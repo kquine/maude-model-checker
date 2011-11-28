@@ -1,0 +1,57 @@
+load symbolic-checker
+
+--- string representation of peterson's algorithm
+--- described in the paper "Beyond Regular Model Checking"
+--- the following does not work since A-unification is not supported
+
+(fmod PETERSON-SYNTAX is 
+
+  sorts Item ItemList .
+  subsort Item < ItemList .
+  op none : -> ItemList [ctor] .
+  op __ : ItemList ItemList -> ItemList [ctor assoc id: none] .
+
+  sort Token TokenList .
+  subsort Token < Item TokenList < ItemList .
+  op o : -> Token [ctor].
+  op __ : TokenList TokenList -> TokenList [ctor assoc id: none] .
+
+  sort Bar BarList .
+  subsort Bar < Item BarList < ItemList .
+  op | : -> Bar [ctor] .
+  op __ : BarList BarList -> BarList [ctor assoc id: none] .
+endfm)
+
+(mod PETERSON is
+  pr PETERSON-SYNTAX .
+
+  sort Conf .
+  op `[_`] : ItemList -> Conf [ctor] .
+
+  var TL : TokenList . var BL : BarList . vars IL IL' : ItemList .
+
+  rl [first]  : [TL o | IL]    => [TL | o IL] .
+  rl [single] : [IL | o | BL]  => [IL | | o BL] .
+  rl [second] : [IL o o | IL'] => [IL o | o IL'] .
+  rl [exit]   : [IL o]         => [o IL] .
+endm)
+
+(mod PETERSON-SATISFACTION is
+  pr PETERSON .
+  pr SYMBOLIC-CHECKER .
+
+  subsort Conf < State .
+
+  op ex? : -> Prop [ctor] . 
+
+  var TL : TokenList . var BL : BarList . var IL : ItemList .
+
+  eq [IL |  ]      |= ex? = true [variant] .
+  eq [IL | o]      |= ex? = true [variant] .
+  eq [IL | o o TL] |= ex? = false [variant] .
+endm)
+
+--- extra condition "number(o) = number(|)" may required..
+
+(smc [TL BL] |= [] ex?  .)
+

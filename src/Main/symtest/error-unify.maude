@@ -1,0 +1,17 @@
+
+--- error related to "iter"
+red in META-LEVEL : metaUnify(
+  mod 'MODULE is
+    nil
+    sorts 'Nat2 ; 'Proc ; 'ProcSet .
+    subsort 'Proc < 'ProcSet .
+    op '0 : nil -> 'Nat2 [ctor] .
+    op 's : 'Nat2 -> 'Nat2 [ctor iter] .
+    op 'none : nil -> 'ProcSet [none] .
+    op '__ : 'ProcSet 'ProcSet -> 'ProcSet [assoc comm id('none.ProcSet)] .
+    op '`[_`] : 'Nat2 -> 'Proc [none] .
+    none
+    none
+    none
+  endm, 
+'__['#0:ProcSet,'`[_`]['s['#1:Nat2]]] =? '#2:ProcSet, 3, 1) .

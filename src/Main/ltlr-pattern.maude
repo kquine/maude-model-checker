@@ -1,0 +1,473 @@
+**************************************
+***           TLR SETTING          ***
+**************************************
+
+fmod TLR-SETTING-OP is pr STRING + QID .
+    --- meta defs 
+    ops ContextQid ContextSymbolQid : -> Qid .
+    ops AssignmentSymbolQid : -> Qid .
+endfm
+
+fmod TLR-META-DEF is pr TLR-SETTING-OP .
+    eq ContextQid = 'Context .
+    eq ContextSymbolQid = '`[`] .
+    eq AssignmentSymbolQid = '_\_ .
+endfm
+
+**************************************
+***	Pre-defined Data & View    ***
+**************************************
+
+view Module from TRIV to META-MODULE is sort Elt to Module . endv
+view Sort from TRIV to META-MODULE is sort Elt to Sort . endv
+view SortSet from TRIV to META-MODULE is sort Elt to SortSet . endv
+view SortPair from TRIV to 2TUPLE{Sort,Sort}*(op `(_`,_`) to `[_`,_`] ) is
+    sort Elt to Tuple{Sort,Sort} .
+endv
+
+*******************************************
+*** Common Auxilarly Function Mudule    ***
+*******************************************
+
+fmod NAME-AUX-FUNCS is
+    pr META-LEVEL + CONVERSION + TLR-META-DEF .
+    op preStr : QidList -> String .
+    op preSum : SortSet -> String .
+    op strNL : NatList -> String .
+
+    op +_(_) : Qid SortSet -> Sort .
+    op $_(_) : QidList Sort -> Sort . --- make a special sort
+    op ?_(_) : QidList Sort -> Bool . --- check if special sort
+    op >_(_) : QidList Sort -> Sort . --- inverse of $ (with filter)
+
+    op $_{_} : QidList SortSet -> SortSet . --- map $ to set
+    op $_[_] : QidList TypeList -> TypeList . --- map $ to list
+    op ?_{_} : QidList SortSet -> SortSet . --- filter
+    op >_{_} : QidList SortSet -> SortSet . --- filter & apply >
+
+    vars Q : Qid . vars QL : QidList . var TY : Type .  var TYL : TypeList .
+    vars S : Sort . vars SS : SortSet . var NSS : NeSortSet .  
+    var N : Nat . var NL : NatList .
+
+    eq strNL(N NL) = string(N,10) + "#" + strNL(NL) .  eq strNL(nil) = ":" .
+
+--- sort name auxilarly func
+    eq preStr(Q QL) = string(Q) + "$" + preStr(QL) .
+    eq preStr(nil) = "" .
+
+    eq preSum(S ; NSS) = string(S) + "|" + preSum(NSS) .
+    eq preSum(S) = string(S) .
+    eq preSum(none) = "" .
+
+    eq + Q (SS) = $ Q ( qid(preSum(SS)) ) .
+    eq $ QL(S) = qid(preStr(QL) + string(S)) .
+    eq > QL(S) = qid(substr(string(S),length(preStr(QL)),length(string(S)))) .
+    eq ? QL(S) = rfind(string(S), preStr(QL) , 0) :: Nat .
+
+    eq $ QL{S ; SS} = ($ QL(S)) ; ($ QL{SS}) .  
+    eq $ QL{none} = none .
+    eq $ QL[TY TYL] = ($ QL(TY)) ($ QL[TYL]) .  
+    eq $ QL[nil] = nil .
+
+
+    ceq ? QL{S ; SS} = S ; ? QL{SS} if ? QL(S) .
+    eq ? QL{SS} = none [owise] .
+    ceq > QL{S ; SS} = > QL(S) ; > QL{SS} if ? QL(S) .
+    eq > QL{SS} = none [owise] .
+endfm
+
+fmod RULE-AUX-FUNCS is
+    pr META-LEVEL + CONVERSION + TLR-META-DEF .
+    op ruleName : Rule -> Qid .
+    op ruleType : Module Rule ~> Type .
+    op ruleVars : Module Rule ~> TermList .
+    op varList : TermList -> TermList .
+    op deldupl : TermList -> TermList .
+
+    vars Q : Qid .  var M : Module .  var C : Constant .  var V : Variable . 
+    var T T' : Term . var TL TL' TL1 TL2 : TermList . var NTL : NeTermList .
+    var Cd : EqCondition .  var AtS : AttrSet .
+
+--- rule auxilarly func
+    eq ruleName((rl T => T' [label(Q) AtS] .)) = Q .
+    eq ruleName((crl T => T' if Cd [label(Q) AtS] .)) = Q .
+
+    eq ruleType(M,(rl T => T' [label(Q) AtS] .)) = leastSort(M, T') .
+    eq ruleType(M,(crl T => T' if Cd [label(Q) AtS] .)) = leastSort(M, T') .
+
+    eq ruleVars(M,(rl T => T' [label(Q) AtS] .)) = deldupl(varList(T)) .
+    eq ruleVars(M,(crl T => T' if Cd [label(Q) AtS] .)) = deldupl(varList(T)) .
+
+    eq varList(V) = V .
+    eq varList(C) = empty .
+    eq varList(Q[TL]) = varList(TL) .
+    eq varList(empty) = empty .
+    eq varList((T, NTL)) = varList(T),varList(NTL) .
+
+    --- eliminating all duplication in the term-list with preserving order.
+    ceq deldupl((TL, T)) = TL' if TL' := deldupl(TL)  /\ (TL1, T, TL2) := TL' .
+    eq deldupl((TL, T)) = (deldupl(TL), T) [owise] .
+    eq deldupl(empty) = empty .
+endfm
+
+*******************************************
+***       SYNTAX PART for TLR        ***
+*******************************************
+
+fmod TLR-SYNTAX-FUNC is
+    pr NAME-AUX-FUNCS + RULE-AUX-FUNCS + SET{SortPair} 
+     + 2TUPLE{Module, SortSet} .
+
+    var C : Constant . vars F Q B : Qid . var QL : QidList . var V : Variable .
+    vars T T' : Term . var TL : TermList .
+    var TY TY' : Type . var TYL TYL' : TypeList . 
+    var M : Module .  var IL : ImportList .
+    vars S S' : Sort . vars SS SS1 SS2 SS3 : SortSet . 
+    vars K : Kind . vars KS : KindSet .
+    vars SdS SdS1 SdS2 : SubsortDeclSet .  vars ODS OS1 OS2 : OpDeclSet .
+    vars MbS : MembAxSet .  vars EqS : EquationSet .  
+    var R : Rule .  var RS : RuleSet .
+    var Cd : EqCondition .  var AtS : AttrSet .
+    var NTYL NTYL' : NeTypeList . var NSS : NeSortSet .
+    var SPS : Set{SortPair} .
+
+--- Some auxilarly functions
+
+    sort DeclTriple .
+    op (_,_,_) : SortSet SubsortDeclSet OpDeclSet -> DeclTriple .
+    op _^_ : DeclTriple DeclTriple -> DeclTriple [assoc comm] .
+    op subsort_<_. : TypeList TypeList -> SubsortDeclSet .
+    op subsort_<_. : SortSet SortSet -> SubsortDeclSet .
+    op makeSet : QidList -> QidSet .
+
+    eq (SS1, SdS, ODS) ^ (SS2,SdS1,OS1) = ((SS1 ; SS2), SdS SdS1, ODS OS1) .
+
+    eq (subsort TY NTYL < TY' NTYL' .) 
+     = (subsort TY < TY' .) (subsort NTYL < NTYL' .) .
+    eq (subsort nil < nil .) = none .
+
+    eq (subsort S ; NSS < SS .) = (subsort S < SS .) (subsort NSS < SS .) .
+    eq (subsort S' < S ; NSS .) = (subsort S' < S .) (subsort S' < NSS .) .
+    eq (subsort none < none .) = none .
+
+    eq makeSet(Q QL) = Q ; makeSet(QL) .
+    eq makeSet(nil) = none .
+
+--- proof-term module : Module -> Module
+    op actionPM : Module -> Module .
+    op actionContextM : Module -> Module .
+
+    ceq actionPM(M) = 
+	(mod getName(M) is 
+	    including 'LTLR-MODEL-CHECKER .
+	    sorts none .
+	    none
+	    (ODS
+	     op 'modelCheckFair : 'State 'Formula 'FairnessSet 
+			    -> 'ModelCheckResult
+		[special (id-hook('LTLRFairnessCheckerSymbol, nil)
+			  opHooks('assignmentSymbol, ODS))
+		] .
+	    )
+	    none none none
+	endm)
+     if ODS := assignOps(M, getRls(M)) .
+
+    ceq actionContextM(M) = 
+	(mod getName(M) is 
+	    including 'LTLR-MODEL-CHECKER .
+	    sorts SS2 ; SS3 .
+	    (SdS2 SdS1
+	     adjustSubsorts(M, ContextQid, > ContextQid{SS2 ; SS3}, empty))
+	    (OS1 OS2 
+	     op 'modelCheckFair : 'State 'Formula 'FairnessSet 
+			    -> 'ModelCheckResult
+		[special (id-hook('LTLRFairnessCheckerSymbol, nil)
+			  opHooks('holeSymbol, OS1))
+		] .
+	    )
+	    none none none
+	endm)
+     if (SS2,SdS2,OS1) := holeDecl(M, getRls(M)) /\ 
+        (SS3,SdS1,OS2) := actCDecl(ctorOps(getOps(M))) .
+
+    --- getting constructor operators
+    op ctorOps : OpDeclSet -> OpDeclSet .
+    eq ctorOps((op Q : TYL -> TY [ctor AtS] .) ODS) 
+     = (op Q : TYL -> TY [ctor AtS] .) ctorOps(ODS) .
+    eq ctorOps(ODS) = none [owise] .
+    
+    --- make connections between new sorts 
+    op adjustSubsorts : Module QidList SortSet Set{SortPair} -> SubsortDeclSet .
+    ceq adjustSubsorts(M, QL, S ; S' ; SS, SPS)
+      = (subsort $ QL(S) < $ QL(S').) 
+        adjustSubsorts(M,QL, S ; S' ; SS, ([S,S'],SPS))
+     if sortLeq(M, S, S') /\ not [S, S'] in SPS .
+    eq adjustSubsorts(M, QL, SS, SPS) = none [owise] .
+
+    --- generate op-hooks
+    op opHooks : Qid OpDeclSet -> HookList .
+    eq opHooks(F, (op Q : TYL -> TY [AtS] .) ODS)
+     = op-hook(F, Q, TYL, TY) opHooks(F, ODS) .
+    eq opHooks(F, none) = nil .
+
+--- hole symbols : Module*RuleSet --> (SortSet,Subsorts,OpDeclSet)
+    op holeDecl : Module RuleSet -> DeclTriple .
+    ceq holeDecl(M, R RS)
+      = (($ ContextQid(TY))
+         ,
+	 (subsort TY < ($ ContextQid(TY)) .)
+	 ,
+	 (op ContextSymbolQid : nil -> $ ContextQid(TY) [ctor] .)) ^ holeDecl(M, RS)
+     if TY := ruleType(M,R) .
+    eq holeDecl(M, none) = (none, none, none) .
+
+--- assignment operators
+    op assignOps : Module RuleSet -> OpDeclSet .
+    eq assignOps(M, R RS)
+      = assignOps(ruleVars(M,R))  assignOps(M, RS) .
+    eq assignOps(M, none) = none .
+
+    --- get substituion var ops
+    op assignOps : TermList -> OpDeclSet .
+    eq assignOps((V,TL)) = 
+       (op AssignmentSymbolQid : 'Qid getType(V) -> 'StateAssignment
+           [ctor prec(63)] .)
+       assignOps(TL) .
+    eq assignOps(empty) = none .
+
+--- context symbols
+    op actCDecl : OpDeclSet -> DeclTriple .
+    ceq actCDecl((op Q : TYL -> TY [AtS] .) OS1)
+      = ( 
+	    ($ ContextQid{makeSet(TYL) ; TY} )
+	    ,
+	    (subsort TYL TY < $ ContextQid[TYL TY] .) 
+	    ,
+	    actCOps(Q, nil, TYL, TY, AtS) 
+	) ^ actCDecl(OS1)
+     if TYL =/= nil .
+    eq actCDecl(OS1) = (none, none, none) [owise] .
+
+    op actCOps : Qid TypeList TypeList Type AttrSet -> OpDeclSet .
+    eq actCOps(Q, TYL, TY' TYL', TY, AtS)
+     = (op Q : TYL $ ContextQid(TY') TYL' -> $ ContextQid(TY) [AtS] .)
+	actCOps(Q, TYL TY', TYL', TY, AtS) .
+    eq actCOps(Q, TYL, nil, TY, AtS) = none .
+endfm
+
+*****************************************
+***       Extending Full Maude        ***
+*****************************************
+
+fmod TLR-SIGN is
+    ex FULL-MAUDE-SIGN .
+    op PROOF`[_`] : @ModExp@ -> @ModExp@ .	    --- assignment module
+    op CONTEXT`[_`] : @ModExp@ -> @ModExp@ .	    --- context module
+endfm
+
+fmod TLR-META-SIGN is
+    pr META-LEVEL .
+    pr META-FULL-MAUDE-SIGN .
+    pr UNIT .
+    op TLR-GRAMMAR : -> FModule .
+    eq TLR-GRAMMAR = addImports((including 'TLR-SIGN .), GRAMMAR) .
+endfm
+
+mod TLR-DATABASE-HANDLING is
+    inc DATABASE-HANDLING .
+    sort TLR .
+    subsort TLR < DatabaseClass .
+    op TLR : -> TLR .
+endm
+
+fmod TLR-EXPR is
+    pr INST-EXPR-EVALUATION .
+    pr EVALUATION .
+    pr MOD-EXP-PARSING .
+    inc MOD-EXPR .
+    pr TLR-SYNTAX-FUNC + TLR-META-DEF .
+
+    var PDL : ParameterDeclList .
+    vars DB DB' DB'' : Database .
+    vars T T' T'' : Term .  
+    var IL : ImportList .
+    var VEPS : Set{Tuple{ViewExp,ViewExp}} .
+    var Q X : Qid .  
+    var ME ME' ME'' : ModuleExpression .
+    var DT : Default{Term} .
+    vars U U' M DM : Module .
+    vars MNS MNS' MNS'' MNS3 MNS4 : Set{ModuleName} .
+    vars VES VES' : Set{ViewExp} .
+    var MIS : Set{ModuleInfo} .
+    var VIS : Set{ViewInfo} .
+    var QIL : QidList .
+    var VDS : OpDeclSet .
+    vars S S' : Sort . vars SS : SortSet .
+
+    op PROOF`[_`] : ModuleExpression -> ModuleExpression .
+    op CONTEXT`[_`] : ModuleExpression -> ModuleExpression .
+
+    ceq evalModExp(PROOF[ME], PDL, DB)	--- for eq & rl, all ops are required
+      = if unitInDb(PROOF[ME'], DB') 
+        then < DB' ; PROOF[ME'] >
+        else < evalModule(
+	    addDecls(
+		mod PROOF[ME'] is
+		    including ME' .
+		    sorts none .  
+		    none none none none none
+		endm, U), 
+	    none, DB'
+	    ) ; PROOF[ME'] >
+        fi 
+      if < DB' ; ME' > := evalModExp(ME, PDL, DB)
+	/\ M := getFlatModule(ME',DB')
+	/\ U := actionPM(M) .
+
+    ceq evalModExp(CONTEXT[ME], PDL, DB)  --- for eq & rl, all ops are required
+      = if unitInDb(CONTEXT[ME'], DB') 
+        then < DB' ; CONTEXT[ME'] >
+        else < evalModule(
+	    addDecls(
+		mod CONTEXT[ME'] is
+		    including ME' .
+		    sorts none .  
+		    none none none none none
+		endm, U), 
+	    none, DB'
+	    ) ; CONTEXT[ME'] >
+        fi 
+      if < DB' ; ME' > := evalModExp(ME, PDL, DB)
+	/\ M := getFlatModule(ME',DB')
+	/\ U := actionContextM(M) .
+
+    eq parseModExp('PROOF`[_`][T]) = PROOF[parseModExp(T)] . 
+    eq parseModExp('CONTEXT`[_`][T]) = CONTEXT[parseModExp(T)] . 
+
+    eq solveUps('upModule['PROOF`[_`][T]], DB) 
+     = solveUpsModExp('upModule['PROOF`[_`][T]], DB) .
+    eq solveUps('upTerm['PROOF`[_`][T], 'bubble[T'']], DB) 
+     = solveUpsModExp('upTerm['PROOF`[_`][T], 'bubble[T'']], DB) .
+    eq solveUps('upModule['CONTEXT`[_`][T]], DB) 
+     = solveUpsModExp('upModule['CONTEXT`[_`][T]], DB) .
+    eq solveUps('upTerm['CONTEXT`[_`][T], 'bubble[T'']], DB) 
+     = solveUpsModExp('upTerm['CONTEXT`[_`][T], 'bubble[T'']], DB) .
+
+    eq labelInModExp(X, PROOF[ME]) = false . 
+    eq labelInModExp(X, CONTEXT[ME]) = false . 
+
+    eq header2Qid(PROOF[ME]) = qid("PROOF[" + string(header2Qid(ME)) + "]") .
+    eq header2QidList(PROOF[ME]) = ('PROOF '`[ header2QidList(ME) '`]) .
+    eq header2Qid(CONTEXT[ME]) 
+     = qid("CONTEXT[" + string(header2Qid(ME)) + "]") .
+    eq header2QidList(CONTEXT[ME]) = ('CONTEXT '`[ header2QidList(ME) '`]) .
+
+    eq prepModExp(PROOF[ME], VEPS) = PROOF[prepModExp(ME, VEPS)] .
+    eq prepModExp(CONTEXT[ME], VEPS) = CONTEXT[prepModExp(ME, VEPS)] .
+
+    eq setUpModExpDeps(PROOF[ME], 
+	db(< ME ; DT ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
+	   MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
+     = db(< ME ; DT ; U ; U' ; M ; VDS ; MNS . PROOF[ME] ; VES > MIS,
+           MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
+    eq setUpModExpDeps(PROOF[ME], 
+	db(< ME ; DM ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
+	   MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
+     = db(< ME ; DM ; U ; U' ; M ; VDS ; MNS . PROOF[ME] ; VES > MIS,
+           MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
+    eq setUpModExpDeps(PROOF[ME], DB)
+     = warning(DB, '\r 'Error: '\o 'Module header2QidList(ME) 
+                        'not 'in 'database. '\n) [owise] .
+
+    eq setUpModExpDeps(CONTEXT[ME], 
+	db(< ME ; DT ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
+	   MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
+     = db(< ME ; DT ; U ; U' ; M ; VDS ; MNS . CONTEXT[ME] ; VES > MIS,
+           MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
+    eq setUpModExpDeps(CONTEXT[ME], 
+	db(< ME ; DM ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
+	   MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
+     = db(< ME ; DM ; U ; U' ; M ; VDS ; MNS . CONTEXT[ME] ; VES > MIS,
+           MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
+    eq setUpModExpDeps(CONTEXT[ME], DB)
+     = warning(DB, '\r 'Error: '\o 'Module header2QidList(ME) 
+                        'not 'in 'database. '\n) [owise] .
+endfm
+
+fmod TLR-BANNER is
+    pr STRING .
+    op tlr-banner : -> String .
+    eq tlr-banner = "LTLR Proofterm Generator (August 2nd, 2011)" .
+endfm
+
+mod FULL-MAUDE is
+    pr TLR-DATABASE-HANDLING .
+    inc LOOP-MODE .
+    pr BANNER .
+    pr TLR-META-SIGN .
+    pr TLR-BANNER .
+    pr TLR-EXPR .
+
+    subsort Object < State .
+    op o : -> Oid .
+    op init : -> System .
+
+    var  Atts : AttributeSet .
+    var  X@TLR : DatabaseClass .
+    var  O : Oid .
+    var  DB : Database .
+    var  ME : Header .
+    var  QI : Qid .
+    vars QIL QIL' QIL'' : QidList .
+    var  TL : TermList .
+    var  N : Nat .
+    vars RP RP' : ResultPair .
+
+    rl [init] :
+	init
+	=> [nil,
+	    < o : TLR | 
+		db : initialDatabase,
+		input : nilTermList, output : nil, 
+		default : 'CONVERSION >,
+	    ('\n '\t '\s '\s '\s '\s string2qidList(tlr-banner) '\n)] .
+
+    rl [in] :
+	[QI QIL, 
+	 < O : X@TLR | db : DB, input : nilTermList, 
+	    output : nil, default : ME, Atts >, 
+	QIL']
+     => if metaParse(TLR-GRAMMAR, QI QIL, '@Input@) :: ResultPair
+	then [nil, 
+	      < O : X@TLR | db : DB, 
+		 input : getTerm(metaParse(TLR-GRAMMAR, QI QIL, '@Input@)),
+		 output : nil, default : ME, Atts >, 
+	      QIL'] 
+	else [nil, 
+	      < O : X@TLR | db : DB, input : nilTermList, 
+		 output : ('\r 'Warning: 
+		    printSyntaxError(
+			metaParse(TLR-GRAMMAR, QI QIL, '@Input@), 
+			    QI QIL) 
+			'\n '\r 'Error: '\o 'No 'parse 'for 'input. '\n), 
+		 default : ME, Atts >, 
+	      QIL'] 
+	fi .
+
+    rl [out] :
+	[QIL, 
+	 < O : X@TLR | 
+	   db : DB, input : TL, output : (QI QIL'), default : ME, Atts >, 
+	 QIL'']
+	=> [QIL, 
+	    < O : X@TLR | 
+		db : DB, input : TL, output : nil, default : ME, Atts >, 
+	    (QI QIL' QIL'')] .
+endm
+
+set trace off .
+set break off .
+set profile off .
+
+loop init .

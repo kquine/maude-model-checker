@@ -1,0 +1,67 @@
+load symbolic-checker
+
+--- from "Efficient Algorithms for Model Checking Pushdown Systems"
+
+(mod PLOTTER is
+
+  sort Operation .
+  ops s m up down right : -> Operation [ctor] .
+
+  sort Stack .
+  op nil : -> Stack [ctor] .
+  op _::_ : Operation Stack -> Stack [ctor] .
+
+  sort Conf .
+  op `[_`] : Stack -> Conf [ctor] .
+
+  var ST : Stack .
+
+  rl [s1] : [s :: ST] => [ST] .
+  rl [s2] : [s :: ST] => [up :: (m :: (down :: ST))] .
+  rl [m1] : [m :: ST] => [s :: (right :: ST)] .
+  rl [m2] : [m :: ST] => [s :: (right :: (m :: ST))] .
+  rl [m3] : [m :: ST] => [up :: (m :: (down :: ST))] .
+
+  rl [d1] : [up :: ST]    => [ST] .
+  rl [d2] : [down :: ST]  => [ST] .
+  rl [d3] : [right :: ST] => [ST] .
+endm)
+
+(mod PLOTTER-SATISFACTION is
+  pr PLOTTER .
+  pr SYMBOLIC-CHECKER .
+
+  subsort Conf < State .
+
+  ops up down right : -> Prop [ctor] .
+
+  var ST : Stack .
+
+  eq [up :: ST]    |= up = true  [variant] . 
+  eq [down :: ST]  |= up = false [variant] . 
+  eq [right :: ST] |= up = false [variant] . 
+  eq [s :: ST]     |= up = false [variant] . 
+  eq [m :: ST]     |= up = false [variant] . 
+  eq [nil]         |= up = false [variant] . 
+
+  eq [up :: ST]    |= down = false [variant] . 
+  eq [down :: ST]  |= down = true  [variant] . 
+  eq [right :: ST] |= down = false [variant] . 
+  eq [s :: ST]     |= down = false [variant] . 
+  eq [m :: ST]     |= down = false [variant] . 
+  eq [nil]         |= down = false [variant] . 
+
+  eq [up :: ST]    |= right = false [variant] . 
+  eq [down :: ST]  |= right = false [variant] . 
+  eq [right :: ST] |= right = true  [variant] . 
+  eq [s :: ST]     |= right = false [variant] . 
+  eq [m :: ST]     |= right = false [variant] . 
+  eq [nil]         |= right = false [variant] . 
+endm)
+
+--- the condition for ST should be refined for both cases
+
+(smc [s :: ST] |= [](up -> (~ down U right)) .)
+
+(smc [s :: ST] |= [](down -> (~ up U right)) .)
+

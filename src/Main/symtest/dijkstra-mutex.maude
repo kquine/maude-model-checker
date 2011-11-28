@@ -1,0 +1,178 @@
+
+mod DIJKSTRA-MUTEX-SYNTAX is
+
+--- There are 6 status for each process. 
+  sorts InitStatus TestStatus CritStatus Status .
+  ops wait flag step exit : -> Status [ctor] .
+  op idle : -> InitStatus [ctor] .
+  op test : -> TestStatus [ctor] .
+  op crit : -> CritStatus [ctor] .
+
+--- a process
+  sorts Proc InitProc TestProc CritProc FlagProc .
+  sorts InitFlagProc TestFlagProc CritFlagProc .
+  subsorts Proc < TestProc CritProc FlagProc .
+  subsorts InitProc < InitFlagProc Proc < FlagProc .
+  subsorts TestProc FlagProc < TestFlagProc .
+  subsorts CritProc FlagProc < CritFlagProc .
+  op <_> : Status -> Proc [ctor] .
+  op <_> : InitStatus -> InitProc [ctor] .
+  op <_> : TestStatus -> TestProc [ctor] .
+  op <_> : CritStatus -> CritProc [ctor] .
+  op !<_> : Status -> FlagProc [ctor] .
+  op !<_> : InitStatus -> InitFlagProc [ctor] .
+  op !<_> : TestStatus -> TestFlagProc [ctor] .
+  op !<_> : CritStatus -> CritFlagProc [ctor] .
+
+--- a set of processes
+  sorts ProcSet InitProcSet TestProcSet CritProcSet FlagProcSet 
+        InitFlagProcSet TestFlagProcSet CritFlagProcSet TestCritProcSet 
+        TestCritFlagProcSet .
+  subsort Proc < ProcSet .
+  subsort TestProc < TestProcSet .
+  subsort CritProc < CritProcSet .
+  subsort FlagProc < FlagProcSet .
+  subsorts InitProc < InitProcSet < InitFlagProcSet ProcSet < FlagProcSet .
+  subsorts InitFlagProc < InitFlagProcSet .
+  subsort TestFlagProc < TestFlagProcSet .
+  subsort CritFlagProc < CritFlagProcSet .
+  subsorts ProcSet < TestProcSet CritProcSet FlagProcSet .
+  subsorts TestProcSet FlagProcSet < TestFlagProcSet .
+  subsorts CritProcSet FlagProcSet < CritFlagProcSet .
+  subsorts TestProcSet CritProcSet < TestCritProcSet .
+  subsorts TestFlagProcSet CritFlagProcSet TestCritProcSet < TestCritFlagProcSet .
+  op none : -> InitProcSet [ctor] .
+  op __ : ProcSet ProcSet -> ProcSet [ctor comm assoc id: none] .
+  op __ : ProcSet InitProcSet -> ProcSet [ditto] .
+  op __ : ProcSet TestProcSet -> TestProcSet [ditto] .
+  op __ : ProcSet CritProcSet -> CritProcSet [ditto] .
+  op __ : ProcSet FlagProcSet -> FlagProcSet [ditto] .
+  op __ : ProcSet InitFlagProcSet -> FlagProcSet [ditto] .
+  op __ : ProcSet TestFlagProcSet -> TestFlagProcSet [ditto] .
+  op __ : ProcSet CritFlagProcSet -> CritFlagProcSet [ditto] .
+  op __ : ProcSet TestCritProcSet -> TestCritProcSet [ditto] .
+  op __ : ProcSet TestCritFlagProcSet -> TestCritFlagProcSet [ditto] .
+
+  op __ : InitProcSet InitProcSet -> InitProcSet [ditto] .
+  op __ : InitProcSet InitFlagProcSet -> InitFlagProcSet [ditto] .
+
+  op __ : TestProcSet TestProcSet -> TestProcSet [ditto] .
+  op __ : TestProcSet CritProcSet -> TestCritProcSet [ditto] .
+  op __ : TestProcSet FlagProcSet -> TestFlagProcSet [ditto] .
+  op __ : TestProcSet TestFlagProcSet -> TestFlagProcSet [ditto] .
+  op __ : TestProcSet CritFlagProcSet -> TestCritFlagProcSet [ditto] .
+  op __ : TestProcSet TestCritProcSet -> TestCritProcSet [ditto] .
+  op __ : TestProcSet TestCritFlagProcSet -> TestCritFlagProcSet [ditto] .
+
+  op __ : CritProcSet CritProcSet -> CritProcSet [ditto] .
+  op __ : CritProcSet FlagProcSet -> CritFlagProcSet [ditto] .
+  op __ : CritProcSet TestFlagProcSet -> TestCritFlagProcSet [ditto] .
+  op __ : CritProcSet CritFlagProcSet -> CritFlagProcSet [ditto] .
+  op __ : CritProcSet TestCritProcSet -> TestCritProcSet [ditto] .
+  op __ : CritProcSet TestCritFlagProcSet -> TestCritFlagProcSet [ditto] .
+
+  op __ : TestCritProcSet TestCritProcSet -> TestCritProcSet [ditto] .
+
+  --- only one flag is allowed
+  op __ : FlagProcSet TestCritProcSet -> TestCritFlagProcSet [ditto] .
+  op __ : TestFlagProcSet TestCritProcSet -> TestCritFlagProcSet [ditto] .
+  op __ : CritFlagProcSet TestCritProcSet -> TestCritFlagProcSet [ditto] .
+  op __ : TestCritProcSet TestCritFlagProcSet -> TestCritFlagProcSet [ditto] .
+endm
+
+mod DIJKSTRA-MUTEX is
+  including DIJKSTRA-MUTEX-SYNTAX .
+
+  --- configuration
+  sort Conf .
+  op [_] : TestCritFlagProcSet -> Conf [ctor] .
+
+  var ST : Status .  
+  var CPS : CritProcSet .  var CFPS : CritFlagProcSet .
+  var TCPS : TestCritProcSet .  var TCFPS : TestCritFlagProcSet .
+
+--- rules 
+  rl [idle1] : [< idle > TCFPS]           => [< wait > TCFPS] .
+  rl [idle2] : [!< idle > TCPS]           => [!< wait > TCPS] .
+
+  rl [wait1] : [< wait > !< exit > TCPS]  => [< flag > < exit > TCPS] .
+  rl [wait2] : [!< wait > TCPS]           => [!< step > TCPS] .
+  
+  rl [flag1] : [< flag > !< ST > TCPS]    => [!< step > < ST > TCPS] .
+  rl [flag2] : [< flag > TCPS]            => [!< step > TCPS] .
+
+  rl [step1] : [< step > TCFPS]           => [< test > TCFPS] .
+  rl [step2] : [!< step > TCPS]           => [!< test > TCPS] .
+
+  rl [test1] : [< test > CFPS ]           => [< crit > CFPS] .
+  rl [test2] : [< test > < test > TCFPS ] => [< idle > < test > TCFPS] .
+  rl [test3] : [< test > !< test > TCPS ] => [< idle > !< test > TCPS] .
+  rl [test4] : [!< test > CPS ]           => [!< crit > CPS] .
+  rl [test5] : [!< test > < test > TCPS ] => [!< idle > < test > TCPS] .
+
+  rl [exit1] : [< crit > TCFPS]           => [< exit > TCFPS] .
+  rl [exit2] : [!< crit > TCPS]           => [!< exit > TCPS] .
+
+  rl [init1] : [< exit > TCFPS]           => [< idle > TCFPS] .
+  rl [init2] : [!< exit > TCPS]           => [!< idle > TCPS] .
+endm
+
+load symbolic-checker
+
+(mod DIJKSTRA-MUTEX-SATISFACTION is
+  pr SYMBOLIC-CHECKER .
+  pr DIJKSTRA-MUTEX .
+
+  subsort Conf < State .
+
+  ops ex? : -> Prop . 
+
+  var TPS : TestProcSet .  var TFPS : TestFlagProcSet .
+  var TCPS : TestCritProcSet .  var TCFPS : TestCritFlagProcSet .
+  var IPS : InitProcSet . var IPFS : InitFlagProcSet .
+
+  eq [TFPS]                    |= ex? = true  [variant] .
+  eq [< crit > TFPS]           |= ex? = true  [variant] .
+  eq [!< crit > TPS]           |= ex? = true  [variant] .
+  eq [< crit > < crit > TCFPS] |= ex? = false [variant] .
+  eq [!< crit > < crit > TCPS] |= ex? = false [variant] .
+  eq [< crit > !< crit > TCPS] |= ex? = false [variant] .
+
+  op initialCond : TestCritFlagProcSet -> Bool [ctor] .
+  eq initialCond(!< idle > IPS)   = true  [variant] .
+  eq initialCond( < wait > TCFPS) = false [variant] .
+  eq initialCond(!< wait > TCPS)  = false [variant] .
+  eq initialCond( < flag > TCFPS) = false [variant] .
+  eq initialCond(!< flag > TCPS)  = false [variant] .
+  eq initialCond( < step > TCFPS) = false [variant] .
+  eq initialCond(!< step > TCPS)  = false [variant] .
+  eq initialCond( < exit > TCFPS) = false [variant] .
+  eq initialCond(!< exit > TCPS)  = false [variant] .
+  eq initialCond( < test > TCFPS) = false [variant] .
+  eq initialCond(!< test > TCPS)  = false [variant] .
+  eq initialCond( < crit > TCFPS) = false [variant] .
+  eq initialCond(!< crit > TCPS)  = false [variant] .
+endm)
+
+--- the following does not terminating.. even if < wait > is added to the 
+--- InitProc, since then (< exit > < exit > ...) be another problem
+
+---(
+(smc [TCFPS] |= [] ex? such that initialCond(TCFPS:TestCritFlagProcSet) .)
+---)
+
+(mod DIJKSTRA-MUTEX-SATISFACTION-WIDENING is
+  pr DIJKSTRA-MUTEX-SATISFACTION .
+
+  --- also need to check coherence (it seems to be coherence)
+  eq < wait > < wait > IS:InitFlagProcSet = < wait > IS:InitFlagProcSet [variant] .
+  eq < exit > < exit > IS:InitFlagProcSet = < exit > IS:InitFlagProcSet [variant] .
+endm)
+
+--- true.
+(smc [IPFS:InitFlagProcSet] |= [] ex?  .)
+
+--- true. The number of states is also similar to the above.
+(smc [TCFPS:TestCritFlagProcSet] |= [] ex? 
+ such that initialCond(TCFPS:TestCritFlagProcSet) .)
+

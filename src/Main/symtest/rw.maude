@@ -1,0 +1,41 @@
+
+load symbolic-checker .
+
+(mod READERS-WRITERS is 
+  sort Nat' . 
+  op 0 : -> Nat' [ctor] . 
+  op s : Nat' -> Nat' [ctor] .  
+  sort Config . 
+  op <_`,_> : Nat' Nat' -> Config [ctor] .
+
+  vars R W : Nat' .
+
+  rl < 0, 0 > => < 0, s(0) > . 
+  rl < R, s(W) > => < R, W > . 
+  rl < R, 0 > => < s(R), 0 > . 
+  rl < s(R), W > => < R, W > .
+endm)
+
+(mod READERS-WRITERS-PROPS is
+  pr READERS-WRITERS .
+  pr SYMBOLIC-CHECKER .
+
+  subsort Config < State .
+
+  vars N M : Nat' .
+
+  ops one-writer-atmost? exclusion? : -> Prop .
+
+  eq < N, 0       > |= one-writer-atmost? = true [variant] .
+  eq < N, s(0)    > |= one-writer-atmost? = true [variant] .
+  eq < N, s(s(M)) > |= one-writer-atmost? = false [variant] .
+  
+  eq < 0,    M    > |= exclusion? = true [variant] .
+  eq < N,    0    > |= exclusion? = true [variant] .
+  eq < s(N), s(M) > |= exclusion? = false [variant] .
+endm)
+
+(smc < N:Nat', 0 > |= [] one-writer-atmost? .)
+
+(smc < N:Nat', 0 > |= [] exclusion? .)
+

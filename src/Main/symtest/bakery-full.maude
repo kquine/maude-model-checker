@@ -1,0 +1,153 @@
+load symbolic-checker
+
+--- bakery model
+(fmod BAKERY-SYNTAX is 
+  sort Nat' .
+  op 0 : -> Nat' [ctor] .
+  op s : Nat' -> Nat' [ctor] .
+
+  sorts ModeIdle ModeWait ModeCrit Mode . 
+  subsorts ModeIdle ModeWait ModeCrit < Mode . 
+  sorts ProcIdle ProcWait Proc ProcIdleSet ProcWaitSet ProcSet . 
+  subsorts ProcIdle < ProcIdleSet . 
+  subsorts ProcWait < ProcWaitSet . 
+  subsorts ProcIdle ProcWait < Proc < ProcSet . 
+  subsorts ProcIdleSet < ProcWaitSet < ProcSet . 
+  
+  op idle : -> ModeIdle . 
+  op wait : Nat' -> ModeWait . 
+  op crit : Nat' -> ModeCrit . 
+  op `[_`,_`] : Nat' ModeIdle -> ProcIdle . 
+  op `[_`,_`] : Nat' ModeWait -> ProcWait . 
+  op `[_`,_`] : Nat' Mode -> Proc . 
+  op none : -> ProcIdleSet . 
+  op __ : ProcIdleSet ProcIdleSet -> ProcIdleSet [assoc comm id: none] . 
+  op __ : ProcWaitSet ProcWaitSet -> ProcWaitSet [assoc comm id: none] .
+  op __ : ProcSet ProcSet -> ProcSet [assoc comm id: none] .
+
+  sort Conf . 
+  op _;_;_ : Nat' Nat' ProcSet -> Conf .
+endfm)
+
+(mod BAKERY is
+  protecting BAKERY-SYNTAX . 
+  
+  var PS : ProcSet .  vars N M K : Nat' . 
+  
+  rl [wake] : N ; M ; [K, idle] PS => s(N) ; M ; [K, wait(N)] PS .
+  rl [crit] : N ; M ; [K, wait(M)] PS => N ; M ; [K, crit(M)] PS .
+  rl [exit] : N ; M ; [K, crit(M)] PS => N ; s(M) ; [K, idle] PS .
+endm)
+
+--- prop definitions for bakery
+(mod BAKERY-SATISFACTION1 is
+  pr BAKERY .
+  pr SYMBOLIC-CHECKER .
+
+  subsort Conf < State .
+
+  ops ever-wait? ever-crit? : -> Prop . 
+
+  vars N M : Nat' . vars PS : ProcSet . 
+  
+  eq s(N) ; M ; PS |= ever-wait? = true [variant] . 
+  eq 0 ; M ; PS    |= ever-wait? = false [variant] . 
+  eq N ; s(M) ; PS |= ever-crit? = true [variant] .
+  eq N ; 0 ; PS    |= ever-crit? = false [variant] . 
+endm)
+
+--- set verbose on .
+
+(smc N:Nat' ; N:Nat' ; [0, idle] [s(0), idle] |= [] (ever-wait? -> <> ever-crit?) .)
+
+(smc in BAKERY-SATISFACTION1 :
+  N:Nat' ; N:Nat' ; [0, idle] [s(0), idle] |= [] (ever-wait? -> ever-crit?) .)
+
+(mod BAKERY-SATISFACTION2 is
+  pr BAKERY .
+  pr SYMBOLIC-CHECKER .
+
+  subsort Conf < State .
+
+  ops ex? : -> Prop . 
+
+  var WS : ProcWaitSet . var IS : ProcIdleSet . var PS : ProcSet . 
+  vars N M K M1 M2 K1 K2 : Nat' .
+
+--- NOTE: ProcIdleSet < ProcWaitSet
+  eq N ; M ; WS |= ex? = true [variant] .
+  eq N ; M ; [K1, crit(M1)] WS |= ex? = true [variant] .
+  eq N ; M ; [K1, crit(M1)] [K2, crit(M2)] PS |= ex? = false [variant] .
+
+--- condition1 : no duplicate tickets
+  op noDuplWait : ProcWaitSet -> Bool .
+  eq noDuplWait([K1, wait(M)] [K2, wait(M)] WS) = false .
+  eq noDuplWait(WS) = true [owise] .
+
+--- condition2 : the next number should be greater than any waiting number
+  op nextNumCond : Nat' ProcWaitSet -> Bool .
+ ceq nextNumCond(M, [K, wait(M1)] WS) = false if M <= M1 .
+  eq nextNumCond(M, WS) = true [owise] .
+
+--- we need to define <= for terms with variable....
+  op _<=_ : Nat' Nat' ~> Bool .
+  eq N <= N = true .
+  eq N <= s(N) = true .
+  eq N <= s(s(N)) = true .
+  --- ...
+  eq N <= M = false [owise] .
+endm)
+
+--- true
+(smc N:Nat' ; N:Nat' ; [0, idle] [s(0), idle] |= [] ex? .)
+
+--- false
+(smc N ; M ; WS |= [] ex?  .)
+
+--- true
+(smc N ; M ; WS |= [] ex? such that noDuplWait(WS:ProcWaitSet) .)
+
+eof
+
+--- false
+(smc N ; N ; WS |= [] ex?  .)
+
+--- NOTE: the followings are not terminating
+--- because of "s^k(N) ; N ; ..." patterns
+
+--- it seems that the following may generate a invalid state
+---( counterexample
+N:Nat' ; N:Nat' ; WS:ProcWaitSet IS:ProcIdleSet
+N:Nat' ; N:Nat' ; IS:ProcIdleSet[#3:Nat',crit(N:Nat')], 
+    WS:ProcWaitSet <-[#3:Nat',wait(N:Nat')]
+s(N:Nat'); N:Nat' ; #12:ProcIdleSet[#6:Nat',wait(N:Nat')][#3:Nat',crit(N:Nat')]
+    IS:ProcIdleSet <- #12:ProcIdleSet[#6:Nat',idle]
+s(s(N:Nat')); N:Nat' ; #22:ProcIdleSet[#6:Nat',wait(N:Nat')][#3:Nat',crit(N:Nat')][#15:Nat',wait(s(N:Nat'))]
+    #12:ProcIdleSet <- #22:ProcIdleSet[#15:Nat',idle]
+s(s(N:Nat')); N:Nat' ; #22:ProcIdleSet[#6:Nat',crit(N:Nat')][#3:Nat',crit(N:Nat')][#15:Nat',wait(s(N:Nat'))]
+    WS <-  [#3:Nat',wait(N:Nat')]
+    IS <- #22:ProcIdleSet [#15:Nat',idle] [#6:Nat',idle]
+---)
+(smc N ; N ; WS |= [] ex? such that noDuplWait(WS:ProcWaitSet) .)
+
+---(
+--- the following seems to be correct, but not terminating..
+(smc N ; N ; IS WS |= [] ex? such that 
+  noDuplWait(WS:ProcWaitSet) /\ nextNumCond(N:Nat',WS:ProcWaitSet)
+.)
+  ---)
+
+
+eof 
+
+(red ##nextStates##(N:Nat' ; N:Nat' ; [0, idle] [s(0), idle]) .)
+
+(red getVariants(##m##, 
+        upTerm(N:Nat' ; N:Nat' ; [0, idle] [s(0), idle] |= P:Prop)) .)
+
+(get variants in BAKERY-SATISFACTION :
+    N:Nat' ; N:Nat' ; [0, idle] [s(0), idle] |= P:Prop .)
+
+(red ##nextStates##(N:Nat' ; N:Nat' ; [0, idle] [s(0), idle]) .)
+
+

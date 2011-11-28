@@ -1,0 +1,692 @@
+
+--- only state-based.
+load model-checker
+
+****************************************
+***          Basic Interface         ***
+****************************************
+
+fmod SYMBOLIC-CHECKER is
+  pr QID .
+  pr SATISFACTION .
+  including LTL .
+
+  subsort Prop < Formula .
+
+*** generic substitution for counter example
+  sorts CEAssignment CESubstitution .
+  subsort CEAssignment < CESubstitution .
+  op _<-_ : Qid Universal -> CEAssignment [ctor poly (2) prec 63] .
+  op none : -> CESubstitution .
+  op _;_ : CESubstitution CESubstitution -> CESubstitution [ctor assoc comm id: none prec 65] .
+  eq CA:CEAssignment ; CA:CEAssignment = CA:CEAssignment .
+
+*** transitions and results
+  sorts Transition TransitionList ModelCheckResult .
+  subsort Transition < TransitionList .
+  subsort Bool < ModelCheckResult .
+  op {_,_} : State CESubstitution -> Transition [ctor] . --- for output
+  op nil : -> TransitionList [ctor] .
+  op __ : TransitionList TransitionList -> TransitionList [ctor assoc id: nil format (d ni d)] .
+  op counterexample_loop_ : TransitionList TransitionList -> ModelCheckResult [ctor format(n n++i n ni i--)] .
+endfm
+
+***************************************************
+***    Symbolic Model Checker on META-LEVEL     ***
+***************************************************
+
+--- core maude search function (using META-LEVEL)
+fmod BOUNDED-FOLDING-MODEL-CHECKER is
+  pr META-LEVEL .
+  pr SATISFACTION .
+  including LTL .
+
+--- meta transition
+  sort MetaConf .
+  op <_> : State -> MetaConf [ctor] .
+  op _|=>_ : Substitution State -> MetaConf [ctor] .
+
+--- propositions
+  subsort Prop < Formula .
+  op prop : Term -> Prop [ctor] .
+
+--- transitions
+  sort Transition TransitionList .
+  subsort Transition < TransitionList .
+  op {_,_} : State Substitution -> Transition [ctor] .
+  op nil : -> TransitionList [ctor] .
+  op __ : TransitionList TransitionList -> TransitionList [ctor assoc id: nil format (d ni d)] .
+
+--- folding relation
+  op _>=_ : State State -> Bool .
+
+--- print state during model checking (debugging purpose)
+  op prettyPrint : State ~> QidList .
+  op prettyPrint : Substitution ~> QidList .
+
+--- model checking results
+  sorts ModelCheckResult .
+  subsort Bool < ModelCheckResult .
+  op counterexample_loop_ : TransitionList TransitionList -> ModelCheckResult [ctor format(n n++i n ni i--)] .
+
+--- model checker
+  op symbolicModelCheck : State Formula ~> ModelCheckResult
+        [special (
+           id-hook SymbolicModelCheckerSymbol
+  
+           --- temporal operators
+           op-hook trueSymbol              (True : ~> Formula)
+           op-hook falseSymbol             (False : ~> Formula)
+           op-hook notSymbol               (~_ : Formula ~> Formula)
+           op-hook nextSymbol              (O_ : Formula ~> Formula)
+           op-hook andSymbol               (_/\_ : Formula Formula ~> Formula)
+           op-hook orSymbol                (_\/_ : Formula Formula ~> Formula)
+           op-hook untilSymbol             (_U_ : Formula Formula ~> Formula)
+           op-hook releaseSymbol           (_R_ : Formula Formula ~> Formula)
+
+           --- state propositions
+           op-hook satisfiesSymbol         (_|=_ : State Formula ~> Bool)
+           term-hook trueTerm              (true)
+
+           --- folding graph stuff
+	   op-hook foldingRelSymbol        (_>=_ : State State ~> Bool)
+	   op-hook prettyPrintStateSymbol  (prettyPrint : State ~> QidList)
+	   op-hook prettyPrintTransSymbol  (prettyPrint : Substitution ~> QidList)
+
+	   --- meta graph
+	   op-hook metaStateSymbol         (<_> : State ~> MetaConf)
+	   op-hook metaTransitionSymbol    (_|=>_ : Substitution State ~> MetaConf)
+
+           --- counterexamples
+	   term-hook falseTerm             (false)
+           op-hook transitionSymbol        ({_,_} : State Substitution ~> Transition)
+           op-hook transitionListSymbol    (__ : TransitionList TransitionList ~> TransitionList)
+           op-hook nilTransitionListSymbol (nil : ~> TransitionList)
+           op-hook counterexampleSymbol    (counterexample_loop_ : TransitionList TransitionList ~> ModelCheckResult)
+         )] .
+endfm
+
+****************************************
+***  Full Maude Narrowing Connector  ***
+****************************************
+
+load full-maude26b
+
+fmod META-SMC-PARAMETERS is 
+  pr META-MODULE .
+  op ##m## : ~> Module [memo] . --- empty! the user module shoule define them.
+  op ##f## : ~> TermList [memo] .
+endfm
+
+mod META-SMC-THEORY is
+  pr RESULT-CONTEXT-SET .
+  pr META-SMC-PARAMETERS .
+  pr BOUNDED-FOLDING-MODEL-CHECKER .
+
+  vars ST ST' : Term . vars SUB SUB' : Substitution .  
+  var TP : Type .  var RTS : ResultTripleSet . 
+
+
+  ops init mid : Term -> State [ctor] .
+
+--- functions
+  ops next variant : Term -> ResultTripleSet .
+
+--- meta rules
+ crl [init] : < init(ST) > => SUB' |=> mid(getTerm(metaReduce(##m##,ST'))) 
+  if {ST',TP,SUB'} | RTS := variant(ST) . 
+
+ crl [mid]  :  < mid(ST) > => SUB' |=> mid(getTerm(metaReduce(##m##,ST')))
+  if {ST',TP,SUB'} | RTS := next(ST) .
+endm
+
+mod META-SMC-TRANSFORMER is
+  pr META-SMC-THEORY .
+  pr BOUNDED-FOLDING-MODEL-CHECKER .
+
+  var F : Qid . var M : Module .  var V : Variable . var C : Constant .
+  vars T T' ST PT : Term . var TL : TermList . 
+  var TR : Transition . var TRL TRL' : TransitionList . var SUB : Substitution .
+
+--- meta formula
+  op tilde : Module Term -> Formula .
+ ceq tilde(M, PT)             = prop(PT) if sortLeq(M,leastSort(M,PT),'Prop) .
+  eq tilde(M, 'True.Formula)  = True .
+  eq tilde(M, 'False.Formula) = False .
+  eq tilde(M, '~_[T])         = ~ tilde(M, T) .
+  eq tilde(M, '_/\_[T, T'])   = tilde(M, T) /\ tilde(M, T') .
+  eq tilde(M, '_\/_[T, T'])   = tilde(M, T) \/ tilde(M, T') .
+  eq tilde(M, 'O_[T])         = O tilde(M, T) .
+  eq tilde(M, '_U_[T, T'])    = tilde(M, T) U tilde(M, T') .
+  eq tilde(M, '_R_[T, T'])    = tilde(M, T) R tilde(M, T') .
+
+--- meta counterexample
+  op transRes : ModelCheckResult -> Term .
+  eq transRes(B:Bool) = upTerm(B:Bool) .
+  eq transRes(counterexample TRL loop TRL')
+   = 'counterexample_loop_[wrapTL('__,'nil.TransitionList,transTRs(TRL)), 
+                           wrapTL('__,'nil.TransitionList,transTRs(TRL'))] .
+
+  op transTRs : TransitionList -> TermList .
+  eq transTRs(TR TRL) = transTR(TR), transTRs(TRL) .
+  eq transTRs(nil)    = empty .
+
+  op transTR : Transition -> TermList .
+  eq transTR({mid(ST),SUB})  = '`{_`,_`}[ST, wrapTL('_;_,'none.CESubstitution,transSUB(SUB))] .
+  eq transTR({init(ST),SUB}) = empty  .
+
+  op transSUB : Substitution -> TermList .
+  eq transSUB(none) = empty .
+  eq transSUB(V <- T ; SUB) 
+   = '_<-_[qid("'" + string(getName(V)) + ".Qid"), T], transSUB(SUB) .
+
+  op wrapTL : Qid Constant TermList -> Term .
+  eq wrapTL(F, C, T) = T .
+  eq wrapTL(F, C, (T,T',TL)) = F[T,T',TL] .
+  eq wrapTL(F, C, empty) = C .
+endm
+
+fmod META-NARROWING-INTERFACE is
+  pr META-SMC-PARAMETERS .
+  pr META-NARROWING-SEARCH .
+
+  vars T T1 T2 ST PT : Term .  var TL : TermList .  var C : Constant . 
+  var TP : Type . vars SUB SUB1 SUB2 : Substitution .  var N : Nat .
+  var RT : ResultTriple . var RTS : ResultTripleSet . var VFS : VariantFourSet .
+
+--- variant narrowing prop instantiations.
+--- compute the PI-instantated states of the given state.
+
+  --- StateSet PropSet -> StateSet
+  op propSetInstSet : ResultTripleSet TermList ~> ResultTripleSet . 
+  eq propSetInstSet(RTS, (PT,TL))
+   = propSetInstSet(propInstSet(RTS, PT), TL) .
+  eq propSetInstSet(RTS, empty) = RTS .
+
+  --- StateSet Prop -> StateSet
+  op propInstSet : ResultTripleSet Term ~> ResultTripleSet .
+  eq propInstSet({ST,TP,SUB} | RTS, PT)
+   = filterPropVars({ST,TP,SUB}, getVariants(##m##, '_|=_[ST, PT])) 
+   | propInstSet(RTS, PT) .
+  eq propInstSet(empty, PT) = empty .
+
+  op filterPropVars : ResultTripleSet VariantFourSet ~> ResultTripleSet .
+  eq filterPropVars({ST,TP,SUB}, {T,SUB1,SUB2,N} | VFS)
+   = if inst?(T) then {ST << (SUB1 .. SUB2),TP, SUB .. (SUB1 .. SUB2)} 
+     else empty fi 
+   | filterPropVars({ST,TP,SUB}, VFS) .
+  eq filterPropVars(RT, empty) = empty .
+
+  --- TODO: by not filtering, we may allow more patterns that are not reduced 
+  --- to true/false. However, it easily generates spurious counter examples.. 
+  --- We may adopt this with abstract refinement techniques..
+  --- But with filtering, the |= equations should be total...
+
+  op inst? : Term ~> Bool .
+  eq inst?('true.Bool)  = true .
+  eq inst?('false.Bool) = true .
+  eq inst?(T) = false [owise] .
+endfm
+
+mod META-SYMBOLIC-CONNECTOR is
+  pr META-NARROWING-INTERFACE .
+  pr META-SMC-TRANSFORMER .
+  pr DECL-META-PRETTY-PRINT 
+   * (op addOps to addOpsSE, op addEqs to addEqsSE, op addSorts to addSortsSE) .
+
+  var M : Module .  vars T T' T1 T2 ST ST' PT CT : Term . 
+  var TL : TermList .  var V : Variable .
+  var TP : Type . vars SUB SUB' SUB'' : Substitution .  var N : Nat .
+  var RT : ResultTriple .  var RTS : ResultTripleSet . 
+
+--- meta prop and state
+  eq mid(ST) |= prop(PT) 
+   = getTerm(metaReduce(##m##, '_|=_[ST, PT])) == 'true.Bool .
+
+--- state folding
+  eq mid(ST) >= mid(ST')
+   = metaMatch(##m##, ST, ST', nil, 0) :: Substitution .
+
+--- compute the next states
+--- TODO: keep both a state and a substitution for a counter example..
+  eq next(ST)    = propSetInstSet(metaNarrow(##m##, ST), ##f##) .
+  eq variant(ST) = propSetInstSet({ST,leastSort(##m##,ST),none}, ##f##) .
+
+--- run SMC model check : State Formula -> Result
+  op smc-check : Term Term ~> ModelCheckResult .
+ ceq smc-check(ST, PT) 
+   = symbolicModelCheck(init(ST), O tilde(##m##,PT)) 
+  if sortLeq(##m##, leastSort(##m##,ST), 'State)
+  /\ sortLeq(##m##, leastSort(##m##,PT), 'Formula) .
+
+--- pretty print (for debugging)
+  eq prettyPrint(init(ST)) = eMetaPrettyPrint(##m##, ST) .
+  eq prettyPrint(mid(ST))  = eMetaPrettyPrint(##m##, ST) .
+
+  eq prettyPrint(none) = 'none .
+  eq prettyPrint(V <- T) = V '<- eMetaPrettyPrint(##m##,T) .
+  eq prettyPrint(V <- T ; A:Assignment ; SUB) 
+   = V '<- eMetaPrettyPrint(##m##,T) '; prettyPrint(A:Assignment ; SUB) .
+endm
+
+*****************************************************
+***  Full Maude Narrowing Connector  (Condition)  ***
+*****************************************************
+
+--- NOTE: currently, only considering "T = true"
+
+mod META-SMC-COND-THEORY is
+  pr META-SMC-THEORY .
+
+  ops init mid : Term EqCondition -> State [ctor] .
+endm 
+
+mod META-SMC-COND-TRANSFORMER is
+  pr META-SMC-TRANSFORMER .
+  pr META-SMC-COND-THEORY .
+
+  var ST : Term .  var SUB : Substitution .  var CD : EqCondition .
+
+  eq transTR({mid(ST,CD),SUB})  = transTR({mid(ST),SUB}) .
+  eq transTR({init(ST,CD),SUB}) = empty  .
+endm
+
+fmod META-NARROWING-COND-INTERFACE is
+  pr META-NARROWING-INTERFACE .
+
+  vars T T1 T2 ST PT : Term .  var TL : TermList .
+  var C : Constant . var CD : EqCondition .
+  var TP : Type . vars SUB SUB1 SUB2 : Substitution .  var N : Nat .
+  var RT : ResultTriple . var RTS : ResultTripleSet . var VFS : VariantFourSet .
+
+--- variant narrowing condition instantiations.
+
+  --- StateSet EqCondition -> StateSet
+  op condSetInstSet : ResultTripleSet EqCondition ~> ResultTripleSet . 
+  eq condSetInstSet(RTS, T = 'true.Bool /\ CD)
+   = condSetInstSet(condInstSet(RTS, T), CD) .
+  eq condSetInstSet(RTS, nil) = RTS .
+
+  --- StateSet Prop -> StateSet
+  op condInstSet : ResultTripleSet Term ~> ResultTripleSet .
+ ceq condInstSet({ST,TP,SUB} | RTS, T)
+   = filterCondVars({ST,TP,SUB}, VFS)
+   | condInstSet(RTS, T) 
+  if VFS := getVariants(##m##, T << SUB) .
+  eq condInstSet(empty, T) = empty .
+
+  --- only true instances (hence the conditions should be complete and FVP)
+  op filterCondVars : ResultTripleSet VariantFourSet ~> ResultTripleSet .
+  eq filterCondVars({ST,TP,SUB}, {'true.Bool,SUB1,SUB2,N} | VFS)
+   = {ST << (SUB1 .. SUB2), TP, SUB .. (SUB1 .. SUB2)} 
+   | filterCondVars({ST,TP,SUB}, VFS) .
+  eq filterCondVars(RT, VFS) = empty [owise] .
+
+  --- applying substitution to condition
+  op _<<_ : EqCondition Substitution ~> EqCondition .
+  eq (T1 = T2 /\ CD) << SUB
+   = ((T1 << SUB) = (T2 << SUB)) /\ (CD << SUB) .
+  eq (T1 := T2 /\ CD) << SUB
+   = ((T1 << SUB) = (T2 << SUB)) /\ (CD << SUB) .
+  eq (T : S:Sort /\ CD) << SUB
+   = ((T << SUB) : S:Sort) /\ (CD << SUB) .
+  eq nil << SUB = (nil).EqCondition .
+endfm
+
+mod META-SYMBOLIC-COND-CONNECTOR-BASE is
+  pr META-SMC-COND-TRANSFORMER .
+  pr META-SYMBOLIC-CONNECTOR .
+  pr META-NARROWING-COND-INTERFACE .
+
+  var M : Module .  vars T T' T1 T2 ST ST' PT CT : Term . 
+  var TL : TermList .  var V : Variable .
+  var TP : Type . vars SUB SUB' SUB'' : Substitution .  var N : Nat .
+  var RT : ResultTriple .  var RTS : ResultTripleSet . 
+  vars CD CD' : EqCondition .
+
+--- meta prop and state
+  eq mid(ST,CD) |= prop(PT) 
+   = getTerm(metaReduce(##m##, '_|=_[ST, PT])) == 'true.Bool .
+
+--- with condition
+  op smc-check : Term Term EqCondition ~> ModelCheckResult .
+ ceq smc-check(ST, PT, CD)
+   = if CD == nil
+     then symbolicModelCheck(init(ST), O tilde(##m##,PT)) 
+     else symbolicModelCheck(init(ST,CD), O tilde(##m##,PT))
+     fi
+  if sortLeq(##m##, leastSort(##m##,ST), 'State)
+  /\ sortLeq(##m##, leastSort(##m##,PT), 'Formula) .
+
+--- normalize conditions (modulo equation)
+--- NOTE: metaNormalize vs. metaReduce??  metaNormalize generates slightly
+--- more states for (state,condition) pairs if there exists equaltional
+--- abstraction, but it will be more correct since we do not worry about
+--- whether some variables is removed by such equations...
+  op condNorm : EqCondition ~> EqCondition .
+  eq condNorm(T = 'true.Bool /\ CD)
+   = getTerm(metaNormalize(##m##,T)) = 'true.Bool /\ condNorm(CD) .
+  eq condNorm(nil) = nil .
+
+--- pretty print (for debugging)
+  eq prettyPrint(init(ST,CD)) 
+   = prettyPrint(init(ST)) '\n '\t eMetaPrettyPrint(##m##, CD) .
+  eq prettyPrint(mid(ST,CD)) 
+   = prettyPrint(mid(ST)) '\n '\t eMetaPrettyPrint(##m##, CD) .
+endm
+
+--- Conditions are solved for generating states by variant narrowing
+mod META-SYMBOLIC-COND-CONNECTOR is
+  pr META-SYMBOLIC-COND-CONNECTOR-BASE .
+
+  var M : Module .  vars T T' T1 T2 ST ST' PT CT : Term . 
+  var TL : TermList .  var V : Variable .
+  var TP : Type . vars SUB SUB' SUB'' : Substitution .  var N : Nat .
+  var RT : ResultTriple .  var RTS : ResultTripleSet . 
+  vars CD CD' : EqCondition .
+
+--- meta rules
+ crl [init-cond] : 
+       < init(ST,CD) >
+    => SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+  if {ST',TP,SUB'} | RTS := variant(ST,CD) .
+
+ crl [mid-cond] : 
+       < mid(ST,CD) >
+    => SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+  if {ST',TP,SUB'} | RTS := next(ST,CD) .
+
+  ops next variant : Term EqCondition -> ResultTripleSet .
+  eq next(ST,CD)    
+   = propSetInstSet(condSetInstSet(metaNarrow(##m##, ST),CD), ##f##) .
+  eq variant(ST,CD) 
+   = propSetInstSet(condSetInstSet({ST,leastSort(##m##,ST),none},CD), ##f##) .
+
+--- condition should be already considered by variant narrowing
+  eq mid(ST,CD) >= mid(ST',CD')
+   = mid(ST) >= mid(ST') .
+endm
+
+--- Folding conditions C >= C' by checking C' => \rho(C) using variant narrowing
+mod META-SYMBOLIC-COND-CONNECTOR2 is
+  pr META-SYMBOLIC-COND-CONNECTOR-BASE .
+
+  vars T T' T1 T2 ST ST' PT CT : Term . 
+  var TL : TermList .  var V : Variable .
+  var TP : Type . vars SUB SUB' SUB'' : Substitution .  
+  var N : Nat . var B : Bool .
+  var RT : ResultTriple .  var RTS : ResultTripleSet . 
+  vars CD CD' : EqCondition .  var VFS : VariantFourSet .
+
+--- meta rules
+ crl [init-cond] : 
+       < init(ST,CD) >
+    => SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+  if {ST',TP,SUB'} | RTS := variant(ST) /\ condOK(CD << SUB') .
+
+ crl [mid-cond]  : 
+       < mid(ST,CD) >
+    => SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+  if {ST',TP,SUB'} | RTS := next(ST) /\ condOK(CD << SUB') .
+
+--- Another method to check a condition.
+  op condOK : EqCondition ~> Bool .
+  eq condOK(T1 = 'true.Bool /\ CD)
+   = if getTerm(metaReduce(##m##, T1)) == 'false.Bool then false else true fi 
+     and-then condOK(CD) .
+  eq condOK(nil) = true .
+
+--- folding with conditions
+  eq mid(ST,CD) >= mid(ST',CD')
+   = condFold(ST, CD, ST', CD', 0) .
+
+  op condFold : Term EqCondition Term EqCondition Nat -> Bool .
+ ceq condFold(ST, CD, ST', CD', N)
+   = implyOK(CD', CD << SUB) and-then condFold(ST, CD, ST', CD', s(N))
+  if SUB := metaMatch(##m##, ST, ST', nil, N) .
+  eq condFold(ST, CD, ST', CD', 0) = false [owise] .
+  eq condFold(ST, CD, ST', CD', s(N)) = true [owise] .
+
+--- check if the implecation (C1 /\ not C2) has no "true" solution
+  op implyOK : EqCondition EqCondition ~> Bool .
+ ceq implyOK(CD, CD')
+   = implyOKsub(VFS)
+  if VFS := getVariants(##m##,'_and_[condList(CD,true),
+                                     '_or_[condList(CD',false)]]) .
+
+  op implyOKsub : VariantFourSet ~> Bool .
+ ceq implyOKsub({T,SUB,SUB',N} | VFS)
+   = T' =/= 'true.Bool and-then implyOKsub(VFS)
+  if T' := getTerm(metaReduce(##m##,T)) .
+  eq implyOKsub(empty) = true .
+
+  op condList : EqCondition Bool ~> TermList .
+  eq condList(T = 'true.Bool /\ CD, B) 
+   = if B then T else 'not_[T] fi, condList(CD, B) .
+  eq condList(nil, B) 
+   = if B then 'true.Bool else 'false.Bool fi .
+
+endm
+
+*****************************************
+***       Extending Full Maude        ***
+*****************************************
+
+--- REDEFINED
+fmod BANNER is
+  pr STRING .
+  op banner : -> String .
+  eq banner = "Symbolic Model Checker August 6th 2011" .
+endfm
+
+fmod SMC-COMMANDS is
+  inc COMMANDS .
+  op smc_|=_. : @Bubble@ @Bubble@ -> @Command@ [ctor] .
+endfm
+
+--- REDEFINED
+fmod FULL-MAUDE-SIGN is
+  including VIEWS .
+  inc SMC-COMMANDS .
+  sort @Input@ .
+  subsorts @Command@ @Module@ @View@ < @Input@ .
+endfm
+
+fmod META-PROP-SET is
+  pr META-LEVEL .
+
+  var M : Module . vars T T' : Term .
+
+  op props : Module Term -> TermList .
+  eq props(M, T) = #props(M, getTerm(metaReduce(M, T))) .
+
+  op #props : Module Term -> TermList .   --- Formula -> PropList .
+ ceq #props(M, T)            = T if sortLeq(M, leastSort(M, T), 'Prop) .
+  eq #props(M, '~_[T])       = #props(M, T) .
+  eq #props(M, '_/\_[T, T']) = #props(M, T), #props(M, T') .
+  eq #props(M, '_\/_[T, T']) = #props(M, T), #props(M, T') .
+  eq #props(M, 'O_[T])       = #props(M, T) .
+  eq #props(M, '_U_[T, T'])  = #props(M, T), #props(M, T') .
+  eq #props(M, '_R_[T, T'])  = #props(M, T), #props(M, T') .
+  eq #props(M, T)            = empty [owise] .
+endfm
+
+mod SMC-COMMAND-PROCESSING is
+  pr COMMAND-PROCESSING .
+  pr META-PROP-SET .
+
+  vars T T1 T2 T3 T4 T5 T6 : Term .  
+  var TL TL1 : TermList .
+  vars DB DB1 : Database .
+  vars M U M1 M2 : Module .
+  vars ME ME1 : ModuleExpression .
+  vars  B BC : Bool .
+  var CD : Condition .
+  var  QIL : QidList .
+  vars VS VDS : OpDeclSet .
+  vars QI QI' F V O : Qid .  var TY : Type .
+  var  TDM : Tuple{Database,ModuleExpression} .
+  var  TM : [Tuple{Term,Module,Bool,OpDeclSet,Database}] .
+  var  RP? : [ResultPair] .
+
+--- command condition type
+  op smcCmdCond : Qid -> Type? .
+  eq smcCmdCond('smc_|=_.) = 'Formula .
+  eq smcCmdCond(QI) = anyType [owise] . --- no condition
+
+--- process smc commands
+  op procSMCComd : Term ModuleExpression Database -> Tuple{Database,QidList} .
+
+  --- no argument
+  eq procSMCComd(QI, ME, DB)
+   = if compiledModule(ME, DB)
+     then procSMC(QI, empty, nil, getFlatModule(ME,DB), getVars(ME,DB), DB)
+     else procSMC(QI, empty, nil,
+                      getFlatModule(modExp(evalModExp(ME,DB)),
+                                    database(evalModExp(ME,DB))),
+                      getVars(modExp(evalModExp(ME,DB)),
+                              database(evalModExp(ME,DB))),
+                      database(evalModExp(ME,DB)))
+     fi .
+
+ --- there exist arguments
+ ceq procSMCComd(F[TL], ME, DB)
+   = if compiledModule(ME, DB)
+     then procSMCComd(F, TL, getFlatModule(ME,DB), B, getVars(ME,DB), DB, empty)
+     else procSMCComd(F, TL, 
+                      getFlatModule(modExp(evalModExp(ME,DB)),
+                                    database(evalModExp(ME,DB))), B,
+                      getVars(modExp(evalModExp(ME,DB)),
+                              database(evalModExp(ME,DB))),
+                      database(evalModExp(ME,DB)), empty)
+     fi 
+  if B  := included('META-MODULE, getImports(getTopModule(ME,DB)), DB) .
+
+--- parse arguments
+  op procSMCComd : Qid TermList Module Bool OpDeclSet Database TermList 
+                -> Tuple{Database,QidList} .
+
+  eq procSMCComd(F, TL, unitError(QIL), B, VDS, DB, TL1) = << DB ; QIL >> .
+
+  --- the first argument
+ ceq procSMCComd(F, (T,TL), M, B, VDS, DB, empty)  
+   = if getModule(TM) :: Module and-then getTerm(TM) :: Term
+     then procSMCComd(F, TL, getModule(TM), B, 
+                      getVars(TM), getDatabase(TM), getTerm(TM))
+     else << DB ; getMsg(getTerm(metaReduce(getModule(TM), getTerm(TM)))) >>
+     fi
+   if TM := solveBubblesRed(T, M, B, VDS, DB) . --- 'in MOD : " part
+
+ --- intermediate arguments
+ ceq procSMCComd(F, (T1,T2,TL), M, B, VDS, DB, TL1) 
+   = if T?:[Term] :: Term
+     then procSMCComd(F, (T2,TL), M, B, VDS, DB, (TL1,T?:[Term]))
+     else << DB ; getMsg(T?:[Term]) >> fi
+  if T?:[Term] := solveBubbles(T1,M,B,VDS,DB) .
+
+ --- the last argument (no condition)
+ ceq procSMCComd(F, 'bubble[QI], M, B, VDS, DB, TL1) 
+   = if T?:[Term] :: Term
+     then procSMC(F, (TL1,T?:[Term]), nil, M, VDS,DB)
+     else << DB ; getMsg(T?:[Term]) >> fi
+  if T?:[Term] := solveBubbles('bubble[QI],M,B,VDS,DB) .
+
+ --- the last argument (may have condition)
+ ceq procSMCComd(F, 'bubble['__[TL]], M, B, VDS, DB, TL1)
+   = if T?:[Term] :: Term
+     then procSMC(F, (TL1,T?:[Term]), nil, M, VDS,DB)
+     else 
+       if smcCmdCond(F) :: Type
+       then parseSMCCondArg1(F,'bubble['__[TL]], smcCmdCond(F), M, VDS, DB, TL1)
+       else << DB ; getMsg(T?:[Term]) >> fi
+     fi
+  if T?:[Term] := solveBubbles('bubble['__[TL]], M, B, VDS, DB) .
+
+--- parse smc command args: procSMCComd(BUBBLES,MOD,HasMetaLv?,HasCond?,...)
+  op parseSMCCondArg1 : Qid Term Type Module OpDeclSet Database TermList 
+                    -> Tuple{Database,QidList} .
+  op parseSMCCondArg2 : Qid Term Module OpDeclSet Database TermList 
+                    -> Tuple{Database,QidList} .
+
+ --- the last argument (with condition)
+ ceq parseSMCCondArg1(F, 'bubble['__[TL]], TY, M, VDS, DB, TL1)
+   = if RP? :: ResultPair
+     then parseSMCCondArg2(F, getTerm(RP?), M, VDS, DB, TL1)
+     else << DB ; ('\r 'Error: '\o 'no 'parse 'for 
+                    downQidList('__[TL,''..Qid]) '\n) >> fi
+  if M1 := addOps(
+       op '_s.t._. : TY '@Condition@ -> 'PatternCondition [prec(122)] .
+       op '_such`that_. : TY '@Condition@ -> 'PatternCondition [prec(122)] .,
+       addSorts('PatternCondition, addInfoConds(M))) 
+  /\ RP? := metaParse(M1, downQidList('__[TL,''..Qid]), 'PatternCondition) .
+
+  --- parse conditions
+  eq parseSMCCondArg2(F, QI[T1,T2], M, VDS, DB, TL1)
+    = if QI == '_s.t._. or QI == '_such`that_. 
+      then procSMC(F, (TL1,T1), parseCond(T2,VDS), M, VDS, DB)
+      else procSMC(F, (TL1,constsToVars(F[T1,T2],VDS)), nil, M, VDS, DB)
+      fi .
+  eq parseSMCCondArg2(F, T, M, VDS, DB, TL1)
+   = procSMC(F, (TL1,constsToVars(T,VDS)), nil, M, VDS, DB) [owise] .
+
+--- execute commands
+  op procSMC : Qid TermList Condition Module OpDeclSet Database -> Tuple{Database,QidList} .
+
+ ceq procSMC('smc_|=_., (T1,T2), CD, M, VDS, DB)
+   = if RP? :: ResultPair
+     then << DB ;
+             ('\b 'symbolic 'model 'check 'in
+              '\o eMetaPrettyPrint(getName(M)) '\b ': '\o '\n '\s '\s
+              eMetaPrettyPrint(M,T1) '\b '\s '|= '\s '\o eMetaPrettyPrint(M,T2) 
+	      ---
+              if CD == nil then nil
+	      else '\n '\b 'under 'the 'condition ': '\o '\n '\s '\s
+	            eMetaPrettyPrint(M,CD) 
+	      fi
+	      ---
+	      '\n '\b 'result '\o '\s
+              eMetaPrettyPrint(leastSort(M,downTerm(getTerm(RP?))))
+              '\s '\b ': '\o '\n '\s '\s
+              eMetaPrettyPrint(M, downTerm(getTerm(RP?))) '\n) >>
+     else << DB ; getMsg(getTerm(RP?)) >>
+     fi
+   if U := addEqs( 
+	    (eq '##m##.Module = up(M) [none] .
+	     eq '##f##.TermList = upTerm(props(M,T2)) [none] .),
+	    upModule('META-SYMBOLIC-COND-CONNECTOR2, false)) /\
+     T3  := up(getTerm(metaReduce(M,T1))) /\
+     T4 := up(getTerm(metaReduce(M,T2))) /\
+     RP? := metaReduce(U,'transRes['smc-check[T3,T4,upTerm(CD)]]) .
+endm
+
+mod SMC-DATABASE-HANDLING is
+  inc DATABASE-HANDLING .
+  pr SMC-COMMAND-PROCESSING .
+
+  var Atts : AttributeSet . var X@DatabaseClass : DatabaseClass . 
+  var F : Qid . var O : Oid .  var ME : ModuleExpression . var DB : Database .
+  var TL : TermList . var T T' : Term . var QIL : QidList .
+
+ crl [SMC] :
+    < O : X@DatabaseClass | 
+       db : DB, input : (F[TL]), output : QIL, default : ME, Atts >
+   => 
+    < O : X@DatabaseClass | 
+       db : getDatabase(procSMCComd(F[TL], ME, DB)),
+       input : nilTermList, 
+       output : getQidList(procSMCComd(F[TL], ME, DB)), 
+       default : ME, Atts > 
+   if (F == 'smc_|=_.) .
+endm
+
+mod SMC-FULL-MAUDE is
+  pr FULL-MAUDE .
+  pr SMC-DATABASE-HANDLING .
+endm
+
+set trace off .
+set break off .
+set profile off .
+
+loop init .
+
