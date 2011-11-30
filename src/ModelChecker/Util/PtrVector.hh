@@ -7,6 +7,7 @@
 
 #ifndef PTRVECTOR_HH_
 #define PTRVECTOR_HH_
+#include <memory>
 #include "macros.hh"
 #include "vector.hh"
 

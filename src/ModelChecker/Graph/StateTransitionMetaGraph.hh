@@ -7,8 +7,9 @@
 
 #ifndef STATETRANSITIONMETAGRAPH_HH_
 #define STATETRANSITIONMETAGRAPH_HH_
+#include <memory>
 #include "hashConsSet.hh"
-#include "dagroot.hh"
+#include "dagRoot.hh"
 #include "Util/PtrVector.hh"
 #include "RewriteTransitionState.hh"
 

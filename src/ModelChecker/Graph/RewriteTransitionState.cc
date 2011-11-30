@@ -6,6 +6,7 @@
  */
 
 //	utility stuff
+#include <memory>
 #include "macros.hh"
 #include "vector.hh"
 
