@@ -24,7 +24,8 @@ class StateFoldingGraph: public CounterExampleGenerator::DagGraph
 	NO_COPYING(StateFoldingGraph);
 
 public:
-	StateFoldingGraph(RewritingContext* parent, StateTransitionMetaGraph* graph, const FoldingChecker* sfc);
+	StateFoldingGraph(RewritingContext* parent, StateTransitionMetaGraph* graph,
+			const FoldingChecker* sfc, const FoldingChecker* tfc);
 	virtual ~StateFoldingGraph() {}
 
 	int getNrStates() const;
@@ -69,7 +70,9 @@ private:
 	RewritingContext* parentContext;
 	PtrVector<FoldedState> states;		// folding graph
 	StateTransitionMetaGraph* graph;	// underlying graph
-	const FoldingChecker* sfc;
+
+	const FoldingChecker* sfc;		// state folding
+	const FoldingChecker* tfc;		// transition folding
 };
 
 

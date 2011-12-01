@@ -2,10 +2,9 @@ load symbolic-checker
 
 --- bakery model
 (fmod BAKERY-SYNTAX is 
-  sort Name .
-  op 0 : -> Name [ctor] .
-  op | : -> Name [ctor] .
-  op __ : Name Name -> Name [ctor comm assoc id: 0] .
+  sort Nat' .
+  op 0 : -> Nat' [ctor] .
+  op s : Nat' -> Nat' [ctor] .
 
   sorts ModeIdle ModeWait ModeCrit Mode . 
   subsorts ModeIdle ModeWait ModeCrit < Mode . 
@@ -16,126 +15,87 @@ load symbolic-checker
   subsorts ProcIdleSet < ProcWaitSet < ProcSet . 
   
   op idle : -> ModeIdle . 
-  op wait : Name -> ModeWait . 
-  op crit : Name -> ModeCrit . 
-  op `[_`,_`] : Name ModeIdle -> ProcIdle . 
-  op `[_`,_`] : Name ModeWait -> ProcWait . 
-  op `[_`,_`] : Name Mode -> Proc . 
+  op wait : Nat' -> ModeWait . 
+  op crit : Nat' -> ModeCrit . 
+  op `[_`,_`] : Nat' ModeIdle -> ProcIdle . 
+  op `[_`,_`] : Nat' ModeWait -> ProcWait . 
+  op `[_`,_`] : Nat' Mode -> Proc . 
   op none : -> ProcIdleSet . 
   op __ : ProcIdleSet ProcIdleSet -> ProcIdleSet [assoc comm id: none] . 
   op __ : ProcWaitSet ProcWaitSet -> ProcWaitSet [assoc comm id: none] .
   op __ : ProcSet ProcSet -> ProcSet [assoc comm id: none] .
 
   sort Conf . 
-  op _;_;_ : Name Name ProcSet -> Conf .
+  op _;_;_ : Nat' Nat' ProcSet -> Conf .
 endfm)
 
 (mod BAKERY is
   protecting BAKERY-SYNTAX . 
   
-  var PS : ProcSet .  vars N M K : Name . 
+  var PS : ProcSet .  vars N M K : Nat' . 
   
-  rl [wake] : N ; M ; [K, idle] PS => | N ; M ; [K, wait(N)] PS .
+  rl [wake] : N ; M ; [K, idle] PS => s(N) ; M ; [K, wait(N)] PS .
   rl [crit] : N ; M ; [K, wait(M)] PS => N ; M ; [K, crit(M)] PS .
-  rl [exit] : N ; M ; [K, crit(M)] PS => N ; | M ; [K, idle] PS .
+  rl [exit] : N ; M ; [K, crit(M)] PS => N ; s(M) ; [K, idle] PS .
 endm)
-
-(fmod BAKERY-COND is
-  protecting BAKERY-SYNTAX .
-
-  var PS : ProcSet . var IS : ProcIdleSet .  vars N M K : Name .
- 
-  op initCond : ProcSet -> Bool .
-  eq initCond([K, idle] IS) = true [variant] .
-  eq initCond([K, wait(M)] PS) = false [variant] .
-  eq initCond([K, crit(M)] PS) = false [variant] .
-
-endfm)
 
 --- prop definitions for bakery
 (mod BAKERY-SATISFACTION1 is
   pr BAKERY .
-  pr BAKERY-COND .
   pr SYMBOLIC-CHECKER .
 
   subsort Conf < State .
 
   ops ever-wait? ever-crit? : -> Prop . 
 
-  vars N M : Name . vars PS : ProcSet . 
+  vars N M : Nat' . vars PS : ProcSet . 
   
-  eq | N ; M ; PS |= ever-wait? = true [variant] . 
-  eq 0 ; M ; PS   |= ever-wait? = false [variant] . 
-  eq N ; | M ; PS |= ever-crit? = true [variant] .
-  eq N ; 0 ; PS   |= ever-crit? = false [variant] . 
-
+  eq s(N) ; M ; PS |= ever-wait? = true [variant] . 
+  eq 0 ; M ; PS    |= ever-wait? = false [variant] . 
+  eq N ; s(M) ; PS |= ever-crit? = true [variant] .
+  eq N ; 0 ; PS    |= ever-crit? = false [variant] . 
 endm)
 
 --- set verbose on .
 
-(smc N:Name ; N:Name ; [0, idle] [|, idle] |= [] (ever-wait? -> <> ever-crit?) .)
+(smc N:Nat' ; N:Nat' ; [0, idle] [s(0), idle] |= [] (ever-wait? -> <> ever-crit?) .)
 
 (smc in BAKERY-SATISFACTION1 :
-  N:Name ; N:Name ; [0, idle] [|, idle] |= [] (ever-wait? -> ever-crit?) .)
-
---- true? but not terminating... 
---- However, if the first two numbers are different, then the result
---- will be not true.
----(
-(smc N:Name ; N:Name ; WS:ProcWaitSet |= [] (ever-wait? -> <> ever-crit?) 
- such that noDuplWait(WS:ProcWaitSet) /\ nextNumCond(N:Name,WS:ProcWaitSet) .)
----)
+  N:Nat' ; N:Nat' ; [0, idle] [s(0), idle] |= [] (ever-wait? -> ever-crit?) .)
 
 (mod BAKERY-SATISFACTION2 is
   pr BAKERY .
-  pr BAKERY-COND .
   pr SYMBOLIC-CHECKER .
 
   subsort Conf < State .
 
   ops ex? : -> Prop . 
 
-  var WS : ProcWaitSet . var PS : ProcSet . vars N M K M1 M2 K1 K2 : Name .
+  var WS : ProcWaitSet . var IS : ProcIdleSet . var PS : ProcSet . 
+  vars N M K M1 M2 K1 K2 : Nat' .
 
 --- NOTE: ProcIdleSet < ProcWaitSet
   eq N ; M ; WS |= ex? = true [variant] .
   eq N ; M ; [K1, crit(M1)] WS |= ex? = true [variant] .
   eq N ; M ; [K1, crit(M1)] [K2, crit(M2)] PS |= ex? = false [variant] .
 
+--- initial conditions
+  op initCond : ProcWaitSet -> Bool .
+  eq initCond([K1, wait(M)] [K2, wait(M)] WS) = false [variant] .
+  eq initCond([K1, wait(M)] IS) = true [variant] .
+  eq initCond(IS) = true [variant] .
+
 endm)
 
 --- true
-(smc N:Name ; N:Name ; [0, idle] [|, idle] |= [] ex? .)
+(smc N:Nat' ; N:Nat' ; [0, idle] [s(0), idle] |= [] ex? .)
 
 --- false
 (smc N ; M ; WS |= [] ex?  .)
 
---- false (the folding graph is infinite, but stop when a counterexample found)
+--- false
 (smc N ; N ; WS |= [] ex?  .)
 
----(
---- not terminating
-(smc N ; M ; PS |= [] ex? such that initCond(PS:ProcSet) .)
----)
-
-(mod BAKERY-SATISFACTION2-WIDENING is
-  pr BAKERY-SATISFACTION2 .
-
-  var IS : ProcIdleSet . var WS : ProcWaitSet . 
-  var PS : ProcSet . vars N M K M1 M2 K1 K2 : Name .
-
-  --- also need to check coherence 
-  --- NOTE: there can be (| K M) number of "wait" processes, so that
-  --- it could be not easy to modify the following equation to one
-  --- supported by the current variant narrowing..
-  eq | | K M ; M ; PS [K1, wait(K M)] [K2, wait(| K M)]
-   = | K M ; M ; PS [K1, wait(K M)] .
-endm)
-
---- We start with N ; N, in order to make the widening equation coherence.
---- Then, the following model checking results seem to be OK.
-
-(smc N ; N ; IS:ProcIdleSet |= [] ex?  .)
-
-(smc N ; N ; PS |= [] ex? such that initCond(PS:ProcSet) .)
+--- true
+(smc N ; M ; WS |= [] ex? such that initCond(WS:ProcWaitSet) .)
 
