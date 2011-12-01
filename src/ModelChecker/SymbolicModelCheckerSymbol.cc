@@ -47,6 +47,7 @@
 SymbolicModelCheckerSymbol::SymbolicModelCheckerSymbol(int id, int arity):
 	TemporalSymbol(id, arity), satisfiesSymbol(NULL),
 	metaStateSymbol(NULL), metaTransitionSymbol(NULL),
+	stateFoldingRelSymbol(NULL), transFoldingRelSymbol(NULL),
 	prettyPrintStateSymbol(NULL), prettyPrintTransSymbol(NULL)
 {}
 
@@ -65,7 +66,8 @@ SymbolicModelCheckerSymbol::attachSymbol(const char* purpose, Symbol* symbol)
 	BIND_SYMBOL(purpose, symbol, metaTransitionSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, prettyPrintStateSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, prettyPrintTransSymbol, Symbol*);
-	if (StateFoldingChecker::attachSymbol(purpose, symbol))	return true;
+	BIND_SYMBOL(purpose, symbol, stateFoldingRelSymbol, Symbol*);
+	BIND_SYMBOL(purpose, symbol, transFoldingRelSymbol, Symbol*);
 	if (CounterExampleGenerator::attachSymbol(purpose, symbol))	return true;
 	return TemporalSymbol::attachSymbol(purpose, symbol);
 }
@@ -87,8 +89,9 @@ SymbolicModelCheckerSymbol::copyAttachments(Symbol* original, SymbolMap* map)
 	COPY_SYMBOL(orig, metaTransitionSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, prettyPrintStateSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, prettyPrintTransSymbol, map, Symbol*);
+	COPY_SYMBOL(orig, stateFoldingRelSymbol, map, Symbol*);
+	COPY_SYMBOL(orig, transFoldingRelSymbol, map, Symbol*);
 	COPY_TERM(orig, trueTerm, map);
-	StateFoldingChecker::copyAttachments(orig, map);
 	CounterExampleGenerator::copyAttachments(orig, map);
 	TemporalSymbol::copyAttachments(original, map);
 }
@@ -109,7 +112,8 @@ SymbolicModelCheckerSymbol::getSymbolAttachments(Vector<const char*>& purposes, 
 	APPEND_SYMBOL(purposes, symbols, metaTransitionSymbol);
 	APPEND_SYMBOL(purposes, symbols, prettyPrintStateSymbol);
 	APPEND_SYMBOL(purposes, symbols, prettyPrintTransSymbol);
-	StateFoldingChecker::getSymbolAttachments(purposes, symbols);
+	APPEND_SYMBOL(purposes, symbols, stateFoldingRelSymbol);
+	APPEND_SYMBOL(purposes, symbols, transFoldingRelSymbol);
 	CounterExampleGenerator::getSymbolAttachments(purposes, symbols);
 	TemporalSymbol::getSymbolAttachments(purposes, symbols);
 }
@@ -178,10 +182,12 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//
 	BuchiAutomaton2 propAutomaton(&formula, top);
 	auto_ptr<StateTransitionMetaGraph> graph(new StateTransitionMetaGraph(sysContext.get(), metaStateSymbol, metaTransitionSymbol));
-	auto_ptr<StateFoldingGraph> nsg(new StateFoldingGraph(sysContext.get(), graph.get(), this));
+
+	FoldingChecker sfc(stateFoldingRelSymbol, trueTerm.getDag());
+	auto_ptr<StateFoldingGraph> nsg(new StateFoldingGraph(sysContext.get(), graph.get(), &sfc));
+
 	PropChecker stateChecker(&context, satisfiesSymbol, trueTerm.getDag());
 	SystemAutomaton systemAutomaton(nsg.get(), propositions, &stateChecker);
-	this->setTrueDag(trueTerm.getDag());
 	ProductAutomaton<BuchiAutomaton2> prod(systemAutomaton, propAutomaton);
 
 	auto_ptr<ModelChecker> mc;
@@ -275,5 +281,7 @@ SymbolicModelCheckerSymbol::SystemAutomaton::satisfiesStateFormula(Bdd formula, 
 				formula = bdd_low(formula);
 		}
 	}
+	CantHappen("Unreachable point");
+	return false;
 }
 

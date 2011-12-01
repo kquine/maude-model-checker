@@ -33,7 +33,7 @@ libModelChecker_a_SOURCES = \
 	Interface/CounterExampleGenerator.cc \
 	Interface/FairnessDecoder.cc \
 	Interface/DefinablePropGenerator.cc \
-	Interface/StateFoldingChecker.cc \
+	Interface/FoldingChecker.cc \
 	Interface/PrettyPrinter.cc \
 	FairSet/WeakFairSet.cc \
 	FairSet/StrongFairSet.cc \

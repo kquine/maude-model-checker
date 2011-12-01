@@ -9,7 +9,7 @@
 #define STATEFOLDINGGRAPH_HH_
 #include "Graph/StateTransitionMetaGraph.hh"
 #include "Interface/CounterExampleGenerator.hh"
-#include "Interface/StateFoldingChecker.hh"
+#include "Interface/FoldingChecker.hh"
 #include "Interface/PrettyPrinter.hh"
 #include "Util/PtrVector.hh"
 #include "protectedDagNodeSet.hh"
@@ -24,7 +24,7 @@ class StateFoldingGraph: public CounterExampleGenerator::DagGraph
 	NO_COPYING(StateFoldingGraph);
 
 public:
-	StateFoldingGraph(RewritingContext* parent, StateTransitionMetaGraph* graph, const StateFoldingChecker* sfc);
+	StateFoldingGraph(RewritingContext* parent, StateTransitionMetaGraph* graph, const FoldingChecker* sfc);
 	virtual ~StateFoldingGraph() {}
 
 	int getNrStates() const;
@@ -69,7 +69,7 @@ private:
 	RewritingContext* parentContext;
 	PtrVector<FoldedState> states;		// folding graph
 	StateTransitionMetaGraph* graph;	// underlying graph
-	const StateFoldingChecker* sfc;
+	const FoldingChecker* sfc;
 };
 
 

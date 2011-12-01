@@ -26,8 +26,10 @@
 
 namespace modelChecker {
 
-StateFoldingGraph::StateFoldingGraph(RewritingContext* parent, StateTransitionMetaGraph* graph, const StateFoldingChecker* sfc):
-		parentContext(parent), graph(graph), foldedStateSize(0), sfc(sfc), searchBound(NONE), hitBoundFlag(false)
+StateFoldingGraph::StateFoldingGraph(RewritingContext* parent,
+		StateTransitionMetaGraph* graph, const FoldingChecker* sfc):
+		parentContext(parent), graph(graph), foldedStateSize(0), sfc(sfc),
+		searchBound(NONE), hitBoundFlag(false)
 {
 	insertNewFoldedState(0, -1);
 }

@@ -89,7 +89,7 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
            term-hook trueTerm              (true)
 
            --- folding graph stuff
-	   op-hook foldingRelSymbol        (_>=_ : State State ~> Bool)
+	   op-hook stateFoldingRelSymbol   (_>=_ : State State ~> Bool)
 	   op-hook prettyPrintStateSymbol  (prettyPrint : State ~> QidList)
 	   op-hook prettyPrintTransSymbol  (prettyPrint : Substitution ~> QidList)
 

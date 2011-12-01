@@ -28,33 +28,16 @@
 //		built in class definitions
 #include "bindingMacros.hh"
 
-#include "StateFoldingChecker.hh"
+#include "FoldingChecker.hh"
 
 namespace modelChecker {
 
-StateFoldingChecker::StateFoldingChecker(): foldingRelSymbol(NULL) {}
+FoldingChecker::FoldingChecker(Symbol* foldingRelSymbol, DagNode* trueDag):
+		foldingRelSymbol(foldingRelSymbol), trueDag(trueDag) {}
+
 
 bool
-StateFoldingChecker::attachSymbol(const char* purpose, Symbol* symbol)
-{
-	BIND_SYMBOL(purpose, symbol, foldingRelSymbol, Symbol*);
-    return false;
-}
-
-void
-StateFoldingChecker::copyAttachments(StateFoldingChecker* orig, SymbolMap* map)
-{
-	COPY_SYMBOL(orig, foldingRelSymbol, map, Symbol*);
-}
-
-void
-StateFoldingChecker::getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols)
-{
-	APPEND_SYMBOL(purposes, symbols, foldingRelSymbol);
-}
-
-bool
-StateFoldingChecker::fold(DagNode* s, DagNode* t, RewritingContext* context) const
+FoldingChecker::fold(DagNode* s, DagNode* t, RewritingContext* context) const
 {
 	Assert(trueDag != NULL, "StateFoldingChecker::fold: trueDag not set");
 	static Vector<DagNode*> args(2);

@@ -13,13 +13,12 @@
 #include "Util/PtrVector.hh"
 #include "Automaton/KripkeStructure.hh"
 #include "Interface/CounterExampleGenerator.hh"
-#include "Interface/StateFoldingChecker.hh"
+#include "Interface/FoldingChecker.hh"
 #include "Interface/PropChecker.hh"
 #include "Interface/PrettyPrinter.hh"
 #include "Graph/StateFoldingGraph.hh"
 
 class SymbolicModelCheckerSymbol: public TemporalSymbol,
-                                  private modelChecker::StateFoldingChecker,
                                   private modelChecker::CounterExampleGenerator
 {
 	NO_COPYING(SymbolicModelCheckerSymbol);
@@ -67,6 +66,10 @@ private:
     // meta-graph symbols
     Symbol* metaStateSymbol;
     Symbol* metaTransitionSymbol;
+
+    // folding symbols
+    Symbol* stateFoldingRelSymbol;
+    Symbol* transFoldingRelSymbol;
 
     // print symbols
     Symbol* prettyPrintStateSymbol;
