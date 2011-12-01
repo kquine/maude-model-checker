@@ -40,7 +40,7 @@ StateTransitionMetaGraph::getNextState(int stateNr, int index)
 	if (index < nrTransitions)
 		return n->transitions[index]->nextState;
 	if (n->explore.get() == NULL)	// fully explored
-		return NULL;
+		return NONE;
 	while (nrTransitions <= index)
 	{
 		DagNode* ns = n->explore->getNextStateDag(initial);

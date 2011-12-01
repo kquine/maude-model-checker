@@ -2,9 +2,10 @@ load symbolic-checker
 
 --- bakery model
 (fmod BAKERY-SYNTAX is 
-  sort Nat' .
-  op 0 : -> Nat' [ctor] .
-  op s : Nat' -> Nat' [ctor] .
+  sort Name .
+  op 0 : -> Name [ctor] .
+  op | : -> Name [ctor] .
+  op __ : Name Name -> Name [ctor comm assoc id: 0] .
 
   sorts ModeIdle ModeWait ModeCrit Mode . 
   subsorts ModeIdle ModeWait ModeCrit < Mode . 
@@ -15,28 +16,28 @@ load symbolic-checker
   subsorts ProcIdleSet < ProcWaitSet < ProcSet . 
   
   op idle : -> ModeIdle . 
-  op wait : Nat' -> ModeWait . 
-  op crit : Nat' -> ModeCrit . 
-  op `[_`,_`] : Nat' ModeIdle -> ProcIdle . 
-  op `[_`,_`] : Nat' ModeWait -> ProcWait . 
-  op `[_`,_`] : Nat' Mode -> Proc . 
+  op wait : Name -> ModeWait . 
+  op crit : Name -> ModeCrit . 
+  op `[_`,_`] : Name ModeIdle -> ProcIdle . 
+  op `[_`,_`] : Name ModeWait -> ProcWait . 
+  op `[_`,_`] : Name Mode -> Proc . 
   op none : -> ProcIdleSet . 
   op __ : ProcIdleSet ProcIdleSet -> ProcIdleSet [assoc comm id: none] . 
   op __ : ProcWaitSet ProcWaitSet -> ProcWaitSet [assoc comm id: none] .
   op __ : ProcSet ProcSet -> ProcSet [assoc comm id: none] .
 
   sort Conf . 
-  op _;_;_ : Nat' Nat' ProcSet -> Conf .
+  op _;_;_ : Name Name ProcSet -> Conf .
 endfm)
 
 (mod BAKERY is
   protecting BAKERY-SYNTAX . 
   
-  var PS : ProcSet .  vars N M K : Nat' . 
+  var PS : ProcSet .  vars N M K : Name . 
   
-  rl [wake] : N ; M ; [K, idle] PS => s(N) ; M ; [K, wait(N)] PS .
+  rl [wake] : N ; M ; [K, idle] PS => | N ; M ; [K, wait(N)] PS .
   rl [crit] : N ; M ; [K, wait(M)] PS => N ; M ; [K, crit(M)] PS .
-  rl [exit] : N ; M ; [K, crit(M)] PS => N ; s(M) ; [K, idle] PS .
+  rl [exit] : N ; M ; [K, crit(M)] PS => N ; | M ; [K, idle] PS .
 endm)
 
 --- prop definitions for bakery
@@ -48,20 +49,20 @@ endm)
 
   ops ever-wait? ever-crit? : -> Prop . 
 
-  vars N M : Nat' . vars PS : ProcSet . 
+  vars N M : Name . vars PS : ProcSet . 
   
-  eq s(N) ; M ; PS |= ever-wait? = true [variant] . 
+  eq | N ; M ; PS |= ever-wait? = true [variant] . 
   eq 0 ; M ; PS    |= ever-wait? = false [variant] . 
-  eq N ; s(M) ; PS |= ever-crit? = true [variant] .
+  eq N ; | M ; PS |= ever-crit? = true [variant] .
   eq N ; 0 ; PS    |= ever-crit? = false [variant] . 
 endm)
 
 --- set verbose on .
 
-(smc N:Nat' ; N:Nat' ; [0, idle] [s(0), idle] |= [] (ever-wait? -> <> ever-crit?) .)
+(smc N:Name ; N:Name ; [0, idle] [|, idle] |= [] (ever-wait? -> <> ever-crit?) .)
 
 (smc in BAKERY-SATISFACTION1 :
-  N:Nat' ; N:Nat' ; [0, idle] [s(0), idle] |= [] (ever-wait? -> ever-crit?) .)
+  N:Name ; N:Name ; [0, idle] [|, idle] |= [] (ever-wait? -> ever-crit?) .)
 
 (mod BAKERY-SATISFACTION2 is
   pr BAKERY .
@@ -72,7 +73,7 @@ endm)
   ops ex? : -> Prop . 
 
   var WS : ProcWaitSet . var IS : ProcIdleSet . var PS : ProcSet . 
-  vars N M K M1 M2 K1 K2 : Nat' .
+  vars N M K M1 M2 K1 K2 : Name .
 
 --- NOTE: ProcIdleSet < ProcWaitSet
   eq N ; M ; WS |= ex? = true [variant] .
@@ -81,21 +82,40 @@ endm)
 
 --- initial conditions
   op initCond : ProcWaitSet -> Bool .
+  eq initCond([K1, wait(M)] WS) = false [variant] .
+  eq initCond(IS) = true [variant] .
+
+***( wrong initial condition
   eq initCond([K1, wait(M)] [K2, wait(M)] WS) = false [variant] .
   eq initCond([K1, wait(M)] IS) = true [variant] .
   eq initCond(IS) = true [variant] .
-
+***)
 endm)
 
 --- true
-(smc N:Nat' ; N:Nat' ; [0, idle] [s(0), idle] |= [] ex? .)
+(smc N:Name ; N:Name ; [0, idle] [|, idle] |= [] ex? .)
 
 --- false
 (smc N ; M ; WS |= [] ex?  .)
 
---- false
+--- false (infinite graph, but a counterexample exists)
 (smc N ; N ; WS |= [] ex?  .)
 
---- true
+***( true, but non terminating
+(smc N ; N ; IS |= [] ex?  .)
 (smc N ; M ; WS |= [] ex? such that initCond(WS:ProcWaitSet) .)
+***)
+
+(mod BAKERY-SATISFACTION2-ABS is
+  pr BAKERY-SATISFACTION2 .
+
+  var PS : ProcSet .  vars N M K K' : Name . var IS : ProcIdleSet .
+
+  eq | | | N M ; M ; PS [K, wait(| N M)] [K', wait(| | N M)]
+   =   | | N M ; M ; PS [K, wait(| N M)] 
+  [variant] .
+endm)
+
+--- terminate, but may not correct.
+(smc N ; N ; IS |= [] ex?  .)
 
