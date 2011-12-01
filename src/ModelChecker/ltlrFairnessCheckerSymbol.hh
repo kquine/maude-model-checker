@@ -34,9 +34,8 @@ class LTLRFairnessCheckerSymbol : public TemporalSymbol,
                                   private modelChecker::FairnessDecoder,
 								  private modelChecker::ProofTermGenerator,
 								 // private ltlrModelChecker::DefinablePropGenerator,
-								  private modelChecker::CounterExampleGenerator<modelChecker::SystemGraph>
+								  private modelChecker::CounterExampleGenerator
 {
-	typedef modelChecker::CounterExampleGenerator<modelChecker::SystemGraph> CounterExampleGenerator;
     NO_COPYING(LTLRFairnessCheckerSymbol);
     
 public:

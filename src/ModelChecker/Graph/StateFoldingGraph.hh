@@ -8,6 +8,7 @@
 #ifndef STATEFOLDINGGRAPH_HH_
 #define STATEFOLDINGGRAPH_HH_
 #include "Graph/StateTransitionMetaGraph.hh"
+#include "Interface/CounterExampleGenerator.hh"
 #include "Interface/StateFoldingChecker.hh"
 #include "Interface/PrettyPrinter.hh"
 #include "Util/PtrVector.hh"
@@ -18,7 +19,7 @@ namespace modelChecker {
 //
 // Wrapper with folding relation.. (currently, inefficient due to using Full-Maude functions..)
 //
-class StateFoldingGraph
+class StateFoldingGraph: public CounterExampleGenerator::DagGraph
 {
 	NO_COPYING(StateFoldingGraph);
 

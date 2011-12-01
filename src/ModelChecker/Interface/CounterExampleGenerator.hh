@@ -14,13 +14,20 @@
 
 namespace modelChecker {
 
-template <typename _SearchGraph>
 class CounterExampleGenerator
 {
 public:
+	struct DagGraph
+	{
+		virtual ~DagGraph() {}
+		virtual DagNode* getStateDag(int stateNr) const = 0;
+		virtual DagNode* getTransitionDag(int stateNr, int index) const = 0;
+	};
+
 	CounterExampleGenerator();
-    DagNode* makeCounterexample(const _SearchGraph& dg,
-    		                    const list<pair<int,int> >& path, const list<pair<int,int> >& cycle) const;
+    DagNode* makeCounterexample(const DagGraph& dg,
+    		                    const list<pair<int,int> >& path,
+    		                    const list<pair<int,int> >& cycle) const;
 
 protected:
     bool attachSymbol(const char* purpose, Symbol* symbol);
@@ -32,8 +39,8 @@ protected:
     void reset();
 
 private:
-    DagNode* makeTransitionList(const _SearchGraph& dg, const list<pair<int,int> >& path) const;
-    DagNode* makeTransition(const _SearchGraph& dg, int stateNr, int count) const;
+    DagNode* makeTransitionList(const DagGraph& dg, const list<pair<int,int> >& path) const;
+    DagNode* makeTransition(const DagGraph& dg, int stateNr, int count) const;
 
     Symbol* counterexampleSymbol;
     Symbol* transitionSymbol;
@@ -43,7 +50,5 @@ private:
 };
 
 }
-
-#include "CounterExampleGenerator.cc"
 
 #endif /* COUNTEREXAMPLESYMBOL_HH_ */

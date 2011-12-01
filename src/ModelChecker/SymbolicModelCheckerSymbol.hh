@@ -20,10 +20,9 @@
 
 class SymbolicModelCheckerSymbol: public TemporalSymbol,
                                   private modelChecker::StateFoldingChecker,
-                                  private modelChecker::CounterExampleGenerator<modelChecker::StateFoldingGraph>
+                                  private modelChecker::CounterExampleGenerator
 {
 	NO_COPYING(SymbolicModelCheckerSymbol);
-	typedef modelChecker::CounterExampleGenerator<modelChecker::StateFoldingGraph> CounterExampleGenerator;
 public:
 	SymbolicModelCheckerSymbol(int id, int arity);
 	virtual ~SymbolicModelCheckerSymbol() {}

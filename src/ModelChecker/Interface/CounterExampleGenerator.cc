@@ -38,13 +38,11 @@
 
 namespace modelChecker {
 
-template <typename SG>
-CounterExampleGenerator<SG>::CounterExampleGenerator():
+CounterExampleGenerator::CounterExampleGenerator():
 		counterexampleSymbol(NULL), transitionSymbol(NULL), transitionListSymbol(NULL), nilTransitionListSymbol(NULL) {}
 
-
-template <typename SG> DagNode*
-CounterExampleGenerator<SG>::makeCounterexample(const SG& dg,
+DagNode*
+CounterExampleGenerator::makeCounterexample(const DagGraph& dg,
 								  	  	    const list<pair<int,int> >& path, const list<pair<int,int> >& cycle) const
 {
 #ifdef TDEBUG
@@ -64,8 +62,8 @@ CounterExampleGenerator<SG>::makeCounterexample(const SG& dg,
 }
 
 
-template <typename SG> DagNode*
-CounterExampleGenerator<SG>::makeTransitionList(const SG& dg, const list<pair<int,int> >& path) const
+DagNode*
+CounterExampleGenerator::makeTransitionList(const DagGraph& dg, const list<pair<int,int> >& path) const
 {
 	typedef pair<int,int> Transition;
     if (path.empty())
@@ -79,8 +77,8 @@ CounterExampleGenerator<SG>::makeTransitionList(const SG& dg, const list<pair<in
     }
 }
 
-template <typename SG> DagNode*
-CounterExampleGenerator<SG>::makeTransition(const SG& dg, int stateNr, int count) const
+DagNode*
+CounterExampleGenerator::makeTransition(const DagGraph& dg, int stateNr, int count) const
 {
 	static Vector<DagNode*> targs(2);
 	targs[0] = dg.getStateDag(stateNr);
@@ -88,8 +86,8 @@ CounterExampleGenerator<SG>::makeTransition(const SG& dg, int stateNr, int count
 	return transitionSymbol->makeDagNode(targs);
 }
 
-template <typename SG> bool
-CounterExampleGenerator<SG>::attachSymbol(const char* purpose, Symbol* symbol)
+bool
+CounterExampleGenerator::attachSymbol(const char* purpose, Symbol* symbol)
 {
     BIND_SYMBOL(purpose, symbol, transitionSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, transitionListSymbol, Symbol*);
@@ -98,15 +96,15 @@ CounterExampleGenerator<SG>::attachSymbol(const char* purpose, Symbol* symbol)
 	return false;
 }
 
-template <typename SG> bool
-CounterExampleGenerator<SG>::attachTerm(const char* purpose, Term* term)
+bool
+CounterExampleGenerator::attachTerm(const char* purpose, Term* term)
 {
     BIND_TERM(purpose, term, falseTerm);
     return false;
 }
 
-template <typename SG> void
-CounterExampleGenerator<SG>::copyAttachments(CounterExampleGenerator* orig, SymbolMap* map)
+void
+CounterExampleGenerator::copyAttachments(CounterExampleGenerator* orig, SymbolMap* map)
 {
     COPY_TERM(orig, falseTerm, map);
 	COPY_SYMBOL(orig, transitionSymbol, map, Symbol*);
@@ -115,8 +113,8 @@ CounterExampleGenerator<SG>::copyAttachments(CounterExampleGenerator* orig, Symb
 	COPY_SYMBOL(orig, counterexampleSymbol, map, Symbol*);
 }
 
-template <typename SG> void
-CounterExampleGenerator<SG>::getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols)
+void
+CounterExampleGenerator::getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols)
 {
     APPEND_SYMBOL(purposes, symbols, transitionSymbol);
 	APPEND_SYMBOL(purposes, symbols, transitionListSymbol);
@@ -124,20 +122,20 @@ CounterExampleGenerator<SG>::getSymbolAttachments(Vector<const char*>& purposes,
 	APPEND_SYMBOL(purposes, symbols, counterexampleSymbol);
 }
 
-template <typename SG> void
-CounterExampleGenerator<SG>::getTermAttachments(Vector<const char*>& purposes, Vector<Term*>& terms)
+void
+CounterExampleGenerator::getTermAttachments(Vector<const char*>& purposes, Vector<Term*>& terms)
 {
     APPEND_TERM(purposes, terms, falseTerm);
 }
 
-template <typename SG> void
-CounterExampleGenerator<SG>::postInterSymbolPass()
+void
+CounterExampleGenerator::postInterSymbolPass()
 {
     PREPARE_TERM(falseTerm);
 }
 
-template <typename SG> void
-CounterExampleGenerator<SG>::reset()
+void
+CounterExampleGenerator::reset()
 {
     falseTerm.reset();	// so false dag can be garbage collected
 }
