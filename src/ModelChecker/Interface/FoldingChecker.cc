@@ -35,7 +35,6 @@ namespace modelChecker {
 FoldingChecker::FoldingChecker(Symbol* foldingRelSymbol, DagNode* trueDag):
 		foldingRelSymbol(foldingRelSymbol), trueDag(trueDag) {}
 
-
 bool
 FoldingChecker::fold(DagNode* s, DagNode* t, RewritingContext* context) const
 {

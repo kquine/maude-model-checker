@@ -11,6 +11,7 @@
 #include "hashConsSet.hh"
 #include "dagRoot.hh"
 #include "Util/PtrVector.hh"
+#include "Interface/CounterExampleGenerator.hh"
 #include "RewriteTransitionState.hh"
 
 /*
@@ -20,7 +21,7 @@
  */
 namespace modelChecker {
 
-class StateTransitionMetaGraph
+class StateTransitionMetaGraph: public CounterExampleGenerator::DagGraph
 {
 	NO_COPYING(StateTransitionMetaGraph);
 public:
@@ -121,14 +122,18 @@ StateTransitionMetaGraph::getStateDag(int stateNr) const
 inline DagNode*
 StateTransitionMetaGraph::getTransitionDag(int stateNr, int index) const
 {
-	Assert(seen[stateNr] != NULL, "StateTransitionMetaGraph::getTransitionDag: Invalid state lookup");
+	Assert(stateNr < seen.size() && seen[stateNr] != NULL,
+			"StateTransitionMetaGraph::getTransitionDag: Invalid state lookup");
+	Assert(index < seen[stateNr]->transitions.size(),
+			"StateTransitionMetaGraph::getTransitionDag: Invalid transition lookup");
 	return hashConsSet.getCanonical(seen[stateNr]->transitions[index]->hashConsIndex);
 }
 
 inline int
 StateTransitionMetaGraph::getStateParent(int stateNr) const
 {
-	Assert(seen[stateNr] != NULL, "StateTransitionMetaGraph::getStateParent: Invalid state lookup");
+	Assert(stateNr < seen.size() && seen[stateNr] != NULL,
+			"StateTransitionMetaGraph::getStateParent: Invalid state lookup");
 	return seen[stateNr]->parentIndex;
 }
 

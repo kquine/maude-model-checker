@@ -37,7 +37,7 @@ class LTLRFairnessCheckerSymbol : public TemporalSymbol,
 								  private modelChecker::CounterExampleGenerator
 {
     NO_COPYING(LTLRFairnessCheckerSymbol);
-    
+    typedef CounterExampleGenerator::Edge	Edge;
 public:
     LTLRFairnessCheckerSymbol(int id, int arity);
     virtual ~LTLRFairnessCheckerSymbol() {}

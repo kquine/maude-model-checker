@@ -24,6 +24,8 @@
 
 #include "StateFoldingGraph.hh"
 
+#define TDEBUG
+
 namespace modelChecker {
 
 StateFoldingGraph::StateFoldingGraph(RewritingContext* parent,
@@ -51,31 +53,88 @@ StateFoldingGraph::getNextState(int stateNr, int index)
 	}
 }
 
-int
-StateFoldingGraph::spuriousState(list<int> path, list<int>::const_iterator pos, int curr)
+bool
+StateFoldingGraph::constructConcretePath(
+		const list<Edge>& path, const list<Edge>& cycle,
+		list<Edge>& resP, list<Edge>& resCy)
 {
-	if (pos != path.end() && sfc->fold(getStateDag(*pos), getStateDag(curr), parentContext))
+	Assert (!path.empty() || !cycle.empty(), "ModelChecker: empty counterexample");
+	bool result = false;
+	resP.clear();
+	resCy.clear();
+	result = path.empty()?
+			constConcrPath(path, cycle, cycle.begin(), true,
+					cycle.front().first, resP, resCy):
+			constConcrPath(path, cycle, path.begin(), false,
+					path.front().first, resP, resCy);
+
+#ifdef TDEBUG
+	if (result)
 	{
-		cout << " --> " << getStateDag(curr) << endl;
-		pos++;
-		int sp = NONE;
-		for (int i = 0;; ++i)
-		{
-			int n = graph->getNextState(curr, i);
-			if (n == NONE)
-				break;
-			else
-			{
-				// TODO: we need to actually compare the depths, but it's OK because of incremental searching.
-				int nsp = spuriousState(path, pos, n);
-				if (nsp != NONE && nsp > sp)
-					sp = nsp;
-			}
-		}
-		return sp;
+		cout << "\nCounterexample found in Narrowing Graph:" << endl;
+		FOR_EACH_CONST(i1, list<Edge>, path)
+			cout << i1->first << " =[" << i1->second << "]=> ";
+		cout << "| ";
+		FOR_EACH_CONST(j1, list<Edge>, cycle)
+			cout << j1->first << " =[" << j1->second << "]=> ";
+		cout << "$ " << endl;
+		cout << "~~~ >= ~~~~~~~~~~~~~~~~" << endl;
+
+		FOR_EACH_CONST(i2, list<Edge>, resP)
+			cout << i2->first << " =[" << i2->second << "]=> ";
+		cout << "| ";
+		FOR_EACH_CONST(j2, list<Edge>, resCy)
+			cout << j2->first << " =[" << j2->second << "]=> ";
+		cout << "$\n" << endl;
 	}
-	else
-		return NONE;
+#endif
+	return result;
+}
+
+bool
+StateFoldingGraph::constConcrPath(
+		const list<Edge>& path, const list<Edge>& cycle,
+		list<Edge>::const_iterator pos, bool inCycle,
+		int spos, list<Edge>& resP, list<Edge>& resCy)
+{
+	if (!inCycle && pos == path.end())
+	{
+		if (cycle.empty())
+			return true;
+		else
+			return constConcrPath(path,cycle, cycle.begin(),true, spos,resP,resCy);
+	}
+	if (inCycle && pos == cycle.end())
+	{
+		return sfc->fold(getStateDag(cycle.front().first),
+						 graph->getStateDag(spos), parentContext);
+	}
+	if (sfc->fold(getStateDag(pos->first),graph->getStateDag(spos),parentContext))
+	{
+		int index = 0;
+		int next = NONE;
+		list<Edge>::const_iterator oldPos = pos;
+		pos++;
+		while ((next = graph->getNextState(spos, index)) != NONE)
+		{
+			if (tfc->fold(
+					getTransitionDag(oldPos->first,oldPos->second),
+					graph->getTransitionDag(spos,index),
+					parentContext))
+			{
+				if (constConcrPath(path, cycle, pos, inCycle, next, resP, resCy))
+				{
+					if (inCycle)
+						resCy.push_front(make_pair(spos,index));
+					else
+						resP.push_front(make_pair(spos,index));
+					return true;
+				}
+			}
+			++index;
+		}
+	}
+	return false;
 }
 
 void

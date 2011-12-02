@@ -43,15 +43,15 @@ CounterExampleGenerator::CounterExampleGenerator():
 
 DagNode*
 CounterExampleGenerator::makeCounterexample(const DagGraph& dg,
-								  	  	    const list<pair<int,int> >& path, const list<pair<int,int> >& cycle) const
+								  	  	    const list<Edge>& path,
+								  	  	    const list<Edge>& cycle) const
 {
 #ifdef TDEBUG
-	typedef pair<int,int> CTransition;
 	cout << "counter example: " << endl;
 	cout << "  path: ";
-	FOR_EACH_CONST(i, list<CTransition>, path) cout << i->first << "=(" << i->second << ")=> ";
+	FOR_EACH_CONST(i, list<Edge>, path) cout << i->first << "=(" << i->second << ")=> ";
 	cout << "\n  cycle: ";
-	FOR_EACH_CONST(j, list<CTransition>, cycle) cout << j->first << "=(" << j->second << ")=> ";
+	FOR_EACH_CONST(j, list<Edge>, cycle) cout << j->first << "=(" << j->second << ")=> ";
 	cout << endl;
 #endif
 
@@ -63,15 +63,15 @@ CounterExampleGenerator::makeCounterexample(const DagGraph& dg,
 
 
 DagNode*
-CounterExampleGenerator::makeTransitionList(const DagGraph& dg, const list<pair<int,int> >& path) const
+CounterExampleGenerator::makeTransitionList(const DagGraph& dg,
+											const list<Edge>& path) const
 {
-	typedef pair<int,int> Transition;
     if (path.empty())
         return nilTransitionListSymbol->makeDagNode();
     else
     {
 		Vector<DagNode*> args;
-		FOR_EACH_CONST(i, list<Transition>, path)
+		FOR_EACH_CONST(i, list<Edge>, path)
 			args.append(makeTransition(dg, i->first, i->second));
 		return (args.length() == 1) ? args[0] : transitionListSymbol->makeDagNode(args);
     }

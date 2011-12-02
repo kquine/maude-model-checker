@@ -11,6 +11,7 @@
 #include <tr1/unordered_map>
 #include "macros.hh"
 #include "Automaton/ProductAutomaton.hh"
+#include "Interface/CounterExampleGenerator.hh"
 #include "StateMap.hh"
 
 namespace modelChecker {
@@ -21,6 +22,7 @@ namespace modelChecker {
 template <typename _PropertyAutomaton>
 class BFSGraph
 {
+	typedef CounterExampleGenerator::Edge	Edge;
 public:
 	typedef typename ProductAutomaton<_PropertyAutomaton>::State				State;
 	typedef typename ProductAutomaton<_PropertyAutomaton>::Transition			Transition;
@@ -32,7 +34,7 @@ public:
 	virtual bool inDomain(const State& s) const = 0;
 	virtual bool isTarget(const State& t) const = 0;
 	virtual bool isTarget(const Transition& t) = 0;
-	State doBFS(list<pair<int,int> >& path);
+	State doBFS(list<Edge>& path);
 
 protected:
 	ProductAutomaton<_PropertyAutomaton>& graph;

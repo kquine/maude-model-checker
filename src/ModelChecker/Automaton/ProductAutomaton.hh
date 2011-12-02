@@ -29,6 +29,7 @@ public:
 	typedef product::TransitionIterator<_PropertyAutomaton>	TransitionIterator;
 
 	ProductAutomaton(KripkeStructure& system, const _PropertyAutomaton& property);
+	virtual ~ProductAutomaton() {}
 
 	virtual TransitionIterator* makeTransitionIterator(const State& state);
 	const Vector<State>& getInitialStates() const;
@@ -81,6 +82,7 @@ namespace product
 	class TransitionIterator
 	{
 	public:
+		virtual ~TransitionIterator() {}
 		bool hasNext() const;
 		const Transition<_PropertyAutomaton>& pick() const;
 		void next();

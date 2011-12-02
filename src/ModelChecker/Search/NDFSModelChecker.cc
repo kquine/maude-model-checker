@@ -25,8 +25,9 @@
 
 #include "NDFSModelChecker.hh"
 
-namespace modelChecker {
+#define NO_PREFIX_OPT
 
+namespace modelChecker {
 
 class NDFSModelChecker::PrefixBFSGraph : public BFSGraph<BuchiAutomaton2>
 {
@@ -74,8 +75,8 @@ NDFSModelChecker::findCounterExample()
 		}
 	}
 
-	// counter example found
-	if (result)
+#ifndef NO_PREFIX_OPT
+	if (result)	// prefix optimization if a counter example found
 	{
 		//
 		//	Shorten prefix-path using BFS if possible
@@ -84,6 +85,7 @@ NDFSModelChecker::findCounterExample()
 		PrefixBFSGraph bfs(prod, intersectionStates, cycleState);
 		bfs.doBFS(leadIn);
 	}
+#endif
 	return result;
 }
 
@@ -125,6 +127,7 @@ NDFSModelChecker::dfs1(const State& initial)
 			if (trap(ns.property))
 			{
 				cycleState = ns;
+				leadIn.pop_front();		// remove dummy
 				return true;
 			}
 		}

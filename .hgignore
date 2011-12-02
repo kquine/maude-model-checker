@@ -1,0 +1,34 @@
+syntax: regexp
+^autom4te\.cache$
+syntax: regexp
+\.a$
+syntax: regexp
+\.Po$
+syntax: regexp
+\.deps$
+syntax: regexp
+Makefile$
+syntax: regexp
+Makefile\.in$
+syntax: regexp
+^src/Main/maude$
+syntax: regexp
+^config\.h\.in$
+syntax: regexp
+^config\.status$
+syntax: regexp
+^configure$
+syntax: regexp
+^stamp-h1$
+syntax: regexp
+^config\.h$
+syntax: regexp
+^aclocal\.m4$
+syntax: regexp
+^\.autotools$
+syntax: regexp
+^\.cproject$
+syntax: regexp
+^\.project$
+syntax: regexp
+^\.settings$

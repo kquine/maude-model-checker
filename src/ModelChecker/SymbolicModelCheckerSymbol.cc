@@ -220,7 +220,24 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//
 	//  3. results
 	//
-	DagNode* resultDag = result ? makeCounterexample(*nsg, mc->getLeadIn(), mc->getCycle()): trueTerm.getDag();
+	DagNode* resultDag = NULL;
+	if (result)
+	{
+		list<Edge> path;
+		list<Edge> cycle;
+		if (nsg->constructConcretePath(mc->getLeadIn(), mc->getCycle(), path, cycle))
+		{
+			resultDag = makeCounterexample(*graph, path, cycle);
+		}
+		else
+		{
+			IssueWarning("ModelChecker: spurious counter example");
+			resultDag = makeCounterexample(*nsg, mc->getLeadIn(), mc->getCycle());
+		}
+	}
+	else
+		resultDag = trueTerm.getDag();
+
 	context.addInCount(*sysContext);
 	return context.builtInReplace(subject, resultDag);
 }

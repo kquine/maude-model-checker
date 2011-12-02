@@ -59,6 +59,7 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
 
 --- folding relation
   op _>=_ : State State -> Bool .
+  op _>=_ : Substitution Substitution -> Bool .
 
 --- print state during model checking (debugging purpose)
   op prettyPrint : State ~> QidList .
@@ -90,6 +91,7 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
 
            --- folding graph stuff
 	   op-hook stateFoldingRelSymbol   (_>=_ : State State ~> Bool)
+	   op-hook transFoldingRelSymbol   (_>=_ : Substitution Substitution ~> Bool)
 	   op-hook prettyPrintStateSymbol  (prettyPrint : State ~> QidList)
 	   op-hook prettyPrintTransSymbol  (prettyPrint : Substitution ~> QidList)
 
@@ -244,8 +246,16 @@ mod META-SYMBOLIC-CONNECTOR is
    = getTerm(metaReduce(##m##, '_|=_[ST, PT])) == 'true.Bool .
 
 --- state folding
+  eq init(ST) >= init(ST) = true .
   eq mid(ST) >= mid(ST')
    = metaMatch(##m##, ST, ST', nil, 0) :: Substitution .
+  eq S1:State >= S2:State = false [owise] .
+
+--- substitution folding
+  eq none >= SUB = true .
+  eq (V <- T ; SUB) >= (V <- T' ; SUB')
+   = metaMatch(##m##, T, T', nil, 0) :: Substitution and-then SUB >= SUB' .
+  eq SUB >= SUB' = false [owise] .
 
 --- compute the next states
 --- TODO: keep both a state and a substitution for a counter example..

@@ -281,13 +281,13 @@ LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context
     auto_ptr<DefinablePropGenerator> dpg(new DefinablePropGenerator(&context, actionmatchSymbol, defEventSymbol, params));
 
     // construct a graph
-    stack<pair<int,int> > curr;
+    stack<Edge> curr;
     NatSet visited;
     curr.push(make_pair(0,0));
     visited.insert(0);
     while (!curr.empty())
     {
-    	pair<int,int>& p = curr.top();
+    	Edge& p = curr.top();
     	cout << "#try: " << p.first << "," << p.second << endl;
     	int next = st->getNextState(p.first, p.second++);
 

@@ -17,6 +17,7 @@ namespace modelChecker {
 class CounterExampleGenerator
 {
 public:
+	typedef pair<int,int>	Edge;
 	struct DagGraph
 	{
 		virtual ~DagGraph() {}
@@ -26,8 +27,8 @@ public:
 
 	CounterExampleGenerator();
     DagNode* makeCounterexample(const DagGraph& dg,
-    		                    const list<pair<int,int> >& path,
-    		                    const list<pair<int,int> >& cycle) const;
+    		                    const list<Edge>& path,
+    		                    const list<Edge>& cycle) const;
 
 protected:
     bool attachSymbol(const char* purpose, Symbol* symbol);
@@ -39,7 +40,7 @@ protected:
     void reset();
 
 private:
-    DagNode* makeTransitionList(const DagGraph& dg, const list<pair<int,int> >& path) const;
+    DagNode* makeTransitionList(const DagGraph& dg, const list<Edge>& path) const;
     DagNode* makeTransition(const DagGraph& dg, int stateNr, int count) const;
 
     Symbol* counterexampleSymbol;

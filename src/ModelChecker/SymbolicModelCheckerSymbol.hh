@@ -41,7 +41,8 @@ private:
     class SystemAutomaton : public modelChecker::KripkeStructure
     {
     public:
-    	SystemAutomaton(modelChecker::StateFoldingGraph* graph, DagNodeSet& props, modelChecker::PropChecker* pc);
+    	SystemAutomaton(modelChecker::StateFoldingGraph* graph,
+    					DagNodeSet& props, modelChecker::PropChecker* pc);
     	int getNrStates() const;
     	int getNrTransitions(int stateNr) const;
     	int getNextState(int stateNr, int transitionNr);

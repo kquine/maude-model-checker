@@ -23,7 +23,7 @@ BFSGraph<PA>::BFSGraph(ProductAutomaton<PA>& graph, const Vector<State>& initial
 	graph(graph), initials(initials) {}
 
 template <class PA> typename BFSGraph<PA>::State
-BFSGraph<PA>::doBFS(list<pair<int,int> >& path)
+BFSGraph<PA>::doBFS(list<Edge>& path)
 {
 	list<pair<int,int> > temp_path;
 

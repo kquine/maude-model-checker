@@ -9,20 +9,23 @@
 #define MODELCHECKER_HH_
 #include <list>
 #include "macros.hh"
+#include "Interface/CounterExampleGenerator.hh"
 
 namespace modelChecker {
 
-class ModelChecker {
+class ModelChecker
+{
+	typedef CounterExampleGenerator::Edge	Edge;
 public:
 	virtual ~ModelChecker()	{}
 	virtual bool findCounterExample() = 0;
 
-	const list<pair<int,int> >& getLeadIn() const;
-	const list<pair<int,int> >& getCycle() const;
+	const list<Edge>& getLeadIn() const;
+	const list<Edge>& getCycle() const;
 
 protected:
-	list<pair<int,int> > leadIn;
-	list<pair<int,int> > cycle;
+	list<Edge> leadIn;
+	list<Edge> cycle;
 };
 
 inline const list<pair<int,int> >&

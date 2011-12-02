@@ -22,7 +22,7 @@ namespace modelChecker {
 class StateFoldingGraph: public CounterExampleGenerator::DagGraph
 {
 	NO_COPYING(StateFoldingGraph);
-
+	typedef CounterExampleGenerator::Edge	Edge;
 public:
 	StateFoldingGraph(RewritingContext* parent, StateTransitionMetaGraph* graph,
 			const FoldingChecker* sfc, const FoldingChecker* tfc);
@@ -42,11 +42,11 @@ public:
 	bool hitStateBound(int stateNr) const;
 
 	// folding stuff
-	bool notFolded(int stateNr) const;				// if stateNr is a folded state or not
+	bool notFolded(int stateNr) const;	// if stateNr is a folded state or not
 
-	// return spurious folding state (that is the closest one to the last one.)
-	// Check for concrete paths that have the exact same length, if there is indeed a cycle in middle.
-	int spuriousState(list<int> path, list<int>::const_iterator pos, int curr);
+	// construct a concrete path without folding, and returns true if succeeded.
+	bool constructConcretePath(const list<Edge>& path, const list<Edge>& cycle,
+							   list<Edge>& resP, list<Edge>& resCy);
 
 	// state dump
 	void dump(PrettyPrinter* stateP, PrettyPrinter* transP);
@@ -60,6 +60,10 @@ private:
 		auto_ptr<Vector<int> > nextStates;	// index |-> folded states. NULL if not open yet.
 	};
 
+	bool constConcrPath(const list<Edge>& path, const list<Edge>& cycle,
+						list<Edge>::const_iterator pos, bool inCycle,
+						int statePos, list<Edge>& resP, list<Edge>& resCy);
+
 	void openState(int stateNr);
 	void insertNewFoldedState(int stateNr, int parentDepth);
 
@@ -68,6 +72,8 @@ private:
 	bool hitBoundFlag;
 
 	RewritingContext* parentContext;
+
+	// NOTE: folding graph and the underlying graph shares the same state index.
 	PtrVector<FoldedState> states;		// folding graph
 	StateTransitionMetaGraph* graph;	// underlying graph
 
