@@ -59,10 +59,13 @@ endm)
 
 --- set verbose on .
 
-(smc N:Name ; N:Name ; [0, idle] [|, idle] |= [] (ever-wait? -> <> ever-crit?) .)
+(smc N ; N ; [0, idle] [|, idle] |= [] (ever-wait? -> <> ever-crit?) .)
 
-(smc in BAKERY-SATISFACTION1 :
-  N:Name ; N:Name ; [0, idle] [|, idle] |= [] (ever-wait? -> ever-crit?) .)
+(smc N ; N ; [0, idle] [|, idle] |= [] (ever-wait? -> ever-crit?) .)
+
+***(
+(smc N ; M ; IS:ProcIdleSet |= [] (ever-wait? -> <> ever-crit?) .)
+***)
 
 (mod BAKERY-SATISFACTION2 is
   pr BAKERY .
@@ -97,6 +100,8 @@ endm)
 
 --- false
 (smc N ; M ; WS |= [] ex?  .)
+
+eof
 
 --- false (infinite graph, but a counterexample exists)
 (smc N ; N ; WS |= [] ex?  .)

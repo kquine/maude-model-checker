@@ -34,6 +34,7 @@ class WeakFairSet::Goal: public FairSet::Goal
 {
 public:
 	Goal(const WeakFairSet* fs);
+	virtual ~Goal() {}
 	bool empty() const;
 	bool update(const FairSet* f);
 	void dump(ostream& o) const;
@@ -43,6 +44,7 @@ protected:
 
 struct WeakFairSet::Bad: public FairSet::Bad
 {
+	virtual ~Bad() {}
 	bool isBad(const FairSet* f) const	{ return false; }
 	bool empty() const					{ return true; }
 	void merge(const FairSet::Bad* b)		{}

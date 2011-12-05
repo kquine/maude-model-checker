@@ -149,6 +149,7 @@ namespace product
 					}
 				}
 			}
+			/* no break */
 		}
 		tr.systemIndex = NONE;
 		tr.target.system = NONE;

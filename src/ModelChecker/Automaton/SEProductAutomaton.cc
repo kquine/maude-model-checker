@@ -62,6 +62,7 @@ namespace product {
 					}
 				}
 			}
+			/* no break */
 		}
 		this->tr.systemIndex = NONE;
 		this->tr.target.system = NONE;

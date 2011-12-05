@@ -17,6 +17,7 @@ class CompositedFairnessMap: public modelChecker::FairnessMap
 {
 	typedef CompositedFairSet		FairSet;
 public:
+	virtual ~CompositedFairnessMap() {}
 	void addFairnessMap(FairnessMap* fairnessMap);
 
 	int getNrFairness() const;

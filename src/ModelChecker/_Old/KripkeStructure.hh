@@ -21,6 +21,7 @@ class KripkeStructure: public StateDagContainer
 
 public:
 	KripkeStructure(RewritingContext* initial, PropSet& props, const PropChecker& stateLabel, ProofTermGenerator* proofTerm);
+	virtual ~KripkeStructure() {}
 
 	int getNrTransitions(int stateNr) const;
 	//

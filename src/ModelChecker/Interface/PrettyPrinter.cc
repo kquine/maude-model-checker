@@ -91,6 +91,7 @@ PrettyPrinter::printBubble(ostream& s, const Vector<int>& bubble)
 					if (needSpace)
 						s << ' ';
 					needSpace = true;
+					/* no break */
 			}
 			s << n[0];
 			continue;

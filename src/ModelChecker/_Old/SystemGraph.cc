@@ -28,6 +28,8 @@ SystemGraph::satisfiesFormula(Bdd formula, int stateNr)
 			formula = checkStateLabel(propId, stateNr) ? bdd_high(formula) : bdd_low(formula);
         }
     }
+    CantHappen("SystemGraph::satisfiesFormula: cannot reach here");
+    return false;
 }
 
 bool

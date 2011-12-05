@@ -91,6 +91,7 @@ FairnessDecoder::translateFormula(int subformulaIndex, const LogicFormula& formu
 	case LogicFormula::OR:			return translateFormula(formula.getArg(subformulaIndex,0), formula)
 										 | translateFormula(formula.getArg(subformulaIndex,1), formula);
 	default:						CantHappen("Fairness formula cannot contains temporal operator");
+									return bdd_false();
 	}
 }
 

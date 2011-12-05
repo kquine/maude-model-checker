@@ -22,7 +22,8 @@ public:
 		bool operator<(const PropHandler::PropSet& td) const	{ return false; }
 	};
 	EmptyPropHandler() {}
-	bool isSatisfied(const PropHandler::PropSet* d, int propId) const	{ CantHappen("EmptyPropHandler::isSatisfied"); }
+	bool isSatisfied(const PropHandler::PropSet* d, int propId) const	{ CantHappen("EmptyPropHandler::isSatisfied");
+	     	 	 	 	 	 	 	 	 	 	 	 	 	 	 	 	  return false; }
 	bool isRelated(int propId) const									{ return false; }
 	void updateProp(PropHandler::PropSet* d, DagNode* t)				{ /* Do nothing */ }
 	void updateProp(PropHandler::PropSet* d, RewriteTransitionState* t)	{ /* Do nothing */ }

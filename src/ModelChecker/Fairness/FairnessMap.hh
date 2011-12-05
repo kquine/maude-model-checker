@@ -17,6 +17,7 @@ struct FairnessMap
 	typedef modelChecker::FairSet				FairSet;
 	typedef product::Transition<GenBuchiAutomaton>	Transition;
 
+	virtual ~FairnessMap() {}
 	virtual bool satisfiedFairSet(const FairSet* f) const = 0;
 	virtual FairSet* makeFairSet(const Transition& t) = 0;
 	virtual int getNrFairness() const = 0;

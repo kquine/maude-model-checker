@@ -27,6 +27,7 @@ class ParamStrongFairSet::Goal: public StrongFairSet::Goal
 {
 public:
 	Goal(const ParamStrongFairSet* fs);
+	virtual ~Goal() {}
 	bool update(const FairSet* f, const pair<NatSet,NatSet>& unrealizedTrueFair);
 };
 

@@ -38,6 +38,8 @@ SystemEventGraph::satisfiesFormula(Bdd formula, int stateNr)
 			}
         }
     }
+    CantHappen("SystemEventGraph::satisfiesFormula: cannot reach here");
+    return bdd_false();
 }
 
 bool
@@ -58,6 +60,8 @@ SystemEventGraph::satisfiesFormula(Bdd formula, int stateNr, int transitionNr)
 				formula = checkStateLabel(propId, stateNr) ? bdd_high(formula) : bdd_low(formula);
         }
     }
+    CantHappen("SystemEventGraph::satisfiesFormula: cannot reach here");
+    return false;
 }
 
 

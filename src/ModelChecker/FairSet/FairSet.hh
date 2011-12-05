@@ -15,6 +15,7 @@ struct FairSet
 	struct Goal;
 	struct Bad;
 
+	virtual ~FairSet() {}
 	virtual Goal* makeFairGoal() const = 0;
 	virtual Bad* makeBadGoal() const = 0;
 	virtual void dump(ostream& o) const = 0;
@@ -22,12 +23,14 @@ struct FairSet
 
 struct FairSet::Goal
 {
+	virtual ~Goal() {}
 	virtual bool empty() const = 0;
 	virtual void dump(ostream& o) const = 0;
 };
 
 struct FairSet::Bad
 {
+	virtual ~Bad() {}
 	virtual bool isBad(const FairSet* f) const = 0;
 	virtual bool empty() const = 0;
 	virtual void merge(const Bad* b) = 0;

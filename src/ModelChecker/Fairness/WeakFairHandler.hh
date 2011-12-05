@@ -30,6 +30,7 @@ public:
 	};
 
 	WeakFairHandler(const Vector<Bdd>& fTable, ProofTermGenerator* pfg = NULL);
+	virtual ~WeakFairHandler() {}
 	int getNrFairness() const;
 
 	bool satisfiedFairSet(const FairSet* f) const;

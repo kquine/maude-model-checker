@@ -18,6 +18,7 @@ class SystemParamStrongFairnessMap: public modelChecker::FairnessMap
 	typedef ParamStrongFairSet		FairSet;
 public:
 	SystemParamStrongFairnessMap(SystemGraph& sysGraph, StateRealizedFairGenerator& fGenerator);
+	virtual ~SystemParamStrongFairnessMap() {}
 	bool satisfiedFairSet(const FairnessMap::FairSet* f) const;
 	int getNrFairness() const;
 	FairnessMap::FairSet* makeFairSet(const Transition& t);

@@ -67,7 +67,7 @@ SystemGraphFactory::makeSystemGraph(RewritingContext* initial)
 inline SystemGraph*
 SystemGraphFactory::selectTransitionInfo(RewritingContext* initial)
 {
-	return trans_info == DEFAULT_TRANSITION && eventProps.size() > 0 || trans_info == PROOF_TRANSITION ?
+	return ((trans_info == DEFAULT_TRANSITION) && eventProps.size() > 0) || trans_info == PROOF_TRANSITION ?
 			 selectStatePropHandler<ProofTermTransitionHandler>(initial, new ProofTermTransitionHandler(pg, parent))
 			:selectStatePropHandler<RuleTransitionHandler>(initial, new RuleTransitionHandler(pg));
 }

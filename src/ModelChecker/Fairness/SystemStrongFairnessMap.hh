@@ -17,6 +17,7 @@ class SystemStrongFairnessMap: public modelChecker::FairnessMap
 	typedef StrongFairSet		FairSet;
 public:
 	SystemStrongFairnessMap(KripkeStructure& sysGraph, const Vector<pair<Bdd,Bdd> >& fTable);
+	virtual ~SystemStrongFairnessMap() {}
 	bool satisfiedFairSet(const FairnessMap::FairSet* f) const;
 	int getNrFairness() const;
 	FairnessMap::FairSet* makeFairSet(const Transition& t);

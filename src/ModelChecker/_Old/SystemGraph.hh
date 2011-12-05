@@ -15,6 +15,7 @@ namespace ltlrModelChecker2 {
 //
 struct SystemGraph
 {
+	virtual ~SystemGraph() {}
 	virtual int getNrStates() const = 0;
 	virtual int getNrTransitions(int stateNr) const = 0;
 	virtual int getNextState(int stateNr, int transitionNr) = 0;

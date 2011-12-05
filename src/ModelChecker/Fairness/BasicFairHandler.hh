@@ -30,6 +30,7 @@ public:
 		virtual bool empty() const = 0;
 	};
 
+	virtual ~BasicFairHandler() {}
 	virtual int getNrFairness() const = 0;
 
 	virtual bool satisfiedFairSet(const FairSet* f) const = 0;

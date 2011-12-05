@@ -49,6 +49,8 @@ KripkeStructure::satisfiesStateFormula(Bdd formula, int stateNr) const
 			formula = trueStateProps.contains(lpi) ? bdd_high(formula) : bdd_low(formula);
         }
     }
+    CantHappen("KripkeStructure::satisfiesStateFormula: cannot reach here");
+    return false;
 }
 
 int

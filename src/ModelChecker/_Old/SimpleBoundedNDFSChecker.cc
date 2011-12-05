@@ -189,6 +189,8 @@ SimpleBoundedNDFSChecker::satisfiesPropositionalFormula(int systemStateNr, Bdd f
 				formula = bdd_low(formula);
 		}
 	}
+	CantHappen("SimpleBoundedNDFSChecker::satisfiesPropositionalFormula: cannot reach here");
+	return false;
 }
 
 }

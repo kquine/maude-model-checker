@@ -17,6 +17,7 @@ class FormulaFairnessMap: public modelChecker::FairnessMap
 	typedef WeakFairSet		FairSet;
 public:
 	FormulaFairnessMap(const GenBuchiAutomaton& property);
+	virtual ~FormulaFairnessMap() {}
 	int getNrFairness() const;
 	bool satisfiedFairSet(const FairnessMap::FairSet* f) const;
 	FairnessMap::FairSet* makeFairSet(const Transition& t);

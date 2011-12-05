@@ -29,6 +29,7 @@ class ParamWeakFairSet::Goal: public WeakFairSet::Goal
 {
 public:
 	Goal(const ParamWeakFairSet* fs);
+	virtual ~Goal() {}
 	bool update(const FairSet* f, const NatSet& unrealizedTrue);
 };
 

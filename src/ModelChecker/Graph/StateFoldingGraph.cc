@@ -53,6 +53,64 @@ StateFoldingGraph::getNextState(int stateNr, int index)
 	}
 }
 
+void
+StateFoldingGraph::openState(int stateNr)
+{
+	//cout << "   --- State " << stateNr << " : ";
+	FoldedState* n = states[stateNr];
+	n->nextStates.reset(new Vector<int>());
+
+	int ns, i = 0;
+	while ((ns = graph->getNextState(stateNr, i++)) != NONE)
+	{
+		//cout << "  #->(" << ns << ")";
+		if (ns >= states.size() || states[ns] == NULL)
+			insertNewFoldedState(ns, n->depth);
+
+		const Vector<int>& ffs = states[ns]->foldingStates;
+		if (ffs.empty())	// if not folded
+			n->nextStates->append(ns);
+		else
+		{
+			//cout << "->[folded:";
+			FOR_EACH_CONST(j, Vector<int>, ffs)
+			{
+				//cout << " " << *j;
+				n->nextStates->append(*j);
+			}
+			//cout << "]";
+		}
+	}
+	//cout << endl;
+}
+
+void
+StateFoldingGraph::insertNewFoldedState(int stateNr, int parentDepth)
+{
+	FoldedState* n = new FoldedState(parentDepth + 1);
+
+	while (states.size() <= stateNr)
+		states.append(NULL);
+	states.replace(stateNr, n);
+	DagNode* stateDag = getStateDag(stateNr);
+
+	//FIXME: we can use the maximum state index for the depth "parentDepth"
+	for (int i = 0; i < states.size(); ++i)
+	{
+		if (notFolded(i)
+				&& states[i]->depth < n->depth	// i != stateNr
+				&& sfc->fold(getStateDag(i), stateDag, parentContext))
+		{
+			n->foldingStates.append(i);
+		}
+	}
+
+	if (n->foldingStates.empty())
+		++ foldedStateSize;
+
+	// TODO: backward folding,, (we may use the state depth for this)
+}
+
 bool
 StateFoldingGraph::constructConcretePath(
 		const list<Edge>& path, const list<Edge>& cycle,
@@ -182,62 +240,5 @@ StateFoldingGraph::dump(PrettyPrinter* stateP, PrettyPrinter* transP)
 	}
 }
 
-void
-StateFoldingGraph::openState(int stateNr)
-{
-	//cout << "   --- State " << stateNr << " : ";
-	FoldedState* n = states[stateNr];
-	n->nextStates.reset(new Vector<int>());
-
-	int ns, i = 0;
-	while ((ns = graph->getNextState(stateNr, i++)) != NONE)
-	{
-		//cout << "  #->(" << ns << ")";
-		if (ns >= states.size() || states[ns] == NULL)
-			insertNewFoldedState(ns, n->depth);
-
-		const Vector<int>& ffs = states[ns]->foldingStates;
-		if (ffs.empty())	// if not folded
-			n->nextStates->append(ns);
-		else
-		{
-			//cout << "->[folded:";
-			FOR_EACH_CONST(j, Vector<int>, ffs)
-			{
-				//cout << " " << *j;
-				n->nextStates->append(*j);
-			}
-			//cout << "]";
-		}
-	}
-	//cout << endl;
-}
-
-void
-StateFoldingGraph::insertNewFoldedState(int stateNr, int parentDepth)
-{
-	FoldedState* n = new FoldedState(parentDepth + 1);
-
-	while (states.size() <= stateNr)
-		states.append(NULL);
-	states.replace(stateNr, n);
-	DagNode* stateDag = getStateDag(stateNr);
-
-	//FIXME: we can use the maximum state index for the depth "parentDepth"
-	for (int i = 0; i < states.size(); ++i)
-	{
-		if (notFolded(i)
-				&& states[i]->depth < n->depth	// i != stateNr
-				&& sfc->fold(getStateDag(i), stateDag, parentContext))
-		{
-			n->foldingStates.append(i);
-		}
-	}
-
-	if (n->foldingStates.empty())
-		++ foldedStateSize;
-
-	// TODO: backward folding,, (we may use the state depth for this)
-}
 
 }

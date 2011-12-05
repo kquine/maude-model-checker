@@ -50,6 +50,8 @@ LabeledKripkeStructure::satisfiesEventFormula(Bdd formula, int stateNr, int tran
 					? bdd_high(formula) : bdd_low(formula);
         }
     }
+    CantHappen("LabeledKripkeStructure::satisfiesEventFormula: cannot reach here");
+    return false;
 }
 
 pair<bool,Bdd>
@@ -84,6 +86,8 @@ LabeledKripkeStructure::satisfiesEventFormula(Bdd formula, int stateNr) const
 			}
         }
     }
+    CantHappen("LabeledKripkeStructure::satisfiesEventFormula: cannot reach here");
+    return bdd_false();
 }
 
 int

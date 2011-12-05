@@ -12,6 +12,7 @@ namespace modelChecker {
 
 struct StateTransitionDagMap
 {
+	virtual ~StateTransitionDagMap() {}
 	virtual DagNode* getStateDag(int stateNr) const = 0;
 	virtual DagNode* getTransitionDag(int stateNr, int transitionNr) const = 0;
 };
