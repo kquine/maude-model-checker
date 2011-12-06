@@ -10,7 +10,7 @@
 #include <memory>
 #include "hashConsSet.hh"
 #include "dagRoot.hh"
-#include "Util/PtrVector.hh"
+#include "DataStruct/PtrVector.hh"
 #include "Interface/CounterExampleGenerator.hh"
 #include "RewriteTransitionState.hh"
 
@@ -35,6 +35,8 @@ public:
 	DagNode* getStateDag(int stateNr) const;
 	DagNode* getTransitionDag(int stateNr, int index) const;
 	int getStateParent(int stateNr) const;
+
+	RewritingContext* getContext() const;
 
 private:
 	struct State;
@@ -135,6 +137,12 @@ StateTransitionMetaGraph::getStateParent(int stateNr) const
 	Assert(stateNr < seen.size() && seen[stateNr] != NULL,
 			"StateTransitionMetaGraph::getStateParent: Invalid state lookup");
 	return seen[stateNr]->parentIndex;
+}
+
+inline RewritingContext*
+StateTransitionMetaGraph::getContext() const
+{
+	return initial;
 }
 
 } /* namespace modelChecker */

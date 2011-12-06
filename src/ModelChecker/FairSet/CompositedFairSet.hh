@@ -7,7 +7,7 @@
 
 #ifndef COMPOSITEDFAIRSET_HH_
 #define COMPOSITEDFAIRSET_HH_
-#include "Util/PtrVector.hh"
+#include "DataStruct/PtrVector.hh"
 #include "FairSet.hh"
 
 namespace modelChecker {

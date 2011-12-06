@@ -34,7 +34,7 @@ public:
 	const T* operator[](size_type i) const	{ return vec[i]; }
 	T* operator[](size_type i)				{ return vec[i]; }
 	void replace(size_type i, T* x);
-	void expandTo(size_type newLength);
+	void expandTo(size_type newLength, bool alloc = true);
 	void contractTo(size_type newLength);
 	void append(T* item)					{ vec.append(item); }
 	size_type size() const					{ return vec.size(); }
@@ -53,12 +53,12 @@ PtrVector<T>::replace(size_type i, T* x)
 }
 
 template <typename T> void
-PtrVector<T>::expandTo(size_type newLength)
+PtrVector<T>::expandTo(size_type newLength, bool alloc)
 {
 	int old = vec.size();
 	vec.expandTo(newLength);
 	for (int i = old; i < newLength; ++i)
-		vec[i] = new T;
+		vec[i] = alloc ? new T : NULL;
 }
 
 template <typename T> void

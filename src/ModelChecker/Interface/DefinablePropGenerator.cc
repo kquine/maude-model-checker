@@ -47,7 +47,7 @@
 //		built in class definitions
 #include "bindingMacros.hh"
 
-#include "Util/TermUtil.hh"
+#include "DataStruct/TermUtil.hh"
 #include "DefinablePropGenerator.hh"
 
 namespace modelChecker {

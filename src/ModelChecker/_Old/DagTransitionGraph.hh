@@ -8,9 +8,9 @@
 #ifndef DAGTRANSITIONGRAPH_HH_
 #define DAGTRANSITIONGRAPH_HH_
 #include "simpleRootContainer.hh"
-#include "Util/PtrVector.hh"
+#include "DataStruct/PtrVector.hh"
 #include "rewriteSearchState.hh"
-#include "Util/TwoWayHashConsSet.hh"
+#include "DataStruct/TwoWayHashConsSet.hh"
 #include "Interface/ProofTermGenerator.hh"
 
 namespace ltlrModelCheckerOld {

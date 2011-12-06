@@ -28,9 +28,9 @@
 
 namespace modelChecker {
 
-StateFoldingGraph::StateFoldingGraph(RewritingContext* parent,
-		StateTransitionMetaGraph* graph, const FoldingChecker* sfc, const FoldingChecker* tfc):
-		parentContext(parent), graph(graph), foldedStateSize(0), sfc(sfc), tfc(tfc),
+StateFoldingGraph::StateFoldingGraph(StateTransitionMetaGraph* graph,
+		const FoldingChecker* sfc, const FoldingChecker* tfc):
+		graph(graph), foldedStateSize(0), sfc(sfc), tfc(tfc),
 		searchBound(NONE), hitBoundFlag(false)
 {
 	insertNewFoldedState(0, -1);
@@ -67,7 +67,7 @@ StateFoldingGraph::openState(int stateNr)
 		if (ns >= states.size() || states[ns] == NULL)
 			insertNewFoldedState(ns, n->depth);
 
-		const Vector<int>& ffs = states[ns]->foldingStates;
+		const Vector<int>& ffs = states[ns]->foldStates;
 		if (ffs.empty())	// if not folded
 			n->nextStates->append(ns);
 		else
@@ -88,9 +88,7 @@ void
 StateFoldingGraph::insertNewFoldedState(int stateNr, int parentDepth)
 {
 	FoldedState* n = new FoldedState(parentDepth + 1);
-
-	while (states.size() <= stateNr)
-		states.append(NULL);
+	states.expandTo(stateNr + 1, false);
 	states.replace(stateNr, n);
 	DagNode* stateDag = getStateDag(stateNr);
 
@@ -99,13 +97,13 @@ StateFoldingGraph::insertNewFoldedState(int stateNr, int parentDepth)
 	{
 		if (notFolded(i)
 				&& states[i]->depth < n->depth	// i != stateNr
-				&& sfc->fold(getStateDag(i), stateDag, parentContext))
+				&& sfc->fold(getStateDag(i), stateDag, graph->getContext()))
 		{
-			n->foldingStates.append(i);
+			n->foldStates.append(i);
 		}
 	}
 
-	if (n->foldingStates.empty())
+	if (n->foldStates.empty())
 		++ foldedStateSize;
 
 	// TODO: backward folding,, (we may use the state depth for this)
@@ -165,9 +163,10 @@ StateFoldingGraph::constConcrPath(
 	if (inCycle && pos == cycle.end())
 	{
 		return sfc->fold(getStateDag(cycle.front().first),
-						 graph->getStateDag(spos), parentContext);
+						 graph->getStateDag(spos), graph->getContext());
 	}
-	if (sfc->fold(getStateDag(pos->first),graph->getStateDag(spos),parentContext))
+	if (sfc->fold(getStateDag(pos->first),graph->getStateDag(spos),
+			graph->getContext()))
 	{
 		int index = 0;
 		int next = NONE;
@@ -178,7 +177,7 @@ StateFoldingGraph::constConcrPath(
 			if (tfc->fold(
 					getTransitionDag(oldPos->first,oldPos->second),
 					graph->getTransitionDag(spos,index),
-					parentContext))
+					graph->getContext()))
 			{
 				if (constConcrPath(path, cycle, pos, inCycle, next, resP, resCy))
 				{
@@ -208,14 +207,14 @@ StateFoldingGraph::dump(PrettyPrinter* stateP, PrettyPrinter* transP)
 		if (!notFolded(i))
 		{
 			cout << "[folded";
-			FOR_EACH_CONST(j, Vector<int>, states[i]->foldingStates)
+			FOR_EACH_CONST(j, Vector<int>, states[i]->foldStates)
 			{
 				cout << " " << *j;
 			}
 			cout << "]";
 		}
 		cout << ": ";
-		stateP->print(cout, getStateDag(i), parentContext);
+		stateP->print(cout, getStateDag(i), graph->getContext());
 		cout << endl;
 
 		// print transitions
@@ -225,12 +224,13 @@ StateFoldingGraph::dump(PrettyPrinter* stateP, PrettyPrinter* transP)
 			{
 				int nx = graph->getNextState(i,j);
 				cout << "    " << (notFolded(nx)?'#':'.') << "-[ ";
-				transP->print(cout, graph->getTransitionDag(i,j), parentContext);
+				transP->print(cout, graph->getTransitionDag(i,j),
+						graph->getContext());
 				cout << " ]-> " << nx;
 				if (!notFolded(nx))
 				{
 					cout << " [FOLD: ";
-					FOR_EACH_CONST(k, Vector<int>, states[nx]->foldingStates)
+					FOR_EACH_CONST(k, Vector<int>, states[nx]->foldStates)
 						cout << " " << *k;
 					cout << "]";
 				}

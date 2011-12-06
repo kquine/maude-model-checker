@@ -8,7 +8,7 @@
 #ifndef PARAMFAIRLATTICE_HH_
 #define PARAMFAIRLATTICE_HH_
 #include <map>
-#include "Util/PtrVector.hh"
+#include "DataStruct/PtrVector.hh"
 
 namespace modelChecker {
 

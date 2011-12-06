@@ -21,7 +21,7 @@
 #include "genBuchiAutomaton.hh"
 
 //	automaton definitions
-#include "Util/PtrStack.hh"
+#include "DataStruct/PtrStack.hh"
 #include "ProductAutomaton.hh"
 
 namespace modelChecker {

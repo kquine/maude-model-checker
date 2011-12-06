@@ -8,7 +8,7 @@
 #ifndef DEFINABLEPROPGENERATOR_HH_
 #define DEFINABLEPROPGENERATOR_HH_
 #include "pattern.hh"
-#include "Util/PtrVector.hh"
+#include "DataStruct/PtrVector.hh"
 
 namespace modelChecker {
 

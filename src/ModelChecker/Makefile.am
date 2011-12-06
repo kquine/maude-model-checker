@@ -20,7 +20,7 @@ libModelChecker_a_CPPFLAGS = \
 
 
 libModelChecker_a_SOURCES = \
-	Util/TermUtil.cc \
+	DataStruct/TermUtil.cc \
 	Graph/RewriteTransitionState.cc \
 	Graph/StateDagContainer.cc \
 	Graph/StateTransitionMetaGraph.cc \

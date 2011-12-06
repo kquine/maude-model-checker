@@ -11,20 +11,21 @@
 #include "Interface/CounterExampleGenerator.hh"
 #include "Interface/FoldingChecker.hh"
 #include "Interface/PrettyPrinter.hh"
-#include "Util/PtrVector.hh"
+#include "DataStruct/PtrVector.hh"
 #include "protectedDagNodeSet.hh"
 
 namespace modelChecker {
 
 //
-// Wrapper with folding relation.. (currently, inefficient due to using Full-Maude functions..)
+// Wrapper with folding relation.. maintaining POR data structure
+// (currently, inefficient due to using Full-Maude functions..)
 //
 class StateFoldingGraph: public CounterExampleGenerator::DagGraph
 {
 	NO_COPYING(StateFoldingGraph);
 	typedef CounterExampleGenerator::Edge	Edge;
 public:
-	StateFoldingGraph(RewritingContext* parent, StateTransitionMetaGraph* graph,
+	StateFoldingGraph(StateTransitionMetaGraph* graph,
 			const FoldingChecker* sfc, const FoldingChecker* tfc);
 	virtual ~StateFoldingGraph() {}
 
@@ -54,9 +55,11 @@ public:
 private:
 	struct FoldedState
 	{
-		FoldedState(int depth): depth(depth) {}
+		FoldedState(int depth = NONE): depth(depth) {}
+		Vector<int> foldStates;				// folded state indices
+		PtrVector<Vector<int> > foldTrans;	// folded transitions
+
 		const int depth;					// search depth.. (not actual BFS depth)
-		Vector<int> foldingStates;			// folded state indices
 		auto_ptr<Vector<int> > nextStates;	// index |-> folded states. NULL if not open yet.
 	};
 
@@ -70,8 +73,6 @@ private:
 	int foldedStateSize;
 	int searchBound;
 	bool hitBoundFlag;
-
-	RewritingContext* parentContext;
 
 	// NOTE: folding graph and the underlying graph shares the same state index.
 	PtrVector<FoldedState> states;		// folding graph
@@ -137,7 +138,7 @@ StateFoldingGraph::hitStateBound(int stateNr) const
 inline bool
 StateFoldingGraph::notFolded(int stateNr) const
 {
-	return states[stateNr] != NULL && states[stateNr]->foldingStates.empty();
+	return states[stateNr] != NULL && states[stateNr]->foldStates.empty();
 }
 
 }

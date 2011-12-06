@@ -9,7 +9,7 @@
 #define NDFSMODELCHECKER_HH_
 #include "buchiAutomaton2.hh"
 #include "ModelChecker.hh"
-#include "Util/PtrVector.hh"
+#include "DataStruct/PtrVector.hh"
 #include "Automaton/ProductAutomaton.hh"
 
 namespace modelChecker {

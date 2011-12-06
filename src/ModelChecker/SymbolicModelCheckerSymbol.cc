@@ -185,8 +185,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 
 	FoldingChecker sfc(stateFoldingRelSymbol, trueTerm.getDag());
 	FoldingChecker tfc(transFoldingRelSymbol, trueTerm.getDag());
-	auto_ptr<StateFoldingGraph> nsg(new StateFoldingGraph(sysContext.get(), graph.get(),
-			&sfc, &tfc));
+	auto_ptr<StateFoldingGraph> nsg(new StateFoldingGraph(graph.get(),&sfc, &tfc));
 
 	PropChecker stateChecker(&context, satisfiesSymbol, trueTerm.getDag());
 	SystemAutomaton systemAutomaton(nsg.get(), propositions, &stateChecker);

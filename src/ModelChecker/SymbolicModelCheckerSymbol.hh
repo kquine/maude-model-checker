@@ -10,7 +10,7 @@
 #include "temporalSymbol.hh"
 #include "cachedDag.hh"
 
-#include "Util/PtrVector.hh"
+#include "DataStruct/PtrVector.hh"
 #include "Automaton/KripkeStructure.hh"
 #include "Interface/CounterExampleGenerator.hh"
 #include "Interface/FoldingChecker.hh"

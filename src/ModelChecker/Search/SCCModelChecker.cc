@@ -20,7 +20,7 @@
 
 //      utility class definitions
 #include "natSet.hh"
-#include "Util/PtrStack.hh"
+#include "DataStruct/PtrStack.hh"
 
 #include "SCCModelChecker.hh"
 
