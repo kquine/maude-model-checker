@@ -34,19 +34,21 @@
 
 namespace modelChecker {
 
-PrettyPrinter::PrettyPrinter(Symbol* prettyPrintSymbol): prettyPrintSymbol(prettyPrintSymbol) {}
+PrettyPrinter::PrettyPrinter(Symbol* prettyPrintSymbol, RewritingContext* context):
+		prettyPrintSymbol(prettyPrintSymbol), parentContext(context) {}
 
 
 void
-PrettyPrinter::print(ostream& o, DagNode* target, RewritingContext* context)
+PrettyPrinter::print(ostream& o, DagNode* target)
 {
 	Assert(prettyPrintSymbol != NULL, "StateFoldingGraph::StateFoldingGraph: null printStateSymbol");
 	static Vector<DagNode*> args(1);
 	args[0] = target;
 	DagNode* printDag = prettyPrintSymbol->makeDagNode(args);
-	const auto_ptr<RewritingContext> printContext(context->makeSubcontext(printDag));
+	const auto_ptr<RewritingContext> printContext(
+			parentContext->makeSubcontext(printDag));
 	printContext->reduce();
-	context->addInCount(*printContext);
+	parentContext->addInCount(*printContext);
 
 	DagArgumentIterator i(*printContext->root());
 	Vector<int> bubble;

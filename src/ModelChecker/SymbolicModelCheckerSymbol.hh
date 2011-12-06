@@ -43,21 +43,37 @@ private:
     public:
     	SystemAutomaton(modelChecker::StateFoldingGraph* graph,
     					DagNodeSet& props, modelChecker::PropChecker* pc);
-    	int getNrStates() const;
-    	int getNrTransitions(int stateNr) const;
+
     	int getNextState(int stateNr, int transitionNr);
-    	bool satisfiesStateFormula(Bdd formula, int stateNr);
+        bool satisfiesStateFormula(Bdd formula, int stateNr); // labeling
+
+    	int getNrStates() const					{ return gph->getNrStates(); }
+    	int getNrTransitions(int stateNr) const	{ return gph->getNrTransitions(stateNr); }
+
+    	// bounded search stuff
+    	void setBound(int bound=NONE) { hitBoundF = false; searchBound = bound; }
+    	bool hitBound() const		  { return hitBoundF; }
 
     private:
-    	struct Label
+    	struct Info
     	{
+    		Info(): depth(NONE) {};
+
+    		int depth;			// search bound (may not actual BFS depth)
     		NatSet testedProps;
     		NatSet trueProps;
     	};
-    	modelChecker::PtrVector<Label> stateLabels;
-    	modelChecker::StateFoldingGraph* graph;
+
+    	// bounded model checking
+    	int searchBound;
+    	bool hitBoundF;
+
+    	// propositions
     	DagNodeSet& props;
     	modelChecker::PropChecker* pc;
+
+    	modelChecker::PtrVector<Info> sInfo;
+    	modelChecker::StateFoldingGraph* gph;
     };
 
     // satisfaction symbols

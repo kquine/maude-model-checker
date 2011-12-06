@@ -13,8 +13,8 @@ namespace modelChecker {
 class PrettyPrinter
 {
 public:
-	PrettyPrinter(Symbol* prettyPrintSymbol);
-	void print(ostream& o, DagNode* target, RewritingContext* context);
+	PrettyPrinter(Symbol* prettyPrintSymbol, RewritingContext* context);
+	void print(ostream& o, DagNode* target);
 
 protected:
     bool attachSymbol(const char* purpose, Symbol* symbol);
@@ -25,6 +25,7 @@ private:
     static void printBubble(ostream& s, const Vector<int>& bubble);
 
     Symbol* prettyPrintSymbol;
+    RewritingContext* parentContext;
 };
 } /* namespace modelChecker */
 #endif /* PRETTYPRINTER_HH_ */

@@ -39,6 +39,7 @@
 // model checker
 #include "buchiAutomaton2.hh"
 #include "Search/NDFSModelChecker.hh"
+#include "Graph/StateTransitionMetaGraph.hh"
 
 #include "SymbolicModelCheckerSymbol.hh"
 
@@ -181,38 +182,49 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//  2. search graph and automaton
 	//
 	BuchiAutomaton2 propAutomaton(&formula, top);
-	auto_ptr<StateTransitionMetaGraph> graph(new StateTransitionMetaGraph(sysContext.get(), metaStateSymbol, metaTransitionSymbol));
+	StateTransitionMetaGraph graph(sysContext.get(),
+			metaStateSymbol, metaTransitionSymbol);
 
-	FoldingChecker sfc(stateFoldingRelSymbol, trueTerm.getDag());
-	FoldingChecker tfc(transFoldingRelSymbol, trueTerm.getDag());
-	auto_ptr<StateFoldingGraph> nsg(new StateFoldingGraph(graph.get(),&sfc, &tfc));
+	FoldingChecker sfc(stateFoldingRelSymbol, trueTerm.getDag(), &context);
+	FoldingChecker tfc(transFoldingRelSymbol, trueTerm.getDag(), &context);
+	StateFoldingGraph nsg(&graph,&sfc, &tfc);
 
 	PropChecker stateChecker(&context, satisfiesSymbol, trueTerm.getDag());
-	SystemAutomaton systemAutomaton(nsg.get(), propositions, &stateChecker);
+	SystemAutomaton systemAutomaton(&nsg, propositions, &stateChecker);
 	ProductAutomaton<BuchiAutomaton2> prod(systemAutomaton, propAutomaton);
 
 	auto_ptr<ModelChecker> mc;
-	PrettyPrinter printState(prettyPrintStateSymbol);
-	PrettyPrinter printTrans(prettyPrintTransSymbol);
+	PrettyPrinter printState(prettyPrintStateSymbol, &context);
+	PrettyPrinter printTrans(prettyPrintTransSymbol, &context);
 
 	bool result = false;
 	int curr_bound = 0;
-	do {
-		mc.reset(new NDFSModelChecker(prod));
-		nsg->setBound(curr_bound++);
-		result = mc->findCounterExample();	// FIXME: possibly duplicate prop checks
-#ifdef SDEBUG
-		cout << " #current bound = " << curr_bound << ", #states = " << nsg->getNrStates() << endl;
-#endif
-	} while(result == false && nsg->hitBound());
+	int bound_state = 0;
 
 #ifdef SDEBUG
 	cout << "## states ------------" << endl;
-	nsg->dump(&printState, &printTrans);
+#endif
+	do {
+#ifdef SDEBUG
+		cout << "##current bound = " << curr_bound << ", #states = " << nsg.getNrStates() << endl;
+		int old_size = nsg.getNrStates();
+#endif
+		mc.reset(new NDFSModelChecker(prod));
+		systemAutomaton.setBound(curr_bound++);
+		result = mc->findCounterExample();
+#ifdef SDEBUG
+		// print states in the previous bound (to show transitions)
+		for (int k = bound_state; k < old_size; ++k)
+			nsg.dump(k, &printState, &printTrans);
+		bound_state = old_size;
+#endif
+	} while(result == false && systemAutomaton.hitBound());
+
+#ifdef SDEBUG
 	cout << "----------------------" << endl;
 #endif
 
-	int nrSystemStates = nsg->getNrStates();
+	int nrSystemStates = nsg.getNrStates();
 	Verbose("SymbolicModelCheckerSymbol: Examined " << nrSystemStates <<
 		  " system state" << pluralize(nrSystemStates) << '.');
 
@@ -224,14 +236,14 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	{
 		list<Edge> path;
 		list<Edge> cycle;
-		if (nsg->constructConcretePath(mc->getLeadIn(), mc->getCycle(), path, cycle))
+		if (nsg.constructConcretePath(mc->getLeadIn(), mc->getCycle(), path, cycle))
 		{
-			resultDag = makeCounterexample(*graph, path, cycle);
+			resultDag = makeCounterexample(graph, path, cycle);
 		}
 		else
 		{
 			IssueWarning("ModelChecker: spurious counter example");
-			resultDag = makeCounterexample(*nsg, mc->getLeadIn(), mc->getCycle());
+			resultDag = makeCounterexample(nsg, mc->getLeadIn(), mc->getCycle());
 		}
 	}
 	else
@@ -244,40 +256,50 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 
 SymbolicModelCheckerSymbol::SystemAutomaton::SystemAutomaton(
 		modelChecker::StateFoldingGraph* graph, DagNodeSet& props,modelChecker::PropChecker* pc):
-			graph(graph), props(props), pc(pc)
+			gph(graph), props(props), pc(pc)
 {
-	stateLabels.expandTo(1);
+	sInfo.expandTo(1);
+	sInfo[0]->depth = 0;
 }
 
 int
-SymbolicModelCheckerSymbol::SystemAutomaton::getNrStates() const
+SymbolicModelCheckerSymbol::SystemAutomaton::getNextState(int stateNr, int index)
 {
-	return graph->getNrStates();
-}
+	Assert(stateNr < sInfo.size(), "SystemAutomaton::getNextState: unknown state");
 
-int
-SymbolicModelCheckerSymbol::SystemAutomaton::getNrTransitions(int stateNr) const
-{
-	return graph->getNrTransitions(stateNr);
-}
-
-int
-SymbolicModelCheckerSymbol::SystemAutomaton::getNextState(int stateNr, int transitionNr)
-{
-	int n = graph->getNextState(stateNr, transitionNr);
-	if (n == NONE && transitionNr == 0 && !graph->hitStateBound(stateNr))
-		return stateNr;	// fake a self loop for deadlocked state (if not hit bound)
-
-	if (n > 0 && n >= stateLabels.size())	// since stateLabels.size() returns unsigned type, we have to first check n > 0..
-		stateLabels.expandTo(n + 1);
-	return n;
+	// if hit bound
+	if (searchBound >= 0 && sInfo[stateNr]->depth > searchBound)
+	{
+		hitBoundF = true;
+		return NONE;
+	}
+	else
+	{
+		int n = gph->getNextState(stateNr, index);
+		if (n == NONE)
+		{
+			// fake a self loop for deadlocked state (if not hit bound)
+			if (index == 0)
+				return stateNr;
+		}
+		else
+		{
+			if (n >= sInfo.size())
+				sInfo.expandTo(n + 1);
+			if (sInfo[n]->depth == NONE)
+				sInfo[n]->depth = sInfo[stateNr]->depth + 1;
+			else
+				sInfo[n]->depth = min(sInfo[n]->depth, sInfo[stateNr]->depth + 1);
+		}
+		return n;
+	}
 }
 
 bool
 SymbolicModelCheckerSymbol::SystemAutomaton::satisfiesStateFormula(Bdd formula, int stateNr)
 {
-	NatSet& testedProps = stateLabels[stateNr]->testedProps;
-	NatSet& trueProps = stateLabels[stateNr]->trueProps;
+	NatSet& testedProps = sInfo[stateNr]->testedProps;
+	NatSet& trueProps = sInfo[stateNr]->trueProps;
 	for(;;)
 	{
 		if (formula == bdd_true())
@@ -290,7 +312,7 @@ SymbolicModelCheckerSymbol::SystemAutomaton::satisfiesStateFormula(Bdd formula, 
 		else
 		{
 			testedProps.insert(propIndex);
-			if (pc->computeLabel(graph->getStateDag(stateNr), props.index2DagNode(propIndex)))
+			if (pc->computeLabel(gph->getStateDag(stateNr), props.index2DagNode(propIndex)))
 			{
 				trueProps.insert(propIndex);
 				formula = bdd_high(formula);
@@ -302,4 +324,7 @@ SymbolicModelCheckerSymbol::SystemAutomaton::satisfiesStateFormula(Bdd formula, 
 	CantHappen("Unreachable point");
 	return false;
 }
+
+
+
 

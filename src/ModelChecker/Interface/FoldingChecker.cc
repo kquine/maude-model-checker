@@ -32,11 +32,13 @@
 
 namespace modelChecker {
 
-FoldingChecker::FoldingChecker(Symbol* foldingRelSymbol, DagNode* trueDag):
-		foldingRelSymbol(foldingRelSymbol), trueDag(trueDag) {}
+FoldingChecker::FoldingChecker(Symbol* foldingRelSymbol,
+		DagNode* trueDag, RewritingContext* context):
+		foldingRelSymbol(foldingRelSymbol), trueDag(trueDag),
+		parentContext(context) {}
 
 bool
-FoldingChecker::fold(DagNode* s, DagNode* t, RewritingContext* context) const
+FoldingChecker::fold(DagNode* s, DagNode* t) const
 {
 	Assert(trueDag != NULL, "StateFoldingChecker::fold: trueDag not set");
 	static Vector<DagNode*> args(2);
@@ -47,13 +49,14 @@ FoldingChecker::fold(DagNode* s, DagNode* t, RewritingContext* context) const
 #ifdef TDEBUG
 	cout << checkDag << " is reduced to ";
 #endif
-	const auto_ptr<RewritingContext> testContext(context->makeSubcontext(checkDag));
+	const auto_ptr<RewritingContext> testContext(
+			parentContext->makeSubcontext(checkDag));
 	testContext->reduce();
 	bool result = trueDag->equal(testContext->root());
 #ifdef TDEBUG
 	cout << testContext->root() << endl;
 #endif
-	context->addInCount(*testContext);
+	parentContext->addInCount(*testContext);
 	return result;
 }
 

@@ -11,8 +11,8 @@
 #include "hashConsSet.hh"
 #include "dagRoot.hh"
 #include "DataStruct/PtrVector.hh"
-#include "Interface/CounterExampleGenerator.hh"
 #include "RewriteTransitionState.hh"
+#include "Graph/SystemGraph2.hh"
 
 /*
  * Generate a graph using Meta rules, given by:
@@ -21,7 +21,7 @@
  */
 namespace modelChecker {
 
-class StateTransitionMetaGraph: public CounterExampleGenerator::DagGraph
+class StateTransitionMetaGraph: public SystemGraph2
 {
 	NO_COPYING(StateTransitionMetaGraph);
 public:

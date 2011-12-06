@@ -7,12 +7,12 @@
 
 #ifndef STATEFOLDINGGRAPH_HH_
 #define STATEFOLDINGGRAPH_HH_
-#include "Graph/StateTransitionMetaGraph.hh"
-#include "Interface/CounterExampleGenerator.hh"
 #include "Interface/FoldingChecker.hh"
 #include "Interface/PrettyPrinter.hh"
+#include "Interface/CounterExampleGenerator.hh"
 #include "DataStruct/PtrVector.hh"
 #include "protectedDagNodeSet.hh"
+#include "Graph/SystemGraph2.hh"
 
 namespace modelChecker {
 
@@ -25,7 +25,7 @@ class StateFoldingGraph: public CounterExampleGenerator::DagGraph
 	NO_COPYING(StateFoldingGraph);
 	typedef CounterExampleGenerator::Edge	Edge;
 public:
-	StateFoldingGraph(StateTransitionMetaGraph* graph,
+	StateFoldingGraph(SystemGraph2* graph,
 			const FoldingChecker* sfc, const FoldingChecker* tfc);
 	virtual ~StateFoldingGraph() {}
 
@@ -36,12 +36,6 @@ public:
 
 	int getNextState(int stateNr, int index);
 
-	// bounded search stuff
-	int getBound() const;
-	void setBound(int bound = NONE);
-	bool hitBound() const;
-	bool hitStateBound(int stateNr) const;
-
 	// folding stuff
 	bool notFolded(int stateNr) const;	// if stateNr is a folded state or not
 
@@ -50,16 +44,13 @@ public:
 							   list<Edge>& resP, list<Edge>& resCy);
 
 	// state dump
-	void dump(PrettyPrinter* stateP, PrettyPrinter* transP);
+	void dump(int stateNr, PrettyPrinter* stateP, PrettyPrinter* transP);
 
 private:
 	struct FoldedState
 	{
-		FoldedState(int depth = NONE): depth(depth) {}
 		Vector<int> foldStates;				// folded state indices
 		PtrVector<Vector<int> > foldTrans;	// folded transitions
-
-		const int depth;					// search depth.. (not actual BFS depth)
 		auto_ptr<Vector<int> > nextStates;	// index |-> folded states. NULL if not open yet.
 	};
 
@@ -67,16 +58,13 @@ private:
 						list<Edge>::const_iterator pos, bool inCycle,
 						int statePos, list<Edge>& resP, list<Edge>& resCy);
 
-	void openState(int stateNr);
-	void insertNewFoldedState(int stateNr, int parentDepth);
+	void insertNewFoldedState(int stateNr);
 
 	int foldedStateSize;
-	int searchBound;
-	bool hitBoundFlag;
 
 	// NOTE: folding graph and the underlying graph shares the same state index.
 	PtrVector<FoldedState> states;		// folding graph
-	StateTransitionMetaGraph* graph;	// underlying graph
+	SystemGraph2* graph;				// underlying graph
 
 	const FoldingChecker* sfc;		// state folding
 	const FoldingChecker* tfc;		// transition folding
@@ -108,31 +96,6 @@ StateFoldingGraph::getTransitionDag(int stateNr, int index) const
 {
 	//FIXME: should return the corresponding dag
 	return graph->getTransitionDag(stateNr, index);
-}
-
-inline int
-StateFoldingGraph::getBound() const
-{
-	return searchBound;
-}
-
-inline void
-StateFoldingGraph::setBound(int bound)
-{
-	hitBoundFlag = false;
-	searchBound = bound;
-}
-
-inline bool
-StateFoldingGraph::hitBound() const
-{
-	return hitBoundFlag;
-}
-
-inline bool
-StateFoldingGraph::hitStateBound(int stateNr) const
-{
-	return searchBound >= 0 && states[stateNr]->depth > searchBound;
 }
 
 inline bool

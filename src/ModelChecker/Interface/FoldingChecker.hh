@@ -13,12 +13,14 @@ namespace modelChecker {
 class FoldingChecker
 {
 public:
-	FoldingChecker(Symbol* foldingRelSymbol, DagNode* trueDag);
-	bool fold(DagNode* s, DagNode* t, RewritingContext* context) const;
+	FoldingChecker(Symbol* foldingRelSymbol, DagNode* trueDag,
+			RewritingContext* context);
+	bool fold(DagNode* s, DagNode* t) const;
 
 private:
     DagNode* trueDag;
 	Symbol* foldingRelSymbol;
+	RewritingContext* parentContext;
 };
 
 }
