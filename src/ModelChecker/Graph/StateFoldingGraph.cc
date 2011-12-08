@@ -55,10 +55,7 @@ StateFoldingGraph::getNextState(int stateNr, int index)
 		//
 		for (int i=0, n=NONE; (n = graph->getNextState(stateNr,i)) != NONE; ++i)
 		{
-			//
-			//	state folding
-			//
-			insertFoldedState(n);
+			insertFoldedState(n);	//	state folding
 			//
 			//	folding graph
 			//
@@ -69,10 +66,13 @@ StateFoldingGraph::getNextState(int stateNr, int index)
 					s->trans->append(make_pair(*j,i));
 			}
 			else	// if the target not folded
+			{
+				MaximalState* mns = safeCast(MaximalState*,foldGraph[n]);
 				s->trans->append(make_pair(n,i));
+				mns->parents.insert(stateNr);		// for backward folding
+			}
 		}
 	}
-
 	return index < s->trans->size() ? (*s->trans)[index].first : NONE;
 }
 

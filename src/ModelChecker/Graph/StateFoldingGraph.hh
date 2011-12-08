@@ -24,6 +24,9 @@ namespace modelChecker {
 //		so that we do not need to maintain the entire partial order structure,
 //		but a only "collapsed" structure..
 // TODO: iterator-based implementation will be required for efficiency..
+// TODO: folding information should be modified when (i) backward folding,
+//       and (ii) folding refinement.
+// TODO: equivalent state (modulo renaming) should be treated differently.
 //
 class StateFoldingGraph: public CounterExampleGenerator::DagGraph
 {
@@ -65,7 +68,12 @@ private:
 
 	struct FoldedState: public State
 	{
-		set<int> foldRel;	// foldedState -> origTrIdx |-> foldedTrIndices (in original graph)
+		set<int> foldRel;	// folded States (in original graph)
+	};
+
+	struct EquivState: public State
+	{
+		int rep;	//
 	};
 
 	bool constConcrPath(const list<Edge>& path, const list<Edge>& cycle,
