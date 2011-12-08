@@ -59,7 +59,7 @@ private:
     	{
     		Info(): depth(NONE) {};
 
-    		int depth;			// search bound (may not actual BFS depth)
+    		int depth;			// search bound (not  BFS depth)
     		NatSet testedProps;
     		NatSet trueProps;
     	};

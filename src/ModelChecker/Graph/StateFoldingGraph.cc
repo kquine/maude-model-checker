@@ -30,70 +30,99 @@ namespace modelChecker {
 
 StateFoldingGraph::StateFoldingGraph(SystemGraph2* graph,
 		const FoldingChecker* sfc, const FoldingChecker* tfc):
-		graph(graph), foldedStateSize(0), sfc(sfc), tfc(tfc)
+		graph(graph), sfc(sfc), tfc(tfc)
 {
-	insertNewFoldedState(0);
+	insertFoldedState(0);
 }
+
 
 int
 StateFoldingGraph::getNextState(int stateNr, int index)
 {
-	FoldedState* n = states[stateNr];
-	if (n->nextStates.get() == NULL)	// OPEN state
+	Assert(stateNr < foldGraph.size() && foldGraph[stateNr] != NULL,
+				"StateFoldingGraph::getNextState: unknown source state folding");
+	Assert(dynamic_cast<FoldedState*>(foldGraph[stateNr]) == NULL
+			|| refinedStates.find(stateNr) != refinedStates.end(),
+			"StateFoldingGraph::getNextState: not maximal/refined source state");
+
+	State* s = foldGraph[stateNr];
+
+	if (s->trans.get() == NULL)
 	{
-		//cout << "   --- State " << stateNr << " : ";
-		FoldedState* n = states[stateNr];
-		n->nextStates.reset(new Vector<int>());
-
-		int ns, i = 0;
-		while ((ns = graph->getNextState(stateNr, i++)) != NONE)
+		s->trans.reset(new Vector<pair<int,int> >());
+		//
+		// compute folding graph
+		//
+		for (int i=0, n=NONE; (n = graph->getNextState(stateNr,i)) != NONE; ++i)
 		{
-			//cout << "  #->(" << ns << ")";
-			if (ns >= states.size() || states[ns] == NULL)
-				insertNewFoldedState(ns);
-
-			const Vector<int>& ffs = states[ns]->foldStates;
-			if (ffs.empty())	// if not folded
-				n->nextStates->append(ns);
-			else
+			//
+			//	state folding
+			//
+			insertFoldedState(n);
+			//
+			//	folding graph
+			//
+			if (FoldedState* fns = dynamic_cast<FoldedState*>(foldGraph[n]))
 			{
-				//cout << "->[folded:";
-				FOR_EACH_CONST(j, Vector<int>, ffs)
-				{
-					//cout << " " << *j;
-					n->nextStates->append(*j);
-				}
-				//cout << "]";
+				// if the target state is folded
+				FOR_EACH_CONST(j, set<int>, fns->foldRel)
+					s->trans->append(make_pair(*j,i));
 			}
+			else	// if the target not folded
+				s->trans->append(make_pair(n,i));
 		}
-		//cout << endl;
 	}
-	return index < n->nextStates->size() ? (*n->nextStates)[index] : NONE;
+
+	return index < s->trans->size() ? (*s->trans)[index].first : NONE;
 }
 
 void
-StateFoldingGraph::insertNewFoldedState(int stateNr)
+StateFoldingGraph::insertFoldedState(int stateNr)
 {
-	FoldedState* n = new FoldedState();
-	states.expandTo(stateNr + 1, false);
-	states.replace(stateNr, n);
-	DagNode* stateDag = getStateDag(stateNr);
+	if (stateNr >= foldGraph.size())
+		foldGraph.expandTo(stateNr + 1, false);
+	if (foldGraph[stateNr] != NULL)
+		return;
 
-	//FIXME: we can use the maximum state index for the depth "parentDepth"
-	for (int i = 0; i < states.size(); ++i)
+	Vector<int> foldingStates;
+	DagNode* stateDag = getStateDag(stateNr);
+	FOR_EACH_CONST(i, set<int>, maximalStates)
 	{
-		if (notFolded(i)
-				&& i != stateNr
-				&& sfc->fold(getStateDag(i), stateDag))
+		if (sfc->fold(getStateDag(*i), stateDag))	// forward folding
+			foldingStates.append(*i);
+
+		if (sfc->fold(stateDag, getStateDag(*i)))	// backward folding
 		{
-			n->foldStates.append(i);
+			MaximalState* ms = safeCast(MaximalState*, foldGraph[*i]);
+			ms->backFold.append(stateNr);
 		}
 	}
 
-	if (n->foldStates.empty())
-		++ foldedStateSize;
+	if (foldingStates.empty())	// maximal cases
+	{
+		foldGraph.replace(stateNr, new MaximalState());
+		maximalStates.insert(stateNr);
+	}
+	else	// folding cases
+	{
+		FoldedState* fs = new FoldedState();
+		foldGraph.replace(stateNr, fs);
+		FOR_EACH_CONST(j, Vector<int>, foldingStates)
+			fs->foldRel.insert(*j);
+	}
+}
 
-	// TODO: backward folding,, (we may use the state depth for this)
+
+void
+StateFoldingGraph::collapseFolding()
+{
+//	FOR_EACH_CONST(i, NatSet, maximalStates)
+//	{
+//		if (folded(*i))
+//		{
+//
+//		}
+//	}
 }
 
 bool
@@ -152,26 +181,25 @@ StateFoldingGraph::constConcrPath(
 		return sfc->fold(getStateDag(cycle.front().first),
 						 graph->getStateDag(spos));
 	}
-	if (sfc->fold(getStateDag(pos->first),graph->getStateDag(spos)))
+
+	if (foldState(pos->first, spos))
 	{
 		int index = 0;
 		int next = NONE;
 		list<Edge>::const_iterator oldPos = pos;
 		pos++;
+
 		while ((next = graph->getNextState(spos, index)) != NONE)
 		{
-			if (tfc->fold(
-					getTransitionDag(oldPos->first,oldPos->second),
-					graph->getTransitionDag(spos,index)))
+			insertFoldedState(next);
+
+			if (constConcrPath(path, cycle, pos, inCycle, next, resP, resCy))
 			{
-				if (constConcrPath(path, cycle, pos, inCycle, next, resP, resCy))
-				{
-					if (inCycle)
-						resCy.push_front(make_pair(spos,index));
-					else
-						resP.push_front(make_pair(spos,index));
-					return true;
-				}
+				if (inCycle)
+					resCy.push_front(make_pair(spos,index));
+				else
+					resP.push_front(make_pair(spos,index));
+				return true;
 			}
 			++index;
 		}
@@ -180,42 +208,39 @@ StateFoldingGraph::constConcrPath(
 }
 
 void
-StateFoldingGraph::dump(int stateNr, PrettyPrinter* stateP, PrettyPrinter* transP)
+StateFoldingGraph::dump(ostream& o, int stateNr, PrettyPrinter* stateP, PrettyPrinter* transP) const
 {
-	cout << " " << stateNr;
+	o << " " << stateNr;
 	if (graph->getStateParent(stateNr) > 0)
-		cout << "(parent " << graph->getStateParent(stateNr) << ")" ;
-	if (!notFolded(stateNr))
-	{
-		cout << "[folded";
-		FOR_EACH_CONST(j, Vector<int>, states[stateNr]->foldStates)
-		{
-			cout << " " << *j;
-		}
-		cout << "]";
-	}
-	cout << ": ";
+		o << "(parent " << graph->getStateParent(stateNr) << ")" ;
+	dump_fold(o, stateNr);
+	o << ": ";
 	stateP->print(cout, getStateDag(stateNr));
-	cout << endl;
+	o << endl;
 
 	// print transitions
-	if (states[stateNr]->nextStates.get() != NULL)
+	for (int j = 0; j < graph->getNrTransitions(stateNr); ++j)
 	{
-		for (int j = 0; j < graph->getNrTransitions(stateNr); ++j)
+		int nx = graph->getNextState(stateNr,j);
+		o << "    " << "-[ ";
+		transP->print(cout, graph->getTransitionDag(stateNr,j));
+		o << " ]-> " << nx;
+		dump_fold(o, nx);
+		o << endl;
+	}
+}
+
+void
+StateFoldingGraph::dump_fold(ostream& o, int stateNr) const
+{
+	if (const FoldedState* fs = dynamic_cast<const FoldedState*>(foldGraph[stateNr]))
+	{
+		o << "[folded";
+		FOR_EACH_CONST(j, set<int>, fs->foldRel)
 		{
-			int nx = graph->getNextState(stateNr,j);
-			cout << "    " << (notFolded(nx)?'#':'.') << "-[ ";
-			transP->print(cout, graph->getTransitionDag(stateNr,j));
-			cout << " ]-> " << nx;
-			if (!notFolded(nx))
-			{
-				cout << " [FOLD: ";
-				FOR_EACH_CONST(k, Vector<int>, states[nx]->foldStates)
-					cout << " " << *k;
-				cout << "]";
-			}
-			cout << endl;
+			o << " " << *j;
 		}
+		o << "]";
 	}
 }
 

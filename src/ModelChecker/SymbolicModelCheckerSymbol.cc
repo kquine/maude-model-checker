@@ -207,7 +207,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	do {
 #ifdef SDEBUG
 		cout << "##current bound = " << curr_bound << ", #states = " << nsg.getNrStates() << endl;
-		int old_size = nsg.getNrStates();
+		int old_size = graph.getNrStates();
 #endif
 		mc.reset(new NDFSModelChecker(prod));
 		systemAutomaton.setBound(curr_bound++);
@@ -215,7 +215,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 #ifdef SDEBUG
 		// print states in the previous bound (to show transitions)
 		for (int k = bound_state; k < old_size; ++k)
-			nsg.dump(k, &printState, &printTrans);
+			nsg.dump(cout, k, &printState, &printTrans);
 		bound_state = old_size;
 #endif
 	} while(result == false && systemAutomaton.hitBound());
@@ -263,7 +263,7 @@ SymbolicModelCheckerSymbol::SystemAutomaton::SystemAutomaton(
 }
 
 int
-SymbolicModelCheckerSymbol::SystemAutomaton::getNextState(int stateNr, int index)
+SymbolicModelCheckerSymbol::SystemAutomaton::getNextState(int stateNr, int transitionNr)
 {
 	Assert(stateNr < sInfo.size(), "SystemAutomaton::getNextState: unknown state");
 
@@ -275,15 +275,16 @@ SymbolicModelCheckerSymbol::SystemAutomaton::getNextState(int stateNr, int index
 	}
 	else
 	{
-		int n = gph->getNextState(stateNr, index);
+		int n = gph->getNextState(stateNr, transitionNr);
 		if (n == NONE)
 		{
 			// fake a self loop for deadlocked state (if not hit bound)
-			if (index == 0)
+			if (transitionNr == 0)
 				return stateNr;
 		}
 		else
 		{
+			//FIXME: bound correct here??
 			if (n >= sInfo.size())
 				sInfo.expandTo(n + 1);
 			if (sInfo[n]->depth == NONE)

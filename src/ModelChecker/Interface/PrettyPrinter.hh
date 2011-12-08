@@ -14,7 +14,7 @@ class PrettyPrinter
 {
 public:
 	PrettyPrinter(Symbol* prettyPrintSymbol, RewritingContext* context);
-	void print(ostream& o, DagNode* target);
+	void print(ostream& o, DagNode* target) const;
 
 protected:
     bool attachSymbol(const char* purpose, Symbol* symbol);

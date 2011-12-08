@@ -7,6 +7,7 @@
 
 #ifndef STATEFOLDINGGRAPH_HH_
 #define STATEFOLDINGGRAPH_HH_
+#include <set>
 #include "Interface/FoldingChecker.hh"
 #include "Interface/PrettyPrinter.hh"
 #include "Interface/CounterExampleGenerator.hh"
@@ -18,15 +19,18 @@ namespace modelChecker {
 
 //
 // Wrapper with folding relation.. maintaining POR data structure
-// (currently, inefficient due to using Full-Maude functions..)
+// NOTE1: currently, inefficient due to using Full-Maude functions..)
+// NOTE2: unfolding state will only consider "concrete" narrowing states,
+//		so that we do not need to maintain the entire partial order structure,
+//		but a only "collapsed" structure..
+// TODO: iterator-based implementation will be required for efficiency..
 //
 class StateFoldingGraph: public CounterExampleGenerator::DagGraph
 {
 	NO_COPYING(StateFoldingGraph);
 	typedef CounterExampleGenerator::Edge	Edge;
 public:
-	StateFoldingGraph(SystemGraph2* graph,
-			const FoldingChecker* sfc, const FoldingChecker* tfc);
+	StateFoldingGraph(SystemGraph2* graph, const FoldingChecker* sfc, const FoldingChecker* tfc);
 	virtual ~StateFoldingGraph() {}
 
 	int getNrStates() const;
@@ -37,52 +41,63 @@ public:
 	int getNextState(int stateNr, int index);
 
 	// folding stuff
-	bool notFolded(int stateNr) const;	// if stateNr is a folded state or not
+	void collapseFolding();			// collapse folding structure (backward folding)
 
 	// construct a concrete path without folding, and returns true if succeeded.
 	bool constructConcretePath(const list<Edge>& path, const list<Edge>& cycle,
 							   list<Edge>& resP, list<Edge>& resCy);
 
 	// state dump
-	void dump(int stateNr, PrettyPrinter* stateP, PrettyPrinter* transP);
+	void dump(ostream& o, int stateNr, PrettyPrinter* stateP, PrettyPrinter* transP) const;
 
 private:
-	struct FoldedState
+	struct State
 	{
-		Vector<int> foldStates;				// folded state indices
-		PtrVector<Vector<int> > foldTrans;	// folded transitions
-		auto_ptr<Vector<int> > nextStates;	// index |-> folded states. NULL if not open yet.
+		virtual ~State() {}
+		auto_ptr<Vector<pair<int,int> > > trans;	// (next state, orig trIndex)
+	};
+
+	struct MaximalState: public State
+	{
+		set<int> parents;		// parent (maximal/refined) state indices in folded graph
+		Vector<int> backFold;	// for backward folding
+	};
+
+	struct FoldedState: public State
+	{
+		set<int> foldRel;	// foldedState -> origTrIdx |-> foldedTrIndices (in original graph)
 	};
 
 	bool constConcrPath(const list<Edge>& path, const list<Edge>& cycle,
 						list<Edge>::const_iterator pos, bool inCycle,
 						int statePos, list<Edge>& resP, list<Edge>& resCy);
 
-	void insertNewFoldedState(int stateNr);
+	void insertFoldedState(int stateNr);
 
-	int foldedStateSize;
+	bool foldState(int s, int t) const;
 
-	// NOTE: folding graph and the underlying graph shares the same state index.
-	PtrVector<FoldedState> states;		// folding graph
-	SystemGraph2* graph;				// underlying graph
+	void dump_fold(ostream& o, int stateNr) const;
 
-	const FoldingChecker* sfc;		// state folding
-	const FoldingChecker* tfc;		// transition folding
+	SystemGraph2* graph;			// underlying graph
+	PtrVector<State> foldGraph;		// folding graph (the same stateIndex with the underlying graph)
+	set<int> maximalStates;			// set of maximal states
+	set<int> refinedStates;			// set of refined states
+	const FoldingChecker* sfc;		// state folding checker
+	const FoldingChecker* tfc;		// transition folding checker
 };
 
 
 inline int
 StateFoldingGraph::getNrStates() const
 {
-	return foldedStateSize;
+	return maximalStates.size() + refinedStates.size();
 }
 
 inline int
 StateFoldingGraph::getNrTransitions(int stateNr) const
 {
-	Assert(stateNr < states.size() && states[stateNr]->nextStates.get() != NULL,
-			"StateFoldingGraph::getNrTransitions: invalid state lookup");
-	return states[stateNr]->nextStates->size();
+	Assert(stateNr < foldGraph.size(), "StateFoldingGraph::getNrTransitions: invalid state lookup");
+	return foldGraph[stateNr]->trans.get() == NULL? NONE: foldGraph[stateNr]->trans->size();
 }
 
 inline DagNode*
@@ -94,15 +109,27 @@ StateFoldingGraph::getStateDag(int stateNr) const
 inline DagNode*
 StateFoldingGraph::getTransitionDag(int stateNr, int index) const
 {
-	//FIXME: should return the corresponding dag
-	return graph->getTransitionDag(stateNr, index);
+	Assert(stateNr < foldGraph.size(), "StateFoldingGraph::getTransitionDag: invalid state lookup");
+	Assert(foldGraph[stateNr]->trans.get() != NULL,
+			"StateFoldingGraph::getTransitionDag: no transition");
+	Assert(index < (*foldGraph[stateNr]->trans).size(),
+			"StateFoldingGraph::getTransitionDag: invalid folding transition lookup");
+	return graph->getTransitionDag(stateNr,
+			(*foldGraph[stateNr]->trans)[index].second);
 }
 
 inline bool
-StateFoldingGraph::notFolded(int stateNr) const
+StateFoldingGraph::foldState(int s, int t) const
 {
-	return states[stateNr] != NULL && states[stateNr]->foldStates.empty();
+	if (t == s)
+		return true;
+	if (const FoldedState* ft = dynamic_cast<const FoldedState*>(foldGraph[t]))
+	{
+		return ft->foldRel.find(s) != ft->foldRel.end();
+	}
+	return false;
 }
+
 
 }
 

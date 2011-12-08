@@ -39,7 +39,7 @@ PrettyPrinter::PrettyPrinter(Symbol* prettyPrintSymbol, RewritingContext* contex
 
 
 void
-PrettyPrinter::print(ostream& o, DagNode* target)
+PrettyPrinter::print(ostream& o, DagNode* target) const
 {
 	Assert(prettyPrintSymbol != NULL, "StateFoldingGraph::StateFoldingGraph: null printStateSymbol");
 	static Vector<DagNode*> args(1);
