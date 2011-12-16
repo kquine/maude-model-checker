@@ -2,6 +2,10 @@
 --- only state-based.
 load model-checker
 
+--- TODO: addling rule label: information in ResultContext. 
+---       toTriple function changes it to ResultTriple
+---       we can extract a rule from it using that..
+
 ****************************************
 ***          Basic Interface         ***
 ****************************************
