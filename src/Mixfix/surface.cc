@@ -1,23 +1,24 @@
-
-/* A Bison parser, made by GNU Bison 2.4.1.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
-   
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-   
-   This program is free software: you can redistribute it and/or modify
+
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-   
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -28,7 +29,7 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-   
+
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
@@ -46,7 +47,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.4.1"
+#define YYBISON_VERSION "2.3"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -54,115 +55,9 @@
 /* Pure parsers.  */
 #define YYPURE 1
 
-/* Push parsers.  */
-#define YYPUSH 0
-
-/* Pull parsers.  */
-#define YYPULL 1
-
 /* Using locations.  */
 #define YYLSP_NEEDED 0
 
-
-
-/* Copy the first part of user declarations.  */
-
-/* Line 189 of yacc.c  */
-#line 27 "surface.yy"
-
-#include <string>
-#include <stack>
-
-//      utility stuff
-#include "macros.hh"
-#include "vector.hh"
-
-//	forward declarations
-#include "interface.hh"
-#include "core.hh"
-#include "higher.hh"
-#include "strategyLanguage.hh"
-#include "mixfix.hh"
-
-//	core class definitions
-#include "lineNumber.hh"
-
-//	front end class definitions
-#include "token.hh"
-#include "renaming.hh"
-#include "view.hh"
-#include "moduleExpression.hh"
-#include "fileTable.hh"
-#include "directoryManager.hh"
-#include "syntacticPreModule.hh"
-#include "visibleModule.hh"  // HACK
-#include "userLevelRewritingContext.hh"
-#include "interpreter.hh"
-
-#include "global.hh"
-#define clear()			tokenSequence.clear();
-#define store(token)		tokenSequence.append(token)
-#define fragClear()		fragments.contractTo(0);
-#define fragStore(token)	fragments.append(token)
-#define YYPARSE_PARAM	parseResult
-#define PARSE_RESULT	(*((UserLevelRewritingContext::ParseResult*) parseResult))
-
-#define CM		interpreter.getCurrentModule()
-#define CV		interpreter.getCurrentView()
-
-#include "lexerAux.hh"
-/*
-void lexerInitialMode();
-void lexerIdMode();
-void lexerCmdMode();
-void lexerFileNameMode();
-void lexerStringMode();
-void lexerLatexMode();
-bool handleEof();
-bool includeFile(const string& directory, const string& fileName, bool silent, int lineNr);
-//void eatComment(bool firstNonWhite);
-*/
-Vector<Token> singleton(1);
-Vector<Token> tokenSequence;
-Vector<Token> lexerBubble;
-Vector<Token> fragments;
-Vector<Token> moduleExpr;
-Vector<Token> opDescription;
-stack<ModuleExpression*> moduleExpressions;
-Renaming* currentRenaming = 0;
-SyntaxContainer* currentSyntaxContainer = 0;
-SyntaxContainer* oldSyntaxContainer = 0;
-
-Int64 number;
-Int64 number2;
-
-static void yyerror(char *s);
-
-void cleanUpModuleExpression();
-void cleanUpParser();
-void missingSpace(const Token& token);
-
-
-/* Line 189 of yacc.c  */
-#line 148 "surface.c"
-
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* Enabling the token table.  */
-#ifndef YYTOKEN_TABLE
-# define YYTOKEN_TABLE 0
-#endif
 
 
 /* Tokens.  */
@@ -324,16 +219,260 @@ void missingSpace(const Token& token);
      FORCE_LOOKAHEAD = 408
    };
 #endif
+/* Tokens.  */
+#define FILE_NAME_STRING 258
+#define UNINTERPRETED_STRING 259
+#define LATEX_STRING 260
+#define KW_MOD 261
+#define KW_OMOD 262
+#define KW_VIEW 263
+#define KW_PARSE 264
+#define KW_NORMALIZE 265
+#define KW_REDUCE 266
+#define KW_REWRITE 267
+#define KW_LOOP 268
+#define KW_NARROW 269
+#define KW_XG_NARROW 270
+#define KW_MATCH 271
+#define KW_XMATCH 272
+#define KW_UNIFY 273
+#define KW_EREWRITE 274
+#define KW_FREWRITE 275
+#define KW_SREWRITE 276
+#define KW_CONTINUE 277
+#define KW_SEARCH 278
+#define KW_SET 279
+#define KW_SHOW 280
+#define KW_ON 281
+#define KW_OFF 282
+#define KW_TRACE 283
+#define KW_BODY 284
+#define KW_BUILTIN 285
+#define KW_WHOLE 286
+#define KW_SELECT 287
+#define KW_DESELECT 288
+#define KW_CONDITION 289
+#define KW_SUBSTITUTION 290
+#define KW_PRINT 291
+#define KW_GRAPH 292
+#define KW_MIXFIX 293
+#define KW_FLAT 294
+#define KW_ATTRIBUTE 295
+#define KW_NEWLINE 296
+#define KW_WITH 297
+#define KW_PARENS 298
+#define KW_ALIASES 299
+#define KW_GC 300
+#define KW_TIME 301
+#define KW_STATS 302
+#define KW_TIMING 303
+#define KW_CMD 304
+#define KW_BREAKDOWN 305
+#define KW_BREAK 306
+#define KW_PATH 307
+#define KW_MODULE 308
+#define KW_MODULES 309
+#define KW_VIEWS 310
+#define KW_ALL 311
+#define KW_SORTS 312
+#define KW_OPS2 313
+#define KW_VARS 314
+#define KW_MBS 315
+#define KW_EQS 316
+#define KW_RLS 317
+#define KW_SUMMARY 318
+#define KW_KINDS 319
+#define KW_ADVISE 320
+#define KW_VERBOSE 321
+#define KW_DO 322
+#define KW_CLEAR 323
+#define KW_PROTECT 324
+#define KW_EXTEND 325
+#define KW_INCLUDE 326
+#define KW_EXCLUDE 327
+#define KW_CONCEAL 328
+#define KW_REVEAL 329
+#define KW_COMPILE 330
+#define KW_COUNT 331
+#define KW_DEBUG 332
+#define KW_RESUME 333
+#define KW_ABORT 334
+#define KW_STEP 335
+#define KW_WHERE 336
+#define KW_CREDUCE 337
+#define KW_SREDUCE 338
+#define KW_DUMP 339
+#define KW_PROFILE 340
+#define KW_NUMBER 341
+#define KW_RAT 342
+#define KW_COLOR 343
+#define SIMPLE_NUMBER 344
+#define KW_PWD 345
+#define KW_CD 346
+#define KW_PUSHD 347
+#define KW_POPD 348
+#define KW_LS 349
+#define KW_LOAD 350
+#define KW_QUIT 351
+#define KW_EOF 352
+#define KW_ENDM 353
+#define KW_IMPORT 354
+#define KW_ENDV 355
+#define KW_SORT 356
+#define KW_SUBSORT 357
+#define KW_OP 358
+#define KW_OPS 359
+#define KW_MSGS 360
+#define KW_VAR 361
+#define KW_CLASS 362
+#define KW_SUBCLASS 363
+#define KW_MB 364
+#define KW_CMB 365
+#define KW_EQ 366
+#define KW_CEQ 367
+#define KW_RL 368
+#define KW_CRL 369
+#define KW_IS 370
+#define KW_FROM 371
+#define KW_ARROW 372
+#define KW_ARROW2 373
+#define KW_PARTIAL 374
+#define KW_IF 375
+#define KW_LABEL 376
+#define KW_TO 377
+#define KW_COLON2 378
+#define KW_ASSOC 379
+#define KW_COMM 380
+#define KW_ID 381
+#define KW_IDEM 382
+#define KW_ITER 383
+#define KW_LEFT 384
+#define KW_RIGHT 385
+#define KW_PREC 386
+#define KW_GATHER 387
+#define KW_METADATA 388
+#define KW_STRAT 389
+#define KW_POLY 390
+#define KW_MEMO 391
+#define KW_FROZEN 392
+#define KW_CTOR 393
+#define KW_LATEX 394
+#define KW_SPECIAL 395
+#define KW_CONFIG 396
+#define KW_OBJ 397
+#define KW_MSG 398
+#define KW_DITTO 399
+#define KW_FORMAT 400
+#define KW_ID_HOOK 401
+#define KW_OP_HOOK 402
+#define KW_TERM_HOOK 403
+#define KW_IN 404
+#define IDENTIFIER 405
+#define NUMERIC_ID 406
+#define ENDS_IN_DOT 407
+#define FORCE_LOOKAHEAD 408
 
 
+
+
+/* Copy the first part of user declarations.  */
+#line 27 "surface.yy"
+
+#include <string>
+#include <stack>
+
+//      utility stuff
+#include "macros.hh"
+#include "vector.hh"
+
+//	forward declarations
+#include "interface.hh"
+#include "core.hh"
+#include "higher.hh"
+#include "strategyLanguage.hh"
+#include "mixfix.hh"
+
+//	core class definitions
+#include "lineNumber.hh"
+
+//	front end class definitions
+#include "token.hh"
+#include "renaming.hh"
+#include "view.hh"
+#include "moduleExpression.hh"
+#include "fileTable.hh"
+#include "directoryManager.hh"
+#include "syntacticPreModule.hh"
+#include "visibleModule.hh"  // HACK
+#include "userLevelRewritingContext.hh"
+#include "interpreter.hh"
+
+#include "global.hh"
+#define clear()			tokenSequence.clear();
+#define store(token)		tokenSequence.append(token)
+#define fragClear()		fragments.contractTo(0);
+#define fragStore(token)	fragments.append(token)
+#define YYPARSE_PARAM	parseResult
+#define PARSE_RESULT	(*((UserLevelRewritingContext::ParseResult*) parseResult))
+
+#define CM		interpreter.getCurrentModule()
+#define CV		interpreter.getCurrentView()
+
+#include "lexerAux.hh"
+/*
+void lexerInitialMode();
+void lexerIdMode();
+void lexerCmdMode();
+void lexerFileNameMode();
+void lexerStringMode();
+void lexerLatexMode();
+bool handleEof();
+bool includeFile(const string& directory, const string& fileName, bool silent, int lineNr);
+//void eatComment(bool firstNonWhite);
+*/
+Vector<Token> singleton(1);
+Vector<Token> tokenSequence;
+Vector<Token> lexerBubble;
+Vector<Token> fragments;
+Vector<Token> moduleExpr;
+Vector<Token> opDescription;
+stack<ModuleExpression*> moduleExpressions;
+Renaming* currentRenaming = 0;
+SyntaxContainer* currentSyntaxContainer = 0;
+SyntaxContainer* oldSyntaxContainer = 0;
+
+Int64 number;
+Int64 number2;
+
+static void yyerror(char *s);
+
+void cleanUpModuleExpression();
+void cleanUpParser();
+void missingSpace(const Token& token);
+
+
+/* Enabling traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+
+/* Enabling verbose error messages.  */
+#ifdef YYERROR_VERBOSE
+# undef YYERROR_VERBOSE
+# define YYERROR_VERBOSE 1
+#else
+# define YYERROR_VERBOSE 0
+#endif
+
+/* Enabling the token table.  */
+#ifndef YYTOKEN_TABLE
+# define YYTOKEN_TABLE 0
+#endif
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-{
-
-/* Line 214 of yacc.c  */
 #line 103 "surface.yy"
-
+{
   bool yyBool;
   Int64 yyInt64;
   const char* yyString;
@@ -342,28 +481,25 @@ typedef union YYSTYPE
   Interpreter::Flags yyFlags;
   Interpreter::PrintFlags yyPrintFlags;
   Interpreter::SearchKind yySearchKind;
-
-
-
-/* Line 214 of yacc.c  */
-#line 350 "surface.c"
-} YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
+}
+/* Line 193 of yacc.c.  */
+#line 487 "surface.c"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 
-/* Copy the second part of user declarations.  */
 
-/* Line 264 of yacc.c  */
+/* Copy the second part of user declarations.  */
 #line 114 "surface.yy"
 
 int yylex(YYSTYPE* lvalp);
 
 
-/* Line 264 of yacc.c  */
-#line 367 "surface.c"
+/* Line 216 of yacc.c.  */
+#line 503 "surface.c"
 
 #ifdef short
 # undef short
@@ -413,7 +549,7 @@ typedef short int yytype_int16;
 #define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
 
 #ifndef YY_
-# if YYENABLE_NLS
+# if defined YYENABLE_NLS && YYENABLE_NLS
 #  if ENABLE_NLS
 #   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
 #   define YY_(msgid) dgettext ("bison-runtime", msgid)
@@ -438,14 +574,14 @@ typedef short int yytype_int16;
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static int
-YYID (int yyi)
+YYID (int i)
 #else
 static int
-YYID (yyi)
-    int yyi;
+YYID (i)
+    int i;
 #endif
 {
-  return yyi;
+  return i;
 }
 #endif
 
@@ -526,9 +662,9 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss_alloc;
-  YYSTYPE yyvs_alloc;
-};
+  yytype_int16 yyss;
+  YYSTYPE yyvs;
+  };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
@@ -562,12 +698,12 @@ union yyalloc
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack_alloc, Stack)				\
+# define YYSTACK_RELOCATE(Stack)					\
     do									\
       {									\
 	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack_alloc, Stack, yysize);			\
-	Stack = &yyptr->Stack_alloc;					\
+	YYCOPY (&yyptr->Stack, Stack, yysize);				\
+	Stack = &yyptr->Stack;						\
 	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
 	yyptr += yynewbytes / sizeof (*yyptr);				\
       }									\
@@ -976,43 +1112,42 @@ static const char *const yytname[] =
   "KW_FROZEN", "KW_CTOR", "KW_LATEX", "KW_SPECIAL", "KW_CONFIG", "KW_OBJ",
   "KW_MSG", "KW_DITTO", "KW_FORMAT", "KW_ID_HOOK", "KW_OP_HOOK",
   "KW_TERM_HOOK", "KW_IN", "IDENTIFIER", "NUMERIC_ID", "ENDS_IN_DOT",
-  "FORCE_LOOKAHEAD", "$accept", "top", "item", "directive", "$@1", "$@2",
-  "$@3", "$@4", "$@5", "moduleExprDot", "moduleExpr", "moduleExpr2",
-  "moduleExpr3", "renameExpr", "instantExpr", "$@6", "parenExpr",
-  "argList", "renaming", "$@7", "$@8", "renaming2", "mappingList",
-  "mapping", "$@9", "$@10", "fromSpec", "$@11", "toAttributes", "$@12",
-  "toAttributeList", "toAttribute", "$@13", "$@14", "$@15", "view", "$@16",
-  "$@17", "$@18", "viewDecList", "skipStrayArrow", "viewDeclaration",
-  "$@19", "sortDot", "viewEndOpMap", "$@20", "$@21", "$@22", "endBubble",
-  "parenBubble", "$@23", "module", "$@24", "$@25", "dot", "parameters",
-  "parameterList", "parameter", "colon2", "badType", "typeDot",
-  "startModule", "decList", "declaration", "$@26", "$@27", "$@28", "$@29",
-  "$@30", "$@31", "$@32", "$@33", "$@34", "$@35", "$@36", "$@37", "$@38",
-  "$@39", "$@40", "$@41", "$@42", "$@43", "$@44", "$@45", "$@46", "$@47",
-  "$@48", "classDef", "cPairList", "cPair", "varNameList", "opNameList",
-  "simpleOpName", "domainRangeAttr", "skipStrayColon", "dra2", "rangeAttr",
-  "typeAttr", "arrow", "typeList", "typeName", "$@49", "sortNames",
-  "attributes", "attributeList", "idKeyword", "attribute", "$@50", "$@51",
-  "$@52", "$@53", "$@54", "$@55", "$@56", "identity", "idList", "hookList",
-  "hook", "expectedIs", "expectedDot", "sortNameList", "subsortList",
-  "$@57", "sortName", "sortNameFrag", "$@58", "sortNameFrags", "$@59",
-  "token", "tokenBarDot", "tokenBarColon", "sortToken", "endsInDot",
-  "inert", "identifier", "startKeyword", "startKeyword2", "midKeyword",
-  "attrKeyword", "attrKeyword2", "command", "$@60", "$@61", "$@62", "$@63",
-  "$@64", "$@65", "$@66", "$@67", "$@68", "$@69", "$@70", "$@71", "$@72",
-  "$@73", "$@74", "$@75", "$@76", "$@77", "$@78", "$@79", "$@80", "$@81",
-  "$@82", "$@83", "$@84", "$@85", "$@86", "$@87", "$@88", "$@89", "$@90",
-  "$@91", "$@92", "$@93", "$@94", "$@95", "printOption", "traceOption",
-  "polarity", "select", "exclude", "conceal", "search", "match",
-  "optDebug", "optNumber", "importMode", "moduleAndTerm", "$@96", "inEnd",
-  "$@97", "numberModuleTerm", "$@98", "$@99", "numberModuleTerm1", "$@100",
-  "$@101", "numberModuleTerm2", "$@102", "$@103", "numbersModuleTerm",
-  "$@104", "$@105", "numbersModuleTerm1", "$@106", "$@107", "$@108",
-  "numbersModuleTerm2", "$@109", "$@110", "$@111", "numbersModuleTerm3",
-  "$@112", "$@113", "numbersModuleTerm4", "$@114", "$@115",
-  "numbersModuleTerm5", "$@116", "$@117", "numbersModuleTerm6", "$@118",
-  "$@119", "miscEndBubble", "$@120", "initialEndBubble", "$@121", "$@122",
-  "cTokenBarIn", "cTokenBarLeftIn", "cTokenBarDotNumber",
+  "FORCE_LOOKAHEAD", "$accept", "top", "item", "directive", "@1", "@2",
+  "@3", "@4", "@5", "moduleExprDot", "moduleExpr", "moduleExpr2",
+  "moduleExpr3", "renameExpr", "instantExpr", "@6", "parenExpr", "argList",
+  "renaming", "@7", "@8", "renaming2", "mappingList", "mapping", "@9",
+  "@10", "fromSpec", "@11", "toAttributes", "@12", "toAttributeList",
+  "toAttribute", "@13", "@14", "@15", "view", "@16", "@17", "@18",
+  "viewDecList", "skipStrayArrow", "viewDeclaration", "@19", "sortDot",
+  "viewEndOpMap", "@20", "@21", "@22", "endBubble", "parenBubble", "@23",
+  "module", "@24", "@25", "dot", "parameters", "parameterList",
+  "parameter", "colon2", "badType", "typeDot", "startModule", "decList",
+  "declaration", "@26", "@27", "@28", "@29", "@30", "@31", "@32", "@33",
+  "@34", "@35", "@36", "@37", "@38", "@39", "@40", "@41", "@42", "@43",
+  "@44", "@45", "@46", "@47", "@48", "classDef", "cPairList", "cPair",
+  "varNameList", "opNameList", "simpleOpName", "domainRangeAttr",
+  "skipStrayColon", "dra2", "rangeAttr", "typeAttr", "arrow", "typeList",
+  "typeName", "@49", "sortNames", "attributes", "attributeList",
+  "idKeyword", "attribute", "@50", "@51", "@52", "@53", "@54", "@55",
+  "@56", "identity", "idList", "hookList", "hook", "expectedIs",
+  "expectedDot", "sortNameList", "subsortList", "@57", "sortName",
+  "sortNameFrag", "@58", "sortNameFrags", "@59", "token", "tokenBarDot",
+  "tokenBarColon", "sortToken", "endsInDot", "inert", "identifier",
+  "startKeyword", "startKeyword2", "midKeyword", "attrKeyword",
+  "attrKeyword2", "command", "@60", "@61", "@62", "@63", "@64", "@65",
+  "@66", "@67", "@68", "@69", "@70", "@71", "@72", "@73", "@74", "@75",
+  "@76", "@77", "@78", "@79", "@80", "@81", "@82", "@83", "@84", "@85",
+  "@86", "@87", "@88", "@89", "@90", "@91", "@92", "@93", "@94", "@95",
+  "printOption", "traceOption", "polarity", "select", "exclude", "conceal",
+  "search", "match", "optDebug", "optNumber", "importMode",
+  "moduleAndTerm", "@96", "inEnd", "@97", "numberModuleTerm", "@98", "@99",
+  "numberModuleTerm1", "@100", "@101", "numberModuleTerm2", "@102", "@103",
+  "numbersModuleTerm", "@104", "@105", "numbersModuleTerm1", "@106",
+  "@107", "@108", "numbersModuleTerm2", "@109", "@110", "@111",
+  "numbersModuleTerm3", "@112", "@113", "numbersModuleTerm4", "@114",
+  "@115", "numbersModuleTerm5", "@116", "@117", "numbersModuleTerm6",
+  "@118", "@119", "miscEndBubble", "@120", "initialEndBubble", "@121",
+  "@122", "cTokenBarIn", "cTokenBarLeftIn", "cTokenBarDotNumber",
   "cTokenBarDotRight", "cTokenBarDotCommaNumber", "cTokenBarDotCommaRight",
   "opSelect", "endSelect", "badSelect", "cOpNameList", "cSimpleOpName",
   "cSimpleTokenBarDot", 0
@@ -2080,7 +2215,7 @@ while (YYID (0))
    we won't break user code: when these are the locations we know.  */
 
 #ifndef YY_LOCATION_PRINT
-# if YYLTYPE_IS_TRIVIAL
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
 #  define YY_LOCATION_PRINT(File, Loc)			\
      fprintf (File, "%d.%d-%d.%d",			\
 	      (Loc).first_line, (Loc).first_column,	\
@@ -2191,20 +2326,17 @@ yy_symbol_print (yyoutput, yytype, yyvaluep)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
+yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)
 #else
 static void
-yy_stack_print (yybottom, yytop)
-    yytype_int16 *yybottom;
-    yytype_int16 *yytop;
+yy_stack_print (bottom, top)
+    yytype_int16 *bottom;
+    yytype_int16 *top;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
-  for (; yybottom <= yytop; yybottom++)
-    {
-      int yybot = *yybottom;
-      YYFPRINTF (stderr, " %d", yybot);
-    }
+  for (; bottom <= top; ++bottom)
+    YYFPRINTF (stderr, " %d", *bottom);
   YYFPRINTF (stderr, "\n");
 }
 
@@ -2238,11 +2370,11 @@ yy_reduce_print (yyvsp, yyrule)
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
-      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
+      fprintf (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
 		       		       );
-      YYFPRINTF (stderr, "\n");
+      fprintf (stderr, "\n");
     }
 }
 
@@ -2522,8 +2654,10 @@ yydestruct (yymsg, yytype, yyvaluep)
 	break;
     }
 }
+
 
 /* Prevent warnings from -Wmissing-prototypes.  */
+
 #ifdef YYPARSE_PARAM
 #if defined __STDC__ || defined __cplusplus
 int yyparse (void *YYPARSE_PARAM);
@@ -2542,9 +2676,10 @@ int yyparse ();
 
 
 
-/*-------------------------.
-| yyparse or yypush_parse.  |
-`-------------------------*/
+
+/*----------.
+| yyparse.  |
+`----------*/
 
 #ifdef YYPARSE_PARAM
 #if (defined __STDC__ || defined __C99__FUNC__ \
@@ -2568,46 +2703,22 @@ yyparse ()
 #endif
 #endif
 {
-/* The lookahead symbol.  */
+  /* The look-ahead symbol.  */
 int yychar;
 
-/* The semantic value of the lookahead symbol.  */
+/* The semantic value of the look-ahead symbol.  */
 YYSTYPE yylval;
 
-    /* Number of syntax errors so far.  */
-    int yynerrs;
+/* Number of syntax errors so far.  */
+int yynerrs;
 
-    int yystate;
-    /* Number of tokens to shift before error messages enabled.  */
-    int yyerrstatus;
-
-    /* The stacks and their tools:
-       `yyss': related to states.
-       `yyvs': related to semantic values.
-
-       Refer to the stacks thru separate pointers, to allow yyoverflow
-       to reallocate them elsewhere.  */
-
-    /* The state stack.  */
-    yytype_int16 yyssa[YYINITDEPTH];
-    yytype_int16 *yyss;
-    yytype_int16 *yyssp;
-
-    /* The semantic value stack.  */
-    YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs;
-    YYSTYPE *yyvsp;
-
-    YYSIZE_T yystacksize;
-
+  int yystate;
   int yyn;
   int yyresult;
-  /* Lookahead token as an internal (translated) token number.  */
-  int yytoken;
-  /* The variables used to return semantic value and location from the
-     action routines.  */
-  YYSTYPE yyval;
-
+  /* Number of tokens to shift before error messages enabled.  */
+  int yyerrstatus;
+  /* Look-ahead token as an internal (translated) token number.  */
+  int yytoken = 0;
 #if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
   char yymsgbuf[128];
@@ -2615,28 +2726,51 @@ YYSTYPE yylval;
   YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
+  /* Three stacks and their tools:
+     `yyss': related to states,
+     `yyvs': related to semantic values,
+     `yyls': related to locations.
+
+     Refer to the stacks thru separate pointers, to allow yyoverflow
+     to reallocate them elsewhere.  */
+
+  /* The state stack.  */
+  yytype_int16 yyssa[YYINITDEPTH];
+  yytype_int16 *yyss = yyssa;
+  yytype_int16 *yyssp;
+
+  /* The semantic value stack.  */
+  YYSTYPE yyvsa[YYINITDEPTH];
+  YYSTYPE *yyvs = yyvsa;
+  YYSTYPE *yyvsp;
+
+
+
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
+
+  YYSIZE_T yystacksize = YYINITDEPTH;
+
+  /* The variables used to return semantic value and location from the
+     action routines.  */
+  YYSTYPE yyval;
+
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
-
-  yytoken = 0;
-  yyss = yyssa;
-  yyvs = yyvsa;
-  yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yystate = 0;
   yyerrstatus = 0;
   yynerrs = 0;
-  yychar = YYEMPTY; /* Cause a token to be read.  */
+  yychar = YYEMPTY;		/* Cause a token to be read.  */
 
   /* Initialize stack pointers.
      Waste one element of value and location stack
      so that they stay on the same level as the state stack.
      The wasted elements are never initialized.  */
+
   yyssp = yyss;
   yyvsp = yyvs;
 
@@ -2666,6 +2800,7 @@ YYSTYPE yylval;
 	YYSTYPE *yyvs1 = yyvs;
 	yytype_int16 *yyss1 = yyss;
 
+
 	/* Each stack pointer address is followed by the size of the
 	   data in use in that stack, in bytes.  This used to be a
 	   conditional around just the two extra args, but that might
@@ -2673,6 +2808,7 @@ YYSTYPE yylval;
 	yyoverflow (YY_("memory exhausted"),
 		    &yyss1, yysize * sizeof (*yyssp),
 		    &yyvs1, yysize * sizeof (*yyvsp),
+
 		    &yystacksize);
 
 	yyss = yyss1;
@@ -2695,8 +2831,9 @@ YYSTYPE yylval;
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
 	  goto yyexhaustedlab;
-	YYSTACK_RELOCATE (yyss_alloc, yyss);
-	YYSTACK_RELOCATE (yyvs_alloc, yyvs);
+	YYSTACK_RELOCATE (yyss);
+	YYSTACK_RELOCATE (yyvs);
+
 #  undef YYSTACK_RELOCATE
 	if (yyss1 != yyssa)
 	  YYSTACK_FREE (yyss1);
@@ -2707,6 +2844,7 @@ YYSTYPE yylval;
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
+
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
 		  (unsigned long int) yystacksize));
 
@@ -2716,9 +2854,6 @@ YYSTYPE yylval;
 
   YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
-  if (yystate == YYFINAL)
-    YYACCEPT;
-
   goto yybackup;
 
 /*-----------.
@@ -2727,16 +2862,16 @@ YYSTYPE yylval;
 yybackup:
 
   /* Do appropriate processing given the current state.  Read a
-     lookahead token if we need one and don't already have one.  */
+     look-ahead token if we need one and don't already have one.  */
 
-  /* First try to decide what to do without reference to lookahead token.  */
+  /* First try to decide what to do without reference to look-ahead token.  */
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
 
-  /* Not known => get a lookahead token if don't already have one.  */
+  /* Not known => get a look-ahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
@@ -2768,16 +2903,20 @@ yybackup:
       goto yyreduce;
     }
 
+  if (yyn == YYFINAL)
+    YYACCEPT;
+
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
-  /* Shift the lookahead token.  */
+  /* Shift the look-ahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
 
-  /* Discard the shifted token.  */
-  yychar = YYEMPTY;
+  /* Discard the shifted token unless it is eof.  */
+  if (yychar != YYEOF)
+    yychar = YYEMPTY;
 
   yystate = yyn;
   *++yyvsp = yylval;
@@ -2817,15 +2956,11 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-
-/* Line 1455 of yacc.c  */
 #line 232 "surface.yy"
     { YYACCEPT; ;}
     break;
 
   case 3:
-
-/* Line 1455 of yacc.c  */
 #line 234 "surface.yy"
     {
 			  PARSE_RESULT = UserLevelRewritingContext::QUIT;
@@ -2833,15 +2968,11 @@ yyreduce:
     break;
 
   case 8:
-
-/* Line 1455 of yacc.c  */
 #line 248 "surface.yy"
     { lexerFileNameMode(); ;}
     break;
 
   case 9:
-
-/* Line 1455 of yacc.c  */
 #line 250 "surface.yy"
     {
 			  int lineNr = lineNumber;
@@ -2854,15 +2985,11 @@ yyreduce:
     break;
 
   case 10:
-
-/* Line 1455 of yacc.c  */
 #line 258 "surface.yy"
     { lexerFileNameMode(); ;}
     break;
 
   case 11:
-
-/* Line 1455 of yacc.c  */
 #line 260 "surface.yy"
     {
 			  int lineNr = lineNumber;
@@ -2875,8 +3002,6 @@ yyreduce:
     break;
 
   case 12:
-
-/* Line 1455 of yacc.c  */
 #line 269 "surface.yy"
     {
 			  cout << directoryManager.getCwd() << '\n';
@@ -2884,15 +3009,11 @@ yyreduce:
     break;
 
   case 13:
-
-/* Line 1455 of yacc.c  */
 #line 272 "surface.yy"
     { lexerFileNameMode(); ;}
     break;
 
   case 14:
-
-/* Line 1455 of yacc.c  */
 #line 274 "surface.yy"
     {
 			  string directory;
@@ -2906,15 +3027,11 @@ yyreduce:
     break;
 
   case 15:
-
-/* Line 1455 of yacc.c  */
 #line 283 "surface.yy"
     { lexerFileNameMode(); ;}
     break;
 
   case 16:
-
-/* Line 1455 of yacc.c  */
 #line 285 "surface.yy"
     {
 			  string directory;
@@ -2928,8 +3045,6 @@ yyreduce:
     break;
 
   case 17:
-
-/* Line 1455 of yacc.c  */
 #line 295 "surface.yy"
     {
 			  const char* path = directoryManager.popd();
@@ -2944,15 +3059,11 @@ yyreduce:
     break;
 
   case 18:
-
-/* Line 1455 of yacc.c  */
 #line 305 "surface.yy"
     { lexerStringMode(); ;}
     break;
 
   case 19:
-
-/* Line 1455 of yacc.c  */
 #line 307 "surface.yy"
     {
 			  system((string("ls") + (yyvsp[(3) - (3)].yyString)).c_str());
@@ -2960,8 +3071,6 @@ yyreduce:
     break;
 
   case 20:
-
-/* Line 1455 of yacc.c  */
 #line 311 "surface.yy"
     {
 			  PARSE_RESULT = UserLevelRewritingContext::QUIT;
@@ -2970,8 +3079,6 @@ yyreduce:
     break;
 
   case 21:
-
-/* Line 1455 of yacc.c  */
 #line 316 "surface.yy"
     {
 			  if(!handleEof())
@@ -2982,8 +3089,6 @@ yyreduce:
     break;
 
   case 22:
-
-/* Line 1455 of yacc.c  */
 #line 349 "surface.yy"
     {
                           moduleExpressions.push(new ModuleExpression((yyvsp[(1) - (2)].yyToken)));
@@ -2991,8 +3096,6 @@ yyreduce:
     break;
 
   case 23:
-
-/* Line 1455 of yacc.c  */
 #line 353 "surface.yy"
     {
                           moduleExpressions.push(new ModuleExpression((yyvsp[(1) - (2)].yyToken)));
@@ -3000,8 +3103,6 @@ yyreduce:
     break;
 
   case 27:
-
-/* Line 1455 of yacc.c  */
 #line 360 "surface.yy"
     {
 			  ModuleExpression* m1 = moduleExpressions.top();
@@ -3013,8 +3114,6 @@ yyreduce:
     break;
 
   case 28:
-
-/* Line 1455 of yacc.c  */
 #line 368 "surface.yy"
     {
 			  Token t;
@@ -3025,8 +3124,6 @@ yyreduce:
     break;
 
   case 30:
-
-/* Line 1455 of yacc.c  */
 #line 378 "surface.yy"
     {
 			  ModuleExpression* m1 = moduleExpressions.top();
@@ -3038,8 +3135,6 @@ yyreduce:
     break;
 
   case 35:
-
-/* Line 1455 of yacc.c  */
 #line 394 "surface.yy"
     {
                           moduleExpressions.push(new ModuleExpression((yyvsp[(1) - (1)].yyToken)));
@@ -3047,8 +3142,6 @@ yyreduce:
     break;
 
   case 36:
-
-/* Line 1455 of yacc.c  */
 #line 401 "surface.yy"
     {
 			  ModuleExpression* m = moduleExpressions.top();
@@ -3059,15 +3152,11 @@ yyreduce:
     break;
 
   case 37:
-
-/* Line 1455 of yacc.c  */
 #line 409 "surface.yy"
     { clear(); ;}
     break;
 
   case 38:
-
-/* Line 1455 of yacc.c  */
 #line 411 "surface.yy"
     {
 			  ModuleExpression* m = moduleExpressions.top();
@@ -3077,29 +3166,21 @@ yyreduce:
     break;
 
   case 39:
-
-/* Line 1455 of yacc.c  */
 #line 418 "surface.yy"
     {;}
     break;
 
   case 40:
-
-/* Line 1455 of yacc.c  */
 #line 421 "surface.yy"
     { store((yyvsp[(3) - (3)].yyToken)); ;}
     break;
 
   case 41:
-
-/* Line 1455 of yacc.c  */
 #line 422 "surface.yy"
     { store((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 42:
-
-/* Line 1455 of yacc.c  */
 #line 429 "surface.yy"
     {
 			  oldSyntaxContainer = currentSyntaxContainer;
@@ -3108,8 +3189,6 @@ yyreduce:
     break;
 
   case 43:
-
-/* Line 1455 of yacc.c  */
 #line 434 "surface.yy"
     {
 			  currentSyntaxContainer = oldSyntaxContainer;
@@ -3117,8 +3196,6 @@ yyreduce:
     break;
 
   case 49:
-
-/* Line 1455 of yacc.c  */
 #line 449 "surface.yy"
     {
 			  currentRenaming->addSortMapping((yyvsp[(2) - (4)].yyToken), (yyvsp[(4) - (4)].yyToken));
@@ -3126,8 +3203,6 @@ yyreduce:
     break;
 
   case 50:
-
-/* Line 1455 of yacc.c  */
 #line 453 "surface.yy"
     {
 			  currentRenaming->addLabelMapping((yyvsp[(2) - (4)].yyToken), (yyvsp[(4) - (4)].yyToken));
@@ -3135,127 +3210,91 @@ yyreduce:
     break;
 
   case 51:
-
-/* Line 1455 of yacc.c  */
 #line 456 "surface.yy"
     { lexBubble(BAR_COLON | BAR_TO, 1); ;}
     break;
 
   case 52:
-
-/* Line 1455 of yacc.c  */
 #line 457 "surface.yy"
     { lexBubble(BAR_COMMA | BAR_LEFT_BRACKET | BAR_RIGHT_PAREN, 1); ;}
     break;
 
   case 53:
-
-/* Line 1455 of yacc.c  */
 #line 458 "surface.yy"
     {;}
     break;
 
   case 54:
-
-/* Line 1455 of yacc.c  */
 #line 463 "surface.yy"
     { Token::peelParens(lexerBubble); currentRenaming->addOpMapping(lexerBubble); ;}
     break;
 
   case 55:
-
-/* Line 1455 of yacc.c  */
 #line 464 "surface.yy"
     {;}
     break;
 
   case 56:
-
-/* Line 1455 of yacc.c  */
 #line 465 "surface.yy"
     { Token::peelParens(lexerBubble); currentRenaming->addOpMapping(lexerBubble); ;}
     break;
 
   case 57:
-
-/* Line 1455 of yacc.c  */
 #line 471 "surface.yy"
     { Token::peelParens(lexerBubble); currentRenaming->addOpTarget(lexerBubble); ;}
     break;
 
   case 58:
-
-/* Line 1455 of yacc.c  */
 #line 472 "surface.yy"
     {;}
     break;
 
   case 59:
-
-/* Line 1455 of yacc.c  */
 #line 473 "surface.yy"
     { Token::peelParens(lexerBubble); currentRenaming->addOpTarget(lexerBubble); ;}
     break;
 
   case 62:
-
-/* Line 1455 of yacc.c  */
 #line 480 "surface.yy"
     { currentRenaming->setPrec((yyvsp[(2) - (2)].yyToken)); ;}
     break;
 
   case 63:
-
-/* Line 1455 of yacc.c  */
 #line 481 "surface.yy"
     { clear(); ;}
     break;
 
   case 64:
-
-/* Line 1455 of yacc.c  */
 #line 482 "surface.yy"
     { currentRenaming->setGather(tokenSequence); ;}
     break;
 
   case 65:
-
-/* Line 1455 of yacc.c  */
 #line 483 "surface.yy"
     { clear(); ;}
     break;
 
   case 66:
-
-/* Line 1455 of yacc.c  */
 #line 484 "surface.yy"
     { currentRenaming->setFormat(tokenSequence); ;}
     break;
 
   case 67:
-
-/* Line 1455 of yacc.c  */
 #line 485 "surface.yy"
     { lexerLatexMode(); ;}
     break;
 
   case 68:
-
-/* Line 1455 of yacc.c  */
 #line 486 "surface.yy"
     { currentRenaming->setLatexMacro((yyvsp[(4) - (5)].yyString)); ;}
     break;
 
   case 69:
-
-/* Line 1455 of yacc.c  */
 #line 492 "surface.yy"
     { lexerIdMode(); ;}
     break;
 
   case 70:
-
-/* Line 1455 of yacc.c  */
 #line 494 "surface.yy"
     {
 			  fileTable.beginModule((yyvsp[(1) - (5)].yyToken), (yyvsp[(3) - (5)].yyToken));
@@ -3267,8 +3306,6 @@ yyreduce:
     break;
 
   case 71:
-
-/* Line 1455 of yacc.c  */
 #line 502 "surface.yy"
     {
 			  CV->addTo(moduleExpressions.top());
@@ -3277,8 +3314,6 @@ yyreduce:
     break;
 
   case 72:
-
-/* Line 1455 of yacc.c  */
 #line 507 "surface.yy"
     {
 			  lexerInitialMode();
@@ -3289,8 +3324,6 @@ yyreduce:
     break;
 
   case 75:
-
-/* Line 1455 of yacc.c  */
 #line 520 "surface.yy"
     {
 			  IssueWarning(LineNumber((yyvsp[(1) - (1)].yyToken).lineNumber()) <<
@@ -3299,8 +3332,6 @@ yyreduce:
     break;
 
   case 77:
-
-/* Line 1455 of yacc.c  */
 #line 528 "surface.yy"
     {
 			  CV->addSortMapping((yyvsp[(2) - (4)].yyToken), (yyvsp[(4) - (4)].yyToken));
@@ -3308,29 +3339,21 @@ yyreduce:
     break;
 
   case 78:
-
-/* Line 1455 of yacc.c  */
 #line 531 "surface.yy"
     {;}
     break;
 
   case 79:
-
-/* Line 1455 of yacc.c  */
 #line 532 "surface.yy"
     { lexBubble(BAR_COLON | BAR_TO, 1); ;}
     break;
 
   case 82:
-
-/* Line 1455 of yacc.c  */
 #line 537 "surface.yy"
     { (yyval.yyToken) = (yyvsp[(1) - (2)].yyToken); ;}
     break;
 
   case 83:
-
-/* Line 1455 of yacc.c  */
 #line 539 "surface.yy"
     {
 			  Token t;
@@ -3341,8 +3364,6 @@ yyreduce:
     break;
 
   case 84:
-
-/* Line 1455 of yacc.c  */
 #line 548 "surface.yy"
     {
 			  //
@@ -3354,8 +3375,6 @@ yyreduce:
     break;
 
   case 85:
-
-/* Line 1455 of yacc.c  */
 #line 556 "surface.yy"
     {
 			  lexBubble(END_STATEMENT, 1);
@@ -3363,8 +3382,6 @@ yyreduce:
     break;
 
   case 86:
-
-/* Line 1455 of yacc.c  */
 #line 560 "surface.yy"
     {
 			  Token::peelParens(lexerBubble);  // remove any enclosing parens from op name
@@ -3373,8 +3390,6 @@ yyreduce:
     break;
 
   case 87:
-
-/* Line 1455 of yacc.c  */
 #line 565 "surface.yy"
     {
 			  //
@@ -3388,8 +3403,6 @@ yyreduce:
     break;
 
   case 88:
-
-/* Line 1455 of yacc.c  */
 #line 575 "surface.yy"
     {
 			  if (lexerBubble[0].code() == Token::encode("term"))
@@ -3413,15 +3426,11 @@ yyreduce:
     break;
 
   case 89:
-
-/* Line 1455 of yacc.c  */
 #line 597 "surface.yy"
     {;}
     break;
 
   case 90:
-
-/* Line 1455 of yacc.c  */
 #line 599 "surface.yy"
     {
 			  Token t;
@@ -3432,29 +3441,21 @@ yyreduce:
     break;
 
   case 91:
-
-/* Line 1455 of yacc.c  */
 #line 607 "surface.yy"
     { lexBubble(BAR_RIGHT_PAREN, 1); ;}
     break;
 
   case 92:
-
-/* Line 1455 of yacc.c  */
 #line 608 "surface.yy"
     {;}
     break;
 
   case 93:
-
-/* Line 1455 of yacc.c  */
 #line 614 "surface.yy"
     { lexerIdMode(); ;}
     break;
 
   case 94:
-
-/* Line 1455 of yacc.c  */
 #line 616 "surface.yy"
     {
 			  interpreter.setCurrentModule(new SyntacticPreModule((yyvsp[(1) - (3)].yyToken), (yyvsp[(3) - (3)].yyToken)));
@@ -3464,8 +3465,6 @@ yyreduce:
     break;
 
   case 95:
-
-/* Line 1455 of yacc.c  */
 #line 622 "surface.yy"
     {
 			  lexerInitialMode();
@@ -3475,15 +3474,11 @@ yyreduce:
     break;
 
   case 96:
-
-/* Line 1455 of yacc.c  */
 #line 629 "surface.yy"
     {;}
     break;
 
   case 97:
-
-/* Line 1455 of yacc.c  */
 #line 631 "surface.yy"
     {
 			  Token t;
@@ -3494,15 +3489,11 @@ yyreduce:
     break;
 
   case 98:
-
-/* Line 1455 of yacc.c  */
 #line 639 "surface.yy"
     {;}
     break;
 
   case 102:
-
-/* Line 1455 of yacc.c  */
 #line 648 "surface.yy"
     {
 			  ModuleExpression* me = moduleExpressions.top();
@@ -3512,15 +3503,11 @@ yyreduce:
     break;
 
   case 103:
-
-/* Line 1455 of yacc.c  */
 #line 655 "surface.yy"
     {;}
     break;
 
   case 104:
-
-/* Line 1455 of yacc.c  */
 #line 657 "surface.yy"
     {
 			  IssueWarning(LineNumber((yyvsp[(1) - (1)].yyToken).lineNumber()) <<
@@ -3530,8 +3517,6 @@ yyreduce:
     break;
 
   case 105:
-
-/* Line 1455 of yacc.c  */
 #line 665 "surface.yy"
     {
 			  singleton[0].dropChar((yyvsp[(1) - (1)].yyToken));
@@ -3542,15 +3527,11 @@ yyreduce:
     break;
 
   case 107:
-
-/* Line 1455 of yacc.c  */
 #line 674 "surface.yy"
     {;}
     break;
 
   case 112:
-
-/* Line 1455 of yacc.c  */
 #line 685 "surface.yy"
     {
 			  ModuleExpression* me = moduleExpressions.top();
@@ -3560,239 +3541,171 @@ yyreduce:
     break;
 
   case 113:
-
-/* Line 1455 of yacc.c  */
 #line 691 "surface.yy"
     { clear(); ;}
     break;
 
   case 114:
-
-/* Line 1455 of yacc.c  */
 #line 692 "surface.yy"
     { CM->addSortDecl(tokenSequence); ;}
     break;
 
   case 115:
-
-/* Line 1455 of yacc.c  */
 #line 694 "surface.yy"
     { clear(); ;}
     break;
 
   case 116:
-
-/* Line 1455 of yacc.c  */
 #line 695 "surface.yy"
     { CM->addSubsortDecl(tokenSequence); ;}
     break;
 
   case 117:
-
-/* Line 1455 of yacc.c  */
 #line 697 "surface.yy"
     { lexBubble(BAR_COLON, 1); ;}
     break;
 
   case 118:
-
-/* Line 1455 of yacc.c  */
 #line 698 "surface.yy"
     { Token::peelParens(lexerBubble); CM->addOpDecl(lexerBubble); ;}
     break;
 
   case 119:
-
-/* Line 1455 of yacc.c  */
 #line 699 "surface.yy"
     {;}
     break;
 
   case 120:
-
-/* Line 1455 of yacc.c  */
 #line 701 "surface.yy"
     {;}
     break;
 
   case 121:
-
-/* Line 1455 of yacc.c  */
 #line 703 "surface.yy"
     {;}
     break;
 
   case 122:
-
-/* Line 1455 of yacc.c  */
 #line 705 "surface.yy"
     { lexBubble((yyvsp[(1) - (1)].yyToken), BAR_COLON, 1); ;}
     break;
 
   case 123:
-
-/* Line 1455 of yacc.c  */
 #line 706 "surface.yy"
     { lexContinueBubble((yyvsp[(3) - (3)].yyToken), END_STATEMENT, 1); ;}
     break;
 
   case 124:
-
-/* Line 1455 of yacc.c  */
 #line 707 "surface.yy"
     { CM->addStatement(lexerBubble); ;}
     break;
 
   case 125:
-
-/* Line 1455 of yacc.c  */
 #line 709 "surface.yy"
     { lexBubble((yyvsp[(1) - (1)].yyToken), BAR_COLON, 1);  ;}
     break;
 
   case 126:
-
-/* Line 1455 of yacc.c  */
 #line 710 "surface.yy"
     { lexContinueBubble((yyvsp[(3) - (3)].yyToken), BAR_IF, 1); ;}
     break;
 
   case 127:
-
-/* Line 1455 of yacc.c  */
 #line 711 "surface.yy"
     { lexContinueBubble((yyvsp[(5) - (5)].yyToken), END_STATEMENT, 1); ;}
     break;
 
   case 128:
-
-/* Line 1455 of yacc.c  */
 #line 712 "surface.yy"
     { CM->addStatement(lexerBubble); ;}
     break;
 
   case 129:
-
-/* Line 1455 of yacc.c  */
 #line 714 "surface.yy"
     { lexBubble((yyvsp[(1) - (1)].yyToken), BAR_EQUALS, 1); ;}
     break;
 
   case 130:
-
-/* Line 1455 of yacc.c  */
 #line 715 "surface.yy"
     { lexContinueBubble((yyvsp[(3) - (3)].yyToken), END_STATEMENT, 1); ;}
     break;
 
   case 131:
-
-/* Line 1455 of yacc.c  */
 #line 716 "surface.yy"
     { CM->addStatement(lexerBubble); ;}
     break;
 
   case 132:
-
-/* Line 1455 of yacc.c  */
 #line 718 "surface.yy"
     { lexBubble((yyvsp[(1) - (1)].yyToken), BAR_EQUALS, 1); ;}
     break;
 
   case 133:
-
-/* Line 1455 of yacc.c  */
 #line 719 "surface.yy"
     { lexContinueBubble((yyvsp[(3) - (3)].yyToken), BAR_IF, 1); ;}
     break;
 
   case 134:
-
-/* Line 1455 of yacc.c  */
 #line 720 "surface.yy"
     { lexContinueBubble((yyvsp[(5) - (5)].yyToken), END_STATEMENT, 1); ;}
     break;
 
   case 135:
-
-/* Line 1455 of yacc.c  */
 #line 721 "surface.yy"
     { CM->addStatement(lexerBubble); ;}
     break;
 
   case 136:
-
-/* Line 1455 of yacc.c  */
 #line 723 "surface.yy"
     { lexBubble((yyvsp[(1) - (1)].yyToken), BAR_ARROW2, 1); ;}
     break;
 
   case 137:
-
-/* Line 1455 of yacc.c  */
 #line 724 "surface.yy"
     { lexContinueBubble((yyvsp[(3) - (3)].yyToken), END_STATEMENT, 1); ;}
     break;
 
   case 138:
-
-/* Line 1455 of yacc.c  */
 #line 725 "surface.yy"
     { CM->addStatement(lexerBubble); ;}
     break;
 
   case 139:
-
-/* Line 1455 of yacc.c  */
 #line 727 "surface.yy"
     { lexBubble((yyvsp[(1) - (1)].yyToken), BAR_ARROW2, 1); ;}
     break;
 
   case 140:
-
-/* Line 1455 of yacc.c  */
 #line 728 "surface.yy"
     { lexContinueBubble((yyvsp[(3) - (3)].yyToken), BAR_IF, 1); ;}
     break;
 
   case 141:
-
-/* Line 1455 of yacc.c  */
 #line 729 "surface.yy"
     { lexContinueBubble((yyvsp[(5) - (5)].yyToken), END_STATEMENT, 1); ;}
     break;
 
   case 142:
-
-/* Line 1455 of yacc.c  */
 #line 730 "surface.yy"
     { CM->addStatement(lexerBubble); ;}
     break;
 
   case 143:
-
-/* Line 1455 of yacc.c  */
 #line 732 "surface.yy"
     { lexBubble(BAR_COLON, 1); ;}
     break;
 
   case 144:
-
-/* Line 1455 of yacc.c  */
 #line 733 "surface.yy"
     { Token::peelParens(lexerBubble); CM->addOpDecl(lexerBubble); ;}
     break;
 
   case 145:
-
-/* Line 1455 of yacc.c  */
 #line 734 "surface.yy"
     { CM->setFlag(SymbolType::MESSAGE); ;}
     break;
 
   case 146:
-
-/* Line 1455 of yacc.c  */
 #line 737 "surface.yy"
     {
 			  CM->setFlag(SymbolType::MESSAGE);
@@ -3800,38 +3713,28 @@ yyreduce:
     break;
 
   case 147:
-
-/* Line 1455 of yacc.c  */
 #line 742 "surface.yy"
     {
 			;}
     break;
 
   case 148:
-
-/* Line 1455 of yacc.c  */
 #line 745 "surface.yy"
     {
 			;}
     break;
 
   case 149:
-
-/* Line 1455 of yacc.c  */
 #line 748 "surface.yy"
     { clear(); ;}
     break;
 
   case 150:
-
-/* Line 1455 of yacc.c  */
 #line 749 "surface.yy"
     { CM->addSubsortDecl(tokenSequence); ;}
     break;
 
   case 151:
-
-/* Line 1455 of yacc.c  */
 #line 752 "surface.yy"
     {
 			  //
@@ -3844,58 +3747,42 @@ yyreduce:
     break;
 
   case 152:
-
-/* Line 1455 of yacc.c  */
 #line 762 "surface.yy"
     {;}
     break;
 
   case 153:
-
-/* Line 1455 of yacc.c  */
 #line 763 "surface.yy"
     {;}
     break;
 
   case 156:
-
-/* Line 1455 of yacc.c  */
 #line 771 "surface.yy"
     {
 			;}
     break;
 
   case 157:
-
-/* Line 1455 of yacc.c  */
 #line 775 "surface.yy"
     { currentSyntaxContainer->addVarDecl((yyvsp[(2) - (2)].yyToken)); ;}
     break;
 
   case 158:
-
-/* Line 1455 of yacc.c  */
 #line 776 "surface.yy"
     { currentSyntaxContainer->addVarDecl((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 161:
-
-/* Line 1455 of yacc.c  */
 #line 783 "surface.yy"
     { singleton[0] = (yyvsp[(1) - (1)].yyToken); CM->addOpDecl(singleton); ;}
     break;
 
   case 162:
-
-/* Line 1455 of yacc.c  */
 #line 784 "surface.yy"
     { CM->addOpDecl(lexerBubble); ;}
     break;
 
   case 165:
-
-/* Line 1455 of yacc.c  */
 #line 790 "surface.yy"
     {
 			  IssueWarning(LineNumber(lineNumber) <<
@@ -3904,8 +3791,6 @@ yyreduce:
     break;
 
   case 166:
-
-/* Line 1455 of yacc.c  */
 #line 797 "surface.yy"
     {
 			  IssueWarning(LineNumber((yyvsp[(1) - (1)].yyToken).lineNumber()) <<
@@ -3915,8 +3800,6 @@ yyreduce:
     break;
 
   case 169:
-
-/* Line 1455 of yacc.c  */
 #line 807 "surface.yy"
     {
 			  IssueWarning(LineNumber((yyvsp[(1) - (1)].yyToken).lineNumber()) <<
@@ -3925,8 +3808,6 @@ yyreduce:
     break;
 
   case 170:
-
-/* Line 1455 of yacc.c  */
 #line 812 "surface.yy"
     {
 			  IssueWarning(LineNumber((yyvsp[(1) - (1)].yyToken).lineNumber()) <<
@@ -3935,8 +3816,6 @@ yyreduce:
     break;
 
   case 171:
-
-/* Line 1455 of yacc.c  */
 #line 819 "surface.yy"
     {
 			  if ((yyvsp[(1) - (2)].yyBool))
@@ -3945,29 +3824,21 @@ yyreduce:
     break;
 
   case 173:
-
-/* Line 1455 of yacc.c  */
 #line 826 "surface.yy"
     {;}
     break;
 
   case 174:
-
-/* Line 1455 of yacc.c  */
 #line 829 "surface.yy"
     { (yyval.yyBool) = false; ;}
     break;
 
   case 175:
-
-/* Line 1455 of yacc.c  */
 #line 830 "surface.yy"
     { (yyval.yyBool) = true; ;}
     break;
 
   case 178:
-
-/* Line 1455 of yacc.c  */
 #line 838 "surface.yy"
     {
 			  singleton[0] = (yyvsp[(1) - (1)].yyToken);
@@ -3976,15 +3847,11 @@ yyreduce:
     break;
 
   case 179:
-
-/* Line 1455 of yacc.c  */
 #line 842 "surface.yy"
     { clear(); ;}
     break;
 
   case 180:
-
-/* Line 1455 of yacc.c  */
 #line 844 "surface.yy"
     {
 			  currentSyntaxContainer->addType(true, tokenSequence);
@@ -3992,29 +3859,21 @@ yyreduce:
     break;
 
   case 181:
-
-/* Line 1455 of yacc.c  */
 #line 849 "surface.yy"
     { store((yyvsp[(3) - (3)].yyToken)); ;}
     break;
 
   case 182:
-
-/* Line 1455 of yacc.c  */
 #line 850 "surface.yy"
     { store((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 183:
-
-/* Line 1455 of yacc.c  */
 #line 853 "surface.yy"
     {;}
     break;
 
   case 187:
-
-/* Line 1455 of yacc.c  */
 #line 862 "surface.yy"
     {
 			  CM->setFlag(SymbolType::LEFT_ID | SymbolType::RIGHT_ID);
@@ -4022,8 +3881,6 @@ yyreduce:
     break;
 
   case 188:
-
-/* Line 1455 of yacc.c  */
 #line 866 "surface.yy"
     {
 			  CM->setFlag(SymbolType::LEFT_ID);
@@ -4031,8 +3888,6 @@ yyreduce:
     break;
 
   case 189:
-
-/* Line 1455 of yacc.c  */
 #line 870 "surface.yy"
     {
 			  CM->setFlag(SymbolType::RIGHT_ID);
@@ -4040,8 +3895,6 @@ yyreduce:
     break;
 
   case 190:
-
-/* Line 1455 of yacc.c  */
 #line 876 "surface.yy"
     {
 			  CM->setFlag(SymbolType::ASSOC);
@@ -4049,8 +3902,6 @@ yyreduce:
     break;
 
   case 191:
-
-/* Line 1455 of yacc.c  */
 #line 880 "surface.yy"
     {
 			  CM->setFlag(SymbolType::COMM);
@@ -4058,22 +3909,16 @@ yyreduce:
     break;
 
   case 192:
-
-/* Line 1455 of yacc.c  */
 #line 883 "surface.yy"
     { lexBubble(BAR_RIGHT_BRACKET | BAR_OP_ATTRIBUTE, 1); ;}
     break;
 
   case 193:
-
-/* Line 1455 of yacc.c  */
 #line 884 "surface.yy"
     { CM->setIdentity(lexerBubble); ;}
     break;
 
   case 194:
-
-/* Line 1455 of yacc.c  */
 #line 886 "surface.yy"
     {
 			  CM->setFlag(SymbolType::IDEM);
@@ -4081,8 +3926,6 @@ yyreduce:
     break;
 
   case 195:
-
-/* Line 1455 of yacc.c  */
 #line 890 "surface.yy"
     {
 			  CM->setFlag(SymbolType::ITER);
@@ -4090,71 +3933,51 @@ yyreduce:
     break;
 
   case 196:
-
-/* Line 1455 of yacc.c  */
 #line 893 "surface.yy"
     { CM->setPrec((yyvsp[(2) - (2)].yyToken)); ;}
     break;
 
   case 197:
-
-/* Line 1455 of yacc.c  */
 #line 894 "surface.yy"
     { clear(); ;}
     break;
 
   case 198:
-
-/* Line 1455 of yacc.c  */
 #line 895 "surface.yy"
     { CM->setGather(tokenSequence); ;}
     break;
 
   case 199:
-
-/* Line 1455 of yacc.c  */
 #line 896 "surface.yy"
     { clear(); ;}
     break;
 
   case 200:
-
-/* Line 1455 of yacc.c  */
 #line 897 "surface.yy"
     { CM->setFormat(tokenSequence); ;}
     break;
 
   case 201:
-
-/* Line 1455 of yacc.c  */
 #line 898 "surface.yy"
     { clear(); ;}
     break;
 
   case 202:
-
-/* Line 1455 of yacc.c  */
 #line 899 "surface.yy"
     { CM->setStrat(tokenSequence); ;}
     break;
 
   case 203:
-
-/* Line 1455 of yacc.c  */
 #line 900 "surface.yy"
     { clear(); ;}
     break;
 
   case 204:
-
-/* Line 1455 of yacc.c  */
 #line 901 "surface.yy"
     { CM->setPoly(tokenSequence); ;}
     break;
 
   case 205:
-
-/* Line 1455 of yacc.c  */
 #line 903 "surface.yy"
     {
 			  CM->setFlag(SymbolType::MEMO);
@@ -4162,8 +3985,6 @@ yyreduce:
     break;
 
   case 206:
-
-/* Line 1455 of yacc.c  */
 #line 907 "surface.yy"
     {
 			  CM->setFlag(SymbolType::CTOR);
@@ -4171,8 +3992,6 @@ yyreduce:
     break;
 
   case 207:
-
-/* Line 1455 of yacc.c  */
 #line 911 "surface.yy"
     {
 			  clear();
@@ -4181,22 +4000,16 @@ yyreduce:
     break;
 
   case 208:
-
-/* Line 1455 of yacc.c  */
 #line 915 "surface.yy"
     { clear(); ;}
     break;
 
   case 209:
-
-/* Line 1455 of yacc.c  */
 #line 916 "surface.yy"
     { CM->setFrozen(tokenSequence); ;}
     break;
 
   case 210:
-
-/* Line 1455 of yacc.c  */
 #line 918 "surface.yy"
     {
 			  CM->setFlag(SymbolType::CONFIG);
@@ -4204,8 +4017,6 @@ yyreduce:
     break;
 
   case 211:
-
-/* Line 1455 of yacc.c  */
 #line 922 "surface.yy"
     {
 			  CM->setFlag(SymbolType::OBJECT);
@@ -4213,8 +4024,6 @@ yyreduce:
     break;
 
   case 212:
-
-/* Line 1455 of yacc.c  */
 #line 926 "surface.yy"
     {
 			  CM->setFlag(SymbolType::MESSAGE);
@@ -4222,8 +4031,6 @@ yyreduce:
     break;
 
   case 213:
-
-/* Line 1455 of yacc.c  */
 #line 930 "surface.yy"
     {
 			  CM->setMetadata((yyvsp[(2) - (2)].yyToken));
@@ -4231,29 +4038,21 @@ yyreduce:
     break;
 
   case 214:
-
-/* Line 1455 of yacc.c  */
 #line 933 "surface.yy"
     { lexerLatexMode(); ;}
     break;
 
   case 215:
-
-/* Line 1455 of yacc.c  */
 #line 934 "surface.yy"
     { CM->setLatexMacro((yyvsp[(4) - (5)].yyString)); ;}
     break;
 
   case 216:
-
-/* Line 1455 of yacc.c  */
 #line 935 "surface.yy"
     {;}
     break;
 
   case 217:
-
-/* Line 1455 of yacc.c  */
 #line 937 "surface.yy"
     {
 			  CM->setFlag(SymbolType::DITTO);
@@ -4261,57 +4060,41 @@ yyreduce:
     break;
 
   case 220:
-
-/* Line 1455 of yacc.c  */
 #line 950 "surface.yy"
     { store((yyvsp[(2) - (2)].yyToken)); ;}
     break;
 
   case 221:
-
-/* Line 1455 of yacc.c  */
 #line 951 "surface.yy"
     { store((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 224:
-
-/* Line 1455 of yacc.c  */
 #line 958 "surface.yy"
     { clear(); CM->addHook(SyntacticPreModule::ID_HOOK, (yyvsp[(2) - (2)].yyToken), tokenSequence); ;}
     break;
 
   case 225:
-
-/* Line 1455 of yacc.c  */
 #line 959 "surface.yy"
     { CM->addHook(SyntacticPreModule::ID_HOOK, (yyvsp[(2) - (3)].yyToken), lexerBubble); ;}
     break;
 
   case 226:
-
-/* Line 1455 of yacc.c  */
 #line 960 "surface.yy"
     { CM->addHook(SyntacticPreModule::OP_HOOK, (yyvsp[(2) - (3)].yyToken), lexerBubble); ;}
     break;
 
   case 227:
-
-/* Line 1455 of yacc.c  */
 #line 961 "surface.yy"
     { CM->addHook(SyntacticPreModule::TERM_HOOK, (yyvsp[(2) - (3)].yyToken), lexerBubble); ;}
     break;
 
   case 228:
-
-/* Line 1455 of yacc.c  */
 #line 967 "surface.yy"
     {;}
     break;
 
   case 229:
-
-/* Line 1455 of yacc.c  */
 #line 969 "surface.yy"
     {
 			  IssueWarning(LineNumber(lineNumber) << ": missing " <<
@@ -4320,15 +4103,11 @@ yyreduce:
     break;
 
   case 230:
-
-/* Line 1455 of yacc.c  */
 #line 975 "surface.yy"
     {;}
     break;
 
   case 231:
-
-/* Line 1455 of yacc.c  */
 #line 977 "surface.yy"
     {
 			  IssueWarning(LineNumber(lineNumber) << ": missing period.");
@@ -4336,43 +4115,31 @@ yyreduce:
     break;
 
   case 232:
-
-/* Line 1455 of yacc.c  */
 #line 985 "surface.yy"
     { store((yyvsp[(2) - (2)].yyToken)); ;}
     break;
 
   case 234:
-
-/* Line 1455 of yacc.c  */
 #line 989 "surface.yy"
     { store((yyvsp[(2) - (2)].yyToken)); ;}
     break;
 
   case 235:
-
-/* Line 1455 of yacc.c  */
 #line 990 "surface.yy"
     { store((yyvsp[(2) - (2)].yyToken)); ;}
     break;
 
   case 236:
-
-/* Line 1455 of yacc.c  */
 #line 991 "surface.yy"
     { store((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 237:
-
-/* Line 1455 of yacc.c  */
 #line 992 "surface.yy"
     { store((yyvsp[(4) - (4)].yyToken)); ;}
     break;
 
   case 238:
-
-/* Line 1455 of yacc.c  */
 #line 999 "surface.yy"
     {
 			  Token t;
@@ -4386,57 +4153,41 @@ yyreduce:
     break;
 
   case 239:
-
-/* Line 1455 of yacc.c  */
 #line 1010 "surface.yy"
     { fragStore((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 240:
-
-/* Line 1455 of yacc.c  */
 #line 1011 "surface.yy"
     { fragStore((yyvsp[(2) - (2)].yyToken)); ;}
     break;
 
   case 241:
-
-/* Line 1455 of yacc.c  */
 #line 1012 "surface.yy"
     { fragStore((yyvsp[(5) - (5)].yyToken)); ;}
     break;
 
   case 242:
-
-/* Line 1455 of yacc.c  */
 #line 1015 "surface.yy"
     { fragStore((yyvsp[(2) - (2)].yyToken)); ;}
     break;
 
   case 243:
-
-/* Line 1455 of yacc.c  */
 #line 1016 "surface.yy"
     {;}
     break;
 
   case 244:
-
-/* Line 1455 of yacc.c  */
 #line 1017 "surface.yy"
     {;}
     break;
 
   case 347:
-
-/* Line 1455 of yacc.c  */
 #line 1097 "surface.yy"
     { lexBubble(END_COMMAND, 1) ;}
     break;
 
   case 348:
-
-/* Line 1455 of yacc.c  */
 #line 1099 "surface.yy"
     {
 			  interpreter.setCurrentModule(lexerBubble);
@@ -4444,15 +4195,11 @@ yyreduce:
     break;
 
   case 349:
-
-/* Line 1455 of yacc.c  */
 #line 1102 "surface.yy"
     { lexBubble(END_COMMAND, 1) ;}
     break;
 
   case 350:
-
-/* Line 1455 of yacc.c  */
 #line 1104 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -4461,8 +4208,6 @@ yyreduce:
     break;
 
   case 351:
-
-/* Line 1455 of yacc.c  */
 #line 1109 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4471,8 +4216,6 @@ yyreduce:
     break;
 
   case 352:
-
-/* Line 1455 of yacc.c  */
 #line 1114 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4482,8 +4225,6 @@ yyreduce:
     break;
 
   case 353:
-
-/* Line 1455 of yacc.c  */
 #line 1121 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4492,8 +4233,6 @@ yyreduce:
     break;
 
   case 354:
-
-/* Line 1455 of yacc.c  */
 #line 1126 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4503,8 +4242,6 @@ yyreduce:
     break;
 
   case 355:
-
-/* Line 1455 of yacc.c  */
 #line 1133 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4513,8 +4250,6 @@ yyreduce:
     break;
 
   case 356:
-
-/* Line 1455 of yacc.c  */
 #line 1138 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4524,8 +4259,6 @@ yyreduce:
     break;
 
   case 357:
-
-/* Line 1455 of yacc.c  */
 #line 1145 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4534,8 +4267,6 @@ yyreduce:
     break;
 
   case 358:
-
-/* Line 1455 of yacc.c  */
 #line 1150 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4545,8 +4276,6 @@ yyreduce:
     break;
 
   case 359:
-
-/* Line 1455 of yacc.c  */
 #line 1157 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4556,8 +4285,6 @@ yyreduce:
     break;
 
   case 360:
-
-/* Line 1455 of yacc.c  */
 #line 1163 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4567,8 +4294,6 @@ yyreduce:
     break;
 
   case 361:
-
-/* Line 1455 of yacc.c  */
 #line 1169 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4579,8 +4304,6 @@ yyreduce:
     break;
 
   case 362:
-
-/* Line 1455 of yacc.c  */
 #line 1176 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4590,8 +4313,6 @@ yyreduce:
     break;
 
   case 363:
-
-/* Line 1455 of yacc.c  */
 #line 1182 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4602,8 +4323,6 @@ yyreduce:
     break;
 
   case 364:
-
-/* Line 1455 of yacc.c  */
 #line 1189 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4613,8 +4332,6 @@ yyreduce:
     break;
 
   case 365:
-
-/* Line 1455 of yacc.c  */
 #line 1195 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4624,8 +4341,6 @@ yyreduce:
     break;
 
   case 366:
-
-/* Line 1455 of yacc.c  */
 #line 1201 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4635,8 +4350,6 @@ yyreduce:
     break;
 
   case 367:
-
-/* Line 1455 of yacc.c  */
 #line 1207 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4647,8 +4360,6 @@ yyreduce:
     break;
 
   case 368:
-
-/* Line 1455 of yacc.c  */
 #line 1214 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4658,8 +4369,6 @@ yyreduce:
     break;
 
   case 369:
-
-/* Line 1455 of yacc.c  */
 #line 1220 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4669,8 +4378,6 @@ yyreduce:
     break;
 
   case 370:
-
-/* Line 1455 of yacc.c  */
 #line 1226 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4680,8 +4387,6 @@ yyreduce:
     break;
 
   case 371:
-
-/* Line 1455 of yacc.c  */
 #line 1232 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4691,8 +4396,6 @@ yyreduce:
     break;
 
   case 372:
-
-/* Line 1455 of yacc.c  */
 #line 1238 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4702,8 +4405,6 @@ yyreduce:
     break;
 
   case 373:
-
-/* Line 1455 of yacc.c  */
 #line 1244 "surface.yy"
     {
 			  interpreter.cont((yyvsp[(3) - (4)].yyInt64), (yyvsp[(1) - (4)].yyBool));
@@ -4711,8 +4412,6 @@ yyreduce:
     break;
 
   case 374:
-
-/* Line 1455 of yacc.c  */
 #line 1248 "surface.yy"
     {
 			  lexerCmdMode();
@@ -4721,8 +4420,6 @@ yyreduce:
     break;
 
   case 375:
-
-/* Line 1455 of yacc.c  */
 #line 1253 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4732,8 +4429,6 @@ yyreduce:
     break;
 
   case 376:
-
-/* Line 1455 of yacc.c  */
 #line 1259 "surface.yy"
     {
 			  moduleExpr.contractTo(0);
@@ -4743,15 +4438,11 @@ yyreduce:
     break;
 
   case 377:
-
-/* Line 1455 of yacc.c  */
 #line 1264 "surface.yy"
     { lexerCmdMode(); ;}
     break;
 
   case 378:
-
-/* Line 1455 of yacc.c  */
 #line 1266 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4760,15 +4451,11 @@ yyreduce:
     break;
 
   case 379:
-
-/* Line 1455 of yacc.c  */
 #line 1270 "surface.yy"
     { lexerCmdMode(); ;}
     break;
 
   case 380:
-
-/* Line 1455 of yacc.c  */
 #line 1272 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4777,15 +4464,11 @@ yyreduce:
     break;
 
   case 381:
-
-/* Line 1455 of yacc.c  */
 #line 1276 "surface.yy"
     { lexerCmdMode(); ;}
     break;
 
   case 382:
-
-/* Line 1455 of yacc.c  */
 #line 1278 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4794,15 +4477,11 @@ yyreduce:
     break;
 
   case 383:
-
-/* Line 1455 of yacc.c  */
 #line 1282 "surface.yy"
     { lexerCmdMode(); ;}
     break;
 
   case 384:
-
-/* Line 1455 of yacc.c  */
 #line 1284 "surface.yy"
     {
 			  lexerInitialMode();
@@ -4811,8 +4490,6 @@ yyreduce:
     break;
 
   case 385:
-
-/* Line 1455 of yacc.c  */
 #line 1289 "surface.yy"
     {
 			  if (CM != 0)  // HACK
@@ -4821,15 +4498,11 @@ yyreduce:
     break;
 
   case 386:
-
-/* Line 1455 of yacc.c  */
 #line 1296 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 387:
-
-/* Line 1455 of yacc.c  */
 #line 1298 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -4838,15 +4511,11 @@ yyreduce:
     break;
 
   case 388:
-
-/* Line 1455 of yacc.c  */
 #line 1302 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 389:
-
-/* Line 1455 of yacc.c  */
 #line 1304 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -4855,15 +4524,11 @@ yyreduce:
     break;
 
   case 390:
-
-/* Line 1455 of yacc.c  */
 #line 1308 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 391:
-
-/* Line 1455 of yacc.c  */
 #line 1310 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -4872,15 +4537,11 @@ yyreduce:
     break;
 
   case 392:
-
-/* Line 1455 of yacc.c  */
 #line 1314 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 393:
-
-/* Line 1455 of yacc.c  */
 #line 1316 "surface.yy"
     {
 			  if (interpreter.setCurrentView(lexerBubble))
@@ -4889,8 +4550,6 @@ yyreduce:
     break;
 
   case 394:
-
-/* Line 1455 of yacc.c  */
 #line 1321 "surface.yy"
     {
 			  interpreter.showModules(true);
@@ -4898,8 +4557,6 @@ yyreduce:
     break;
 
   case 395:
-
-/* Line 1455 of yacc.c  */
 #line 1325 "surface.yy"
     {
 			  interpreter.showNamedViews();
@@ -4907,15 +4564,11 @@ yyreduce:
     break;
 
   case 396:
-
-/* Line 1455 of yacc.c  */
 #line 1328 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 397:
-
-/* Line 1455 of yacc.c  */
 #line 1330 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -4924,15 +4577,11 @@ yyreduce:
     break;
 
   case 398:
-
-/* Line 1455 of yacc.c  */
 #line 1334 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 399:
-
-/* Line 1455 of yacc.c  */
 #line 1336 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -4941,15 +4590,11 @@ yyreduce:
     break;
 
   case 400:
-
-/* Line 1455 of yacc.c  */
 #line 1340 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 401:
-
-/* Line 1455 of yacc.c  */
 #line 1342 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -4958,15 +4603,11 @@ yyreduce:
     break;
 
   case 402:
-
-/* Line 1455 of yacc.c  */
 #line 1346 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 403:
-
-/* Line 1455 of yacc.c  */
 #line 1348 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -4975,15 +4616,11 @@ yyreduce:
     break;
 
   case 404:
-
-/* Line 1455 of yacc.c  */
 #line 1352 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 405:
-
-/* Line 1455 of yacc.c  */
 #line 1354 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -4992,15 +4629,11 @@ yyreduce:
     break;
 
   case 406:
-
-/* Line 1455 of yacc.c  */
 #line 1358 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 407:
-
-/* Line 1455 of yacc.c  */
 #line 1360 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -5009,15 +4642,11 @@ yyreduce:
     break;
 
   case 408:
-
-/* Line 1455 of yacc.c  */
 #line 1364 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 409:
-
-/* Line 1455 of yacc.c  */
 #line 1366 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -5026,15 +4655,11 @@ yyreduce:
     break;
 
   case 410:
-
-/* Line 1455 of yacc.c  */
 #line 1370 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 411:
-
-/* Line 1455 of yacc.c  */
 #line 1372 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -5043,8 +4668,6 @@ yyreduce:
     break;
 
   case 412:
-
-/* Line 1455 of yacc.c  */
 #line 1377 "surface.yy"
     {
 			  interpreter.showSearchPath((yyvsp[(3) - (4)].yyInt64));
@@ -5052,8 +4675,6 @@ yyreduce:
     break;
 
   case 413:
-
-/* Line 1455 of yacc.c  */
 #line 1381 "surface.yy"
     {
 			  interpreter.showSearchPathLabels((yyvsp[(4) - (5)].yyInt64));
@@ -5061,8 +4682,6 @@ yyreduce:
     break;
 
   case 414:
-
-/* Line 1455 of yacc.c  */
 #line 1385 "surface.yy"
     {
 			  interpreter.showSearchGraph();
@@ -5070,15 +4689,11 @@ yyreduce:
     break;
 
   case 415:
-
-/* Line 1455 of yacc.c  */
 #line 1388 "surface.yy"
     { lexBubble(END_COMMAND, 0); ;}
     break;
 
   case 416:
-
-/* Line 1455 of yacc.c  */
 #line 1390 "surface.yy"
     {
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -5087,8 +4702,6 @@ yyreduce:
     break;
 
   case 417:
-
-/* Line 1455 of yacc.c  */
 #line 1398 "surface.yy"
     {
 			  globalAdvisoryFlag = (yyvsp[(4) - (5)].yyBool);
@@ -5096,8 +4709,6 @@ yyreduce:
     break;
 
   case 418:
-
-/* Line 1455 of yacc.c  */
 #line 1402 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::SHOW_STATS, (yyvsp[(4) - (5)].yyBool));
@@ -5105,8 +4716,6 @@ yyreduce:
     break;
 
   case 419:
-
-/* Line 1455 of yacc.c  */
 #line 1406 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::SHOW_LOOP_STATS, (yyvsp[(5) - (6)].yyBool));
@@ -5114,8 +4723,6 @@ yyreduce:
     break;
 
   case 420:
-
-/* Line 1455 of yacc.c  */
 #line 1410 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::SHOW_TIMING, (yyvsp[(4) - (5)].yyBool));
@@ -5123,8 +4730,6 @@ yyreduce:
     break;
 
   case 421:
-
-/* Line 1455 of yacc.c  */
 #line 1414 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::SHOW_BREAKDOWN, (yyvsp[(4) - (5)].yyBool));
@@ -5132,8 +4737,6 @@ yyreduce:
     break;
 
   case 422:
-
-/* Line 1455 of yacc.c  */
 #line 1418 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::SHOW_LOOP_TIMING, (yyvsp[(5) - (6)].yyBool));
@@ -5141,8 +4744,6 @@ yyreduce:
     break;
 
   case 423:
-
-/* Line 1455 of yacc.c  */
 #line 1422 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::SHOW_COMMAND, (yyvsp[(4) - (5)].yyBool));
@@ -5150,8 +4751,6 @@ yyreduce:
     break;
 
   case 424:
-
-/* Line 1455 of yacc.c  */
 #line 1426 "surface.yy"
     {
 			  MemoryCell::setShowGC((yyvsp[(4) - (5)].yyBool));
@@ -5159,8 +4758,6 @@ yyreduce:
     break;
 
   case 425:
-
-/* Line 1455 of yacc.c  */
 #line 1430 "surface.yy"
     {
 			  interpreter.setPrintFlag((yyvsp[(3) - (5)].yyPrintFlags), (yyvsp[(4) - (5)].yyBool));
@@ -5168,8 +4765,6 @@ yyreduce:
     break;
 
   case 426:
-
-/* Line 1455 of yacc.c  */
 #line 1434 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::PRINT_ATTRIBUTE, (yyvsp[(4) - (5)].yyBool));
@@ -5177,8 +4772,6 @@ yyreduce:
     break;
 
   case 427:
-
-/* Line 1455 of yacc.c  */
 #line 1438 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::PRINT_ATTRIBUTE_NEWLINE, (yyvsp[(5) - (6)].yyBool));
@@ -5186,8 +4779,6 @@ yyreduce:
     break;
 
   case 428:
-
-/* Line 1455 of yacc.c  */
 #line 1442 "surface.yy"
     {
 			  interpreter.setFlag((yyvsp[(3) - (5)].yyFlags), (yyvsp[(4) - (5)].yyBool));
@@ -5195,8 +4786,6 @@ yyreduce:
     break;
 
   case 429:
-
-/* Line 1455 of yacc.c  */
 #line 1446 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::BREAK, (yyvsp[(3) - (4)].yyBool));
@@ -5204,22 +4793,16 @@ yyreduce:
     break;
 
   case 430:
-
-/* Line 1455 of yacc.c  */
 #line 1449 "surface.yy"
     { lexerCmdMode(); ;}
     break;
 
   case 431:
-
-/* Line 1455 of yacc.c  */
 #line 1450 "surface.yy"
     { lexerInitialMode(); ;}
     break;
 
   case 432:
-
-/* Line 1455 of yacc.c  */
 #line 1452 "surface.yy"
     {
 			  interpreter.setAutoImport((yyvsp[(2) - (7)].yyImportMode), (yyvsp[(4) - (7)].yyToken), (yyvsp[(6) - (7)].yyBool));
@@ -5227,22 +4810,16 @@ yyreduce:
     break;
 
   case 433:
-
-/* Line 1455 of yacc.c  */
 #line 1455 "surface.yy"
     { lexerCmdMode(); ;}
     break;
 
   case 434:
-
-/* Line 1455 of yacc.c  */
 #line 1456 "surface.yy"
     { lexerInitialMode(); ;}
     break;
 
   case 435:
-
-/* Line 1455 of yacc.c  */
 #line 1458 "surface.yy"
     {
 			  interpreter.setOmodInclude((yyvsp[(5) - (8)].yyToken), (yyvsp[(7) - (8)].yyBool));
@@ -5250,8 +4827,6 @@ yyreduce:
     break;
 
   case 436:
-
-/* Line 1455 of yacc.c  */
 #line 1462 "surface.yy"
     {
 			  globalVerboseFlag = (yyvsp[(3) - (4)].yyBool);
@@ -5259,8 +4834,6 @@ yyreduce:
     break;
 
   case 437:
-
-/* Line 1455 of yacc.c  */
 #line 1466 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::AUTO_CLEAR_MEMO, (yyvsp[(4) - (5)].yyBool));
@@ -5268,8 +4841,6 @@ yyreduce:
     break;
 
   case 438:
-
-/* Line 1455 of yacc.c  */
 #line 1470 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::AUTO_CLEAR_RULES, (yyvsp[(4) - (5)].yyBool));
@@ -5277,8 +4848,6 @@ yyreduce:
     break;
 
   case 439:
-
-/* Line 1455 of yacc.c  */
 #line 1474 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::COMPILE_COUNT, (yyvsp[(4) - (5)].yyBool));
@@ -5286,8 +4855,6 @@ yyreduce:
     break;
 
   case 440:
-
-/* Line 1455 of yacc.c  */
 #line 1478 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::PROFILE, (yyvsp[(3) - (4)].yyBool));
@@ -5295,8 +4862,6 @@ yyreduce:
     break;
 
   case 441:
-
-/* Line 1455 of yacc.c  */
 #line 1482 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::AUTO_CLEAR_PROFILE, (yyvsp[(4) - (5)].yyBool));
@@ -5304,8 +4869,6 @@ yyreduce:
     break;
 
   case 442:
-
-/* Line 1455 of yacc.c  */
 #line 1489 "surface.yy"
     {
 			  PARSE_RESULT = UserLevelRewritingContext::RESUME;
@@ -5313,8 +4876,6 @@ yyreduce:
     break;
 
   case 443:
-
-/* Line 1455 of yacc.c  */
 #line 1493 "surface.yy"
     {
 			  PARSE_RESULT = UserLevelRewritingContext::ABORT;
@@ -5322,8 +4883,6 @@ yyreduce:
     break;
 
   case 444:
-
-/* Line 1455 of yacc.c  */
 #line 1497 "surface.yy"
     {
 			  PARSE_RESULT = UserLevelRewritingContext::STEP;
@@ -5331,8 +4890,6 @@ yyreduce:
     break;
 
   case 445:
-
-/* Line 1455 of yacc.c  */
 #line 1501 "surface.yy"
     {
 			  PARSE_RESULT = UserLevelRewritingContext::WHERE;
@@ -5340,8 +4897,6 @@ yyreduce:
     break;
 
   case 446:
-
-/* Line 1455 of yacc.c  */
 #line 1508 "surface.yy"
     {
 			  MemoryCell::setShowGC((yyvsp[(4) - (5)].yyBool));
@@ -5349,8 +4904,6 @@ yyreduce:
     break;
 
   case 447:
-
-/* Line 1455 of yacc.c  */
 #line 1512 "surface.yy"
     {
 			  interpreter.setFlag(Interpreter::SHOW_STATS, (yyvsp[(3) - (4)].yyBool));
@@ -5358,428 +4911,306 @@ yyreduce:
     break;
 
   case 448:
-
-/* Line 1455 of yacc.c  */
 #line 1518 "surface.yy"
     { lexerInitialMode(); ;}
     break;
 
   case 450:
-
-/* Line 1455 of yacc.c  */
 #line 1525 "surface.yy"
     { (yyval.yyPrintFlags) = Interpreter::PRINT_MIXFIX; ;}
     break;
 
   case 451:
-
-/* Line 1455 of yacc.c  */
 #line 1526 "surface.yy"
     { (yyval.yyPrintFlags) = Interpreter::PRINT_FLAT; ;}
     break;
 
   case 452:
-
-/* Line 1455 of yacc.c  */
 #line 1527 "surface.yy"
     { (yyval.yyPrintFlags) = Interpreter::PRINT_WITH_ALIASES; ;}
     break;
 
   case 453:
-
-/* Line 1455 of yacc.c  */
 #line 1528 "surface.yy"
     { (yyval.yyPrintFlags) = Interpreter::PRINT_WITH_PARENS; ;}
     break;
 
   case 454:
-
-/* Line 1455 of yacc.c  */
 #line 1529 "surface.yy"
     { (yyval.yyPrintFlags) = Interpreter::PRINT_GRAPH; ;}
     break;
 
   case 455:
-
-/* Line 1455 of yacc.c  */
 #line 1530 "surface.yy"
     { (yyval.yyPrintFlags) = Interpreter::PRINT_CONCEAL; ;}
     break;
 
   case 456:
-
-/* Line 1455 of yacc.c  */
 #line 1531 "surface.yy"
     { (yyval.yyPrintFlags) = Interpreter::PRINT_NUMBER; ;}
     break;
 
   case 457:
-
-/* Line 1455 of yacc.c  */
 #line 1532 "surface.yy"
     { (yyval.yyPrintFlags) = Interpreter::PRINT_RAT; ;}
     break;
 
   case 458:
-
-/* Line 1455 of yacc.c  */
 #line 1533 "surface.yy"
     { (yyval.yyPrintFlags) = Interpreter::PRINT_COLOR; ;}
     break;
 
   case 459:
-
-/* Line 1455 of yacc.c  */
 #line 1534 "surface.yy"
     { (yyval.yyPrintFlags) = Interpreter::PRINT_FORMAT; ;}
     break;
 
   case 460:
-
-/* Line 1455 of yacc.c  */
 #line 1537 "surface.yy"
     { (yyval.yyFlags) = Interpreter::TRACE; ;}
     break;
 
   case 461:
-
-/* Line 1455 of yacc.c  */
 #line 1538 "surface.yy"
     { (yyval.yyFlags) = Interpreter::TRACE_CONDITION; ;}
     break;
 
   case 462:
-
-/* Line 1455 of yacc.c  */
 #line 1539 "surface.yy"
     { (yyval.yyFlags) = Interpreter::TRACE_WHOLE; ;}
     break;
 
   case 463:
-
-/* Line 1455 of yacc.c  */
 #line 1540 "surface.yy"
     { (yyval.yyFlags) = Interpreter::TRACE_SUBSTITUTION; ;}
     break;
 
   case 464:
-
-/* Line 1455 of yacc.c  */
 #line 1541 "surface.yy"
     { (yyval.yyFlags) = Interpreter::TRACE_SELECT; ;}
     break;
 
   case 465:
-
-/* Line 1455 of yacc.c  */
 #line 1542 "surface.yy"
     { (yyval.yyFlags) = Interpreter::TRACE_MB; ;}
     break;
 
   case 466:
-
-/* Line 1455 of yacc.c  */
 #line 1543 "surface.yy"
     { (yyval.yyFlags) = Interpreter::TRACE_EQ; ;}
     break;
 
   case 467:
-
-/* Line 1455 of yacc.c  */
 #line 1544 "surface.yy"
     { (yyval.yyFlags) = Interpreter::TRACE_RL; ;}
     break;
 
   case 468:
-
-/* Line 1455 of yacc.c  */
 #line 1545 "surface.yy"
     { (yyval.yyFlags) = Interpreter::TRACE_REWRITE; ;}
     break;
 
   case 469:
-
-/* Line 1455 of yacc.c  */
 #line 1546 "surface.yy"
     { (yyval.yyFlags) = Interpreter::TRACE_BODY; ;}
     break;
 
   case 470:
-
-/* Line 1455 of yacc.c  */
 #line 1547 "surface.yy"
     { (yyval.yyFlags) = Interpreter::TRACE_BUILTIN; ;}
     break;
 
   case 471:
-
-/* Line 1455 of yacc.c  */
 #line 1550 "surface.yy"
     { (yyval.yyBool) = true; ;}
     break;
 
   case 472:
-
-/* Line 1455 of yacc.c  */
 #line 1551 "surface.yy"
     { (yyval.yyBool) = false; ;}
     break;
 
   case 473:
-
-/* Line 1455 of yacc.c  */
 #line 1554 "surface.yy"
     { (yyval.yyBool) = true; ;}
     break;
 
   case 474:
-
-/* Line 1455 of yacc.c  */
 #line 1555 "surface.yy"
     { (yyval.yyBool) = false; ;}
     break;
 
   case 475:
-
-/* Line 1455 of yacc.c  */
 #line 1558 "surface.yy"
     { (yyval.yyBool) = true; ;}
     break;
 
   case 476:
-
-/* Line 1455 of yacc.c  */
 #line 1559 "surface.yy"
     { (yyval.yyBool) = false; ;}
     break;
 
   case 477:
-
-/* Line 1455 of yacc.c  */
 #line 1562 "surface.yy"
     { (yyval.yyBool) = true; ;}
     break;
 
   case 478:
-
-/* Line 1455 of yacc.c  */
 #line 1563 "surface.yy"
     { (yyval.yyBool) = false; ;}
     break;
 
   case 479:
-
-/* Line 1455 of yacc.c  */
 #line 1568 "surface.yy"
     { (yyval.yySearchKind) = Interpreter::NARROW; ;}
     break;
 
   case 480:
-
-/* Line 1455 of yacc.c  */
 #line 1569 "surface.yy"
     { (yyval.yySearchKind) = Interpreter::XG_NARROW; ;}
     break;
 
   case 481:
-
-/* Line 1455 of yacc.c  */
 #line 1570 "surface.yy"
     { (yyval.yySearchKind) = Interpreter::SEARCH; ;}
     break;
 
   case 482:
-
-/* Line 1455 of yacc.c  */
 #line 1573 "surface.yy"
     { (yyval.yyBool) = true; ;}
     break;
 
   case 483:
-
-/* Line 1455 of yacc.c  */
 #line 1574 "surface.yy"
     { (yyval.yyBool) = false; ;}
     break;
 
   case 484:
-
-/* Line 1455 of yacc.c  */
 #line 1577 "surface.yy"
     { (yyval.yyBool) = true; ;}
     break;
 
   case 485:
-
-/* Line 1455 of yacc.c  */
 #line 1578 "surface.yy"
     { (yyval.yyBool) = false; ;}
     break;
 
   case 486:
-
-/* Line 1455 of yacc.c  */
 #line 1581 "surface.yy"
     { (yyval.yyInt64) = (yyvsp[(1) - (1)].yyInt64); ;}
     break;
 
   case 487:
-
-/* Line 1455 of yacc.c  */
 #line 1582 "surface.yy"
     { (yyval.yyInt64) = NONE; ;}
     break;
 
   case 488:
-
-/* Line 1455 of yacc.c  */
 #line 1585 "surface.yy"
     { (yyval.yyImportMode) = ImportModule::PROTECTING; ;}
     break;
 
   case 489:
-
-/* Line 1455 of yacc.c  */
 #line 1586 "surface.yy"
     { (yyval.yyImportMode) = ImportModule::EXTENDING; ;}
     break;
 
   case 490:
-
-/* Line 1455 of yacc.c  */
 #line 1587 "surface.yy"
     { (yyval.yyImportMode) = ImportModule::INCLUDING; ;}
     break;
 
   case 492:
-
-/* Line 1455 of yacc.c  */
 #line 1597 "surface.yy"
     { lexBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0); ;}
     break;
 
   case 494:
-
-/* Line 1455 of yacc.c  */
 #line 1601 "surface.yy"
     { moduleExpr = lexerBubble; lexBubble(END_COMMAND, 1); ;}
     break;
 
   case 497:
-
-/* Line 1455 of yacc.c  */
 #line 1613 "surface.yy"
     { lexSave((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 500:
-
-/* Line 1455 of yacc.c  */
 #line 1616 "surface.yy"
     { lexBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0);  ;}
     break;
 
   case 502:
-
-/* Line 1455 of yacc.c  */
 #line 1621 "surface.yy"
     { lexContinueSave((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 504:
-
-/* Line 1455 of yacc.c  */
 #line 1623 "surface.yy"
     { lexContinueBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0); ;}
     break;
 
   case 507:
-
-/* Line 1455 of yacc.c  */
 #line 1629 "surface.yy"
     { number = Token::codeToInt64(lexerBubble[1].code()); ;}
     break;
 
   case 509:
-
-/* Line 1455 of yacc.c  */
 #line 1631 "surface.yy"
     { lexContinueBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0); ;}
     break;
 
   case 512:
-
-/* Line 1455 of yacc.c  */
 #line 1646 "surface.yy"
     { lexSave((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 515:
-
-/* Line 1455 of yacc.c  */
 #line 1649 "surface.yy"
     { lexBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0); ;}
     break;
 
   case 517:
-
-/* Line 1455 of yacc.c  */
 #line 1658 "surface.yy"
     { lexContinueSave((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 519:
-
-/* Line 1455 of yacc.c  */
 #line 1660 "surface.yy"
     { lexContinueSave((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 521:
-
-/* Line 1455 of yacc.c  */
 #line 1662 "surface.yy"
     { lexContinueBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0); ;}
     break;
 
   case 524:
-
-/* Line 1455 of yacc.c  */
 #line 1672 "surface.yy"
     { number = Token::codeToInt64(lexerBubble[1].code()); ;}
     break;
 
   case 526:
-
-/* Line 1455 of yacc.c  */
 #line 1674 "surface.yy"
     { lexContinueSave((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 528:
-
-/* Line 1455 of yacc.c  */
 #line 1676 "surface.yy"
     { lexContinueBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0); ;}
     break;
 
   case 531:
-
-/* Line 1455 of yacc.c  */
 #line 1686 "surface.yy"
     { lexContinueSave((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 533:
-
-/* Line 1455 of yacc.c  */
 #line 1688 "surface.yy"
     { lexContinueBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0); ;}
     break;
 
   case 536:
-
-/* Line 1455 of yacc.c  */
 #line 1699 "surface.yy"
     {
 			  number = Token::codeToInt64(lexerBubble[1].code());
@@ -5789,64 +5220,46 @@ yyreduce:
     break;
 
   case 538:
-
-/* Line 1455 of yacc.c  */
 #line 1705 "surface.yy"
     { lexContinueBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0); ;}
     break;
 
   case 541:
-
-/* Line 1455 of yacc.c  */
 #line 1715 "surface.yy"
     { lexContinueSave((yyvsp[(1) - (1)].yyToken)); ;}
     break;
 
   case 543:
-
-/* Line 1455 of yacc.c  */
 #line 1717 "surface.yy"
     { lexContinueBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0); ;}
     break;
 
   case 546:
-
-/* Line 1455 of yacc.c  */
 #line 1727 "surface.yy"
     { number2 = Token::codeToInt64(lexerBubble[2].code()); ;}
     break;
 
   case 548:
-
-/* Line 1455 of yacc.c  */
 #line 1729 "surface.yy"
     { lexContinueBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0); ;}
     break;
 
   case 551:
-
-/* Line 1455 of yacc.c  */
 #line 1734 "surface.yy"
     { lexContinueBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 0, 1); ;}
     break;
 
   case 554:
-
-/* Line 1455 of yacc.c  */
 #line 1740 "surface.yy"
     { lexBubble((yyvsp[(1) - (1)].yyToken), END_COMMAND, 1, 1); ;}
     break;
 
   case 556:
-
-/* Line 1455 of yacc.c  */
 #line 1742 "surface.yy"
     { lexBubble((yyvsp[(1) - (1)].yyToken), BAR_COLON | END_COMMAND, 0); ;}
     break;
 
   case 558:
-
-/* Line 1455 of yacc.c  */
 #line 1745 "surface.yy"
     {
 			  lexerBubble.resize(1);
@@ -5856,15 +5269,11 @@ yyreduce:
     break;
 
   case 596:
-
-/* Line 1455 of yacc.c  */
 #line 1784 "surface.yy"
     {;}
     break;
 
   case 598:
-
-/* Line 1455 of yacc.c  */
 #line 1789 "surface.yy"
     {
 			  singleton[0].dropChar((yyvsp[(1) - (1)].yyToken));
@@ -5874,8 +5283,6 @@ yyreduce:
     break;
 
   case 601:
-
-/* Line 1455 of yacc.c  */
 #line 1800 "surface.yy"
     {
 			  singleton[0] = (yyvsp[(1) - (1)].yyToken);
@@ -5884,8 +5291,6 @@ yyreduce:
     break;
 
   case 602:
-
-/* Line 1455 of yacc.c  */
 #line 1805 "surface.yy"
     {
 			  interpreter.addSelected(lexerBubble);
@@ -5893,9 +5298,8 @@ yyreduce:
     break;
 
 
-
-/* Line 1455 of yacc.c  */
-#line 5899 "surface.c"
+/* Line 1267 of yacc.c.  */
+#line 5303 "surface.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -5905,6 +5309,7 @@ yyreduce:
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
+
 
   /* Now `shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -5970,7 +5375,7 @@ yyerrlab:
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse lookahead token after an
+      /* If just tried and failed to reuse look-ahead token after an
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
@@ -5987,7 +5392,7 @@ yyerrlab:
 	}
     }
 
-  /* Else will try to reuse lookahead token after shifting the error
+  /* Else will try to reuse look-ahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -6044,6 +5449,9 @@ yyerrlab1:
       YY_STACK_PRINT (yyss, yyssp);
     }
 
+  if (yyn == YYFINAL)
+    YYACCEPT;
+
   *++yyvsp = yylval;
 
 
@@ -6068,7 +5476,7 @@ yyabortlab:
   yyresult = 1;
   goto yyreturn;
 
-#if !defined(yyoverflow) || YYERROR_VERBOSE
+#ifndef yyoverflow
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
@@ -6079,7 +5487,7 @@ yyexhaustedlab:
 #endif
 
 yyreturn:
-  if (yychar != YYEMPTY)
+  if (yychar != YYEOF && yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
 		 yytoken, &yylval);
   /* Do not reclaim the symbols of the rule which action triggered
@@ -6105,8 +5513,6 @@ yyreturn:
 }
 
 
-
-/* Line 1675 of yacc.c  */
 #line 1835 "surface.yy"
 
 

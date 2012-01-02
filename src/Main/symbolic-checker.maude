@@ -638,7 +638,7 @@ mod SMC-COMMAND-PROCESSING is
   eq parseSMCCondArg2(F, QI[T1,T2], M, VDS, DB, TL1)
     = if QI == '_s.t._. or QI == '_such`that_. 
       then procSMC(F, (TL1,T1), parseCond(T2,VDS), M, VDS, DB)
-      else procSMC(F, (TL1,constsToVars(F[T1,T2],VDS)), nil, M, VDS, DB)
+      else procSMC(F, (TL1,constsToVars(QI[T1,T2],VDS)), nil, M, VDS, DB)
       fi .
   eq parseSMCCondArg2(F, T, M, VDS, DB, TL1)
    = procSMC(F, (TL1,constsToVars(T,VDS)), nil, M, VDS, DB) [owise] .
