@@ -202,11 +202,13 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	int bound_state = 0;
 
 #ifdef SDEBUG
-	cout << "## states ------------" << endl;
+	if (globalVerboseFlag)
+		cout << "## states ------------" << endl;
 #endif
 	do {
 #ifdef SDEBUG
-		cout << "##current bound = " << curr_bound << ", #states = " << nsg.getNrStates() << endl;
+		if (globalVerboseFlag)
+			cout << "##current bound = " << curr_bound << ", #states = " << nsg.getNrStates() << endl;
 		int old_size = graph.getNrStates();
 #endif
 		mc.reset(new NDFSModelChecker(prod));
@@ -214,14 +216,16 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 		result = mc->findCounterExample();
 #ifdef SDEBUG
 		// print states in the previous bound (to show transitions)
-		for (int k = bound_state; k < old_size; ++k)
-			nsg.dump(cout, k, &printState, &printTrans);
+		if (globalVerboseFlag)
+			for (int k = bound_state; k < old_size; ++k)
+				nsg.dump(cout, k, &printState, &printTrans);
 		bound_state = old_size;
 #endif
 	} while(result == false && systemAutomaton.hitBound());
 
 #ifdef SDEBUG
-	cout << "----------------------" << endl;
+	if (globalVerboseFlag)
+		cout << "----------------------" << endl;
 #endif
 
 	int nrSystemStates = nsg.getNrStates();

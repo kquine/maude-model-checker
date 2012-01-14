@@ -141,7 +141,7 @@ StateFoldingGraph::constructConcretePath(
 					path.front().first, resP, resCy);
 
 #ifdef TDEBUG
-	if (result)
+	if (result && globalVerboseFlag)
 	{
 		cout << "\nCounterexample found in Narrowing Graph:" << endl;
 		FOR_EACH_CONST(i1, list<Edge>, path)

@@ -59,15 +59,15 @@ endm)
 
 --- set verbose on .
 
-(smc N ; N ; [0, idle] [|, idle] |= [] (ever-wait? -> <> ever-crit?) .)
+(lfmc N ; N ; [0, idle] [|, idle] |= [] (ever-wait? -> <> ever-crit?) .)
 
-(smc N ; N ; [0, idle] [|, idle] |= [] (ever-wait? -> ever-crit?) .)
+(lfmc N ; N ; [0, idle] [|, idle] |= [] (ever-wait? -> ever-crit?) .)
 
 *** deadlock counterexample
-(smc N ; M ; IS:ProcIdleSet |= [] (ever-wait? -> <> ever-crit?) .)
+(lfmc N ; M ; IS:ProcIdleSet |= [] (ever-wait? -> <> ever-crit?) .)
 
 *** spurious counterexample
-(smc N ; M ; WS:ProcWaitSet |= [] (ever-wait? -> <> ever-crit?) .)
+(lfmc N ; M ; WS:ProcWaitSet |= [] (ever-wait? -> <> ever-crit?) .)
 
 (mod BAKERY-SATISFACTION2 is
   pr BAKERY .
@@ -98,17 +98,17 @@ endm)
 endm)
 
 --- true
-(smc N:Name ; N:Name ; [0, idle] [|, idle] |= [] ex? .)
+(lfmc N:Name ; N:Name ; [0, idle] [|, idle] |= [] ex? .)
 
 --- false
-(smc N ; M ; WS |= [] ex?  .)
+(lfmc N ; M ; WS |= [] ex?  .)
 
 --- false (infinite graph, but a counterexample exists)
-(smc N ; N ; WS |= [] ex?  .)
+(lfmc N ; N ; WS |= [] ex?  .)
 
 ***( true, but non terminating
-(smc N ; N ; IS |= [] ex?  .)
-(smc N ; M ; WS |= [] ex? such that initCond(WS:ProcWaitSet) .)
+(lfmc N ; N ; IS |= [] ex?  .)
+(lfmc N ; M ; WS |= [] ex? such that initCond(WS:ProcWaitSet) .)
 ***)
 
 (mod BAKERY-SATISFACTION2-ABS is
@@ -122,5 +122,5 @@ endm)
 endm)
 
 --- terminate, but may not correct.
-(smc N ; N ; IS |= [] ex?  .)
+(lfmc N ; N ; IS |= [] ex?  .)
 
