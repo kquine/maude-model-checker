@@ -32,7 +32,7 @@ fmod SYMBOLIC-CHECKER is
   op {_,_} : State CESubstitution -> Transition [ctor] . --- for output
   op nil : -> TransitionList [ctor] .
   op __ : TransitionList TransitionList -> TransitionList [ctor assoc id: nil format (d ni d)] .
-  op counterexample_loop_ : TransitionList TransitionList -> ModelCheckResult [ctor format(n n++i n ni i--)] .
+  op prefix_loop_ : TransitionList TransitionList -> ModelCheckResult [ctor format(n n++i n ni i--)] .
 endfm
 
 ***************************************************
@@ -72,7 +72,7 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
 --- model checking results
   sorts ModelCheckResult .
   subsort Bool < ModelCheckResult .
-  op counterexample_loop_ : TransitionList TransitionList -> ModelCheckResult [ctor format(n n++i n ni i--)] .
+  op prefix_loop_ : TransitionList TransitionList -> ModelCheckResult [ctor format(n n++i n ni i--)] .
 
 --- model checker
   op symbolicModelCheck : State Formula ~> ModelCheckResult
@@ -108,7 +108,7 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
            op-hook transitionSymbol        ({_,_} : State Substitution ~> Transition)
            op-hook transitionListSymbol    (__ : TransitionList TransitionList ~> TransitionList)
            op-hook nilTransitionListSymbol (nil : ~> TransitionList)
-           op-hook counterexampleSymbol    (counterexample_loop_ : TransitionList TransitionList ~> ModelCheckResult)
+           op-hook counterexampleSymbol    (prefix_loop_ : TransitionList TransitionList ~> ModelCheckResult)
          )] .
 endfm
 
@@ -169,8 +169,8 @@ mod META-SMC-TRANSFORMER is
 --- meta counterexample
   op transRes : ModelCheckResult -> Term .
   eq transRes(B:Bool) = upTerm(B:Bool) .
-  eq transRes(counterexample TRL loop TRL')
-   = 'counterexample_loop_[wrapTL('__,'nil.TransitionList,transTRs(TRL)), 
+  eq transRes(prefix TRL loop TRL')
+   = 'prefix_loop_[wrapTL('__,'nil.TransitionList,transTRs(TRL)), 
                            wrapTL('__,'nil.TransitionList,transTRs(TRL'))] .
 
   op transTRs : TransitionList -> TermList .
@@ -253,6 +253,7 @@ mod META-SYMBOLIC-CONNECTOR is
   eq init(ST) >= init(ST) = true .
   eq mid(ST) >= mid(ST')
    = metaMatch(##m##, ST, ST', nil, 0) :: Substitution .
+*** renaming: and-then metaMatch(##m##, ST', ST, nil, 0) :: Substitution .
   eq S1:State >= S2:State = false [owise] .
 
 --- substitution folding

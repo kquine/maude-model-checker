@@ -63,9 +63,11 @@ endm)
 
 (smc N ; N ; [0, idle] [|, idle] |= [] (ever-wait? -> ever-crit?) .)
 
-***(
+*** deadlock counterexample
 (smc N ; M ; IS:ProcIdleSet |= [] (ever-wait? -> <> ever-crit?) .)
-***)
+
+*** spurious counterexample
+(smc N ; M ; WS:ProcWaitSet |= [] (ever-wait? -> <> ever-crit?) .)
 
 (mod BAKERY-SATISFACTION2 is
   pr BAKERY .
@@ -100,8 +102,6 @@ endm)
 
 --- false
 (smc N ; M ; WS |= [] ex?  .)
-
-eof
 
 --- false (infinite graph, but a counterexample exists)
 (smc N ; N ; WS |= [] ex?  .)
