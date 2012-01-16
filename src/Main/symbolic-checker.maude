@@ -158,62 +158,6 @@ mod META-LMC-THEORY is
   if {ST',TP,SUB'} | RTS := next(ST) .
 endm
 
-mod META-LMC-TRANSFORMER is
-  pr META-LMC-THEORY .
-  pr BOUNDED-FOLDING-MODEL-CHECKER .
-
-  var F : Qid . var M : Module .  var V : Variable . var C : Constant .
-  vars T T' ST PT : Term . var TL : TermList . 
-  var TR : Transition . var TRL TRL' : TransitionList . var SUB : Substitution .
-  var D : Bound . vars B BC BR : Bool . var MR : ModelCheckResult .
-
---- meta formula
-  op tilde : Module Term -> Formula .
- ceq tilde(M, PT)             = prop(PT) if sortLeq(M,leastSort(M,PT),'Prop) .
-  eq tilde(M, 'True.Formula)  = True .
-  eq tilde(M, 'False.Formula) = False .
-  eq tilde(M, '~_[T])         = ~ tilde(M, T) .
-  eq tilde(M, '_/\_[T, T'])   = tilde(M, T) /\ tilde(M, T') .
-  eq tilde(M, '_\/_[T, T'])   = tilde(M, T) \/ tilde(M, T') .
-  eq tilde(M, 'O_[T])         = O tilde(M, T) .
-  eq tilde(M, '_U_[T, T'])    = tilde(M, T) U tilde(M, T') .
-  eq tilde(M, '_R_[T, T'])    = tilde(M, T) R tilde(M, T') .
-
---- meta result
-  op transReport : BoundedModelCheckReport -> Term .
-  eq transReport(result: MR real: BR bound: D complete: BC) 
-   = transRes(MR) .
-
----( 'result:_real:_bound:_complete:_[
-       transRes(MR), upTerm(BR), upTerm(D), upTerm(BC)] .
----)
-
---- meta counterexample
-  op transRes : ModelCheckResult -> Term .
-  eq transRes(B) = upTerm(B:Bool) .
-  eq transRes(prefix TRL loop TRL')
-   = 'prefix_loop_[wrapTL('__,'nil.TransitionList,transTRs(TRL)), 
-                           wrapTL('__,'nil.TransitionList,transTRs(TRL'))] .
-
-  op transTRs : TransitionList -> TermList .
-  eq transTRs(TR TRL) = transTR(TR), transTRs(TRL) .
-  eq transTRs(nil)    = empty .
-
-  op transTR : Transition -> TermList .
-  eq transTR({mid(ST),SUB})  = '`{_`,_`}[ST, wrapTL('_;_,'none.CESubstitution,transSUB(SUB))] .
-  eq transTR({init(ST),SUB}) = empty  .
-
-  op transSUB : Substitution -> TermList .
-  eq transSUB(none) = empty .
-  eq transSUB(V <- T ; SUB) 
-   = '_<-_[qid("'" + string(getName(V)) + ".Qid"), T], transSUB(SUB) .
-
-  op wrapTL : Qid Constant TermList -> Term .
-  eq wrapTL(F, C, T) = T .
-  eq wrapTL(F, C, (T,T',TL)) = F[T,T',TL] .
-  eq wrapTL(F, C, empty) = C .
-endm
-
 fmod META-NARROWING-INTERFACE is
   pr META-LMC-PARAMETERS .
   pr META-NARROWING-SEARCH .
@@ -257,8 +201,9 @@ fmod META-NARROWING-INTERFACE is
 endfm
 
 mod META-SYMBOLIC-CONNECTOR is
+  pr META-LMC-THEORY .
+  pr BOUNDED-FOLDING-MODEL-CHECKER .
   pr META-NARROWING-INTERFACE .
-  pr META-LMC-TRANSFORMER .
   pr DECL-META-PRETTY-PRINT 
    * (op addOps to addOpsSE, op addEqs to addEqsSE, op addSorts to addSortsSE) .
 
@@ -297,6 +242,18 @@ mod META-SYMBOLIC-CONNECTOR is
   if sortLeq(##m##, leastSort(##m##,ST), 'State)
   /\ sortLeq(##m##, leastSort(##m##,PT), 'Formula) .
 
+--- meta formula
+  op tilde : Module Term -> Formula .
+ ceq tilde(M, PT)             = prop(PT) if sortLeq(M,leastSort(M,PT),'Prop) .
+  eq tilde(M, 'True.Formula)  = True .
+  eq tilde(M, 'False.Formula) = False .
+  eq tilde(M, '~_[T])         = ~ tilde(M, T) .
+  eq tilde(M, '_/\_[T, T'])   = tilde(M, T) /\ tilde(M, T') .
+  eq tilde(M, '_\/_[T, T'])   = tilde(M, T) \/ tilde(M, T') .
+  eq tilde(M, 'O_[T])         = O tilde(M, T) .
+  eq tilde(M, '_U_[T, T'])    = tilde(M, T) U tilde(M, T') .
+  eq tilde(M, '_R_[T, T'])    = tilde(M, T) R tilde(M, T') .
+
 --- pretty print (for debugging)
   eq prettyPrint(init(ST)) = eMetaPrettyPrint(##m##, ST) .
   eq prettyPrint(mid(ST))  = eMetaPrettyPrint(##m##, ST) .
@@ -318,16 +275,6 @@ mod META-LMC-COND-THEORY is
 
   ops init mid : Term EqCondition -> State [ctor] .
 endm 
-
-mod META-LMC-COND-TRANSFORMER is
-  pr META-LMC-TRANSFORMER .
-  pr META-LMC-COND-THEORY .
-
-  var ST : Term .  var SUB : Substitution .  var CD : EqCondition .
-
-  eq transTR({mid(ST,CD),SUB})  = transTR({mid(ST),SUB}) .
-  eq transTR({init(ST,CD),SUB}) = empty  .
-endm
 
 fmod META-NARROWING-COND-INTERFACE is
   pr META-NARROWING-INTERFACE .
@@ -372,7 +319,7 @@ fmod META-NARROWING-COND-INTERFACE is
 endfm
 
 mod META-SYMBOLIC-COND-CONNECTOR-BASE is
-  pr META-LMC-COND-TRANSFORMER .
+  pr META-LMC-COND-THEORY .
   pr META-SYMBOLIC-CONNECTOR .
   pr META-NARROWING-COND-INTERFACE .
 
@@ -507,6 +454,7 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
 
 endm
 
+
 *****************************************
 ***       Extending Full Maude        ***
 *****************************************
@@ -551,9 +499,51 @@ fmod META-PROP-SET is
   eq #props(M, T)            = empty [owise] .
 endfm
 
+mod META-LMC-COUNTEREXAMPLE-TRANSFORMER is
+  pr META-LMC-THEORY .
+  pr META-LMC-COND-THEORY .
+  pr BOUNDED-FOLDING-MODEL-CHECKER .
+
+  var F : Qid . var M : Module .  var V : Variable . var C : Constant .
+  var CD : Condition . vars T T' ST PT : Term . var TL : TermList . 
+  var TR : Transition . var TRL TRL' : TransitionList . var SUB : Substitution .
+  var D : Bound . vars B BC BR : Bool . var MR : ModelCheckResult .
+
+--- meta counterexample
+  op transRes : ModelCheckResult -> Term .
+  eq transRes(B) = upTerm(B:Bool) .
+  eq transRes(prefix TRL loop TRL')
+   = 'prefix_loop_[wrapTL('__,'nil.TransitionList,transTRs(TRL)), 
+                           wrapTL('__,'nil.TransitionList,transTRs(TRL'))] .
+
+  op transTRs : TransitionList -> TermList .
+  eq transTRs(TR TRL) = transTR(TR), transTRs(TRL) .
+  eq transTRs(nil)    = empty .
+
+--- transition (including conditions)
+  op transTR : Transition -> TermList .
+  eq transTR({mid(ST),SUB})  = '`{_`,_`}[ST, wrapTL('_;_,'none.CESubstitution,transSUB(SUB))] .
+  eq transTR({init(ST),SUB}) = empty  .
+
+  eq transTR({mid(ST,CD),SUB})  = transTR({mid(ST),SUB}) .
+  eq transTR({init(ST,CD),SUB}) = empty  .
+
+--- substitution
+  op transSUB : Substitution -> TermList .
+  eq transSUB(none) = empty .
+  eq transSUB(V <- T ; SUB) 
+   = '_<-_[qid("'" + string(getName(V)) + ".Qid"), T], transSUB(SUB) .
+
+  op wrapTL : Qid Constant TermList -> Term .
+  eq wrapTL(F, C, T) = T .
+  eq wrapTL(F, C, (T,T',TL)) = F[T,T',TL] .
+  eq wrapTL(F, C, empty) = C .
+endm
+
 mod LMC-COMMAND-PROCESSING is
   pr COMMAND-PROCESSING .
   pr META-PROP-SET .
+  pr META-LMC-COUNTEREXAMPLE-TRANSFORMER .
 
   vars T T1 T2 T3 T4 T5 T6 : Term .  
   var TL TL1 : TermList .
@@ -622,7 +612,6 @@ mod LMC-COMMAND-PROCESSING is
      fi
    if TMVB := solveBubblesRew(T, M, B, unbounded, VDS, DB) . --- "[1] in MOD :"
 
-
  --- intermediate arguments
  ceq procLMCComd(F, (T1,T2,TL), M, B, D, VDS, DB, TL1) 
    = if T?:[Term] :: Term
@@ -675,6 +664,19 @@ mod LMC-COMMAND-PROCESSING is
   eq parseLMCCondArg2(F, T, D, M, VDS, DB, TL1)
    = procLMC(F, (TL1,constsToVars(T,VDS)), nil, D, M, VDS, DB) [owise] .
 
+  --- error handling
+  eq getTerm({T, M, B, VDS, DB}) = T .
+  eq getTerm(tupleTMBOBDerror(QIL)) = qidError(QIL) .
+  eq getModule({T, M, B, VDS, DB}) = M .
+  eq getModule(tupleTMBOBDerror(QIL)) = unitError(QIL) .
+  eq getVars({T, M, B, VDS, DB}) = VDS .
+  eq getVars(tupleTMBOBDerror(QIL)) = opDeclError(QIL) .
+  eq getBool({T, M, B, VDS, DB}) = B .
+  eq getBool(tupleTMBOBDerror(QIL)) = false .
+  eq getDatabase({T, M, B, VDS, DB}) = DB .
+  eq getDatabase(tupleTMBOBDerror(QIL)) = emptyDatabase .
+
+
 --- execute commands
   op procLMC : Qid TermList Condition Bound Module OpDeclSet Database -> Tuple{Database,QidList} .
 
@@ -686,21 +688,7 @@ mod LMC-COMMAND-PROCESSING is
   op procLMCExec : Term Term Condition Bool Bound Module Database -> Tuple{Database,QidList} .
   ceq procLMCExec(T1, T2, CD, B, D, M, DB)
    = if RP? :: ResultPair
-     then << DB ;
-             ('\b 'logical 
-              ---
-              if B then 'folding else nil fi
-              ---
-              'model 'check 'in
-              '\o eMetaPrettyPrint(getName(M)) '\b ': '\o '\n '\s '\s
-              eMetaPrettyPrint(M,T1) '\b '\s '|= '\s '\o eMetaPrettyPrint(M,T2) 
-	      ---
-              if CD == nil then nil
-	      else '\n '\b 'under 'the 'condition ': '\o '\n '\s '\s
-	            eMetaPrettyPrint(M,CD) fi
-	      ---
-	      '\n '\b 'result: '\o '\n '\s '\s
-              eMetaPrettyPrint(M, downTerm(getTerm(RP?))) '\n) >>
+     then << DB ; (printLMCInfo(M,B,T1,T2,CD) printLMCOutput(getTerm(RP?))) >>
      else << DB ; getMsg(getTerm(RP?)) >>
      fi
    if U := addEqs( 
@@ -709,8 +697,27 @@ mod LMC-COMMAND-PROCESSING is
 	    upModule('META-SYMBOLIC-COND-CONNECTOR2, false)) /\
      T3  := up(getTerm(metaReduce(M,T1))) /\
      T4 := up(getTerm(metaReduce(M,T2))) /\
-     RP? := metaReduce(U,
-              'transReport['lmc-check[T3,T4,upTerm(CD),upTerm(B),upTerm(D)]]) .
+     RP? := metaReduce(U, 'lmc-check[T3,T4,upTerm(CD),upTerm(B),upTerm(D)]) .
+
+  op printLMCInfo : Module Bool Term Term Condition -> QidList .
+  eq printLMCInfo(M, B, T1, T2, CD)
+   = '\b 'logical (if B then 'folding else nil fi) 'model 'check 'in
+     '\o eMetaPrettyPrint(getName(M)) '\b ': '\o '\n '\s '\s
+     eMetaPrettyPrint(M,T1) '\b '\s '|= '\s '\o eMetaPrettyPrint(M,T2) 
+     (if CD == nil then nil
+      else '\n '\b 'under 'the 'condition ': '\o '\n '\s '\s
+      eMetaPrettyPrint(M,CD) fi) '\n .
+
+  op printLMCOutput : -> QidList .
+  eq printLMCOutput('result:_real:_bound:_complete:_[T1,T2,T3,T4])
+   = '\b 'result: '\o '\n '\s '\s
+---      eMetaPrettyPrint(M, downTerm(getTerm(RP?))) 
+      '\n
+   .
+  eq printLMCOutput(T)
+   = '\b 'result: '\o '\n '\s '\s
+     'model 'checker 'internal 'error '\n [owise] .
+
 endm
 
 mod LMC-DATABASE-HANDLING is

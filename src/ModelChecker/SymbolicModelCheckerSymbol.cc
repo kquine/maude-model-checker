@@ -305,6 +305,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 
 		context.addInCount(*sysContext);
 		DagNode* resultDag = resultreportSymbol->makeDagNode(res_args);
+		cout << resultDag << endl;
 		return context.builtInReplace(subject, resultDag);
 	}
 }
