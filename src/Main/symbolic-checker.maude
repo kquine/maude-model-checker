@@ -54,13 +54,6 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
   subsort Prop < Formula .
   op prop : Term -> Prop [ctor] .
 
---- transitions
-  sort Transition TransitionList .
-  subsort Transition < TransitionList .
-  op {_,_} : State Substitution -> Transition [ctor] .
-  op nil : -> TransitionList [ctor] .
-  op __ : TransitionList TransitionList -> TransitionList [ctor assoc id: nil format (d ni d)] .
-
 --- folding relation
   op _>=_ : State State -> Bool .
   op _>=_ : Substitution Substitution -> Bool .
@@ -69,14 +62,25 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
   op prettyPrint : State ~> QidList .
   op prettyPrint : Substitution ~> QidList .
 
+--- transitions
+  sort Transition TransitionList .
+  subsort Transition < TransitionList .
+  op {_,_} : State Substitution -> Transition [ctor] .
+  op nil : -> TransitionList [ctor] .
+  op __ : TransitionList TransitionList -> TransitionList [ctor assoc id: nil format (d ni d)] .
+
 --- model checking results
   sorts ModelCheckResult .
   subsort Bool < ModelCheckResult .
   op prefix_loop_ : TransitionList TransitionList -> ModelCheckResult [ctor format(n n++i n ni i--)] .
 
+--- bounded model checker report
+  sort BoundedModelCheckReport .
+  op result:_real:_bound:_complete:_ : ModelCheckResult Bool Nat Bool -> BoundedModelCheckReport [ctor] .
+
 --- model checker
 --- (InitState,Formula,SubsumptionFolding,Bound)
-  op symbolicModelCheck : State Formula Bool Bound ~> ModelCheckResult
+  op symbolicModelCheck : State Formula Bool Bound ~> BoundedModelCheckReport
         [special (
            id-hook SymbolicModelCheckerSymbol
   
@@ -89,6 +93,10 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
            op-hook orSymbol                (_\/_ : Formula Formula ~> Formula)
            op-hook untilSymbol             (_U_ : Formula Formula ~> Formula)
            op-hook releaseSymbol           (_R_ : Formula Formula ~> Formula)
+
+           --- for Bound attribute
+           op-hook succSymbol              (s_ : Nat ~> NzNat)
+           op-hook unboundedSymbol         (unbounded : ~> Bound)
 
            --- state propositions
            op-hook satisfiesSymbol         (_|=_ : State Formula ~> Bool)
@@ -110,6 +118,9 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
            op-hook transitionListSymbol    (__ : TransitionList TransitionList ~> TransitionList)
            op-hook nilTransitionListSymbol (nil : ~> TransitionList)
            op-hook counterexampleSymbol    (prefix_loop_ : TransitionList TransitionList ~> ModelCheckResult)
+
+           --- result report
+           op-hook resultreportSymbol      (result:_real:_bound:_complete:_ : ModelCheckResult Bool Nat Bool ~> BoundedModelCheckReport) 
          )] .
 endfm
 
@@ -154,6 +165,7 @@ mod META-LMC-TRANSFORMER is
   var F : Qid . var M : Module .  var V : Variable . var C : Constant .
   vars T T' ST PT : Term . var TL : TermList . 
   var TR : Transition . var TRL TRL' : TransitionList . var SUB : Substitution .
+  var D : Bound . vars B BC BR : Bool . var MR : ModelCheckResult .
 
 --- meta formula
   op tilde : Module Term -> Formula .
@@ -167,9 +179,18 @@ mod META-LMC-TRANSFORMER is
   eq tilde(M, '_U_[T, T'])    = tilde(M, T) U tilde(M, T') .
   eq tilde(M, '_R_[T, T'])    = tilde(M, T) R tilde(M, T') .
 
+--- meta result
+  op transReport : BoundedModelCheckReport -> Term .
+  eq transReport(result: MR real: BR bound: D complete: BC) 
+   = transRes(MR) .
+
+---( 'result:_real:_bound:_complete:_[
+       transRes(MR), upTerm(BR), upTerm(D), upTerm(BC)] .
+---)
+
 --- meta counterexample
   op transRes : ModelCheckResult -> Term .
-  eq transRes(B:Bool) = upTerm(B:Bool) .
+  eq transRes(B) = upTerm(B:Bool) .
   eq transRes(prefix TRL loop TRL')
    = 'prefix_loop_[wrapTL('__,'nil.TransitionList,transTRs(TRL)), 
                            wrapTL('__,'nil.TransitionList,transTRs(TRL'))] .
@@ -270,7 +291,7 @@ mod META-SYMBOLIC-CONNECTOR is
   eq variant(ST) = propSetInstSet({ST,leastSort(##m##,ST),none}, ##f##) .
 
 --- run LMC model check : State Formula -> Result
-  op lmc-check : Term Term Bool Bound ~> ModelCheckResult .
+  op lmc-check : Term Term Bool Bound ~> BoundedModelCheckReport .
  ceq lmc-check(ST, PT, B, D) 
    = symbolicModelCheck(init(ST), O tilde(##m##,PT), B, D) 
   if sortLeq(##m##, leastSort(##m##,ST), 'State)
@@ -367,7 +388,7 @@ mod META-SYMBOLIC-COND-CONNECTOR-BASE is
    = getTerm(metaReduce(##m##, '_|=_[ST, PT])) == 'true.Bool .
 
 --- with condition
-  op lmc-check : Term Term EqCondition Bool Bound ~> ModelCheckResult .
+  op lmc-check : Term Term EqCondition Bool Bound ~> BoundedModelCheckReport .
  ceq lmc-check(ST, PT, CD, B, D)
    = if CD == nil
      then symbolicModelCheck(init(ST), O tilde(##m##,PT), B, D)
@@ -689,7 +710,7 @@ mod LMC-COMMAND-PROCESSING is
      T3  := up(getTerm(metaReduce(M,T1))) /\
      T4 := up(getTerm(metaReduce(M,T2))) /\
      RP? := metaReduce(U,
-              'transRes['lmc-check[T3,T4,upTerm(CD),upTerm(true),upTerm(D)]]) .
+              'transReport['lmc-check[T3,T4,upTerm(CD),upTerm(B),upTerm(D)]]) .
 endm
 
 mod LMC-DATABASE-HANDLING is

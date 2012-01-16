@@ -97,6 +97,9 @@ endm)
 ***)
 endm)
 
+--- no counterexample
+(lmc [10] N:Name ; N:Name ; [0, idle] [|, idle] |= [] ex? .)
+
 --- true
 (lfmc N:Name ; N:Name ; [0, idle] [|, idle] |= [] ex? .)
 

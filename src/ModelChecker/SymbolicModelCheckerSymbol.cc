@@ -14,6 +14,8 @@
 #include "interface.hh"
 #include "core.hh"
 #include "freeTheory.hh"
+#include "NA_Theory.hh"
+#include "S_Theory.hh"
 #include "builtIn.hh"
 #include "higher.hh"
 
@@ -27,8 +29,10 @@
 #include "rewritingContext.hh"
 #include "symbolMap.hh"
 
-//      free theory class definitions
+//      additional theory class definitions
 #include "freeDagNode.hh"
+#include "S_Symbol.hh"
+#include "S_DagNode.hh"
 
 //      built in class definitions
 #include "bindingMacros.hh"
@@ -49,7 +53,9 @@ SymbolicModelCheckerSymbol::SymbolicModelCheckerSymbol(int id, int arity):
 	TemporalSymbol(id, arity), satisfiesSymbol(NULL),
 	metaStateSymbol(NULL), metaTransitionSymbol(NULL),
 	stateFoldingRelSymbol(NULL), transFoldingRelSymbol(NULL),
-	prettyPrintStateSymbol(NULL), prettyPrintTransSymbol(NULL)
+	prettyPrintStateSymbol(NULL), prettyPrintTransSymbol(NULL),
+    unboundedSymbol(NULL), succSymbol(NULL),
+    resultreportSymbol(NULL)
 {}
 
 bool
@@ -69,6 +75,9 @@ SymbolicModelCheckerSymbol::attachSymbol(const char* purpose, Symbol* symbol)
 	BIND_SYMBOL(purpose, symbol, prettyPrintTransSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, stateFoldingRelSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, transFoldingRelSymbol, Symbol*);
+	BIND_SYMBOL(purpose, symbol, unboundedSymbol, Symbol*);
+	BIND_SYMBOL(purpose, symbol, succSymbol, SuccSymbol*);
+	BIND_SYMBOL(purpose, symbol, resultreportSymbol, Symbol*);
 	if (CounterExampleGenerator::attachSymbol(purpose, symbol))	return true;
 	return TemporalSymbol::attachSymbol(purpose, symbol);
 }
@@ -92,6 +101,9 @@ SymbolicModelCheckerSymbol::copyAttachments(Symbol* original, SymbolMap* map)
 	COPY_SYMBOL(orig, prettyPrintTransSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, stateFoldingRelSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, transFoldingRelSymbol, map, Symbol*);
+	COPY_SYMBOL(orig, unboundedSymbol, map, Symbol*);
+	COPY_SYMBOL(orig, succSymbol, map, SuccSymbol*);
+	COPY_SYMBOL(orig, resultreportSymbol, map, Symbol*);
 	COPY_TERM(orig, trueTerm, map);
 	CounterExampleGenerator::copyAttachments(orig, map);
 	TemporalSymbol::copyAttachments(original, map);
@@ -115,6 +127,9 @@ SymbolicModelCheckerSymbol::getSymbolAttachments(Vector<const char*>& purposes, 
 	APPEND_SYMBOL(purposes, symbols, prettyPrintTransSymbol);
 	APPEND_SYMBOL(purposes, symbols, stateFoldingRelSymbol);
 	APPEND_SYMBOL(purposes, symbols, transFoldingRelSymbol);
+	APPEND_SYMBOL(purposes, symbols, unboundedSymbol);
+	APPEND_SYMBOL(purposes, symbols, succSymbol);
+	APPEND_SYMBOL(purposes, symbols, resultreportSymbol);
 	CounterExampleGenerator::getSymbolAttachments(purposes, symbols);
 	TemporalSymbol::getSymbolAttachments(purposes, symbols);
 }
@@ -156,11 +171,39 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//
 	auto_ptr<RewritingContext> sysContext(context.makeSubcontext(d->getArgument(0)));
 	auto_ptr<RewritingContext> formulaCxt(context.makeSubcontext(negate(d->getArgument(1))));
+    auto_ptr<RewritingContext> boolCxt(context.makeSubcontext(d->getArgument(2)));
+    auto_ptr<RewritingContext> boundCxt(context.makeSubcontext(d->getArgument(3)));
 
 	formulaCxt->reduce();	context.addInCount(*formulaCxt);
+	boolCxt->reduce();		context.addInCount(*boolCxt);
+	boundCxt->reduce();		context.addInCount(*boundCxt);
 #ifdef TDEBUG
 	cout << "Negated formula: " << formulaCxt->root() << endl;
 #endif
+
+	// the third boolean argument
+    bool subFolding = false;
+    if (boolCxt->root()->symbol() == this->trueTerm.getDag()->symbol())
+    	subFolding = true;
+    else
+    {
+    	if (boolCxt->root()->symbol() != this->getFalseDag()->symbol())
+    		IssueWarning("ModelChecker: the third argument is not reduced to boolean values");
+    }
+
+    // the fourth natural number argument
+    long globalBound = NONE;
+    {
+    	S_DagNode* tmpBoundDag = dynamic_cast<S_DagNode*>(boundCxt->root());
+    	if (tmpBoundDag != NULL)
+    		globalBound = tmpBoundDag->getNumber().get_si();
+    	else
+    	{
+    		if (boundCxt->root()->symbol() != this->unboundedSymbol)
+    			IssueWarning("ModelChecker: the fourth argument is not reduced to bound values, and assumed as infinity");
+    	}
+    }
+
 
 	//
 	//	1. Convert a formula Dag into a LogicFormula.
@@ -235,26 +278,35 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//
 	//  3. results
 	//
-	DagNode* resultDag = NULL;
-	if (result)
 	{
-		list<Edge> path;
-		list<Edge> cycle;
-		if (nsg.constructConcretePath(mc->getLeadIn(), mc->getCycle(), path, cycle))
+		Vector<DagNode*> res_args(4);
+		if (result)
 		{
-			resultDag = makeCounterexample(graph, path, cycle);
+			list<Edge> path;
+			list<Edge> cycle;
+			if (nsg.constructConcretePath(mc->getLeadIn(), mc->getCycle(), path, cycle))
+			{
+				res_args[0] = makeCounterexample(graph, path, cycle);
+				res_args[1] = trueTerm.getDag();
+			}
+			else
+			{
+				res_args[0] = makeCounterexample(nsg, mc->getLeadIn(), mc->getCycle());
+				res_args[1] = this->getFalseDag();
+			}
 		}
 		else
 		{
-			IssueWarning("ModelChecker: spurious counter example");
-			resultDag = makeCounterexample(nsg, mc->getLeadIn(), mc->getCycle());
+			res_args[0] = trueTerm.getDag();
+			res_args[1] = trueTerm.getDag();
 		}
-	}
-	else
-		resultDag = trueTerm.getDag();
+		res_args[2] = succSymbol->makeNatDag(curr_bound);
+		res_args[3] = systemAutomaton.hitBound() ? this->getFalseDag() : trueTerm.getDag();
 
-	context.addInCount(*sysContext);
-	return context.builtInReplace(subject, resultDag);
+		context.addInCount(*sysContext);
+		DagNode* resultDag = resultreportSymbol->makeDagNode(res_args);
+		return context.builtInReplace(subject, resultDag);
+	}
 }
 
 

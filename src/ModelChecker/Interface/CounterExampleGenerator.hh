@@ -39,6 +39,8 @@ protected:
     void postInterSymbolPass();
     void reset();
 
+    DagNode* getFalseDag();
+
 private:
     DagNode* makeTransitionList(const DagGraph& dg, const list<Edge>& path) const;
     DagNode* makeTransition(const DagGraph& dg, int stateNr, int count) const;
@@ -49,6 +51,12 @@ private:
     Symbol* nilTransitionListSymbol;
     CachedDag falseTerm;
 };
+
+inline DagNode*
+CounterExampleGenerator::getFalseDag()
+{
+	return falseTerm.getDag();
+}
 
 }
 

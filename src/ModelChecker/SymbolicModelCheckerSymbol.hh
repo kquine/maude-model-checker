@@ -9,6 +9,7 @@
 #define SYMBOLICMODELCHECKERSYMBOL_HH_
 #include "temporalSymbol.hh"
 #include "cachedDag.hh"
+#include "succSymbol.hh"
 
 #include "DataStruct/PtrVector.hh"
 #include "Automaton/KripkeStructure.hh"
@@ -88,9 +89,16 @@ private:
     Symbol* stateFoldingRelSymbol;
     Symbol* transFoldingRelSymbol;
 
+    // bound symbols
+    Symbol* unboundedSymbol;
+    SuccSymbol* succSymbol;
+
     // print symbols
     Symbol* prettyPrintStateSymbol;
     Symbol* prettyPrintTransSymbol;
+
+    // result symbol
+    Symbol* resultreportSymbol;
 };
 
 
