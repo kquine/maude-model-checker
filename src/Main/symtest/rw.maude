@@ -37,8 +37,20 @@ endm)
   eq < s(N), s(M) > |= exclusion? = false [variant] .
 endm)
 
+--- result: no counterexample
+(lmc [10] < N:Nat, 0 > |= [] one-writer-atmost? .)
+
 --- result: true
 (lfmc < N:Nat, 0 > |= [] one-writer-atmost? .)
+
+--- result: possibly spurious counterexample
+(lfmc < N:Nat, 0 > |= <> ~ one-writer-atmost? .)
+
+--- result: false (with counterexample)
+(lmc < N:Nat, 0 > |= <> ~ one-writer-atmost? .)
+
+--- result: no counterexample
+(lmc [10] < N:Nat, 0 > |= [] exclusion? .)
 
 --- result: true
 (lfmc < N:Nat, 0 > |= [] exclusion? .)

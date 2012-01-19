@@ -69,7 +69,7 @@ private:
 
     bool interpreteBoolDag(DagNode* dag);
     long interpreteNatDag(DagNode* dag);
-    DagNode* makeModelCheckReportDag(bool result, int bound, bool complete,
+    DagNode* makeModelCheckReportDag(bool result, int bound, bool complete, bool subsumption,
     		const modelChecker::ModelChecker& mc, modelChecker::StateFoldingGraph& nsg);
 
     // satisfaction symbols

@@ -192,6 +192,8 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 		IssueAdvisory("negated LTL formula " << QUOTE(formulaCxt->root()) <<" did not reduce to a valid negative normal form.");
 		return TemporalSymbol::eqRewrite(subject, context);
 	}
+	bool subsumption = interpreteBoolDag(boolCxt->root());
+	long globalBound = interpreteNatDag(boundCxt->root());
 #ifdef TDEBUG
 	cout << "top = " << top << endl;
 	formula.dump(cout);
@@ -204,7 +206,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	StateTransitionMetaGraph graph(sysContext.get(), metaStateSymbol, metaTransitionSymbol);
 
 	auto_ptr<FoldingChecker> fc;
-	if (interpreteBoolDag(boolCxt->root()))
+	if (subsumption)
 		fc.reset(new FoldingChecker(subsumeFoldingRelSymbol, trueTerm.getDag(), &context));
 	else
 		fc.reset(new FoldingChecker(renameFoldingRelSymbol, trueTerm.getDag(), &context));
@@ -222,8 +224,6 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//  3. perform bounded model checking
 	//
 	bool result = false;
-    long globalBound = interpreteNatDag(boundCxt->root());
-
 #ifdef SDEBUG
 	int bound_state = 0;
 #endif
@@ -250,7 +250,8 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//
 	//  3. results
 	//
-	DagNode* resultDag = makeModelCheckReportDag(result, nsg.getCurrLevel(), nsg.reachFixpoint(), *mc, nsg);
+	DagNode* resultDag = makeModelCheckReportDag(result, nsg.getCurrLevel(), nsg.reachFixpoint(),
+			subsumption, *mc, nsg);
 	context.addInCount(*sysContext);
 	return context.builtInReplace(subject, resultDag);
 }
@@ -283,23 +284,31 @@ SymbolicModelCheckerSymbol::interpreteNatDag(DagNode* dag)
 }
 
 DagNode*
-SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool complete,
+SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool complete, bool subsumption,
 		const modelChecker::ModelChecker& mc, modelChecker::StateFoldingGraph& nsg)
 {
 	Vector<DagNode*> res_args(4);
 	if (result)
 	{
-		list<Edge> path;
-		list<Edge> cycle;
-		if (nsg.concretePath(mc.getLeadIn(), mc.getCycle(), path, cycle))
+		if (subsumption)
 		{
-			res_args[0] = makeCounterexample(nsg, path, cycle);
-			res_args[1] = trueTerm.getDag();
+			list<Edge> path;
+			list<Edge> cycle;
+			if (nsg.concretePath(mc.getLeadIn(), mc.getCycle(), path, cycle))
+			{
+				res_args[0] = makeCounterexample(nsg, path, cycle);
+				res_args[1] = trueTerm.getDag();
+			}
+			else	// spurious counterexample
+			{
+				res_args[0] = makeCounterexample(nsg.getUnderlyingGraph(), mc.getLeadIn(), mc.getCycle());
+				res_args[1] = this->getFalseDag();
+			}
 		}
-		else
+		else	// renaming equivalence (no spurious counterexample)
 		{
 			res_args[0] = makeCounterexample(nsg.getUnderlyingGraph(), mc.getLeadIn(), mc.getCycle());
-			res_args[1] = this->getFalseDag();
+			res_args[1] = trueTerm.getDag();
 		}
 	}
 	else
