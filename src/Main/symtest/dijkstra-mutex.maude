@@ -158,7 +158,7 @@ endm)
 --- InitProc, since then (< exit > < exit > ...) be another problem
 
 ---(
-(smc [TCFPS] |= [] ex? such that initialCond(TCFPS:TestCritFlagProcSet) .)
+(lfmc [TCFPS] |= [] ex? such that initialCond(TCFPS:TestCritFlagProcSet) .)
 ---)
 
 (mod DIJKSTRA-MUTEX-SATISFACTION-WIDENING is
@@ -170,9 +170,9 @@ endm)
 endm)
 
 --- true.
-(smc [IPFS:InitFlagProcSet] |= [] ex?  .)
+(lfmc [IPFS:InitFlagProcSet] |= [] ex?  .)
 
 --- true. The number of states is also similar to the above.
-(smc [TCFPS:TestCritFlagProcSet] |= [] ex? 
+(lfmc [TCFPS:TestCritFlagProcSet] |= [] ex? 
  such that initialCond(TCFPS:TestCritFlagProcSet) .)
 

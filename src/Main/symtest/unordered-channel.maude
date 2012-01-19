@@ -63,5 +63,5 @@ endm)
 
 --- not work well,,, due to the variable in the formula, and
 --- the equation for the list concatenation
-(smc {L:List, N:Nat2 | C:Conf | nil, P:Nat2} |= [] prefix(L:List) .)
+(lfmc {L:List, N:Nat2 | C:Conf | nil, P:Nat2} |= [] prefix(L:List) .)
 

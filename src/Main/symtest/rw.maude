@@ -35,7 +35,7 @@ endm)
   eq < s(N), s(M) > |= exclusion? = false [variant] .
 endm)
 
-(smc < N:Nat', 0 > |= [] one-writer-atmost? .)
+(lfmc < N:Nat', 0 > |= [] one-writer-atmost? .)
 
-(smc < N:Nat', 0 > |= [] exclusion? .)
+(lfmc < N:Nat', 0 > |= [] exclusion? .)
 

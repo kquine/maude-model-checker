@@ -28,32 +28,27 @@
 
 namespace modelChecker {
 
-StateFoldingGraph::StateFoldingGraph(SystemGraph2* graph,
-		const FoldingChecker* sfc, const FoldingChecker* tfc):
-		graph(graph), sfc(sfc), tfc(tfc)
+StateFoldingGraph::StateFoldingGraph(SystemGraph2* graph, const FoldingChecker* sfc):
+		graph(graph), sfc(sfc)
 {
+	levelIndices.append(0);
 	insertFoldedState(0);
 }
 
-
-int
-StateFoldingGraph::getNextState(int stateNr, int index)
+bool
+StateFoldingGraph::incrementLevel()
 {
-	Assert(stateNr < foldGraph.size() && foldGraph[stateNr] != NULL,
-				"StateFoldingGraph::getNextState: unknown source state folding");
-	Assert(dynamic_cast<FoldedState*>(foldGraph[stateNr]) == NULL
-			|| refinedStates.find(stateNr) != refinedStates.end(),
-			"StateFoldingGraph::getNextState: not maximal/refined source state");
+	int oldSize = maximalStates.size();
+	if (reachFixpoint())	// do nothing if already fixpoint reached
+		return false;
 
-	State* s = foldGraph[stateNr];
-
-	if (s->trans.get() == NULL)
+	for(int i = levelIndices[levelIndices.size() - 1]; i < oldSize; ++i)
 	{
-		s->trans.reset(new Vector<pair<int,int> >());
-		//
-		// compute folding graph
-		//
-		for (int i=0, n=NONE; (n = graph->getNextState(stateNr,i)) != NONE; ++i)
+		int mStateNr = maximalStates[i];
+		MaximalState* ms = safeCast(MaximalState*,foldGraph[mStateNr]);
+		Assert(ms->trans.get() == NULL, "the maximal level, but already explored");
+		ms->trans.reset(new Vector<pair<int,int> >());
+		for (int j = 0, n = NONE; (n = graph->getNextState(mStateNr, j)) != NONE; ++j)
 		{
 			insertFoldedState(n);	//	state folding
 			//
@@ -62,18 +57,19 @@ StateFoldingGraph::getNextState(int stateNr, int index)
 			if (FoldedState* fns = dynamic_cast<FoldedState*>(foldGraph[n]))
 			{
 				// if the target state is folded
-				FOR_EACH_CONST(j, set<int>, fns->foldRel)
-					s->trans->append(make_pair(*j,i));
+				FOR_EACH_CONST(k, set<int>, fns->foldRel)
+					ms->trans->append(make_pair(*k,j));
 			}
-			else	// if the target not folded
+			else
 			{
+				// if the target not folded
 				MaximalState* mns = safeCast(MaximalState*,foldGraph[n]);
-				s->trans->append(make_pair(n,i));
-				mns->parents.insert(stateNr);		// for backward folding
+				ms->trans->append(make_pair(n,j));
 			}
 		}
 	}
-	return index < s->trans->size() ? (*s->trans)[index].first : NONE;
+	levelIndices.append(oldSize);
+	return ! reachFixpoint();
 }
 
 void
@@ -81,27 +77,22 @@ StateFoldingGraph::insertFoldedState(int stateNr)
 {
 	if (stateNr >= foldGraph.size())
 		foldGraph.expandTo(stateNr + 1, false);
-	if (foldGraph[stateNr] != NULL)
+	if (foldGraph[stateNr] != NULL)	// do NOTHING if stateNr have already been created
 		return;
 
 	Vector<int> foldingStates;
 	DagNode* stateDag = getStateDag(stateNr);
-	FOR_EACH_CONST(i, set<int>, maximalStates)
+	for (int i = 0; i < levelIndices[levelIndices.size() - 1]; ++i)
 	{
-		if (sfc->fold(getStateDag(*i), stateDag))	// forward folding
-			foldingStates.append(*i);
-
-		if (sfc->fold(stateDag, getStateDag(*i)))	// backward folding
-		{
-			MaximalState* ms = safeCast(MaximalState*, foldGraph[*i]);
-			ms->backFold.append(stateNr);
-		}
+		if (sfc->fold(getStateDag(maximalStates[i]), stateDag))	// forward folding
+			foldingStates.append(maximalStates[i]);
 	}
 
 	if (foldingStates.empty())	// maximal cases
 	{
-		foldGraph.replace(stateNr, new MaximalState());
-		maximalStates.insert(stateNr);
+		MaximalState* ms = new MaximalState();
+		foldGraph.replace(stateNr, ms);
+		maximalStates.append(stateNr);
 	}
 	else	// folding cases
 	{
@@ -113,23 +104,22 @@ StateFoldingGraph::insertFoldedState(int stateNr)
 }
 
 
-void
-StateFoldingGraph::collapseFolding()
+int
+StateFoldingGraph::getNextState(int stateNr, int index) const
 {
-//	FOR_EACH_CONST(i, NatSet, maximalStates)
-//	{
-//		if (folded(*i))
-//		{
-//
-//		}
-//	}
+	Assert(stateNr < foldGraph.size() && foldGraph[stateNr] != NULL,
+				"StateFoldingGraph::getNextState: unknown source state folding");
+
+	const MaximalState* ms = safeCast(const MaximalState*,foldGraph[stateNr]);
+	return index < ms->trans->size() ? (*ms->trans)[index].first : NONE;
 }
 
 bool
-StateFoldingGraph::constructConcretePath(
+StateFoldingGraph::concretePath(
 		const list<Edge>& path, const list<Edge>& cycle,
 		list<Edge>& resP, list<Edge>& resCy)
 {
+	// currently, supposed to be called only once.
 	Assert (!path.empty() || !cycle.empty(), "ModelChecker: empty counterexample");
 	bool result = false;
 	resP.clear();
@@ -178,21 +168,20 @@ StateFoldingGraph::constConcrPath(
 	}
 	if (inCycle && pos == cycle.end())
 	{
-		return sfc->fold(getStateDag(cycle.front().first),
-						 graph->getStateDag(spos));
+		//TODO: how to construct a concrete infinite path?
+		//return sfc->fold(getStateDag(cycle.front().first), graph->getStateDag(spos));
+		return cycle.front().first == spos;
 	}
 
 	if (foldState(pos->first, spos))
 	{
 		int index = 0;
 		int next = NONE;
-		list<Edge>::const_iterator oldPos = pos;
 		pos++;
 
 		while ((next = graph->getNextState(spos, index)) != NONE)
 		{
 			insertFoldedState(next);
-
 			if (constConcrPath(path, cycle, pos, inCycle, next, resP, resCy))
 			{
 				if (inCycle)

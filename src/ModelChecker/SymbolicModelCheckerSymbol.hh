@@ -51,23 +51,12 @@ private:
     	int getNrStates() const					{ return gph->getNrStates(); }
     	int getNrTransitions(int stateNr) const	{ return gph->getNrTransitions(stateNr); }
 
-    	// bounded search stuff
-    	void setBound(int bound=NONE) { hitBoundF = false; searchBound = bound; }
-    	bool hitBound() const		  { return hitBoundF; }
-
     private:
     	struct Info
     	{
-    		Info(): depth(NONE) {};
-
-    		int depth;			// search bound (not  BFS depth)
     		NatSet testedProps;
     		NatSet trueProps;
     	};
-
-    	// bounded model checking
-    	int searchBound;
-    	bool hitBoundF;
 
     	// propositions
     	DagNodeSet& props;
@@ -76,6 +65,11 @@ private:
     	modelChecker::PtrVector<Info> sInfo;
     	modelChecker::StateFoldingGraph* gph;
     };
+
+    bool interpreteBoolDag(DagNode* dag);
+    long interpreteNatDag(DagNode* dag);
+    DagNode* makeModelCheckReportDag(bool result, int bound, bool complete,
+    		const modelChecker::ModelChecker& mc, modelChecker::StateFoldingGraph& nsg);
 
     // satisfaction symbols
     Symbol* satisfiesSymbol;
@@ -86,8 +80,8 @@ private:
     Symbol* metaTransitionSymbol;
 
     // folding symbols
-    Symbol* stateFoldingRelSymbol;
-    Symbol* transFoldingRelSymbol;
+    Symbol* subsumeFoldingRelSymbol;
+    Symbol* renameFoldingRelSymbol;
 
     // bound symbols
     Symbol* unboundedSymbol;

@@ -56,7 +56,7 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
 
 --- folding relation
   op _>=_ : State State -> Bool .
-  op _>=_ : Substitution Substitution -> Bool .
+  op _~=_ : State State -> Bool .
 
 --- print state during model checking (debugging purpose)
   op prettyPrint : State ~> QidList .
@@ -103,8 +103,8 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
            term-hook trueTerm              (true)
 
            --- folding graph stuff
-	   op-hook stateFoldingRelSymbol   (_>=_ : State State ~> Bool)
-	   op-hook transFoldingRelSymbol   (_>=_ : Substitution Substitution ~> Bool)
+	   op-hook subsumeFoldingRelSymbol (_>=_ : State State ~> Bool)
+	   op-hook renameFoldingRelSymbol  (_~=_ : State State ~> Bool)
 	   op-hook prettyPrintStateSymbol  (prettyPrint : State ~> QidList)
 	   op-hook prettyPrintTransSymbol  (prettyPrint : Substitution ~> QidList)
 
@@ -221,14 +221,13 @@ mod META-SYMBOLIC-CONNECTOR is
   eq init(ST) >= init(ST) = true .
   eq mid(ST) >= mid(ST')
    = metaMatch(##m##, ST, ST', nil, 0) :: Substitution .
-*** renaming: and-then metaMatch(##m##, ST', ST, nil, 0) :: Substitution .
   eq S1:State >= S2:State = false [owise] .
 
---- substitution folding
-  eq none >= SUB = true .
-  eq (V <- T ; SUB) >= (V <- T' ; SUB')
-   = metaMatch(##m##, T, T', nil, 0) :: Substitution and-then SUB >= SUB' .
-  eq SUB >= SUB' = false [owise] .
+--- renameing folding
+  eq init(ST) ~= init(ST) = true .
+  eq mid(ST) ~= mid(ST')
+   = mid(ST) >= mid(ST') and-then mid(ST') >= mid(ST) .
+  eq S1:State ~= S2:State = false [owise] .
 
 --- compute the next states
 --- TODO: keep both a state and a substitution for a counter example..
@@ -391,6 +390,8 @@ mod META-SYMBOLIC-COND-CONNECTOR is
 --- condition should be already considered by variant narrowing
   eq mid(ST,CD) >= mid(ST',CD')
    = mid(ST) >= mid(ST') .
+  eq mid(ST,CD) ~= mid(ST',CD')
+   = mid(ST,CD) >= mid(ST',CD') and-then mid(ST',CD') >= mid(ST,CD) .
 endm
 
 --- Folding conditions C >= C' by checking C' => \rho(C) using variant narrowing
@@ -426,6 +427,9 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
   eq mid(ST,CD) >= mid(ST',CD')
    = condFold(ST, CD, ST', CD', 0) .
 
+  eq mid(ST,CD) ~= mid(ST',CD')
+   = mid(ST,CD) >= mid(ST',CD') and-then mid(ST',CD') >= mid(ST,CD) .
+
   op condFold : Term EqCondition Term EqCondition Nat -> Bool .
  ceq condFold(ST, CD, ST', CD', N)
    = implyOK(CD', CD << SUB) and-then condFold(ST, CD, ST', CD', s(N))
@@ -451,7 +455,6 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
    = if B then T else 'not_[T] fi, condList(CD, B) .
   eq condList(nil, B) 
    = if B then 'true.Bool else 'false.Bool fi .
-
 endm
 
 
@@ -543,7 +546,6 @@ endm
 mod LMC-COMMAND-PROCESSING is
   pr COMMAND-PROCESSING .
   pr META-PROP-SET .
-  pr META-LMC-COUNTEREXAMPLE-TRANSFORMER .
 
   vars T T1 T2 T3 T4 T5 T6 : Term .  
   var TL TL1 : TermList .
@@ -558,7 +560,7 @@ mod LMC-COMMAND-PROCESSING is
   vars QI QI' F V O : Qid .  var TY : Type .
   var  TDM : Tuple{Database,ModuleExpression} .
   var  TMVB : [Tuple{Term,Module,Bool,OpDeclSet,Bound,Database}] .
-  var  RP? : [ResultPair] .
+  var RP : ResultPair . var  RP? : [ResultPair] .
 
 --- command condition type
   op lmcCmdCond : Qid -> Type? .
@@ -597,7 +599,9 @@ mod LMC-COMMAND-PROCESSING is
      fi 
   if B  := included('META-MODULE, getImports(getTopModule(ME,DB)), DB) .
 
+-------------------------------------
 --- parse arguments
+---
   op procLMCComd : Qid TermList Module Bool Bound OpDeclSet Database TermList 
                 -> Tuple{Database,QidList} .
 
@@ -637,7 +641,7 @@ mod LMC-COMMAND-PROCESSING is
      fi
   if T?:[Term] := solveBubbles('bubble['__[TL]], M, B, VDS, DB) .
 
---- parse lmc command args: procLMCComd(BUBBLES,MOD,HasMetaLv?,HasCond?,...)
+  --- parse lmc command args: procLMCComd(BUBBLES,MOD,HasMetaLv?,HasCond?,...)
   op parseLMCCondArg1 : Qid Term Type Bound Module OpDeclSet Database TermList 
                     -> Tuple{Database,QidList} .
   op parseLMCCondArg2 : Qid Term Bound Module OpDeclSet Database TermList 
@@ -676,8 +680,9 @@ mod LMC-COMMAND-PROCESSING is
   eq getDatabase({T, M, B, VDS, DB}) = DB .
   eq getDatabase(tupleTMBOBDerror(QIL)) = emptyDatabase .
 
-
+-------------------------------------
 --- execute commands
+---
   op procLMC : Qid TermList Condition Bound Module OpDeclSet Database -> Tuple{Database,QidList} .
 
   eq procLMC('lfmc_|=_., (T1,T2), CD, D, M, VDS, DB)
@@ -688,7 +693,7 @@ mod LMC-COMMAND-PROCESSING is
   op procLMCExec : Term Term Condition Bool Bound Module Database -> Tuple{Database,QidList} .
   ceq procLMCExec(T1, T2, CD, B, D, M, DB)
    = if RP? :: ResultPair
-     then << DB ; (printLMCInfo(M,B,T1,T2,CD) printLMCOutput(getTerm(RP?))) >>
+     then << DB ; printLMCInfo(M,B,T1,T2,CD) printLMCOutput(M,getTerm(RP?)) >>
      else << DB ; getMsg(getTerm(RP?)) >>
      fi
    if U := addEqs( 
@@ -708,16 +713,32 @@ mod LMC-COMMAND-PROCESSING is
       else '\n '\b 'under 'the 'condition ': '\o '\n '\s '\s
       eMetaPrettyPrint(M,CD) fi) '\n .
 
-  op printLMCOutput : -> QidList .
-  eq printLMCOutput('result:_real:_bound:_complete:_[T1,T2,T3,T4])
+  op printLMCOutput : Module Term -> QidList .
+  eq printLMCOutput(M, 'result:_real:_bound:_complete:_[T1,T2,T3,T4])
    = '\b 'result: '\o '\n '\s '\s
----      eMetaPrettyPrint(M, downTerm(getTerm(RP?))) 
-      '\n
-   .
-  eq printLMCOutput(T)
-   = '\b 'result: '\o '\n '\s '\s
+     (if T1 == 'true.Bool then 
+        if T4 == 'true.Bool then
+          'true '\s '`( 'complete 'with 'depth eMetaPrettyPrint(M,T3) '`)
+        else 
+          'no 'counterexample 'found 'within 'bound eMetaPrettyPrint(M,T3)
+        fi
+      else 
+        if T2 == 'true.Bool then nil else 'possibly 'spurious fi
+        'counterexample 'found 'at 'depth eMetaPrettyPrint(M,T3) '\n '\s '\s
+        printLMCCE(M, T1)
+      fi) '\n .
+
+  eq printLMCOutput(M, T)
+   = '\b 'error: '\o '\n '\s '\s
      'model 'checker 'internal 'error '\n [owise] .
 
+  op printLMCCE : Module Term -> QidList .
+ ceq printLMCCE(M, T)
+   = eMetaPrettyPrint(M, downTerm(getTerm(RP)))
+  if RP := metaReduce(upModule('META-LMC-COUNTEREXAMPLE-TRANSFORMER,false),
+                      'transRes[T]) .
+  eq printLMCCE(M, T)
+   = 'invalid 'counterexample 'term [owise] .
 endm
 
 mod LMC-DATABASE-HANDLING is

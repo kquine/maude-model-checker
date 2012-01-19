@@ -61,7 +61,7 @@ endm)
 
 --- the condition for ST should be refined for both cases
 
-(smc [s :: ST] |= [](up -> (~ down U right)) .)
+(lfmc [s :: ST] |= [](up -> (~ down U right)) .)
 
-(smc [s :: ST] |= [](down -> (~ up U right)) .)
+(lfmc [s :: ST] |= [](down -> (~ up U right)) .)
 

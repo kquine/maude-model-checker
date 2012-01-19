@@ -52,7 +52,7 @@
 SymbolicModelCheckerSymbol::SymbolicModelCheckerSymbol(int id, int arity):
 	TemporalSymbol(id, arity), satisfiesSymbol(NULL),
 	metaStateSymbol(NULL), metaTransitionSymbol(NULL),
-	stateFoldingRelSymbol(NULL), transFoldingRelSymbol(NULL),
+	subsumeFoldingRelSymbol(NULL), renameFoldingRelSymbol(NULL),
 	prettyPrintStateSymbol(NULL), prettyPrintTransSymbol(NULL),
     unboundedSymbol(NULL), succSymbol(NULL),
     resultreportSymbol(NULL)
@@ -73,8 +73,8 @@ SymbolicModelCheckerSymbol::attachSymbol(const char* purpose, Symbol* symbol)
 	BIND_SYMBOL(purpose, symbol, metaTransitionSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, prettyPrintStateSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, prettyPrintTransSymbol, Symbol*);
-	BIND_SYMBOL(purpose, symbol, stateFoldingRelSymbol, Symbol*);
-	BIND_SYMBOL(purpose, symbol, transFoldingRelSymbol, Symbol*);
+	BIND_SYMBOL(purpose, symbol, subsumeFoldingRelSymbol, Symbol*);
+	BIND_SYMBOL(purpose, symbol, renameFoldingRelSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, unboundedSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, succSymbol, SuccSymbol*);
 	BIND_SYMBOL(purpose, symbol, resultreportSymbol, Symbol*);
@@ -99,8 +99,8 @@ SymbolicModelCheckerSymbol::copyAttachments(Symbol* original, SymbolMap* map)
 	COPY_SYMBOL(orig, metaTransitionSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, prettyPrintStateSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, prettyPrintTransSymbol, map, Symbol*);
-	COPY_SYMBOL(orig, stateFoldingRelSymbol, map, Symbol*);
-	COPY_SYMBOL(orig, transFoldingRelSymbol, map, Symbol*);
+	COPY_SYMBOL(orig, subsumeFoldingRelSymbol, map, Symbol*);
+	COPY_SYMBOL(orig, renameFoldingRelSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, unboundedSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, succSymbol, map, SuccSymbol*);
 	COPY_SYMBOL(orig, resultreportSymbol, map, Symbol*);
@@ -125,8 +125,8 @@ SymbolicModelCheckerSymbol::getSymbolAttachments(Vector<const char*>& purposes, 
 	APPEND_SYMBOL(purposes, symbols, metaTransitionSymbol);
 	APPEND_SYMBOL(purposes, symbols, prettyPrintStateSymbol);
 	APPEND_SYMBOL(purposes, symbols, prettyPrintTransSymbol);
-	APPEND_SYMBOL(purposes, symbols, stateFoldingRelSymbol);
-	APPEND_SYMBOL(purposes, symbols, transFoldingRelSymbol);
+	APPEND_SYMBOL(purposes, symbols, subsumeFoldingRelSymbol);
+	APPEND_SYMBOL(purposes, symbols, renameFoldingRelSymbol);
 	APPEND_SYMBOL(purposes, symbols, unboundedSymbol);
 	APPEND_SYMBOL(purposes, symbols, succSymbol);
 	APPEND_SYMBOL(purposes, symbols, resultreportSymbol);
@@ -181,30 +181,6 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	cout << "Negated formula: " << formulaCxt->root() << endl;
 #endif
 
-	// the third boolean argument
-    bool subFolding = false;
-    if (boolCxt->root()->symbol() == this->trueTerm.getDag()->symbol())
-    	subFolding = true;
-    else
-    {
-    	if (boolCxt->root()->symbol() != this->getFalseDag()->symbol())
-    		IssueWarning("ModelChecker: the third argument is not reduced to boolean values");
-    }
-
-    // the fourth natural number argument
-    long globalBound = NONE;
-    {
-    	S_DagNode* tmpBoundDag = dynamic_cast<S_DagNode*>(boundCxt->root());
-    	if (tmpBoundDag != NULL)
-    		globalBound = tmpBoundDag->getNumber().get_si();
-    	else
-    	{
-    		if (boundCxt->root()->symbol() != this->unboundedSymbol)
-    			IssueWarning("ModelChecker: the fourth argument is not reduced to bound values, and assumed as infinity");
-    	}
-    }
-
-
 	//
 	//	1. Convert a formula Dag into a LogicFormula.
 	//
@@ -225,12 +201,14 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//  2. search graph and automaton
 	//
 	BuchiAutomaton2 propAutomaton(&formula, top);
-	StateTransitionMetaGraph graph(sysContext.get(),
-			metaStateSymbol, metaTransitionSymbol);
+	StateTransitionMetaGraph graph(sysContext.get(), metaStateSymbol, metaTransitionSymbol);
 
-	FoldingChecker sfc(stateFoldingRelSymbol, trueTerm.getDag(), &context);
-	FoldingChecker tfc(transFoldingRelSymbol, trueTerm.getDag(), &context);
-	StateFoldingGraph nsg(&graph,&sfc, &tfc);
+	auto_ptr<FoldingChecker> fc;
+	if (interpreteBoolDag(boolCxt->root()))
+		fc.reset(new FoldingChecker(subsumeFoldingRelSymbol, trueTerm.getDag(), &context));
+	else
+		fc.reset(new FoldingChecker(renameFoldingRelSymbol, trueTerm.getDag(), &context));
+	StateFoldingGraph nsg(&graph,fc.get());
 
 	PropChecker stateChecker(&context, satisfiesSymbol, trueTerm.getDag());
 	SystemAutomaton systemAutomaton(&nsg, propositions, &stateChecker);
@@ -240,36 +218,32 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	PrettyPrinter printState(prettyPrintStateSymbol, &context);
 	PrettyPrinter printTrans(prettyPrintTransSymbol, &context);
 
+	//
+	//  3. perform bounded model checking
+	//
 	bool result = false;
-	int curr_bound = 0;
-	int bound_state = 0;
+    long globalBound = interpreteNatDag(boundCxt->root());
 
 #ifdef SDEBUG
-	if (globalVerboseFlag)
-		cout << "## states ------------" << endl;
+	int bound_state = 0;
 #endif
 	do {
 #ifdef SDEBUG
-		if (globalVerboseFlag)
-			cout << "##current bound = " << curr_bound << ", #states = " << nsg.getNrStates() << endl;
+		//if (globalVerboseFlag)
+			cout << "##current bound = " << nsg.getCurrLevel() << ", #states = " << nsg.getNrStates() << endl;
 		int old_size = graph.getNrStates();
 #endif
 		mc.reset(new NDFSModelChecker(prod));
-		systemAutomaton.setBound(curr_bound++);
 		result = mc->findCounterExample();
 #ifdef SDEBUG
 		// print states in the previous bound (to show transitions)
-		if (globalVerboseFlag)
+		//if (globalVerboseFlag)
 			for (int k = bound_state; k < old_size; ++k)
 				nsg.dump(cout, k, &printState, &printTrans);
 		bound_state = old_size;
 #endif
-	} while(result == false && systemAutomaton.hitBound());
-
-#ifdef SDEBUG
-	if (globalVerboseFlag)
-		cout << "----------------------" << endl;
-#endif
+	} while((globalBound == NONE || nsg.getCurrLevel() <= globalBound) &&
+			result == false && nsg.incrementLevel());
 
 	int nrSystemStates = nsg.getNrStates();
 	Verbose("SymbolicModelCheckerSymbol: Examined " << nrSystemStates <<
@@ -278,36 +252,67 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//
 	//  3. results
 	//
+	DagNode* resultDag = makeModelCheckReportDag(result, nsg.getCurrLevel(), nsg.reachFixpoint(), *mc, nsg);
+	context.addInCount(*sysContext);
+	return context.builtInReplace(subject, resultDag);
+}
+
+bool
+SymbolicModelCheckerSymbol::interpreteBoolDag(DagNode* dag)
+{
+    if (dag->symbol() == this->trueTerm.getDag()->symbol())
+    	return true;
+    else
+    {
+    	if (dag->symbol() != this->getFalseDag()->symbol())
+    		IssueWarning("ModelChecker: the third argument is not reduced to boolean values");
+    	return false;
+    }
+}
+
+long
+SymbolicModelCheckerSymbol::interpreteNatDag(DagNode* dag)
+{
+	S_DagNode* tmpBoundDag = dynamic_cast<S_DagNode*>(dag);
+	if (tmpBoundDag != NULL)
+		return tmpBoundDag->getNumber().get_si();
+	else
 	{
-		Vector<DagNode*> res_args(4);
-		if (result)
+		if (dag->symbol() != this->unboundedSymbol)
+			IssueWarning("ModelChecker: the fourth argument is not reduced to bound values, and assumed as infinity");
+		return NONE;
+	}
+}
+
+DagNode*
+SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool complete,
+		const modelChecker::ModelChecker& mc, modelChecker::StateFoldingGraph& nsg)
+{
+	Vector<DagNode*> res_args(4);
+	if (result)
+	{
+		list<Edge> path;
+		list<Edge> cycle;
+		if (nsg.concretePath(mc.getLeadIn(), mc.getCycle(), path, cycle))
 		{
-			list<Edge> path;
-			list<Edge> cycle;
-			if (nsg.constructConcretePath(mc->getLeadIn(), mc->getCycle(), path, cycle))
-			{
-				res_args[0] = makeCounterexample(graph, path, cycle);
-				res_args[1] = trueTerm.getDag();
-			}
-			else
-			{
-				res_args[0] = makeCounterexample(nsg, mc->getLeadIn(), mc->getCycle());
-				res_args[1] = this->getFalseDag();
-			}
+			res_args[0] = makeCounterexample(nsg, path, cycle);
+			res_args[1] = trueTerm.getDag();
 		}
 		else
 		{
-			res_args[0] = trueTerm.getDag();
-			res_args[1] = trueTerm.getDag();
+			res_args[0] = makeCounterexample(nsg.getUnderlyingGraph(), mc.getLeadIn(), mc.getCycle());
+			res_args[1] = this->getFalseDag();
 		}
-		res_args[2] = succSymbol->makeNatDag(curr_bound);
-		res_args[3] = systemAutomaton.hitBound() ? this->getFalseDag() : trueTerm.getDag();
-
-		context.addInCount(*sysContext);
-		DagNode* resultDag = resultreportSymbol->makeDagNode(res_args);
-		cout << resultDag << endl;
-		return context.builtInReplace(subject, resultDag);
 	}
+	else
+	{
+		res_args[0] = trueTerm.getDag();
+		res_args[1] = trueTerm.getDag();
+	}
+	res_args[2] = succSymbol->makeNatDag(bound);
+	res_args[3] = complete ? trueTerm.getDag() : this->getFalseDag();
+
+	return resultreportSymbol->makeDagNode(res_args);
 }
 
 
@@ -316,7 +321,6 @@ SymbolicModelCheckerSymbol::SystemAutomaton::SystemAutomaton(
 			gph(graph), props(props), pc(pc)
 {
 	sInfo.expandTo(1);
-	sInfo[0]->depth = 0;
 }
 
 int
@@ -325,9 +329,8 @@ SymbolicModelCheckerSymbol::SystemAutomaton::getNextState(int stateNr, int trans
 	Assert(stateNr < sInfo.size(), "SystemAutomaton::getNextState: unknown state");
 
 	// if hit bound
-	if (searchBound >= 0 && sInfo[stateNr]->depth > searchBound)
+	if (gph->boundState(stateNr))
 	{
-		hitBoundF = true;
 		return NONE;
 	}
 	else
@@ -341,13 +344,8 @@ SymbolicModelCheckerSymbol::SystemAutomaton::getNextState(int stateNr, int trans
 		}
 		else
 		{
-			//FIXME: bound correct here??
 			if (n >= sInfo.size())
 				sInfo.expandTo(n + 1);
-			if (sInfo[n]->depth == NONE)
-				sInfo[n]->depth = sInfo[stateNr]->depth + 1;
-			else
-				sInfo[n]->depth = min(sInfo[n]->depth, sInfo[stateNr]->depth + 1);
 		}
 		return n;
 	}

@@ -53,5 +53,5 @@ endm)
 
 --- extra condition "number(o) = number(|)" may required..
 
-(smc [TL BL] |= [] ex?  .)
+(lfmc [TL BL] |= [] ex?  .)
 
