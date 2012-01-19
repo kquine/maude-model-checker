@@ -24,7 +24,7 @@
 
 #include "StateFoldingGraph.hh"
 
-#define TDEBUG
+//#define TDEBUG
 
 namespace modelChecker {
 
@@ -35,13 +35,12 @@ StateFoldingGraph::StateFoldingGraph(SystemGraph2* graph, const FoldingChecker* 
 	insertFoldedState(0);
 }
 
-bool
+void
 StateFoldingGraph::incrementLevel()
 {
-	int oldSize = maximalStates.size();
 	if (reachFixpoint())	// do nothing if already fixpoint reached
-		return false;
-
+		return;
+	int oldSize = maximalStates.size();
 	for(int i = levelIndices[levelIndices.size() - 1]; i < oldSize; ++i)
 	{
 		int mStateNr = maximalStates[i];
@@ -69,7 +68,6 @@ StateFoldingGraph::incrementLevel()
 		}
 	}
 	levelIndices.append(oldSize);
-	return ! reachFixpoint();
 }
 
 void
@@ -111,7 +109,8 @@ StateFoldingGraph::getNextState(int stateNr, int index) const
 				"StateFoldingGraph::getNextState: unknown source state folding");
 
 	const MaximalState* ms = safeCast(const MaximalState*,foldGraph[stateNr]);
-	return index < ms->trans->size() ? (*ms->trans)[index].first : NONE;
+	return ms->trans.get() == NULL ? NONE :
+			(index < ms->trans->size() ? (*ms->trans)[index].first : NONE);
 }
 
 bool
@@ -131,7 +130,7 @@ StateFoldingGraph::concretePath(
 					path.front().first, resP, resCy);
 
 #ifdef TDEBUG
-	if (result && globalVerboseFlag)
+	if (result)
 	{
 		cout << "\nCounterexample found in Narrowing Graph:" << endl;
 		FOR_EACH_CONST(i1, list<Edge>, path)
@@ -232,6 +231,5 @@ StateFoldingGraph::dump_fold(ostream& o, int stateNr) const
 		o << "]";
 	}
 }
-
 
 }

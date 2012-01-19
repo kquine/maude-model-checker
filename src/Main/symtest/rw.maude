@@ -1,14 +1,16 @@
 
 load symbolic-checker .
 
+--- The readers-writers problem in Maude
+--- From: All About Maude - A High-Performance Logical Framework.
 (mod READERS-WRITERS is 
-  sort Nat' . 
-  op 0 : -> Nat' [ctor] . 
-  op s : Nat' -> Nat' [ctor] .  
+  sort Nat . 
+  op 0 : -> Nat [ctor] . 
+  op s : Nat -> Nat [ctor] .  
   sort Config . 
-  op <_`,_> : Nat' Nat' -> Config [ctor] .
+  op <_`,_> : Nat Nat -> Config [ctor] .
 
-  vars R W : Nat' .
+  vars R W : Nat .
 
   rl < 0, 0 > => < 0, s(0) > . 
   rl < R, s(W) > => < R, W > . 
@@ -18,11 +20,11 @@ endm)
 
 (mod READERS-WRITERS-PROPS is
   pr READERS-WRITERS .
-  pr SYMBOLIC-CHECKER .
+  pr SYMBOLIC-CHECKER * (sort Nat to Nat') .
 
   subsort Config < State .
 
-  vars N M : Nat' .
+  vars N M : Nat .
 
   ops one-writer-atmost? exclusion? : -> Prop .
 
@@ -35,7 +37,9 @@ endm)
   eq < s(N), s(M) > |= exclusion? = false [variant] .
 endm)
 
-(lfmc < N:Nat', 0 > |= [] one-writer-atmost? .)
+--- result: true
+(lfmc < N:Nat, 0 > |= [] one-writer-atmost? .)
 
-(lfmc < N:Nat', 0 > |= [] exclusion? .)
+--- result: true
+(lfmc < N:Nat, 0 > |= [] exclusion? .)
 

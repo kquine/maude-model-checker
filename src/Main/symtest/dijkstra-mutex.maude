@@ -1,4 +1,6 @@
 
+--- The Dijkstra's mutual exclusion algorithms in Maude
+--- From: Nancy Ann Lynch, Distributed algorithms, Morgan Kaufmann, 1996
 mod DIJKSTRA-MUTEX-SYNTAX is
 
 --- There are 6 status for each process. 

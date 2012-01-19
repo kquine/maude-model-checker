@@ -52,7 +52,7 @@ private:
     	int getNrTransitions(int stateNr) const	{ return gph->getNrTransitions(stateNr); }
 
     private:
-    	struct Info
+    	struct StateProp
     	{
     		NatSet testedProps;
     		NatSet trueProps;
@@ -62,7 +62,7 @@ private:
     	DagNodeSet& props;
     	modelChecker::PropChecker* pc;
 
-    	modelChecker::PtrVector<Info> sInfo;
+    	modelChecker::PtrVector<StateProp> sInfo;
     	modelChecker::StateFoldingGraph* gph;
     };
 

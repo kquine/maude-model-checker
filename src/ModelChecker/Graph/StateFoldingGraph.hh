@@ -38,7 +38,7 @@ public:
 	bool reachFixpoint() const;
 	int getCurrLevel() const;
 	bool boundState(int stateNr) const;
-	bool incrementLevel();
+	void incrementLevel();
 	int getNextState(int stateNr, int index) const;
 
 	// construct a concrete path without folding, and returns true if succeeded.
@@ -118,7 +118,7 @@ StateFoldingGraph::reachFixpoint() const
 inline int
 StateFoldingGraph::getCurrLevel() const
 {
-	return levelIndices.size();
+	return reachFixpoint() ? levelIndices.size() - 1 : levelIndices.size();
 }
 
 inline bool

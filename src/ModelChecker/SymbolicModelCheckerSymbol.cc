@@ -47,7 +47,7 @@
 
 #include "SymbolicModelCheckerSymbol.hh"
 
-#define SDEBUG
+//#define SDEBUG
 
 SymbolicModelCheckerSymbol::SymbolicModelCheckerSymbol(int id, int arity):
 	TemporalSymbol(id, arity), satisfiesSymbol(NULL),
@@ -229,21 +229,19 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 #endif
 	do {
 #ifdef SDEBUG
-		//if (globalVerboseFlag)
-			cout << "##current bound = " << nsg.getCurrLevel() << ", #states = " << nsg.getNrStates() << endl;
-		int old_size = graph.getNrStates();
+		int oldSize = nsg.getNrStates();
+		cout << "##current bound = " << nsg.getCurrLevel() << ", #states = " << nsg.getNrStates() << endl;
+#endif
+		nsg.incrementLevel();
+#ifdef SDEBUG
+		for (int k = bound_state; k < oldSize; ++k)
+			nsg.dump(cout, k, &printState, &printTrans);
+		bound_state = oldSize;
 #endif
 		mc.reset(new NDFSModelChecker(prod));
 		result = mc->findCounterExample();
-#ifdef SDEBUG
-		// print states in the previous bound (to show transitions)
-		//if (globalVerboseFlag)
-			for (int k = bound_state; k < old_size; ++k)
-				nsg.dump(cout, k, &printState, &printTrans);
-		bound_state = old_size;
-#endif
-	} while((globalBound == NONE || nsg.getCurrLevel() <= globalBound) &&
-			result == false && nsg.incrementLevel());
+	} while((globalBound == NONE || nsg.getCurrLevel() < globalBound) &&	// user bound
+			(result == false && ! nsg.reachFixpoint()));			// no counterexample & not fixedpoint
 
 	int nrSystemStates = nsg.getNrStates();
 	Verbose("SymbolicModelCheckerSymbol: Examined " << nrSystemStates <<
@@ -327,28 +325,19 @@ int
 SymbolicModelCheckerSymbol::SystemAutomaton::getNextState(int stateNr, int transitionNr)
 {
 	Assert(stateNr < sInfo.size(), "SystemAutomaton::getNextState: unknown state");
-
-	// if hit bound
-	if (gph->boundState(stateNr))
+	int n = gph->getNextState(stateNr, transitionNr);
+	if (n == NONE)
 	{
-		return NONE;
+		// fake a self loop for deadlocked state (if not hit bound)
+		if (transitionNr == 0 && !gph->boundState(stateNr))
+			return stateNr;
 	}
 	else
 	{
-		int n = gph->getNextState(stateNr, transitionNr);
-		if (n == NONE)
-		{
-			// fake a self loop for deadlocked state (if not hit bound)
-			if (transitionNr == 0)
-				return stateNr;
-		}
-		else
-		{
-			if (n >= sInfo.size())
-				sInfo.expandTo(n + 1);
-		}
-		return n;
+		if (n >= sInfo.size())
+			sInfo.expandTo(n + 1);
 	}
+	return n;
 }
 
 bool
