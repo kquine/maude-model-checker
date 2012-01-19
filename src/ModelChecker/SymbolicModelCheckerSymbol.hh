@@ -17,6 +17,7 @@
 #include "Interface/FoldingChecker.hh"
 #include "Interface/PropChecker.hh"
 #include "Interface/PrettyPrinter.hh"
+#include "Search/ModelChecker.hh"
 #include "Graph/StateFoldingGraph.hh"
 
 class SymbolicModelCheckerSymbol: public TemporalSymbol,

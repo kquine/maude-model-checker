@@ -10,7 +10,6 @@
 #include <list>
 #include "term.hh"
 #include "cachedDag.hh"
-#include "Graph/SystemGraph.hh"
 
 namespace modelChecker {
 
