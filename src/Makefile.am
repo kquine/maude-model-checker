@@ -1,5 +1,5 @@
 SUBDIRS = \
-    ModelChecker \
+	ModelChecker \
 	3rdParty \
 	Utility \
 	Temporal \

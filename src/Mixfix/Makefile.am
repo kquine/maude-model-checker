@@ -26,9 +26,9 @@ libmixfix_a_CPPFLAGS = \
 	-I$(top_srcdir)/src/AU_Persistent \
 	-I$(top_srcdir)/src/AU_Theory \
 	-I$(top_srcdir)/src/Meta \
-	-I$(top_srcdir)/src/ModelChecker \
 	-I$(top_srcdir)/src/3rdParty \
 	-I$(top_srcdir)/src/FullCompiler \
+	-I$(top_srcdir)/src/ModelChecker \
 	-I$(top_srcdir)/src/StrategyLanguage
 
 libmixfix_a_SOURCES = \
