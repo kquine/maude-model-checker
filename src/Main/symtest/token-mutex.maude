@@ -2,27 +2,58 @@
 --- modified from "All about Maude," p390.
 
 mod TOKEN-MUTEX is 
-  sorts Name . 
-  op 0 : -> Name [ctor] .
-  op | : -> Name [ctor] .
-  op __ : Name Name -> Name [ctor comm assoc id: 0] .
+  sorts Number . 
+  op 0 : -> Number [ctor] .
+  op | : -> Number [ctor] .
+  op __ : Number Number -> Number [ctor comm assoc id: 0] .
 
-  sorts Token Proc Mode .
-  ops * $ : -> Token [ctor] . 
-  op [_,_] : Name Mode -> Proc [ctor] . 
-  ops wait critical : -> Mode [ctor] . 
+  sorts Token Mode ModeWait .
+  subsorts ModeWait < Mode .
+  op {_} : Number -> Token [ctor] . 
+  op crit : -> Mode [ctor] . 
+  op wait : -> ModeWait [ctor] . 
 
-  sort Conf .
-  subsorts Token Proc < Conf . 
-  op none : -> Conf [ctor] . 
-  op __ : Conf Conf -> Conf [ctor assoc comm id: none] . 
+  sorts Proc ProcWait .
+  subsort ProcWait < Proc .
+  op [_,_] : Number Mode -> Proc [ctor] . 
+  op [_,_] : Number ModeWait -> ProcWait [ctor] . 
 
----(
-  rl [a-enter] : $ [a, wait] => [a, critical] . 
-  rl [a-exit] : [a, critical] => [a, wait] * . 
+  sort Conf ConfWait .
+  subsort Proc < Conf . 
+  subsorts Token ProcWait < ConfWait < Conf .
+  op none : -> ConfWait [ctor] . 
+  op __ : Conf Conf -> Conf [ctor comm assoc id: none] . 
+  op __ : ConfWait ConfWait -> ConfWait [ctor ditto] . 
 
-  rl [b-enter] : * [b, wait] => [b, critical] . 
-  rl [b-exit] : [b, critical] => [b, wait] $ .
----)
+  sort Top .
+  op <_,_> : Number Conf -> Top .
+
+  vars N M : Number . var CF : Conf .
+
+  rl [enter] : <   | N M,   {M} [M, wait] CF > 
+            => <   | N M,       [M, crit] CF > . 
+  rl [exit1] : < | | N M,       [M, crit] CF >
+            => < | | N M, {| M} [M, wait] CF > . 
+  rl [exit2] : <     | M,       [M, crit] CF >
+            => <     | M,   {0} [M, wait] CF > . 
 endm
+
+load symbolic-checker
+
+(mod TOKEN-MUTEX-SATISFACTION is
+  pr TOKEN-MUTEX .
+  pr SYMBOLIC-CHECKER .
+
+  subsort Top < State .
+
+  op ex? : -> Prop .
+
+  vars N M M' : Number .  var CF : Conf .  var WF : ConfWait . 
+
+  eq < N, WF > |= ex? = true [variant] .
+  eq < N, WF [M,crit] > |= ex? = true [variant] .
+  eq < N, WF [M,crit] [M',crit] > |= ex? = false [variant] .
+endm)
+
+(lfmc < N, {M} WF > |= [] ex? .)
 
