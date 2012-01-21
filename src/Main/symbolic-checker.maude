@@ -2,16 +2,20 @@
 --- only state-based.
 load model-checker
 
---- TODO: addling rule label: information in ResultContext. 
----       toTriple function changes it to ResultTriple
----       we can extract a rule from it using that..
-
 ****************************************
 ***          Basic Interface         ***
 ****************************************
 
+fmod RULE-NAME is
+  extending QID .
+
+  sort RuleName .
+  subsort Qid < RuleName .
+  ops unlabeled deadlock : -> RuleName .
+endfm
+
 fmod SYMBOLIC-CHECKER is
-  pr QID .
+  pr RULE-NAME .
   pr SATISFACTION .
   including LTL .
 
@@ -29,7 +33,7 @@ fmod SYMBOLIC-CHECKER is
   sorts Transition TransitionList ModelCheckResult .
   subsort Transition < TransitionList .
   subsort Bool < ModelCheckResult .
-  op {_,_} : State CESubstitution -> Transition [ctor] . --- for output
+  op {_,_,_} : State CESubstitution RuleName -> Transition [ctor] .
   op nil : -> TransitionList [ctor] .
   op __ : TransitionList TransitionList -> TransitionList [ctor assoc id: nil format (d ni d)] .
   op prefix_loop_ : TransitionList TransitionList -> ModelCheckResult [ctor format(n n++i n ni i--)] .
@@ -41,14 +45,17 @@ endfm
 
 --- core maude search function (using META-LEVEL)
 fmod BOUNDED-FOLDING-MODEL-CHECKER is
+  pr RULE-NAME .
   pr META-LEVEL .
   pr SATISFACTION .
   including LTL .
 
 --- meta transition
-  sort MetaConf .
+  sorts MetaEdge MetaConf .
+  op deadlock : -> MetaEdge [ctor] .
+  op _/_ : RuleName Substitution -> MetaEdge [ctor] .
   op <_> : State -> MetaConf [ctor] .
-  op _|=>_ : Substitution State -> MetaConf [ctor] .
+  op _|=>_ : MetaEdge State -> MetaConf [ctor] .
 
 --- propositions
   subsort Prop < Formula .
@@ -60,12 +67,12 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
 
 --- print state during model checking (debugging purpose)
   op prettyPrint : State ~> QidList .
-  op prettyPrint : Substitution ~> QidList .
+  op prettyPrint : MetaEdge ~> QidList .
 
 --- transitions
   sort Transition TransitionList .
   subsort Transition < TransitionList .
-  op {_,_} : State Substitution -> Transition [ctor] .
+  op {_,_} : State MetaEdge -> Transition [ctor] .
   op nil : -> TransitionList [ctor] .
   op __ : TransitionList TransitionList -> TransitionList [ctor assoc id: nil format (d ni d)] .
 
@@ -81,47 +88,48 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
 --- model checker
 --- (InitState,Formula,SubsumptionFolding,Bound)
   op symbolicModelCheck : State Formula Bool Bound ~> BoundedModelCheckReport
-        [special (
-           id-hook SymbolicModelCheckerSymbol
-  
-           --- temporal operators
-           op-hook trueSymbol              (True : ~> Formula)
-           op-hook falseSymbol             (False : ~> Formula)
-           op-hook notSymbol               (~_ : Formula ~> Formula)
-           op-hook nextSymbol              (O_ : Formula ~> Formula)
-           op-hook andSymbol               (_/\_ : Formula Formula ~> Formula)
-           op-hook orSymbol                (_\/_ : Formula Formula ~> Formula)
-           op-hook untilSymbol             (_U_ : Formula Formula ~> Formula)
-           op-hook releaseSymbol           (_R_ : Formula Formula ~> Formula)
+    [special (
+      id-hook SymbolicModelCheckerSymbol
 
-           --- for Bound attribute
-           op-hook succSymbol              (s_ : Nat ~> NzNat)
-           op-hook unboundedSymbol         (unbounded : ~> Bound)
+      --- temporal operators
+      op-hook trueSymbol              (True : ~> Formula)
+      op-hook falseSymbol             (False : ~> Formula)
+      op-hook notSymbol               (~_ : Formula ~> Formula)
+      op-hook nextSymbol              (O_ : Formula ~> Formula)
+      op-hook andSymbol               (_/\_ : Formula Formula ~> Formula)
+      op-hook orSymbol                (_\/_ : Formula Formula ~> Formula)
+      op-hook untilSymbol             (_U_ : Formula Formula ~> Formula)
+      op-hook releaseSymbol           (_R_ : Formula Formula ~> Formula)
 
-           --- state propositions
-           op-hook satisfiesSymbol         (_|=_ : State Formula ~> Bool)
-           term-hook trueTerm              (true)
+      --- for Bound attribute
+      op-hook succSymbol              (s_ : Nat ~> NzNat)
+      op-hook unboundedSymbol         (unbounded : ~> Bound)
 
-           --- folding graph stuff
-	   op-hook subsumeFoldingRelSymbol (_>=_ : State State ~> Bool)
-	   op-hook renameFoldingRelSymbol  (_~=_ : State State ~> Bool)
-	   op-hook prettyPrintStateSymbol  (prettyPrint : State ~> QidList)
-	   op-hook prettyPrintTransSymbol  (prettyPrint : Substitution ~> QidList)
+      --- state propositions
+      op-hook satisfiesSymbol         (_|=_ : State Formula ~> Bool)
+      term-hook trueTerm              (true)
 
-	   --- meta graph
-	   op-hook metaStateSymbol         (<_> : State ~> MetaConf)
-	   op-hook metaTransitionSymbol    (_|=>_ : Substitution State ~> MetaConf)
+      --- folding graph stuff
+      op-hook subsumeFoldingRelSymbol (_>=_ : State State ~> Bool)
+      op-hook renameFoldingRelSymbol  (_~=_ : State State ~> Bool)
+      op-hook prettyPrintStateSymbol  (prettyPrint : State ~> QidList)
+      op-hook prettyPrintTransSymbol  (prettyPrint : MetaEdge ~> QidList)
 
-           --- counterexamples
-	   term-hook falseTerm             (false)
-           op-hook transitionSymbol        ({_,_} : State Substitution ~> Transition)
-           op-hook transitionListSymbol    (__ : TransitionList TransitionList ~> TransitionList)
-           op-hook nilTransitionListSymbol (nil : ~> TransitionList)
-           op-hook counterexampleSymbol    (prefix_loop_ : TransitionList TransitionList ~> ModelCheckResult)
+      --- meta graph
+      op-hook metaStateSymbol         (<_> : State ~> MetaConf)
+      op-hook metaTransitionSymbol    (_|=>_ : MetaEdge State ~> MetaConf)
 
-           --- result report
-           op-hook resultreportSymbol      (result:_real:_bound:_complete:_ : ModelCheckResult Bool Nat Bool ~> BoundedModelCheckReport) 
-         )] .
+      --- counterexamples
+      term-hook falseTerm             (false)
+      op-hook deadlockTransSymbol     (deadlock : ~> MetaEdge)
+      op-hook transitionSymbol        ({_,_} : State MetaEdge ~> Transition)
+      op-hook transitionListSymbol    (__ : TransitionList TransitionList ~> TransitionList)
+      op-hook nilTransitionListSymbol (nil : ~> TransitionList)
+      op-hook counterexampleSymbol    (prefix_loop_ : TransitionList TransitionList ~> ModelCheckResult)
+
+      --- result report
+      op-hook resultreportSymbol      (result:_real:_bound:_complete:_ : ModelCheckResult Bool Nat Bool ~> BoundedModelCheckReport) 
+     )] .
 endfm
 
 ****************************************
@@ -136,58 +144,108 @@ fmod META-LMC-PARAMETERS is
   op ##f## : ~> TermList [memo] .
 endfm
 
-mod META-LMC-THEORY is
+fmod LMC-RESULT-4TUPLE-SET is
   pr RESULT-CONTEXT-SET .
+
+  sort StepResult StepResult? .
+  subsort StepResult < StepResult? .
+  op failure : -> StepResult? [ctor] .
+  op {_,_,_/_} : Term Type Substitution RuleSet -> StepResult [ctor] .
+
+  sort StepResultSet .
+  subsort StepResult < StepResultSet .
+  op empty : -> StepResultSet [ctor] .
+  op _|_ : StepResultSet StepResultSet -> StepResultSet
+    [ctor assoc comm id: empty prec 65] .
+  eq X:StepResult | X:StepResult = X:StepResult .
+
+  var M : Module . vars NextVar : Nat . vars S S' : Substitution .
+  vars T TS CtTS : Term . var TL : TermList . var TP : Type . var R : Rule .
+  var Tr : TraceNarrow . var B : Flags . vars Ct CtS : Context .  
+  var RTS : ResultContextSet . var SRS : StepResultSet .
+
+  op to4Tuple : Module ResultContextSet -> StepResult .
+  eq to4Tuple(M, empty ) = empty .
+  eq to4Tuple(M, {T,TP,S,S',Ct,CtS,TS,CtTS,NextVar,Tr,B} | RTS )
+   = {CtTS, leastSort(M,CtTS), S .. S' / getRuleSet(Tr)} | 
+     to4Tuple(M, RTS) .
+
+  op _|>_ : StepResult TermList -> StepResult .
+  eq (empty).StepResult |> TL = (empty).StepResult .
+  eq ({T,TP,S / R} | SRS) |> TL = {T,TP,S |> TL / R} | (SRS |> TL) .
+  eq (failure | SRS ) |> TL = failure | (SRS |> TL) .
+
+  op getRuleSet : TraceNarrow -> RuleSet .
+  eq getRuleSet({T,S,TP,R} Tr) = R getRuleSet(Tr) .
+  eq getRuleSet(nil) = none .
+endfm
+
+mod META-LMC-THEORY is
+  pr LMC-RESULT-4TUPLE-SET .
   pr META-LMC-PARAMETERS .
   pr BOUNDED-FOLDING-MODEL-CHECKER .
 
-  vars ST ST' : Term . vars SUB SUB' : Substitution .  
-  var TP : Type .  var RTS : ResultTripleSet . 
-
+  vars T1 T2 ST ST' : Term . vars SUB SUB' : Substitution .  
+  var RS : RuleSet . var AtS : AttrSet . var CD : Condition . var Q : Qid . 
+  var TP : Type .  var SRS : StepResultSet . 
 
   ops init mid : Term -> State [ctor] .
 
 --- functions
-  ops next variant : Term -> ResultTripleSet .
+  ops next variant : Term -> StepResultSet .
 
 --- meta rules
- crl [init] : < init(ST) > => SUB' |=> mid(getTerm(metaReduce(##m##,ST'))) 
-  if {ST',TP,SUB'} | RTS := variant(ST) . 
+ crl [init] : < init(ST) > 
+           => getRuleName(RS) / SUB' |=> mid(getTerm(metaReduce(##m##,ST'))) 
+  if {ST',TP,SUB' / RS} | SRS := variant(ST) . 
 
- crl [mid]  :  < mid(ST) > => SUB' |=> mid(getTerm(metaReduce(##m##,ST')))
-  if {ST',TP,SUB'} | RTS := next(ST) .
+ crl [mid]  :  < mid(ST) > 
+           => getRuleName(RS) / SUB' |=> mid(getTerm(metaReduce(##m##,ST')))
+  if {ST',TP,SUB' / RS} | SRS := next(ST) .
+
+  op getRuleName : RuleSet -> RuleName .
+  eq getRuleName((rl T1 => T2 [label(Q) AtS] .) RS) = Q .
+  eq getRuleName((crl T1 => T2 if CD [label(Q) AtS] .) RS) = Q .
+  eq getRuleName(RS) = unlabeled [owise] .
 endm
 
 fmod META-NARROWING-INTERFACE is
   pr META-LMC-PARAMETERS .
+  pr LMC-RESULT-4TUPLE-SET .
   pr META-NARROWING-SEARCH .
 
+  var M : Module . var RS : RuleSet .
   vars T T1 T2 ST PT : Term .  var TL : TermList .  var C : Constant . 
   var TP : Type . vars SUB SUB1 SUB2 : Substitution .  var N : Nat .
-  var RT : ResultTriple . var RTS : ResultTripleSet . var VFS : VariantFourSet .
+  var SR : StepResult . var SRS : StepResultSet . var VFS : VariantFourSet .
+
+  op metaNarrow2 : Module Term -> StepResult .
+  eq metaNarrow2(M,T) 
+   = to4Tuple(M,metaENarrowShowAll(M,T,1,full noStrategy BuiltIn-unify)) 
+     |> T .
 
 --- variant narrowing prop instantiations.
 --- compute the PI-instantated states of the given state.
 
   --- StateSet PropSet -> StateSet
-  op propSetInstSet : ResultTripleSet TermList ~> ResultTripleSet . 
-  eq propSetInstSet(RTS, (PT,TL))
-   = propSetInstSet(propInstSet(RTS, PT), TL) .
-  eq propSetInstSet(RTS, empty) = RTS .
+  op propSetInstSet : StepResultSet TermList ~> StepResultSet . 
+  eq propSetInstSet(SRS, (PT,TL))
+   = propSetInstSet(propInstSet(SRS, PT), TL) .
+  eq propSetInstSet(SRS, empty) = SRS .
 
   --- StateSet Prop -> StateSet
-  op propInstSet : ResultTripleSet Term ~> ResultTripleSet .
-  eq propInstSet({ST,TP,SUB} | RTS, PT)
-   = filterPropVars({ST,TP,SUB}, getVariants(##m##, '_|=_[ST, PT])) 
-   | propInstSet(RTS, PT) .
+  op propInstSet : StepResultSet Term ~> StepResultSet .
+  eq propInstSet({ST,TP,SUB / RS} | SRS, PT)
+   = filterPropVars({ST,TP,SUB / RS}, getVariants(##m##, '_|=_[ST, PT])) 
+   | propInstSet(SRS, PT) .
   eq propInstSet(empty, PT) = empty .
 
-  op filterPropVars : ResultTripleSet VariantFourSet ~> ResultTripleSet .
-  eq filterPropVars({ST,TP,SUB}, {T,SUB1,SUB2,N} | VFS)
-   = if inst?(T) then {ST << (SUB1 .. SUB2),TP, SUB .. (SUB1 .. SUB2)} 
+  op filterPropVars : StepResult VariantFourSet ~> StepResultSet .
+  eq filterPropVars({ST,TP,SUB / RS}, {T,SUB1,SUB2,N} | VFS)
+   = if inst?(T) then {ST << (SUB1 .. SUB2),TP, SUB .. (SUB1 .. SUB2) / RS} 
      else empty fi 
-   | filterPropVars({ST,TP,SUB}, VFS) .
-  eq filterPropVars(RT, empty) = empty .
+   | filterPropVars({ST,TP,SUB / RS}, VFS) .
+  eq filterPropVars(SR, empty) = empty .
 
   --- TODO: by not filtering, we may allow more patterns that are not reduced 
   --- to true/false. However, it easily generates spurious counter examples.. 
@@ -208,7 +266,7 @@ mod META-SYMBOLIC-CONNECTOR is
    * (op addOps to addOpsSE, op addEqs to addEqsSE, op addSorts to addSortsSE) .
 
   var M : Module .  vars T T' T1 T2 ST ST' PT CT : Term . 
-  var TL : TermList .  var V : Variable .
+  var Q : Qid . var TL : TermList .  var V : Variable .
   var TP : Type . vars SUB SUB' SUB'' : Substitution .  
   var B : Bool . var N : Nat . var D : Bound .
   var RT : ResultTriple .  var RTS : ResultTripleSet . 
@@ -231,8 +289,10 @@ mod META-SYMBOLIC-CONNECTOR is
 
 --- compute the next states
 --- TODO: keep both a state and a substitution for a counter example..
-  eq next(ST)    = propSetInstSet(metaNarrow(##m##, ST), ##f##) .
-  eq variant(ST) = propSetInstSet({ST,leastSort(##m##,ST),none}, ##f##) .
+  eq next(ST)    
+   = propSetInstSet(metaNarrow2(##m##, ST), ##f##) .
+  eq variant(ST) 
+   = propSetInstSet({ST,leastSort(##m##,ST),none / none}, ##f##) .
 
 --- run LMC model check : State Formula -> Result
   op lmc-check : Term Term Bool Bound ~> BoundedModelCheckReport .
@@ -257,10 +317,15 @@ mod META-SYMBOLIC-CONNECTOR is
   eq prettyPrint(init(ST)) = eMetaPrettyPrint(##m##, ST) .
   eq prettyPrint(mid(ST))  = eMetaPrettyPrint(##m##, ST) .
 
-  eq prettyPrint(none) = 'none .
-  eq prettyPrint(V <- T) = V '<- eMetaPrettyPrint(##m##,T) .
-  eq prettyPrint(V <- T ; A:Assignment ; SUB) 
-   = V '<- eMetaPrettyPrint(##m##,T) '; prettyPrint(A:Assignment ; SUB) .
+  eq prettyPrint(Q / SUB) = Q '/ prettyPrintSub(SUB) . 
+  eq prettyPrint(unlabeled / SUB) = 'unlabeled '/ prettyPrintSub(SUB) . 
+  eq prettyPrint(deadlock / SUB) = 'deadlock '/ prettyPrintSub(SUB) . 
+
+  op prettyPrintSub : Substitution -> QidList .
+  eq prettyPrintSub(none) = 'none .
+  eq prettyPrintSub(V <- T) = V '<- eMetaPrettyPrint(##m##,T) .
+  eq prettyPrintSub(V <- T ; A:Assignment ; SUB) 
+   = V '<- eMetaPrettyPrint(##m##,T) '; prettyPrintSub(A:Assignment ; SUB) .
 endm
 
 *****************************************************
@@ -279,32 +344,31 @@ fmod META-NARROWING-COND-INTERFACE is
   pr META-NARROWING-INTERFACE .
 
   vars T T1 T2 ST PT : Term .  var TL : TermList .
-  var C : Constant . var CD : EqCondition .
+  var C : Constant . var CD : EqCondition . var RS : RuleSet .
   var TP : Type . vars SUB SUB1 SUB2 : Substitution .  var N : Nat .
-  var RT : ResultTriple . var RTS : ResultTripleSet . var VFS : VariantFourSet .
+  var SR : StepResult . var SRS : StepResultSet . var VFS : VariantFourSet .
 
 --- variant narrowing condition instantiations.
 
   --- StateSet EqCondition -> StateSet
-  op condSetInstSet : ResultTripleSet EqCondition ~> ResultTripleSet . 
-  eq condSetInstSet(RTS, T = 'true.Bool /\ CD)
-   = condSetInstSet(condInstSet(RTS, T), CD) .
-  eq condSetInstSet(RTS, nil) = RTS .
+  op condSetInstSet : StepResultSet EqCondition ~> StepResultSet . 
+  eq condSetInstSet(SRS, T = 'true.Bool /\ CD)
+   = condSetInstSet(condInstSet(SRS, T), CD) .
+  eq condSetInstSet(SRS, nil) = SRS .
 
   --- StateSet Prop -> StateSet
-  op condInstSet : ResultTripleSet Term ~> ResultTripleSet .
- ceq condInstSet({ST,TP,SUB} | RTS, T)
-   = filterCondVars({ST,TP,SUB}, VFS)
-   | condInstSet(RTS, T) 
+  op condInstSet : StepResultSet Term ~> StepResultSet .
+ ceq condInstSet({ST,TP,SUB / RS} | SRS, T)
+   = filterCondVars({ST,TP,SUB / RS}, VFS) | condInstSet(SRS, T) 
   if VFS := getVariants(##m##, T << SUB) .
   eq condInstSet(empty, T) = empty .
 
   --- only true instances (hence the conditions should be complete and FVP)
-  op filterCondVars : ResultTripleSet VariantFourSet ~> ResultTripleSet .
-  eq filterCondVars({ST,TP,SUB}, {'true.Bool,SUB1,SUB2,N} | VFS)
-   = {ST << (SUB1 .. SUB2), TP, SUB .. (SUB1 .. SUB2)} 
-   | filterCondVars({ST,TP,SUB}, VFS) .
-  eq filterCondVars(RT, VFS) = empty [owise] .
+  op filterCondVars : StepResult VariantFourSet ~> StepResultSet .
+  eq filterCondVars({ST,TP,SUB / RS}, {'true.Bool,SUB1,SUB2,N} | VFS)
+   = {ST << (SUB1 .. SUB2), TP, SUB .. (SUB1 .. SUB2) / RS} 
+   | filterCondVars({ST,TP,SUB / RS}, VFS) .
+  eq filterCondVars(SR, VFS) = empty [owise] .
 
   --- applying substitution to condition
   op _<<_ : EqCondition Substitution ~> EqCondition .
@@ -367,25 +431,28 @@ mod META-SYMBOLIC-COND-CONNECTOR is
   var M : Module .  vars T T' T1 T2 ST ST' PT CT : Term . 
   var TL : TermList .  var V : Variable .
   var TP : Type . vars SUB SUB' SUB'' : Substitution .  var N : Nat .
-  var RT : ResultTriple .  var RTS : ResultTripleSet . 
-  vars CD CD' : EqCondition .
+  var SR : StepResult .  var SRS : StepResultSet . 
+  vars CD CD' : EqCondition . var RS : RuleSet .
 
 --- meta rules
  crl [init-cond] : 
        < init(ST,CD) >
-    => SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
-  if {ST',TP,SUB'} | RTS := variant(ST,CD) .
+    => getRuleName(RS) / SUB' |=> 
+         mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+  if {ST',TP,SUB' / RS} | SRS := variant(ST,CD) .
 
  crl [mid-cond] : 
        < mid(ST,CD) >
-    => SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
-  if {ST',TP,SUB'} | RTS := next(ST,CD) .
+    => getRuleName(RS) / SUB' |=> 
+         mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+  if {ST',TP,SUB' / RS} | SRS := next(ST,CD) .
 
-  ops next variant : Term EqCondition -> ResultTripleSet .
+  ops next variant : Term EqCondition -> StepResultSet .
   eq next(ST,CD)    
-   = propSetInstSet(condSetInstSet(metaNarrow(##m##, ST),CD), ##f##) .
+   = propSetInstSet(condSetInstSet(metaNarrow2(##m##, ST),CD), ##f##) .
   eq variant(ST,CD) 
-   = propSetInstSet(condSetInstSet({ST,leastSort(##m##,ST),none},CD), ##f##) .
+   = propSetInstSet(condSetInstSet({ST,leastSort(##m##,ST),none / none},CD), 
+                    ##f##) .
 
 --- condition should be already considered by variant narrowing
   eq mid(ST,CD) >= mid(ST',CD')
@@ -401,20 +468,22 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
   vars T T' T1 T2 ST ST' PT CT : Term . 
   var TL : TermList .  var V : Variable .
   var TP : Type . vars SUB SUB' SUB'' : Substitution .  
-  var N : Nat . var B : Bool .
-  var RT : ResultTriple .  var RTS : ResultTripleSet . 
+  var N : Nat . var B : Bool . var RS : RuleSet .
+  var SR : StepResult .  var SRS : StepResultSet . 
   vars CD CD' : EqCondition .  var VFS : VariantFourSet .
 
 --- meta rules
  crl [init-cond] : 
        < init(ST,CD) >
-    => SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
-  if {ST',TP,SUB'} | RTS := variant(ST) /\ condOK(CD << SUB') .
+    => getRuleName(RS) / SUB' |=> 
+         mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+  if {ST',TP,SUB' / RS} | SRS := variant(ST) /\ condOK(CD << SUB') .
 
  crl [mid-cond]  : 
        < mid(ST,CD) >
-    => SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
-  if {ST',TP,SUB'} | RTS := next(ST) /\ condOK(CD << SUB') .
+    => getRuleName(RS) / SUB' |=> 
+         mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+  if {ST',TP,SUB' / RS} | SRS := next(ST) /\ condOK(CD << SUB') .
 
 --- Another method to check a condition.
   op condOK : EqCondition ~> Bool .
@@ -507,9 +576,10 @@ mod META-LMC-COUNTEREXAMPLE-TRANSFORMER is
   pr META-LMC-COND-THEORY .
   pr BOUNDED-FOLDING-MODEL-CHECKER .
 
-  var F : Qid . var M : Module .  var V : Variable . var C : Constant .
+  vars Q F : Qid . var M : Module .  var V : Variable . var C : Constant .
   var CD : Condition . vars T T' ST PT : Term . var TL : TermList . 
-  var TR : Transition . var TRL TRL' : TransitionList . var SUB : Substitution .
+  var TR : Transition . var TRL TRL' : TransitionList . 
+  var RN : RuleName . var SUB : Substitution . var ME : MetaEdge .
   var D : Bound . vars B BC BR : Bool . var MR : ModelCheckResult .
 
 --- meta counterexample
@@ -525,11 +595,15 @@ mod META-LMC-COUNTEREXAMPLE-TRANSFORMER is
 
 --- transition (including conditions)
   op transTR : Transition -> TermList .
-  eq transTR({mid(ST),SUB})  = '`{_`,_`}[ST, wrapTL('_;_,'none.CESubstitution,transSUB(SUB))] .
-  eq transTR({init(ST),SUB}) = empty  .
+  eq transTR({mid(ST), RN / SUB})  
+   = '`{_`,_`,_`}[ST, wrapTL('_;_,'none.CESubstitution,transSUB(SUB)), 
+                  upRuleName(RN)] .
+  eq transTR({mid(ST), deadlock})  
+   = '`{_`,_`,_`}[ST, 'none.CESubstitution, upRuleName(deadlock)] .
+  eq transTR({init(ST), ME}) = empty  .
 
-  eq transTR({mid(ST,CD),SUB})  = transTR({mid(ST),SUB}) .
-  eq transTR({init(ST,CD),SUB}) = empty  .
+  eq transTR({mid(ST,CD),ME})  = transTR({mid(ST),ME}) .
+  eq transTR({init(ST,CD),ME}) = empty  .
 
 --- substitution
   op transSUB : Substitution -> TermList .
@@ -541,6 +615,10 @@ mod META-LMC-COUNTEREXAMPLE-TRANSFORMER is
   eq wrapTL(F, C, T) = T .
   eq wrapTL(F, C, (T,T',TL)) = F[T,T',TL] .
   eq wrapTL(F, C, empty) = C .
+
+  op upRuleName : RuleName -> Constant .
+  eq upRuleName(Q) = qid("'" + string(Q) + ".Qid") .
+  eq upRuleName(RN) = upTerm(RN) [owise] .
 endm
 
 mod LMC-COMMAND-PROCESSING is

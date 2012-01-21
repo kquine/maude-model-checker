@@ -44,6 +44,7 @@ private:
     DagNode* makeTransitionList(const DagGraph& dg, const list<Edge>& path) const;
     DagNode* makeTransition(const DagGraph& dg, int stateNr, int count) const;
 
+    Symbol* deadlockTransSymbol;
     Symbol* counterexampleSymbol;
     Symbol* transitionSymbol;
     Symbol* transitionListSymbol;

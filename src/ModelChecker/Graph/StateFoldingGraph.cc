@@ -128,27 +128,6 @@ StateFoldingGraph::concretePath(
 					cycle.front().first, resP, resCy):
 			constConcrPath(path, cycle, path.begin(), false,
 					path.front().first, resP, resCy);
-
-#ifdef TDEBUG
-	if (result)
-	{
-		cout << "\nCounterexample found in Narrowing Graph:" << endl;
-		FOR_EACH_CONST(i1, list<Edge>, path)
-			cout << i1->first << " =[" << i1->second << "]=> ";
-		cout << "| ";
-		FOR_EACH_CONST(j1, list<Edge>, cycle)
-			cout << j1->first << " =[" << j1->second << "]=> ";
-		cout << "$ " << endl;
-		cout << "~~~ >= ~~~~~~~~~~~~~~~~" << endl;
-
-		FOR_EACH_CONST(i2, list<Edge>, resP)
-			cout << i2->first << " =[" << i2->second << "]=> ";
-		cout << "| ";
-		FOR_EACH_CONST(j2, list<Edge>, resCy)
-			cout << j2->first << " =[" << j2->second << "]=> ";
-		cout << "$\n" << endl;
-	}
-#endif
 	return result;
 }
 
@@ -168,7 +147,7 @@ StateFoldingGraph::constConcrPath(
 	if (inCycle && pos == cycle.end())
 	{
 		//TODO: how to construct a concrete infinite path?
-		//return sfc->fold(getStateDag(cycle.front().first), graph->getStateDag(spos));
+		//return foldState(cycle.front().first,spos);
 		return cycle.front().first == spos;
 	}
 
@@ -191,6 +170,7 @@ StateFoldingGraph::constConcrPath(
 			}
 			++index;
 		}
+		//TODO: deadlock case
 	}
 	return false;
 }

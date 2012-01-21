@@ -296,18 +296,18 @@ SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool
 			list<Edge> cycle;
 			if (nsg.concretePath(mc.getLeadIn(), mc.getCycle(), path, cycle))
 			{
-				res_args[0] = makeCounterexample(nsg, path, cycle);
+				res_args[0] = makeCounterexample(nsg.getUnderlyingGraph(), path, cycle);
 				res_args[1] = trueTerm.getDag();
 			}
 			else	// spurious counterexample
 			{
-				res_args[0] = makeCounterexample(nsg.getUnderlyingGraph(), mc.getLeadIn(), mc.getCycle());
+				res_args[0] = makeCounterexample(nsg, mc.getLeadIn(), mc.getCycle());
 				res_args[1] = this->getFalseDag();
 			}
 		}
 		else	// renaming equivalence (no spurious counterexample)
 		{
-			res_args[0] = makeCounterexample(nsg.getUnderlyingGraph(), mc.getLeadIn(), mc.getCycle());
+			res_args[0] = makeCounterexample(nsg, mc.getLeadIn(), mc.getCycle());
 			res_args[1] = trueTerm.getDag();
 		}
 	}

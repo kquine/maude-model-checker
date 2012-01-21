@@ -126,9 +126,11 @@ StateTransitionMetaGraph::getTransitionDag(int stateNr, int index) const
 {
 	Assert(stateNr < seen.size() && seen[stateNr] != NULL,
 			"StateTransitionMetaGraph::getTransitionDag: Invalid state lookup");
-	Assert(index < seen[stateNr]->transitions.size(),
-			"StateTransitionMetaGraph::getTransitionDag: Invalid transition lookup");
-	return hashConsSet.getCanonical(seen[stateNr]->transitions[index]->hashConsIndex);
+	Assert((index == 0 && getNrTransitions(stateNr) == 0) || index < getNrTransitions(stateNr),
+				"StateTransitionMetaGraph::getTransitionDag: Invalid transition lookup");
+
+	return (index == 0 && getNrTransitions(stateNr) == 0) ? NULL	// deadlock
+			: hashConsSet.getCanonical(seen[stateNr]->transitions[index]->hashConsIndex);
 }
 
 inline int

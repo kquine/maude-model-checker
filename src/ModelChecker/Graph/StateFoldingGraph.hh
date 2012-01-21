@@ -105,8 +105,10 @@ StateFoldingGraph::getTransitionDag(int stateNr, int index) const
 	Assert(stateNr < foldGraph.size(), "StateFoldingGraph::getTransitionDag: invalid state lookup");
 	const MaximalState* ms = safeCast(const MaximalState*,foldGraph[stateNr]);
 	Assert(ms->trans.get() != NULL, "StateFoldingGraph::getTransitionDag: no transition");
-	Assert(index < (*ms->trans).size(), "StateFoldingGraph::getTransitionDag: invalid folding transition lookup");
-	return graph->getTransitionDag(stateNr, (*ms->trans)[index].second);
+	Assert((index == 0 && (*ms->trans).size() == 0) || index < (*ms->trans).size(),
+			"StateFoldingGraph::getTransitionDag: invalid folding transition lookup");
+	return (index == 0 && (*ms->trans).size() == 0) ? NULL
+			: graph->getTransitionDag(stateNr, (*ms->trans)[index].second);
 }
 
 inline bool

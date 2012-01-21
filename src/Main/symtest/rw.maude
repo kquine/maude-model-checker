@@ -12,10 +12,10 @@ load symbolic-checker .
 
   vars R W : Nat .
 
-  rl < 0, 0 > => < 0, s(0) > . 
-  rl < R, s(W) > => < R, W > . 
-  rl < R, 0 > => < s(R), 0 > . 
-  rl < s(R), W > => < R, W > .
+  rl [enter-w] : < 0, 0 > => < 0, s(0) > . 
+  rl [leave-w] : < R, s(W) > => < R, W > . 
+  rl [enter-r] : < R, 0 > => < s(R), 0 > . 
+  rl [leave-r] : < s(R), W > => < R, W > .
 endm)
 
 (mod READERS-WRITERS-PROPS is

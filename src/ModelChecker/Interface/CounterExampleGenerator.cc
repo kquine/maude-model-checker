@@ -39,7 +39,8 @@
 namespace modelChecker {
 
 CounterExampleGenerator::CounterExampleGenerator():
-		counterexampleSymbol(NULL), transitionSymbol(NULL), transitionListSymbol(NULL), nilTransitionListSymbol(NULL) {}
+		deadlockTransSymbol(NULL), counterexampleSymbol(NULL),
+		transitionSymbol(NULL), transitionListSymbol(NULL), nilTransitionListSymbol(NULL) {}
 
 DagNode*
 CounterExampleGenerator::makeCounterexample(const DagGraph& dg,
@@ -83,12 +84,15 @@ CounterExampleGenerator::makeTransition(const DagGraph& dg, int stateNr, int cou
 	static Vector<DagNode*> targs(2);
 	targs[0] = dg.getStateDag(stateNr);
 	targs[1] = dg.getTransitionDag(stateNr, count);
+	if (targs[1] == NULL)
+		targs[1] = deadlockTransSymbol->makeDagNode();
 	return transitionSymbol->makeDagNode(targs);
 }
 
 bool
 CounterExampleGenerator::attachSymbol(const char* purpose, Symbol* symbol)
 {
+	BIND_SYMBOL(purpose, symbol, deadlockTransSymbol, Symbol*);
     BIND_SYMBOL(purpose, symbol, transitionSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, transitionListSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, nilTransitionListSymbol, Symbol*);
@@ -107,6 +111,7 @@ void
 CounterExampleGenerator::copyAttachments(CounterExampleGenerator* orig, SymbolMap* map)
 {
     COPY_TERM(orig, falseTerm, map);
+    COPY_SYMBOL(orig, deadlockTransSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, transitionSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, transitionListSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, nilTransitionListSymbol, map, Symbol*);
@@ -116,6 +121,7 @@ CounterExampleGenerator::copyAttachments(CounterExampleGenerator* orig, SymbolMa
 void
 CounterExampleGenerator::getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols)
 {
+	APPEND_SYMBOL(purposes, symbols, deadlockTransSymbol);
     APPEND_SYMBOL(purposes, symbols, transitionSymbol);
 	APPEND_SYMBOL(purposes, symbols, transitionListSymbol);
 	APPEND_SYMBOL(purposes, symbols, nilTransitionListSymbol);
