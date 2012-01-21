@@ -113,68 +113,6 @@ StateFoldingGraph::getNextState(int stateNr, int index) const
 			(index < ms->trans->size() ? (*ms->trans)[index].first : NONE);
 }
 
-bool
-StateFoldingGraph::concretePath(
-		const list<Edge>& path, const list<Edge>& cycle,
-		list<Edge>& resP, list<Edge>& resCy)
-{
-	// currently, supposed to be called only once.
-	Assert (!path.empty() || !cycle.empty(), "ModelChecker: empty counterexample");
-	bool result = false;
-	resP.clear();
-	resCy.clear();
-	result = path.empty()?
-			constConcrPath(path, cycle, cycle.begin(), true,
-					cycle.front().first, resP, resCy):
-			constConcrPath(path, cycle, path.begin(), false,
-					path.front().first, resP, resCy);
-	return result;
-}
-
-bool
-StateFoldingGraph::constConcrPath(
-		const list<Edge>& path, const list<Edge>& cycle,
-		list<Edge>::const_iterator pos, bool inCycle,
-		int spos, list<Edge>& resP, list<Edge>& resCy)
-{
-	if (!inCycle && pos == path.end())
-	{
-		if (cycle.empty())
-			return true;
-		else
-			return constConcrPath(path,cycle, cycle.begin(),true, spos,resP,resCy);
-	}
-	if (inCycle && pos == cycle.end())
-	{
-		//TODO: how to construct a concrete infinite path?
-		//return foldState(cycle.front().first,spos);
-		return cycle.front().first == spos;
-	}
-
-	if (foldState(pos->first, spos))
-	{
-		int index = 0;
-		int next = NONE;
-		pos++;
-
-		while ((next = graph->getNextState(spos, index)) != NONE)
-		{
-			insertFoldedState(next);
-			if (constConcrPath(path, cycle, pos, inCycle, next, resP, resCy))
-			{
-				if (inCycle)
-					resCy.push_front(make_pair(spos,index));
-				else
-					resP.push_front(make_pair(spos,index));
-				return true;
-			}
-			++index;
-		}
-		//TODO: deadlock case
-	}
-	return false;
-}
-
 void
 StateFoldingGraph::dump(ostream& o, int stateNr, PrettyPrinter* stateP, PrettyPrinter* transP) const
 {

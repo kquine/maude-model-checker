@@ -41,10 +41,7 @@ public:
 	void incrementLevel();
 	int getNextState(int stateNr, int index) const;
 
-	// construct a concrete path without folding, and returns true if succeeded.
-	bool concretePath(const list<Edge>& path, const list<Edge>& cycle, list<Edge>& resP, list<Edge>& resCy);
-	const SystemGraph2& getUnderlyingGraph() const;
-
+	SystemGraph2& getUnderlyingGraph() const;
 	void dump(ostream& o, int stateNr, PrettyPrinter* stateP, PrettyPrinter* transP) const;	// state dump
 
 private:
@@ -62,12 +59,6 @@ private:
 	};
 
 	void insertFoldedState(int stateNr);
-	bool foldState(int s, int t) const;
-
-	bool constConcrPath(const list<Edge>& path, const list<Edge>& cycle,
-						list<Edge>::const_iterator pos, bool inCycle,
-						int statePos, list<Edge>& resP, list<Edge>& resCy);
-
 	void dump_fold(ostream& o, int stateNr) const;
 
 	SystemGraph2* graph;			// underlying graph
@@ -129,22 +120,10 @@ StateFoldingGraph::boundState(int stateNr) const
 	return safeCast(const MaximalState*,foldGraph[stateNr])->trans.get() == NULL;
 }
 
-inline const SystemGraph2&
+inline SystemGraph2&
 StateFoldingGraph::getUnderlyingGraph() const
 {
 	return *graph;
-}
-
-inline bool
-StateFoldingGraph::foldState(int s, int t) const
-{
-	if (t == s)
-		return true;
-	if (const FoldedState* ft = dynamic_cast<const FoldedState*>(foldGraph[t]))
-	{
-		return ft->foldRel.find(s) != ft->foldRel.end();
-	}
-	return false;
 }
 
 

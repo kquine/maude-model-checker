@@ -52,7 +52,7 @@
 SymbolicModelCheckerSymbol::SymbolicModelCheckerSymbol(int id, int arity):
 	TemporalSymbol(id, arity), satisfiesSymbol(NULL),
 	metaStateSymbol(NULL), metaTransitionSymbol(NULL),
-	subsumeFoldingRelSymbol(NULL), renameFoldingRelSymbol(NULL),
+	subsumeFoldingRelSymbol(NULL), renameFoldingRelSymbol(NULL), compatibleTransSymbol(NULL),
 	prettyPrintStateSymbol(NULL), prettyPrintTransSymbol(NULL),
     unboundedSymbol(NULL), succSymbol(NULL),
     resultreportSymbol(NULL)
@@ -75,6 +75,7 @@ SymbolicModelCheckerSymbol::attachSymbol(const char* purpose, Symbol* symbol)
 	BIND_SYMBOL(purpose, symbol, prettyPrintTransSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, subsumeFoldingRelSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, renameFoldingRelSymbol, Symbol*);
+	BIND_SYMBOL(purpose, symbol, compatibleTransSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, unboundedSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, succSymbol, SuccSymbol*);
 	BIND_SYMBOL(purpose, symbol, resultreportSymbol, Symbol*);
@@ -101,6 +102,7 @@ SymbolicModelCheckerSymbol::copyAttachments(Symbol* original, SymbolMap* map)
 	COPY_SYMBOL(orig, prettyPrintTransSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, subsumeFoldingRelSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, renameFoldingRelSymbol, map, Symbol*);
+	COPY_SYMBOL(orig, compatibleTransSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, unboundedSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, succSymbol, map, SuccSymbol*);
 	COPY_SYMBOL(orig, resultreportSymbol, map, Symbol*);
@@ -127,6 +129,7 @@ SymbolicModelCheckerSymbol::getSymbolAttachments(Vector<const char*>& purposes, 
 	APPEND_SYMBOL(purposes, symbols, prettyPrintTransSymbol);
 	APPEND_SYMBOL(purposes, symbols, subsumeFoldingRelSymbol);
 	APPEND_SYMBOL(purposes, symbols, renameFoldingRelSymbol);
+	APPEND_SYMBOL(purposes, symbols, compatibleTransSymbol);
 	APPEND_SYMBOL(purposes, symbols, unboundedSymbol);
 	APPEND_SYMBOL(purposes, symbols, succSymbol);
 	APPEND_SYMBOL(purposes, symbols, resultreportSymbol);
@@ -205,12 +208,13 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	BuchiAutomaton2 propAutomaton(&formula, top);
 	StateTransitionMetaGraph graph(sysContext.get(), metaStateSymbol, metaTransitionSymbol);
 
-	auto_ptr<FoldingChecker> fc;
+	auto_ptr<FoldingChecker> sfc;
 	if (subsumption)
-		fc.reset(new FoldingChecker(subsumeFoldingRelSymbol, trueTerm.getDag(), &context));
+		sfc.reset(new FoldingChecker(subsumeFoldingRelSymbol, trueTerm.getDag(), &context));
 	else
-		fc.reset(new FoldingChecker(renameFoldingRelSymbol, trueTerm.getDag(), &context));
-	StateFoldingGraph nsg(&graph,fc.get());
+		sfc.reset(new FoldingChecker(renameFoldingRelSymbol, trueTerm.getDag(), &context));
+	FoldingChecker tfc(compatibleTransSymbol, trueTerm.getDag(), &context);
+	StateFoldingGraph nsg(&graph,sfc.get());
 
 	PropChecker stateChecker(&context, satisfiesSymbol, trueTerm.getDag());
 	SystemAutomaton systemAutomaton(&nsg, propositions, &stateChecker);
@@ -251,7 +255,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//  3. results
 	//
 	DagNode* resultDag = makeModelCheckReportDag(result, nsg.getCurrLevel(), nsg.reachFixpoint(),
-			subsumption, *mc, nsg);
+			subsumption, *mc, nsg, sfc.get(), &tfc);
 	context.addInCount(*sysContext);
 	return context.builtInReplace(subject, resultDag);
 }
@@ -285,7 +289,8 @@ SymbolicModelCheckerSymbol::interpreteNatDag(DagNode* dag)
 
 DagNode*
 SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool complete, bool subsumption,
-		const modelChecker::ModelChecker& mc, modelChecker::StateFoldingGraph& nsg)
+		const modelChecker::ModelChecker& mc, modelChecker::StateFoldingGraph& nsg,
+		modelChecker::FoldingChecker* sfc, modelChecker::FoldingChecker* tfc)
 {
 	Vector<DagNode*> res_args(4);
 	if (result)
@@ -294,7 +299,7 @@ SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool
 		{
 			list<Edge> path;
 			list<Edge> cycle;
-			if (nsg.concretePath(mc.getLeadIn(), mc.getCycle(), path, cycle))
+			if (concretePath(nsg,sfc,tfc, mc.getLeadIn(), mc.getCycle(), path, cycle))
 			{
 				res_args[0] = makeCounterexample(nsg.getUnderlyingGraph(), path, cycle);
 				res_args[1] = trueTerm.getDag();
@@ -322,6 +327,85 @@ SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool
 	return resultreportSymbol->makeDagNode(res_args);
 }
 
+
+bool
+SymbolicModelCheckerSymbol::concretePath(modelChecker::StateFoldingGraph& gph,
+		modelChecker::FoldingChecker* sfc, modelChecker::FoldingChecker* tfc,
+		const list<Edge>& path, const list<Edge>& cycle,
+		list<Edge>& resP, list<Edge>& resCy)
+{
+	Assert (!path.empty() || !cycle.empty(), "ModelChecker: empty counterexample");
+	bool result = false;
+	resP.clear();
+	resCy.clear();
+	result = path.empty()?
+			constConcrPath(gph,sfc,tfc, path, cycle, cycle.begin(), true, cycle.front().first, resP, resCy):
+			constConcrPath(gph,sfc,tfc, path, cycle, path.begin(), false, path.front().first, resP, resCy);
+	return result;
+}
+
+bool
+SymbolicModelCheckerSymbol::constConcrPath(modelChecker::StateFoldingGraph& gph,
+		modelChecker::FoldingChecker* sfc, modelChecker::FoldingChecker* tfc,
+		const list<Edge>& path, const list<Edge>& cycle,
+		list<Edge>::const_iterator pos, bool inCycle,
+		int spos, list<Edge>& resP, list<Edge>& resCy)
+{
+	if (!inCycle && pos == path.end())
+	{
+		if (cycle.empty())
+			return true;
+		else
+			return constConcrPath(gph,sfc,tfc, path,cycle, cycle.begin(),true, spos,resP,resCy);
+	}
+	if (inCycle && pos == cycle.end())
+	{
+		//TODO: how to construct a concrete infinite path?
+		//return foldState(cycle.front().first,spos);
+		return cycle.front().first == spos;
+	}
+
+	if (pos->first == spos ||  sfc->fold(gph.getStateDag(pos->first),gph.getStateDag(spos)))
+	{
+		if (pos->second == 0 && gph.getNrTransitions(pos->first) == 0) // deadlock
+		{
+			if ( gph.getUnderlyingGraph().getNextState(spos, 0) == NONE )
+			{
+				if (inCycle)
+					resCy.push_front(make_pair(spos,0));
+				else
+					resP.push_front(make_pair(spos,0));
+				return true;
+			}
+			return false;
+		}
+		else
+		{
+			int index = 0;
+			int next = NONE;
+			DagNode* fd = gph.getTransitionDag(pos->first,pos->second);
+			pos ++;
+
+			while ((next = gph.getUnderlyingGraph().getNextState(spos, index)) != NONE)
+			{
+				DagNode* od = gph.getUnderlyingGraph().getTransitionDag(spos,index);
+				if (tfc->fold(fd,od))
+				{
+					if (constConcrPath(gph,sfc,tfc, path, cycle, pos, inCycle, next, resP, resCy))
+					{
+						if (inCycle)
+							resCy.push_front(make_pair(spos,index));
+						else
+							resP.push_front(make_pair(spos,index));
+						return true;
+					}
+				}
+				++index;
+			}
+		}
+	}
+	return false;
+}
 
 SymbolicModelCheckerSymbol::SystemAutomaton::SystemAutomaton(
 		modelChecker::StateFoldingGraph* graph, DagNodeSet& props,modelChecker::PropChecker* pc):

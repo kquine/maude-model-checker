@@ -70,7 +70,18 @@ private:
     bool interpreteBoolDag(DagNode* dag);
     long interpreteNatDag(DagNode* dag);
     DagNode* makeModelCheckReportDag(bool result, int bound, bool complete, bool subsumption,
-    		const modelChecker::ModelChecker& mc, modelChecker::StateFoldingGraph& nsg);
+    		const modelChecker::ModelChecker& mc, modelChecker::StateFoldingGraph& nsg,
+    		modelChecker::FoldingChecker* sfc, modelChecker::FoldingChecker* tfc);
+
+    // construct a concrete path without folding, and returns true if succeeded.
+    bool concretePath(modelChecker::StateFoldingGraph& gph,
+    		modelChecker::FoldingChecker* sfc, modelChecker::FoldingChecker* tfc,
+    		const list<Edge>& path, const list<Edge>& cycle, list<Edge>& resP, list<Edge>& resCy);
+    bool constConcrPath(modelChecker::StateFoldingGraph& gph,
+    		modelChecker::FoldingChecker* sfc, modelChecker::FoldingChecker* tfc,
+    		const list<Edge>& path, const list<Edge>& cycle,
+    		list<Edge>::const_iterator pos, bool inCycle,
+    		int statePos, list<Edge>& resP, list<Edge>& resCy);
 
     // satisfaction symbols
     Symbol* satisfiesSymbol;
@@ -83,6 +94,7 @@ private:
     // folding symbols
     Symbol* subsumeFoldingRelSymbol;
     Symbol* renameFoldingRelSymbol;
+    Symbol* compatibleTransSymbol;
 
     // bound symbols
     Symbol* unboundedSymbol;

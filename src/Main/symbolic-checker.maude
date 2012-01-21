@@ -53,7 +53,7 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
 --- meta transition
   sorts MetaEdge MetaConf .
   op deadlock : -> MetaEdge [ctor] .
-  op _/_ : RuleName Substitution -> MetaEdge [ctor] .
+  op _/_ : RuleSet Substitution -> MetaEdge [ctor] .
   op <_> : State -> MetaConf [ctor] .
   op _|=>_ : MetaEdge State -> MetaConf [ctor] .
 
@@ -64,6 +64,10 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
 --- folding relation
   op _>=_ : State State -> Bool .
   op _~=_ : State State -> Bool .
+
+  op _~_  : MetaEdge MetaEdge -> Bool .
+  eq deadlock ~ deadlock = true .
+  eq RS:RuleSet / S1:Substitution ~ RS:RuleSet / S2:Substitution = true .
 
 --- print state during model checking (debugging purpose)
   op prettyPrint : State ~> QidList .
@@ -112,6 +116,8 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
       --- folding graph stuff
       op-hook subsumeFoldingRelSymbol (_>=_ : State State ~> Bool)
       op-hook renameFoldingRelSymbol  (_~=_ : State State ~> Bool)
+      op-hook compatibleTransSymbol   (_~_  : MetaEdge MetaEdge ~> Bool)
+
       op-hook prettyPrintStateSymbol  (prettyPrint : State ~> QidList)
       op-hook prettyPrintTransSymbol  (prettyPrint : MetaEdge ~> QidList)
 
@@ -186,7 +192,7 @@ mod META-LMC-THEORY is
   pr BOUNDED-FOLDING-MODEL-CHECKER .
 
   vars T1 T2 ST ST' : Term . vars SUB SUB' : Substitution .  
-  var RS : RuleSet . var AtS : AttrSet . var CD : Condition . var Q : Qid . 
+  var RS : RuleSet . var CD : Condition . var Q : Qid . 
   var TP : Type .  var SRS : StepResultSet . 
 
   ops init mid : Term -> State [ctor] .
@@ -196,17 +202,12 @@ mod META-LMC-THEORY is
 
 --- meta rules
  crl [init] : < init(ST) > 
-           => getRuleName(RS) / SUB' |=> mid(getTerm(metaReduce(##m##,ST'))) 
+           => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST'))) 
   if {ST',TP,SUB' / RS} | SRS := variant(ST) . 
 
  crl [mid]  :  < mid(ST) > 
-           => getRuleName(RS) / SUB' |=> mid(getTerm(metaReduce(##m##,ST')))
+           => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST')))
   if {ST',TP,SUB' / RS} | SRS := next(ST) .
-
-  op getRuleName : RuleSet -> RuleName .
-  eq getRuleName((rl T1 => T2 [label(Q) AtS] .) RS) = Q .
-  eq getRuleName((crl T1 => T2 if CD [label(Q) AtS] .) RS) = Q .
-  eq getRuleName(RS) = unlabeled [owise] .
 endm
 
 fmod META-NARROWING-INTERFACE is
@@ -266,8 +267,8 @@ mod META-SYMBOLIC-CONNECTOR is
    * (op addOps to addOpsSE, op addEqs to addEqsSE, op addSorts to addSortsSE) .
 
   var M : Module .  vars T T' T1 T2 ST ST' PT CT : Term . 
-  var Q : Qid . var TL : TermList .  var V : Variable .
-  var TP : Type . vars SUB SUB' SUB'' : Substitution .  
+  var RN : RuleName . var RS : RuleSet . var TL : TermList .  
+  var V : Variable . var TP : Type . vars SUB SUB' SUB'' : Substitution .  
   var B : Bool . var N : Nat . var D : Bound .
   var RT : ResultTriple .  var RTS : ResultTripleSet . 
 
@@ -317,9 +318,8 @@ mod META-SYMBOLIC-CONNECTOR is
   eq prettyPrint(init(ST)) = eMetaPrettyPrint(##m##, ST) .
   eq prettyPrint(mid(ST))  = eMetaPrettyPrint(##m##, ST) .
 
-  eq prettyPrint(Q / SUB) = Q '/ prettyPrintSub(SUB) . 
-  eq prettyPrint(unlabeled / SUB) = 'unlabeled '/ prettyPrintSub(SUB) . 
-  eq prettyPrint(deadlock / SUB) = 'deadlock '/ prettyPrintSub(SUB) . 
+  eq prettyPrint(RS / SUB) 
+    = eMetaPrettyPrint(##m##, RS) '/ prettyPrintSub(SUB) .
 
   op prettyPrintSub : Substitution -> QidList .
   eq prettyPrintSub(none) = 'none .
@@ -437,14 +437,12 @@ mod META-SYMBOLIC-COND-CONNECTOR is
 --- meta rules
  crl [init-cond] : 
        < init(ST,CD) >
-    => getRuleName(RS) / SUB' |=> 
-         mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+    => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
   if {ST',TP,SUB' / RS} | SRS := variant(ST,CD) .
 
  crl [mid-cond] : 
        < mid(ST,CD) >
-    => getRuleName(RS) / SUB' |=> 
-         mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+    => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
   if {ST',TP,SUB' / RS} | SRS := next(ST,CD) .
 
   ops next variant : Term EqCondition -> StepResultSet .
@@ -475,14 +473,12 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
 --- meta rules
  crl [init-cond] : 
        < init(ST,CD) >
-    => getRuleName(RS) / SUB' |=> 
-         mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+    => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
   if {ST',TP,SUB' / RS} | SRS := variant(ST) /\ condOK(CD << SUB') .
 
  crl [mid-cond]  : 
        < mid(ST,CD) >
-    => getRuleName(RS) / SUB' |=> 
-         mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+    => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
   if {ST',TP,SUB' / RS} | SRS := next(ST) /\ condOK(CD << SUB') .
 
 --- Another method to check a condition.
@@ -579,7 +575,8 @@ mod META-LMC-COUNTEREXAMPLE-TRANSFORMER is
   vars Q F : Qid . var M : Module .  var V : Variable . var C : Constant .
   var CD : Condition . vars T T' ST PT : Term . var TL : TermList . 
   var TR : Transition . var TRL TRL' : TransitionList . 
-  var RN : RuleName . var SUB : Substitution . var ME : MetaEdge .
+  var RS : RuleSet . var RN : RuleName .  var AtS : AttrSet . 
+  var SUB : Substitution . var ME : MetaEdge .
   var D : Bound . vars B BC BR : Bool . var MR : ModelCheckResult .
 
 --- meta counterexample
@@ -595,9 +592,9 @@ mod META-LMC-COUNTEREXAMPLE-TRANSFORMER is
 
 --- transition (including conditions)
   op transTR : Transition -> TermList .
-  eq transTR({mid(ST), RN / SUB})  
+  eq transTR({mid(ST), RS / SUB})  
    = '`{_`,_`,_`}[ST, wrapTL('_;_,'none.CESubstitution,transSUB(SUB)), 
-                  upRuleName(RN)] .
+                  upRuleName(getRuleName(RS))] .
   eq transTR({mid(ST), deadlock})  
    = '`{_`,_`,_`}[ST, 'none.CESubstitution, upRuleName(deadlock)] .
   eq transTR({init(ST), ME}) = empty  .
@@ -619,6 +616,11 @@ mod META-LMC-COUNTEREXAMPLE-TRANSFORMER is
   op upRuleName : RuleName -> Constant .
   eq upRuleName(Q) = qid("'" + string(Q) + ".Qid") .
   eq upRuleName(RN) = upTerm(RN) [owise] .
+
+  op getRuleName : RuleSet -> RuleName .
+  eq getRuleName((rl T => T' [label(Q) AtS] .) RS) = Q .
+  eq getRuleName((crl T => T' if CD [label(Q) AtS] .) RS) = Q .
+  eq getRuleName(RS) = unlabeled [owise] .
 endm
 
 mod LMC-COMMAND-PROCESSING is
