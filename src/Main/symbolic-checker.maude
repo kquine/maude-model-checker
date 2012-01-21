@@ -1,5 +1,6 @@
+--- The Maude Logical Bounded Model Checker Interface
+--- Author: Kyungmin Bae <kbae4@illinois.edu>
 
---- only state-based.
 load model-checker
 
 ****************************************
