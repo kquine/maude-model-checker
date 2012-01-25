@@ -52,8 +52,8 @@ load symbolic-checker
 
   eq < N, WF > |= ex? = true [variant] .
   eq < N, WF [M,crit] > |= ex? = true [variant] .
-  eq < N, WF [M,crit] [M',crit] > |= ex? = false [variant] .
+  eq < N, CF [M,crit] [M',crit] > |= ex? = false [variant] .
 endm)
 
-(lfmc < N, {M} WF > |= [] ex? .)
+(lfmc < | M N, {M} WF > |= [] ex? .)
 
