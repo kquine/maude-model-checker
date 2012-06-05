@@ -92,6 +92,8 @@ endm)
   eq initCond(IS) = true [variant] .
 
 ***( wrong initial condition
+--- required that every wait(M) has smaller value M then the current
+--- index ( the first number)
   eq initCond([K1, wait(M)] [K2, wait(M)] WS) = false [variant] .
   eq initCond([K1, wait(M)] IS) = true [variant] .
   eq initCond(IS) = true [variant] .

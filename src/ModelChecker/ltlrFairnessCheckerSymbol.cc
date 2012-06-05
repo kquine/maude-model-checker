@@ -61,6 +61,8 @@
 #include "ltlrFairnessCheckerSymbol.hh"
 
 
+//TODO: we can avoid to attach each assignment symbol by searching the "module" for needed symbols..
+
 //#define TDEBUG
 
 LTLRFairnessCheckerSymbol::LTLRFairnessCheckerSymbol(int id, int arity): TemporalSymbol(id, arity) {}
