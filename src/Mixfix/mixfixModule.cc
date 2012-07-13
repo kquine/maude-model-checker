@@ -145,10 +145,8 @@
 #include "loopSymbol.hh"
 #include "userLevelRewritingContext.hh"
 
-// ltlr model checker
+// model checkers
 #include "ltlrFairnessCheckerSymbol.hh"
-
-// symbolic model checker
 #include "SymbolicModelCheckerSymbol.hh"
 
 #include "interpreter.hh"

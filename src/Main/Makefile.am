@@ -57,7 +57,7 @@ maude_LDADD = \
 	../MSCP10/libmscp10.a \
 	../Temporal/libtemporal.a \
 	../IO_Stuff/libIO_Stuff.a \
-	../ModelChecker/libModelChecker.a \
+        ../ModelChecker/libModelChecker.a \
 	$(FULL_COMPILER_LIB) \
 	../Utility/libutility.a \
 	$(BUDDY_LIB) \

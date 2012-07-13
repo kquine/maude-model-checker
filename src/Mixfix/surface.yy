@@ -122,6 +122,7 @@ int yylex(YYSTYPE* lvalp);
 %token <yyToken> KW_MOD KW_OMOD KW_VIEW
 %token KW_PARSE KW_NORMALIZE KW_REDUCE KW_REWRITE
 %token KW_LOOP KW_NARROW KW_XG_NARROW KW_MATCH KW_XMATCH KW_UNIFY
+%token KW_GENERATE KW_VARIANTS
 %token KW_EREWRITE KW_FREWRITE KW_SREWRITE
 %token KW_CONTINUE KW_SEARCH
 %token KW_SET KW_SHOW KW_ON KW_OFF 
@@ -1240,6 +1241,18 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
 			    interpreter.unify(lexerBubble, number);
 			}
+		|	genvars
+			{
+			  lexerCmdMode();
+			  moduleExpr.contractTo(0);
+			  number = NONE;
+			}
+			numberModuleTerm
+			{
+			  lexerInitialMode();
+			  if (interpreter.setCurrentModule(moduleExpr, 1))
+			    interpreter.generateVariants(lexerBubble, number);
+			}
 		|	optDebug KW_CONTINUE optNumber '.'
 			{
 			  interpreter.cont($3, $1);
@@ -1517,6 +1530,10 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
  */
 		|	error			{ lexerInitialMode(); }
 			'.'
+		;
+
+genvars		:	KW_VARS
+		|	KW_GENERATE KW_VARIANTS
 		;
 
 /*
