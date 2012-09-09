@@ -3066,6 +3066,7 @@ fmod VARIANT is
   vars F F' : Qid .
 
   --- Variants ----------------------------------------------------------
+---(
   sort VariantTriple .
   op {_,_,_} : Term Substitution Nat -> VariantTriple [ctor] .
 
@@ -3082,6 +3083,7 @@ fmod VARIANT is
    = T:Term | getTerms(R:VariantTripleSet) .
   eq getTerms((empty).VariantTripleSet)
    = emptyTermSet .
+---)
 
   --- Variants ----------------------------------------------------------
   sort VariantFour .
@@ -3114,12 +3116,14 @@ fmod VARIANT is
   eq getTerms((empty).VariantFourSet)
    = emptyTermSet .
 
+---(
   op toVariantTripleSet : VariantFourSet -> VariantTripleSet .
   eq toVariantTripleSet(empty) 
    = empty .
   eq toVariantTripleSet({T,S,S',NextVar} | VTS)
 ---    = {T,S ; S',NextVar} | toVariantTripleSet(VTS) .
    = {T,S,NextVar} | toVariantTripleSet(VTS) .
+---)
 
 endfm
 
