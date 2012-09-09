@@ -5,7 +5,7 @@ load symbolic-checker
 (fmod BAKERY-SYNTAX is 
   sort Name .
   op 0 : -> Name [ctor] .
-  op | : -> Name [ctor] .
+  op s : -> Name [ctor] .
   op __ : Name Name -> Name [ctor comm assoc id: 0] .
 
   sorts ModeIdle ModeWait ModeCrit Mode . 
@@ -36,9 +36,9 @@ endfm)
   
   var PS : ProcSet .  vars N M K : Name . 
   
-  rl [wake] : N ; M ; [K, idle] PS => | N ; M ; [K, wait(N)] PS .
+  rl [wake] : N ; M ; [K, idle] PS => s N ; M ; [K, wait(N)] PS .
   rl [crit] : N ; M ; [K, wait(M)] PS => N ; M ; [K, crit(M)] PS .
-  rl [exit] : N ; M ; [K, crit(M)] PS => N ; | M ; [K, idle] PS .
+  rl [exit] : N ; M ; [K, crit(M)] PS => N ; s M ; [K, idle] PS .
 endm)
 
 --- prop definitions for bakery
@@ -52,23 +52,26 @@ endm)
 
   vars N M : Name . vars PS : ProcSet . 
   
-  eq | N ; M ; PS |= ever-wait? = true [variant] . 
+  eq s N ; M ; PS |= ever-wait? = true [variant] . 
   eq 0 ; M ; PS    |= ever-wait? = false [variant] . 
-  eq N ; | M ; PS |= ever-crit? = true [variant] .
+  eq N ; s M ; PS |= ever-crit? = true [variant] .
   eq N ; 0 ; PS    |= ever-crit? = false [variant] . 
 endm)
 
 --- set verbose on .
 
-(lfmc N ; N ; [0, idle] [|, idle] |= [] (ever-wait? -> <> ever-crit?) .)
+---(
 
-(lfmc N ; N ; [0, idle] [|, idle] |= [] (ever-wait? -> ever-crit?) .)
+(lfmc N ; N ; [0, idle] [s, idle] |= [] (ever-wait? -> <> ever-crit?) .)
+
+(lfmc N ; N ; [0, idle] [s, idle] |= [] (ever-wait? -> ever-crit?) .)
 
 *** deadlock counterexample
 (lfmc N ; M ; IS:ProcIdleSet |= [] (ever-wait? -> <> ever-crit?) .)
 
 *** spurious counterexample
 (lfmc N ; M ; WS:ProcWaitSet |= [] (ever-wait? -> <> ever-crit?) .)
+---)
 
 (mod BAKERY-SATISFACTION2 is
   pr BAKERY .
@@ -76,7 +79,7 @@ endm)
 
   subsort Conf < State .
 
-  ops ex? : -> Prop . 
+  ops ex? ini : -> Prop . 
 
   var WS : ProcWaitSet . var IS : ProcIdleSet . var PS : ProcSet . 
   vars N M K M1 M2 K1 K2 : Name .
@@ -85,26 +88,14 @@ endm)
   eq N ; M ; WS |= ex? = true [variant] .
   eq N ; M ; [K1, crit(M1)] WS |= ex? = true [variant] .
   eq N ; M ; [K1, crit(M1)] [K2, crit(M2)] PS |= ex? = false [variant] .
-
---- initial conditions
-  op initCond : ProcWaitSet -> Bool .
-  eq initCond([K1, wait(M)] WS) = false [variant] .
-  eq initCond(IS) = true [variant] .
-
-***( wrong initial condition
---- required that every wait(M) has smaller value M then the current
---- index ( the first number)
-  eq initCond([K1, wait(M)] [K2, wait(M)] WS) = false [variant] .
-  eq initCond([K1, wait(M)] IS) = true [variant] .
-  eq initCond(IS) = true [variant] .
-***)
 endm)
 
+---(
 --- no counterexample
-(lmc [10] N:Name ; N:Name ; [0, idle] [|, idle] |= [] ex? .)
+(lmc [10] N:Name ; N:Name ; [0, idle] [s, idle] |= [] ex? .)
 
 --- true
-(lfmc N:Name ; N:Name ; [0, idle] [|, idle] |= [] ex? .)
+(lfmc N:Name ; N:Name ; [0, idle] [s, idle] |= [] ex? .)
 
 --- false
 (lfmc N ; M ; WS |= [] ex?  .)
@@ -114,19 +105,23 @@ endm)
 
 ***( true, but non terminating
 (lfmc N ; N ; IS |= [] ex?  .)
-(lfmc N ; M ; WS |= [] ex? such that initCond(WS:ProcWaitSet) .)
 ***)
+---)
 
 (mod BAKERY-SATISFACTION2-ABS is
   pr BAKERY-SATISFACTION2 .
 
-  var PS : ProcSet .  vars N M K K' : Name . var IS : ProcIdleSet .
+  var PS : ProcSet .  vars N M L K1 K2 K3 K4 : Name . var IS : ProcIdleSet .
 
-  eq | | | N M ; M ; PS [K, wait(| N M)] [K', wait(| | N M)]
-   =   | | N M ; M ; PS [K, wait(| N M)] 
+  eq s s s N M ; M ; IS [K1, wait(N M)] [K2, wait(s N M)] [K3, wait(s s N M)]
+   =   s s N M ; M ; IS [K1, wait(N M)] [K2, wait(s N M)]
   [variant] .
+
+  eq s s s N M ; M ; IS [K4, crit(L)] [K1, wait(N M)] [K2, wait(s N M)] [K3, wait(s s N M)]
+   =   s s N M ; M ; IS [K4, crit(L)] [K1, wait(N M)] [K2, wait(s N M)]
+  [variant] .
+
 endm)
 
---- terminate, but may not correct.
 (lfmc N ; N ; IS |= [] ex?  .)
 

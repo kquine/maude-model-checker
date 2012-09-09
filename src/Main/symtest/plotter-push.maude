@@ -1,15 +1,22 @@
-load symbolic-checker
 
---- from "Efficient Algorithms for Model Checking Pushdown Systems"
+--- from "Efficient Algorithms for Model Checking Pushdown Systems," J. Esparza, et. al.
 
-(mod PLOTTER is
+--- This example does not require logical model checking..
+--- We only use "bisimilar equational abstraction" to verify 
+--- the desired LTL properties.
 
+fmod OPERATION-STACK is
   sort Operation .
   ops s m up down right : -> Operation [ctor] .
 
   sort Stack .
+  subsort Operation < Stack .
   op nil : -> Stack [ctor] .
-  op _::_ : Operation Stack -> Stack [ctor] .
+  op _::_ : Stack Stack -> Stack [ctor assoc id: nil] .
+endfm
+
+mod PLOTTER is
+  pr OPERATION-STACK .
 
   sort Conf .
   op `[_`] : Stack -> Conf [ctor] .
@@ -17,19 +24,21 @@ load symbolic-checker
   var ST : Stack .
 
   rl [s1] : [s :: ST] => [ST] .
-  rl [s2] : [s :: ST] => [up :: (m :: (down :: ST))] .
-  rl [m1] : [m :: ST] => [s :: (right :: ST)] .
-  rl [m2] : [m :: ST] => [s :: (right :: (m :: ST))] .
-  rl [m3] : [m :: ST] => [up :: (m :: (down :: ST))] .
+  rl [s2] : [s :: ST] => [up :: m :: down :: ST] .
+  rl [m1] : [m :: ST] => [s :: right :: ST] .
+  rl [m2] : [m :: ST] => [s :: right :: m :: ST] .
+  rl [m3] : [m :: ST] => [up :: m :: down :: ST] .
 
   rl [d1] : [up :: ST]    => [ST] .
   rl [d2] : [down :: ST]  => [ST] .
   rl [d3] : [right :: ST] => [ST] .
-endm)
+endm
 
-(mod PLOTTER-SATISFACTION is
+load model-checker
+
+mod PLOTTER-SATISFACTION is
   pr PLOTTER .
-  pr SYMBOLIC-CHECKER .
+  pr MODEL-CHECKER .
 
   subsort Conf < State .
 
@@ -37,31 +46,35 @@ endm)
 
   var ST : Stack .
 
-  eq [up :: ST]    |= up = true  [variant] . 
-  eq [down :: ST]  |= up = false [variant] . 
-  eq [right :: ST] |= up = false [variant] . 
-  eq [s :: ST]     |= up = false [variant] . 
-  eq [m :: ST]     |= up = false [variant] . 
-  eq [nil]         |= up = false [variant] . 
+  eq [up :: ST]    |= up = true  . 
+  eq [down :: ST]  |= down = true  . 
+  eq [right :: ST] |= right = true  . 
+endm
 
-  eq [up :: ST]    |= down = false [variant] . 
-  eq [down :: ST]  |= down = true  [variant] . 
-  eq [right :: ST] |= down = false [variant] . 
-  eq [s :: ST]     |= down = false [variant] . 
-  eq [m :: ST]     |= down = false [variant] . 
-  eq [nil]         |= down = false [variant] . 
+mod PLOTTER-SATISFACTION-ABS is
+  pr PLOTTER-SATISFACTION .
 
-  eq [up :: ST]    |= right = false [variant] . 
-  eq [down :: ST]  |= right = false [variant] . 
-  eq [right :: ST] |= right = true  [variant] . 
-  eq [s :: ST]     |= right = false [variant] . 
-  eq [m :: ST]     |= right = false [variant] . 
-  eq [nil]         |= right = false [variant] . 
-endm)
+  vars ST ST' : Stack .
 
---- the condition for ST should be refined for both cases
+  eq [ST :: down :: down :: ST'] 
+   = [ST :: down         :: ST'] .
 
-(lfmc [s :: ST] |= [](up -> (~ down U right)) .)
+  eq [ST :: down :: right :: down :: right :: ST']
+   = [ST :: down :: right                       :: ST'] .
 
-(lfmc [s :: ST] |= [](down -> (~ up U right)) .)
+  eq [ST :: m :: down :: right :: m :: down :: right :: ST']
+   = [ST :: m :: down :: right                       :: ST'] .
+endm
+
+set verbose on .
+
+--- NOTE: the LTL properties are slightly different from the
+--- original paper, since our definition of atomic propositions
+--- only consider the head operation.. That is, even though
+--- some operation, e.g., "right," is contained in the stack,
+--- the property "right" can be never satisfied forever.
+
+red modelCheck([s],[](up -> (([] ~ right) \/ (~ down U right))) ) .
+
+red modelCheck([s],[](down -> (([] ~ right) \/ (~ up U right))) ) .
 
