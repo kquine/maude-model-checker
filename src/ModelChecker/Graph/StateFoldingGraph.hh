@@ -31,6 +31,7 @@ public:
 	virtual ~StateFoldingGraph() {}
 
 	int getNrStates() const;
+	int getNrAllStates() const;
 	int getNrTransitions(int stateNr) const;
 	DagNode* getStateDag(int stateNr) const;
 	DagNode* getTransitionDag(int stateNr, int index) const;
@@ -74,6 +75,12 @@ inline int
 StateFoldingGraph::getNrStates() const
 {
 	return maximalStates.size();
+}
+
+inline int
+StateFoldingGraph::getNrAllStates() const
+{
+	return graph->getNrStates();
 }
 
 inline int

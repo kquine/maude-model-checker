@@ -30,6 +30,7 @@ libModelChecker_a_SOURCES = \
 	Interface/PropChecker.cc \
 	Interface/PropInterpreter.cc \
 	Interface/ProofTermGenerator.cc \
+	Interface/SubstConstructor.cc \
 	Interface/CounterExampleGenerator.cc \
 	Interface/FairnessDecoder.cc \
 	Interface/DefinablePropGenerator.cc \

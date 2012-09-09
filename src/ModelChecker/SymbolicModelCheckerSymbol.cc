@@ -47,11 +47,11 @@
 
 #include "SymbolicModelCheckerSymbol.hh"
 
-//#define SDEBUG
+#define SDEBUG
 
 SymbolicModelCheckerSymbol::SymbolicModelCheckerSymbol(int id, int arity):
-	TemporalSymbol(id, arity), satisfiesSymbol(NULL),
-	metaStateSymbol(NULL), metaTransitionSymbol(NULL),
+	TemporalSymbol(id, arity),
+	satisfiesSymbol(NULL), metaStateSymbol(NULL), metaTransitionSymbol(NULL),
 	subsumeFoldingRelSymbol(NULL), renameFoldingRelSymbol(NULL), compatibleTransSymbol(NULL),
 	prettyPrintStateSymbol(NULL), prettyPrintTransSymbol(NULL),
     unboundedSymbol(NULL), succSymbol(NULL),
@@ -246,6 +246,10 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 		result = mc->findCounterExample();
 	} while((globalBound == NONE || nsg.getCurrLevel() < globalBound) &&	// user bound
 			(result == false && ! nsg.reachFixpoint()));			// no counterexample & not fixedpoint
+#ifdef SDEBUG
+	for (int k = bound_state; k < nsg.getNrAllStates(); ++k)
+		nsg.dump(cout, k, &printState, &printTrans);
+#endif
 
 	int nrSystemStates = nsg.getNrStates();
 	Verbose("SymbolicModelCheckerSymbol: Examined " << nrSystemStates <<
