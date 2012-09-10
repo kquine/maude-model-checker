@@ -80,7 +80,7 @@ StateFoldingGraph::insertFoldedState(int stateNr)
 
 	Vector<int> foldingStates;
 	DagNode* stateDag = getStateDag(stateNr);
-	for (int i = 0; i < levelIndices[levelIndices.size() - 1]; ++i)
+	for (int i = 0; i < maximalStates.size() ; ++i)	// levelIndices[levelIndices.size() - 1]
 	{
 		if (sfc->fold(getStateDag(maximalStates[i]), stateDag))	// forward folding
 			foldingStates.append(maximalStates[i]);
