@@ -1,8 +1,7 @@
-load symbolic-checker
 
 --- Lamport's Bakery protocol in Maude.
 --- From: All About Maude - A High-Performance Logical Framework. 
-(fmod BAKERY-SYNTAX is 
+fmod BAKERY-SYNTAX is 
   sort Name .
   op 0 : -> Name [ctor] .
   op s : -> Name [ctor] .
@@ -29,9 +28,9 @@ load symbolic-checker
 
   sort Conf . 
   op _;_;_ : Name Name ProcSet -> Conf .
-endfm)
+endfm
 
-(mod BAKERY is
+mod BAKERY is
   protecting BAKERY-SYNTAX . 
   
   var PS : ProcSet .  vars N M K : Name . 
@@ -39,7 +38,10 @@ endfm)
   rl [wake] : N ; M ; [K, idle] PS => s N ; M ; [K, wait(N)] PS .
   rl [crit] : N ; M ; [K, wait(M)] PS => N ; M ; [K, crit(M)] PS .
   rl [exit] : N ; M ; [K, crit(M)] PS => N ; s M ; [K, idle] PS .
-endm)
+endm
+
+
+load symbolic-checker
 
 --- prop definitions for bakery
 (mod BAKERY-SATISFACTION1 is
@@ -60,7 +62,7 @@ endm)
 
 --- set verbose on .
 
----(
+---( ?? not works for the core Maude version
 
 (lfmc N ; N ; [0, idle] [s, idle] |= [] (ever-wait? -> <> ever-crit?) .)
 
