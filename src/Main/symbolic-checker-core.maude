@@ -147,8 +147,25 @@ load full-maude26b
 
 fmod META-LMC-PARAMETERS is 
   pr META-MODULE .
-  op ##m## : ~> Module [memo] . --- empty! the user module shoule define them.
+  op ##m## : ~> SModule [memo] . --- empty! the user module shoule define them.
   op ##f## : ~> TermList [memo] .
+
+  var H : Header .  var IL : ImportList .  var SS : SortSet .  var SSDS : SubsortDeclSet .  
+  var OPDS : OpDeclSet . var MAS : MembAxSet .  var EQS : EquationSet .  var RLS : RuleSet .
+  vars T1 T2 : Term . var ATS : AttrSet . var COND : EqCondition .
+
+  op trMod : SModule -> SModule [memo] . --- to handle the mismatch between Full & Core Maude
+  eq trMod(fmod H is IL sorts SS . SSDS OPDS MAS EQS endfm) 
+   = fmod H is IL sorts SS . SSDS OPDS MAS trEqs(EQS) endfm .
+  eq trMod(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm)
+   = mod H is IL sorts SS . SSDS OPDS MAS trEqs(EQS) RLS endm .
+
+  op trEqs : EquationSet -> EquationSet .
+  eq trEqs(eq T1 = T2 [metadata("variant") ATS] . EQS)
+   = eq T1 = T2 [variant ATS] . trEqs(EQS) .
+  eq trEqs(ceq T1 = T2 if COND [metadata("variant") ATS] . EQS)
+   = ceq T1 = T2 if COND [variant ATS] . trEqs(EQS) .
+  eq trEqs(EQS) = EQS [owise] .
 endfm
 
 fmod LMC-RESULT-SET is
@@ -210,11 +227,11 @@ mod META-LMC-THEORY is
 
 --- meta rules
  crl [init] : < init(ST) > 
-           => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST'))) 
+           => RS / SUB' |=> mid(getTerm(metaReduce(trMod(##m##),ST'))) 
   if {ST',TP,SUB' / RS} | SRS := variant(ST) . 
 
  crl [mid]  :  < mid(ST) > 
-           => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST')))
+           => RS / SUB' |=> mid(getTerm(metaReduce(trMod(##m##),ST')))
   if {ST',TP,SUB' / RS} | SRS := next(ST) .
 endm
 
@@ -226,8 +243,8 @@ fmod META-NARROWING-INTERFACE is
   var M : Module . var RS : RuleSet .
   vars T T1 T2 ST PT : Term .  var TL : TermList .  var C : Constant . 
   var TP : Type . vars SUB SUB1 SUB2 : Substitution .  
-  vars NextVar NextVar' N : Nat .
-  var SR : StepResult . var SRS : StepResultSet . var VS : VariantSet .
+  vars NextVar NextVar' N : Nat . var VR : Variant . var VS : VariantSet .
+  var SR : StepResult . var SRS : StepResultSet . 
 
   op metaNarrow2 : Module Term -> StepResult .
   eq metaNarrow2(M,T) 
@@ -235,15 +252,15 @@ fmod META-NARROWING-INTERFACE is
      |> T .
 
   op metaGenVariant : Module Term -> VariantSet .
-  eq metaGenVariant(M, T) = metaGenVariant(M, T, highestVar(T) + 1) .
+  eq metaGenVariant(M, T) = metaGenVariant(M, T, highestVar(T)) .
 
   op metaGenVariant : Module Term Nat -> VariantSet .
   eq metaGenVariant(M, T, NextVar) = metaGenVariant2(M, T, NextVar, 0) .
    
   op metaGenVariant2 : Module Term Nat Nat -> VariantSet .
  ceq metaGenVariant2(M, T, NextVar, N)
-   = {T1,SUB,NextVar'} | metaGenVariant2(M,T,NextVar',s N) 
-   if {T1,SUB,NextVar'} := metaGetVariant(M,T,empty,NextVar,N) .
+   = VR | metaGenVariant2(M,T,NextVar,s N) 
+   if VR := metaGetVariant(M,T,empty,NextVar,N) .
   eq metaGenVariant2(M, T, NextVar, N) = empty [owise] .
 
 --- variant narrowing prop instantiations.
@@ -258,7 +275,7 @@ fmod META-NARROWING-INTERFACE is
   --- StateSet Prop -> StateSet
   op propInstSet : StepResultSet Term ~> StepResultSet .
   eq propInstSet({ST,TP,SUB / RS} | SRS, PT)
-   = filterPropVars({ST,TP,SUB / RS}, metaGenVariant(##m##, '_|=_[ST, PT]))
+   = filterPropVars({ST,TP,SUB / RS}, metaGenVariant(trMod(##m##), '_|=_[ST, PT]))
    | propInstSet(SRS, PT) .
   eq propInstSet(empty, PT) = empty .
 
@@ -295,12 +312,12 @@ mod META-SYMBOLIC-CONNECTOR is
 
 --- meta prop and state
   eq mid(ST) |= prop(PT) 
-   = getTerm(metaReduce(##m##, '_|=_[ST, PT])) == 'true.Bool .
+   = getTerm(metaReduce(trMod(##m##), '_|=_[ST, PT])) == 'true.Bool .
 
 --- state folding
   eq init(ST) >= init(ST) = true .
   eq mid(ST) >= mid(ST')
-   = metaMatch(##m##, ST, ST', nil, 0) :: Substitution .
+   = metaMatch(trMod(##m##), ST, ST', nil, 0) :: Substitution .
   eq S1:State >= S2:State = false [owise] .
 
 --- renameing folding
@@ -312,16 +329,16 @@ mod META-SYMBOLIC-CONNECTOR is
 --- compute the next states
 --- TODO: keep both a state and a substitution for a counter example..
   eq next(ST)    
-   = propSetInstSet(metaNarrow2(##m##, ST), ##f##) .
+   = propSetInstSet(metaNarrow2(trMod(##m##), ST), ##f##) .
   eq variant(ST) 
-   = propSetInstSet({ST,leastSort(##m##,ST),none / none}, ##f##) .
+   = propSetInstSet({ST,leastSort(trMod(##m##),ST),none / none}, ##f##) .
 
 --- run LMC model check : State Formula -> Result
   op lmc-check : Term Term Bool Bound ~> BoundedModelCheckReport .
  ceq lmc-check(ST, PT, B, D) 
-   = symbolicModelCheck(init(ST), O tilde(##m##,PT), B, D) 
-  if sortLeq(##m##, leastSort(##m##,ST), 'State)
-  /\ sortLeq(##m##, leastSort(##m##,PT), 'Formula) .
+   = symbolicModelCheck(init(ST), O tilde(trMod(##m##),PT), B, D) 
+  if sortLeq(trMod(##m##), leastSort(trMod(##m##),ST), 'State)
+  /\ sortLeq(trMod(##m##), leastSort(trMod(##m##),PT), 'Formula) .
 
 --- meta formula
   op tilde : Module Term -> Formula .
@@ -336,18 +353,18 @@ mod META-SYMBOLIC-CONNECTOR is
   eq tilde(M, '_R_[T, T'])    = tilde(M, T) R tilde(M, T') .
 
 --- pretty print (for debugging)
-  eq prettyPrint(init(ST)) = eMetaPrettyPrint(##m##, ST) .
-  eq prettyPrint(mid(ST))  = eMetaPrettyPrint(##m##, ST) .
+  eq prettyPrint(init(ST)) = eMetaPrettyPrint(trMod(##m##), ST) .
+  eq prettyPrint(mid(ST))  = eMetaPrettyPrint(trMod(##m##), ST) .
 
   eq prettyPrint(RS / SUB) 
-    = ---eMetaPrettyPrint(##m##, RS) '/ 
+    = ---eMetaPrettyPrint(trMod(##m##), RS) '/ 
       prettyPrintSub(SUB) .
 
   op prettyPrintSub : Substitution -> QidList .
   eq prettyPrintSub(none) = 'none .
-  eq prettyPrintSub(V <- T) = V '<- eMetaPrettyPrint(##m##,T) .
+  eq prettyPrintSub(V <- T) = V '<- eMetaPrettyPrint(trMod(##m##),T) .
   eq prettyPrintSub(V <- T ; A:Assignment ; SUB) 
-   = V '<- eMetaPrettyPrint(##m##,T) '; prettyPrintSub(A:Assignment ; SUB) .
+   = V '<- eMetaPrettyPrint(trMod(##m##),T) '; prettyPrintSub(A:Assignment ; SUB) .
 endm
 
 *****************************************************
@@ -382,7 +399,7 @@ fmod META-NARROWING-COND-INTERFACE is
   op condInstSet : StepResultSet Term ~> StepResultSet .
  ceq condInstSet({ST,TP,SUB / RS} | SRS, T)
    = filterCondVars({ST,TP,SUB / RS}, VS) | condInstSet(SRS, T) 
-  if VS := metaGenVariant(##m##, T << SUB) .
+  if VS := metaGenVariant(trMod(##m##), T << SUB) .
   eq condInstSet(empty, T) = empty .
 
   --- only true instances (hence the conditions should be complete and FVP)
@@ -417,17 +434,17 @@ mod META-SYMBOLIC-COND-CONNECTOR-BASE is
 
 --- meta prop and state
   eq mid(ST,CD) |= prop(PT) 
-   = getTerm(metaReduce(##m##, '_|=_[ST, PT])) == 'true.Bool .
+   = getTerm(metaReduce(trMod(##m##), '_|=_[ST, PT])) == 'true.Bool .
 
 --- with condition
   op lmc-check : Term Term EqCondition Bool Bound ~> BoundedModelCheckReport .
  ceq lmc-check(ST, PT, CD, B, D)
    = if CD == nil
-     then symbolicModelCheck(init(ST), O tilde(##m##,PT), B, D)
-     else symbolicModelCheck(init(ST,CD), O tilde(##m##,PT), B, D)
+     then symbolicModelCheck(init(ST), O tilde(trMod(##m##),PT), B, D)
+     else symbolicModelCheck(init(ST,CD), O tilde(trMod(##m##),PT), B, D)
      fi
-  if sortLeq(##m##, leastSort(##m##,ST), 'State)
-  /\ sortLeq(##m##, leastSort(##m##,PT), 'Formula) .
+  if sortLeq(trMod(##m##), leastSort(trMod(##m##),ST), 'State)
+  /\ sortLeq(trMod(##m##), leastSort(trMod(##m##),PT), 'Formula) .
 
 --- normalize conditions (modulo equation)
 --- NOTE: metaNormalize vs. metaReduce??  metaNormalize generates slightly
@@ -436,14 +453,14 @@ mod META-SYMBOLIC-COND-CONNECTOR-BASE is
 --- whether some variables is removed by such equations...
   op condNorm : EqCondition ~> EqCondition .
   eq condNorm(T = 'true.Bool /\ CD)
-   = getTerm(metaNormalize(##m##,T)) = 'true.Bool /\ condNorm(CD) .
+   = getTerm(metaNormalize(trMod(##m##),T)) = 'true.Bool /\ condNorm(CD) .
   eq condNorm(nil) = nil .
 
 --- pretty print (for debugging)
   eq prettyPrint(init(ST,CD)) 
-   = prettyPrint(init(ST)) '\n '\t eMetaPrettyPrint(##m##, CD) .
+   = prettyPrint(init(ST)) '\n '\t eMetaPrettyPrint(trMod(##m##), CD) .
   eq prettyPrint(mid(ST,CD)) 
-   = prettyPrint(mid(ST)) '\n '\t eMetaPrettyPrint(##m##, CD) .
+   = prettyPrint(mid(ST)) '\n '\t eMetaPrettyPrint(trMod(##m##), CD) .
 endm
 
 --- Conditions are solved for generating states by variant narrowing
@@ -459,19 +476,19 @@ mod META-SYMBOLIC-COND-CONNECTOR is
 --- meta rules
  crl [init-cond] : 
        < init(ST,CD) >
-    => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+    => RS / SUB' |=> mid(getTerm(metaReduce(trMod(##m##),ST')),condNorm(CD << SUB'))
   if {ST',TP,SUB' / RS} | SRS := variant(ST,CD) .
 
  crl [mid-cond] : 
        < mid(ST,CD) >
-    => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+    => RS / SUB' |=> mid(getTerm(metaReduce(trMod(##m##),ST')),condNorm(CD << SUB'))
   if {ST',TP,SUB' / RS} | SRS := next(ST,CD) .
 
   ops next variant : Term EqCondition -> StepResultSet .
   eq next(ST,CD)    
-   = propSetInstSet(condSetInstSet(metaNarrow2(##m##, ST),CD), ##f##) .
+   = propSetInstSet(condSetInstSet(metaNarrow2(trMod(##m##), ST),CD), ##f##) .
   eq variant(ST,CD) 
-   = propSetInstSet(condSetInstSet({ST,leastSort(##m##,ST),none / none},CD), 
+   = propSetInstSet(condSetInstSet({ST,leastSort(trMod(##m##),ST),none / none},CD), 
                     ##f##) .
 
 --- condition should be already considered by variant narrowing
@@ -495,18 +512,18 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
 --- meta rules
  crl [init-cond] : 
        < init(ST,CD) >
-    => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+    => RS / SUB' |=> mid(getTerm(metaReduce(trMod(##m##),ST')),condNorm(CD << SUB'))
   if {ST',TP,SUB' / RS} | SRS := variant(ST) /\ condOK(CD << SUB') .
 
  crl [mid-cond]  : 
        < mid(ST,CD) >
-    => RS / SUB' |=> mid(getTerm(metaReduce(##m##,ST')),condNorm(CD << SUB'))
+    => RS / SUB' |=> mid(getTerm(metaReduce(trMod(##m##),ST')),condNorm(CD << SUB'))
   if {ST',TP,SUB' / RS} | SRS := next(ST) /\ condOK(CD << SUB') .
 
 --- Another method to check a condition.
   op condOK : EqCondition ~> Bool .
   eq condOK(T1 = 'true.Bool /\ CD)
-   = if getTerm(metaReduce(##m##, T1)) == 'false.Bool then false else true fi 
+   = if getTerm(metaReduce(trMod(##m##), T1)) == 'false.Bool then false else true fi 
      and-then condOK(CD) .
   eq condOK(nil) = true .
 
@@ -520,7 +537,7 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
   op condFold : Term EqCondition Term EqCondition Nat -> Bool .
  ceq condFold(ST, CD, ST', CD', N)
    = implyOK(CD', CD << SUB) and-then condFold(ST, CD, ST', CD', s(N))
-  if SUB := metaMatch(##m##, ST, ST', nil, N) .
+  if SUB := metaMatch(trMod(##m##), ST, ST', nil, N) .
   eq condFold(ST, CD, ST', CD', 0) = false [owise] .
   eq condFold(ST, CD, ST', CD', s(N)) = true [owise] .
 
@@ -528,13 +545,13 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
   op implyOK : EqCondition EqCondition ~> Bool .
  ceq implyOK(CD, CD')
    = implyOKsub(VS)
-  if VS := metaGenVariant(##m##,'_and_[condList(CD,true),
+  if VS := metaGenVariant(trMod(##m##),'_and_[condList(CD,true),
                                      '_or_[condList(CD',false)]]) .
 
   op implyOKsub : VariantSet ~> Bool .
  ceq implyOKsub({T,SUB,N} | VS)
    = T' =/= 'true.Bool and-then implyOKsub(VS)
-  if T' := getTerm(metaReduce(##m##,T)) .
+  if T' := getTerm(metaReduce(trMod(##m##),T)) .
   eq implyOKsub(empty) = true .
 
   op condList : EqCondition Bool ~> TermList .

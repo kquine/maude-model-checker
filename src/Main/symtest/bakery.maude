@@ -18,9 +18,9 @@ fmod BAKERY-SYNTAX is
   op idle : -> ModeIdle . 
   op wait : Name -> ModeWait . 
   op crit : Name -> ModeCrit . 
-  op `[_`,_`] : Name ModeIdle -> ProcIdle . 
-  op `[_`,_`] : Name ModeWait -> ProcWait . 
-  op `[_`,_`] : Name Mode -> Proc . 
+  op `[_`] : ModeIdle -> ProcIdle . 
+  op `[_`] : ModeWait -> ProcWait . 
+  op `[_`] : Mode -> Proc . 
   op none : -> ProcIdleSet . 
   op __ : ProcIdleSet ProcIdleSet -> ProcIdleSet [assoc comm id: none] . 
   op __ : ProcWaitSet ProcWaitSet -> ProcWaitSet [assoc comm id: none] .
@@ -33,11 +33,11 @@ endfm
 mod BAKERY is
   protecting BAKERY-SYNTAX . 
   
-  var PS : ProcSet .  vars N M K : Name . 
+  var PS : ProcSet .  vars N M : Name . 
   
-  rl [wake] : N ; M ; [K, idle] PS => s N ; M ; [K, wait(N)] PS .
-  rl [crit] : N ; M ; [K, wait(M)] PS => N ; M ; [K, crit(M)] PS .
-  rl [exit] : N ; M ; [K, crit(M)] PS => N ; s M ; [K, idle] PS .
+  rl [wake] : N ; M ; [idle] PS    => s N ; M ; [wait(N)] PS .
+  rl [crit] : N ; M ; [wait(M)] PS => N ; M ; [crit(M)] PS .
+  rl [exit] : N ; M ; [crit(M)] PS => N ; s M ; [idle] PS .
 endm
 
 
@@ -64,9 +64,9 @@ endm)
 
 ---( ?? not works for the core Maude version
 
-(lfmc N ; N ; [0, idle] [s, idle] |= [] (ever-wait? -> <> ever-crit?) .)
+(lfmc N ; N ; [idle] [idle] |= [] (ever-wait? -> <> ever-crit?) .)
 
-(lfmc N ; N ; [0, idle] [s, idle] |= [] (ever-wait? -> ever-crit?) .)
+(lfmc N ; N ; [idle] [idle] |= [] (ever-wait? -> ever-crit?) .)
 
 *** deadlock counterexample
 (lfmc N ; M ; IS:ProcIdleSet |= [] (ever-wait? -> <> ever-crit?) .)
@@ -84,20 +84,20 @@ endm)
   ops ex? ini : -> Prop . 
 
   var WS : ProcWaitSet . var IS : ProcIdleSet . var PS : ProcSet . 
-  vars N M K M1 M2 K1 K2 : Name .
+  vars N M M1 M2 : Name .
 
 --- NOTE: ProcIdleSet < ProcWaitSet
   eq N ; M ; WS |= ex? = true [variant] .
-  eq N ; M ; [K1, crit(M1)] WS |= ex? = true [variant] .
-  eq N ; M ; [K1, crit(M1)] [K2, crit(M2)] PS |= ex? = false [variant] .
+  eq N ; M ; [crit(M1)] WS |= ex? = true [variant] .
+  eq N ; M ; [crit(M1)] [crit(M2)] PS |= ex? = false [variant] .
 endm)
 
 ---(
 --- no counterexample
-(lmc [10] N:Name ; N:Name ; [0, idle] [s, idle] |= [] ex? .)
+(lmc [10] N:Name ; N:Name ; [idle] [idle] |= [] ex? .)
 
 --- true
-(lfmc N:Name ; N:Name ; [0, idle] [s, idle] |= [] ex? .)
+(lfmc N:Name ; N:Name ; [idle] [idle] |= [] ex? .)
 
 --- false
 (lfmc N ; M ; WS |= [] ex?  .)
@@ -113,17 +113,23 @@ endm)
 (mod BAKERY-SATISFACTION2-ABS is
   pr BAKERY-SATISFACTION2 .
 
-  var PS : ProcSet .  vars N M L K1 K2 K3 K4 : Name . var IS : ProcIdleSet .
+  var PS : ProcSet .  vars N M L : Name . var IS : ProcIdleSet .
 
-  eq s s s N M ; M ; IS [K1, wait(N M)] [K2, wait(s N M)] [K3, wait(s s N M)]
-   =   s s N M ; M ; IS [K1, wait(N M)] [K2, wait(s N M)]
+  eq s s s N M ; M ; IS [wait(N M)] [wait(s N M)] [wait(s s N M)]
+   =   s s N M ; M ; IS [wait(N M)] [wait(s N M)]
   [variant] .
 
-  eq s s s N M ; M ; IS [K4, crit(L)] [K1, wait(N M)] [K2, wait(s N M)] [K3, wait(s s N M)]
-   =   s s N M ; M ; IS [K4, crit(L)] [K1, wait(N M)] [K2, wait(s N M)]
+  eq s s s N M ; M ; IS [crit(L)] [wait(N M)] [wait(s N M)] [wait(s s N M)]
+   =   s s N M ; M ; IS [crit(L)] [wait(N M)] [wait(s N M)]
   [variant] .
 
+--- coherent completion 
+  rl [crit] :   
+      s s M ; M ; IS [wait(M)] [wait(s M)] 
+   => s s s M ; M ; IS [crit(M)] [wait(s M)] [wait(s s M)] .
 endm)
+
+---NOTE: coherent completion may be replaced by stuterring simulation..
 
 (lfmc N ; N ; IS |= [] ex?  .)
 

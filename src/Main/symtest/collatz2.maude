@@ -1,0 +1,134 @@
+
+mod COLLATZ is
+  pr LIST{Nat} .
+
+  sort Conf .
+  op ?_   : Nat -> Conf .
+  op 2^_*_ : Nat Nat -> Conf .
+  op 2^_   : Nat -> Conf .
+
+  vars M N : Nat .
+
+  eq ? N = 2^ 0 * N .
+ ceq 2^ M * N = 2^ (s M) * (N quo 2) if N rem 2 == 0 .
+  eq 2^ M * 1 = 2^ M .
+
+  rl 2^ M * N => 2^ M * (3 * N + 1) .
+
+endm
+
+search ? 27 =>+ (2^ N) .
+show search graph .
+
+eof
+
+rew ? 1 .
+rew ? 2 .
+rew ? 3 .
+rew ? 4 .
+rew ? 5 .
+rew ? 6 .
+rew ? 7 .
+rew ? 8 .
+rew ? 9 .
+rew ? 10 .
+rew ? 11 .
+rew ? 12 .
+rew ? 13 .
+rew ? 14 .
+rew ? 15 .
+rew ? 16 .
+rew ? 17 .
+rew ? 18 .
+rew ? 19 .
+rew ? 20 .
+rew ? 21 .
+rew ? 22 .
+rew ? 23 .
+rew ? 24 .
+rew ? 25 .
+rew ? 26 .
+rew ? 27 .
+rew ? 28 .
+rew ? 29 .
+rew ? 30 .
+rew ? 31 .
+rew ? 32 .
+rew ? 33 .
+rew ? 34 .
+rew ? 35 .
+rew ? 36 .
+rew ? 37 .
+rew ? 38 .
+rew ? 39 .
+rew ? 40 .
+rew ? 41 .
+rew ? 42 .
+rew ? 43 .
+rew ? 44 .
+rew ? 45 .
+rew ? 46 .
+rew ? 47 .
+rew ? 48 .
+rew ? 49 .
+rew ? 50 .
+rew ? 51 .
+rew ? 52 .
+rew ? 53 .
+rew ? 54 .
+rew ? 55 .
+rew ? 56 .
+rew ? 57 .
+rew ? 58 .
+rew ? 59 .
+rew ? 60 .
+rew ? 61 .
+rew ? 62 .
+rew ? 63 .
+rew ? 64 .
+rew ? 65 .
+rew ? 66 .
+rew ? 67 .
+rew ? 68 .
+rew ? 69 .
+rew ? 70 .
+rew ? 71 .
+rew ? 72 .
+rew ? 73 .
+rew ? 74 .
+rew ? 75 .
+rew ? 76 .
+rew ? 77 .
+rew ? 78 .
+rew ? 79 .
+rew ? 80 .
+rew ? 81 .
+rew ? 82 .
+rew ? 83 .
+rew ? 84 .
+rew ? 85 .
+rew ? 86 .
+rew ? 87 .
+rew ? 88 .
+rew ? 89 .
+rew ? 90 .
+rew ? 91 .
+rew ? 92 .
+rew ? 93 .
+rew ? 94 .
+rew ? 95 .
+rew ? 96 .
+rew ? 97 .
+rew ? 98 .
+rew ? 99 .
+rew ? 100 .
+rew ? 101 .
+rew ? 102 .
+rew ? 103 .
+rew ? 104 .
+rew ? 105 .
+rew ? 106 .
+rew ? 107 .
+rew ? 108 .
+rew ? 109 .
+

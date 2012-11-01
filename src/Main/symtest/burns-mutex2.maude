@@ -1,0 +1,149 @@
+
+--- The Burns's mutual exclusion algorithms in Maude
+--- From: Nancy Ann Lynch, Distributed algorithms, Morgan Kaufmann, 1996
+---
+---    repeat
+---l1:   flag[i] := 0
+---l2:   for j = 0 to i - 1
+---        if flag[j] = 1 then goto l1
+---l3:   flag[i] := 1
+---l4:   for j = 0 to i - 1
+---        if flag[j] = 1 then goto l1
+---l5:   for j = I + 1 to N -1
+---        await flag[j] != 1
+---crit:
+---l6:   flag[i] := 0
+---    forever
+
+fmod NUMBERS is
+  sort Number .
+  op 0 : -> Number [ctor] .
+  op s : -> Number [ctor] .
+  op __ : Number Number -> Number [ctor comm assoc id: 0] .
+endfm
+
+fmod BURNS-DATA is
+  pr NUMBERS .
+  sorts Status WaitStatus InitStatus .
+  subsorts InitStatus < WaitStatus < Status .
+  op l1 : -> InitStatus [ctor] .
+  op l3 : -> WaitStatus [ctor] .
+  ops l2 l4 l5 : Number -> WaitStatus [ctor] .
+  op crit : -> Status [ctor] .
+
+  sorts Flag .
+  ops 0 1 : -> Flag [ctor] .
+endfm
+
+fmod BURNS-PROCS is
+  protecting NUMBERS .
+  protecting BURNS-DATA .
+
+  sort Proc .
+  op [_:_,_] : Number Flag Status -> Proc [ctor] .
+
+  sorts WaitProc InitProc .
+  subsorts InitProc < WaitProc < Proc .
+  op [_:_,_] : Number Flag WaitStatus -> WaitProc [ctor] .
+  op [_:_,_] : Number Flag InitStatus -> InitProc [ctor] .
+endfm
+
+fmod BURNS-PROCSETS is
+  protecting BURNS-PROCS .
+
+  sorts ProcSet WaitProcSet InitProcSet .
+  subsorts Proc < ProcSet .
+  subsorts WaitProc < WaitProcSet .
+  subsorts InitProc < InitProcSet .
+  subsorts InitProcSet < WaitProcSet < ProcSet .
+  op none : -> InitProcSet [ctor] .
+  op __ : ProcSet ProcSet -> ProcSet [ctor comm assoc id: none] .
+  op __ : WaitProcSet WaitProcSet -> WaitProcSet [ctor ditto] .
+  op __ : InitProcSet InitProcSet -> InitProcSet [ctor ditto] .
+endfm
+
+mod BURNS-MUTEX is
+  protecting BURNS-PROCSETS .
+
+  sort Conf .
+  op <_|_> : Number ProcSet -> Conf [ctor] .
+
+  vars I J N : Number . var F : Flag . var S : Status .  vars PS : ProcSet . 
+
+  rl [l1] : < N | [I : F,l1]    PS >  
+         => < N | [I : 0,l2(0)] PS > .
+
+  rl [l2] : < N | [s I J : F,l2(J)]   PS [J : 1,S] >  
+         => < N | [s I J : F,l1]      PS [J : 1,S] > .
+  rl [l2] : < N | [s I J : F,l2(J)]   PS [J : 0,S] >  
+         => < N | [s I J : F,l2(s J)] PS [J : 0,S] > .
+  rl [l2] : < s I N | [I : F,l2(I)]   PS > 
+         => < s I N | [I : F,l3]      PS > .
+
+  rl [l3] : < N | [I : F,l3]    PS >  
+         => < N | [I : 1,l4(0)] PS > .
+
+  rl [l4] : < N | [s I J : F,l4(J)]   PS [J : 1,S] >  
+         => < N | [s I J : F,l1]      PS [J : 1,S] > .
+  rl [l4] : < N | [s I J : F,l4(J)]   PS [J : 0,S] >  
+         => < N | [s I J : F,l4(s J)] PS [J : 0,S] > .
+  rl [l4] : < s I N | [I : F,l4(I)]   PS > 
+         => < s I N | [I : F,l5(s I)] PS > .
+
+  rl [l5] : < N     | [I : F,l5(s J I)]   PS [s J I : 0,S] >  
+         => < N     | [I : F,l5(s s J I)] PS [s J I : 0,S] > .
+  rl [l5] : < s I N | [I : F,l5(s I N)]   PS > 
+         => < s I N | [I : F,crit]        PS > .
+
+  rl [l6] : < N | [I : F,crit] PS >  
+         => < N | [I : 0,l1] PS > .
+endm
+
+--- search < s s s | [0 : 0,l1] [s : 0,l1] [s s : 0,l1] > =>+ C:Conf .
+
+load symbolic-checker .
+
+(mod BURNS-MUTEX-SATISFACTION is
+  pr SYMBOLIC-CHECKER .
+  pr BURNS-MUTEX .
+
+  subsort Conf < State .
+
+  ops ex? : -> Prop . 
+
+  var I J N : Number . vars F F' : Flag . 
+  vars WS : WaitProcSet . vars PS : ProcSet .
+
+  eq < N | WS >                            |= ex? = true  [variant] .
+  eq < N | [I : F,crit] WS >               |= ex? = true  [variant] .
+  eq < N | [I : F,crit] [J : F',crit] PS > |= ex? = false [variant] .
+
+endm)
+
+---(
+(lfmc [20] < N | IS:InitProcSet > |= [] ex? .)
+---)
+
+(mod BURNS-MUTEX-SATISFACTION-ABS is
+  pr BURNS-MUTEX-SATISFACTION .
+
+  vars I J K L N M : Number . var F : Flag . 
+  vars S S' : Status . vars SI SI' : InitStatus .
+  vars PS : ProcSet . vars IS : InitProcSet . 
+
+  eq < N | IS [I : 0,l2(0)] [J : 0,l2(0)] > 
+   = < N | IS [I : 0,l2(0)]               > [variant] .
+
+  eq < N | IS [0 : 0, SI] [s : 0,SI'] [s s M : 0,l2(s s)] >
+   = < N | IS [0 : 0, SI] [s M : 0,l2(s)]                 > [variant] .
+
+  eq < N | IS [0 : 0, S] [s : 0,l2(s)] [s s M : 0,l2(s s)] >
+   = < N | IS [0 : 0, S] [s M : 0,l2(s)]                   > [variant] .
+
+  eq < s s s N | IS [0 : 0,SI] [s : 0,SI'] [s s : 0,l3] >
+   = <   s s N | IS [0 : 0,SI] [s : 0,l3]               > [variant] .
+
+endm)
+
+(lfmc < N | IS > |= [] ex? .)
+

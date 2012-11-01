@@ -1,0 +1,26 @@
+
+fmod NUMBERS is
+  sort Number .
+  op 0 : -> Number [ctor] .
+  op s : -> Number [ctor] .
+  op __ : Number Number -> Number [ctor comm assoc id: 0] .
+endfm
+
+--- an optimized version of the problem
+mod COLLATZ is
+  pr NUMBERS .
+
+  sort Conf .
+  op [_] : Number -> Conf .
+
+
+  var N : Number .
+
+  rl [N N s] => [N N N s s] .	
+
+  eq [N N] = [N] .
+endm
+
+search [s s s s s] =>* [s] .
+show search graph .
+

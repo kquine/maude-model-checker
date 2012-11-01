@@ -771,6 +771,7 @@ fmod RENAMING is
 
   ----------------------------------------------
   --- New Renaming Utilities -------------------
+  --- NOTE: modified to handle both "#" and "%"
   op highestVar : GTermList -> Nat .
   eq highestVar(TL:GTermList)
    = highestVar(TL:GTermList,0) .
@@ -780,21 +781,20 @@ fmod RENAMING is
   eq highestVarTerm([]) = 0 .
   eq highestVarTerm(C) = 0 .
   eq highestVarTerm(V) 
-   = if rfind(string(V), "#", length(string(V))) =/= notFound
+   = if (substr(string(V), 0, 1) == "#" or substr(string(V), 0, 1) == "%")
         and
         rfind(string(V), ":", length(string(V))) =/= notFound
         and
-        rat(substr(string(V),
-                   rfind(string(V), "#", length(string(V))) + 1,
+        rat(substr(string(V), 1,
                    rfind(string(V), ":", length(string(V))) + (- 1))
             ,10) 
         :: Nat
-     then rat(substr(string(V),
-                   rfind(string(V), "#", length(string(V))) + 1,
+     then rat(substr(string(V), 1,
                    rfind(string(V), ":", length(string(V))) + (- 1))
               ,10) 
      else 0
      fi .
+
 
   eq highestVarTerm(F[TL:GTermList]) 
    = highestVar(TL:GTermList,0) .

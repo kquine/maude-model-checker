@@ -226,11 +226,11 @@ endm
 search < {0,l0,-} {0,l0,-} {0,l0,!} > =>* < CPS > .
 ---)
 
-load symbolic-checker
+load model-checker
 
-(mod DIJKSTRA-MUTEX-SATISFACTION is
-  pr SYMBOLIC-CHECKER .
+mod DIJKSTRA-MUTEX-SATISFACTION is
   pr DIJKSTRA-MUTEX .
+  pr MODEL-CHECKER .
 
   subsort Conf < State .
 
@@ -241,36 +241,35 @@ load symbolic-checker
   var CNS : CNCrtProcSet . var NS : NCrtProcSet .
   var CIS : CInitProcSet .
 
-  eq < CNS >                        |= ex? = true  [variant] .
-  eq < {F,crit,-} CNS >             |= ex? = true  [variant] .
-  eq < {F,crit,!} NS >              |= ex? = true  [variant] .
-  eq < {F,crit,-} {F',crit,-} CPS > |= ex? = false [variant] .
-  eq < {F,crit,!} {F',crit,-} PS >  |= ex? = false [variant] .
-  eq < {F,crit,-} {F',crit,!} PS >  |= ex? = false [variant] .
-endm)
+  eq < CNS >                        |= ex? = true  .
+  eq < {F,crit,-} CNS >             |= ex? = true  .
+  eq < {F,crit,!} NS >              |= ex? = true  .
+  eq < {F,crit,-} {F',crit,-} CPS > |= ex? = false .
+  eq < {F,crit,!} {F',crit,-} PS >  |= ex? = false .
+  eq < {F,crit,-} {F',crit,!} PS >  |= ex? = false .
+endm
 
----(
-(lfmc [20] < CIS > |= [] ex? .)
----)
+set verbose on .
+red modelCheck(< {0,l0,-} {0,l0,-} {0,l0,!} >,[] ex?) .
 
-(mod DIJKSTRA-MUTEX-SATISFACTION-WIDENING is
+
+mod DIJKSTRA-MUTEX-SATISFACTION-INF is
   pr DIJKSTRA-MUTEX-SATISFACTION .
 
-  vars F F' : Flag .  var CIS : CInitProcSet .
-  var NL1PS : NL1ProcSet . var NL5PS : NL5ProcSet .
-  var CNL1PS : CNL1ProcSet . var CNL5PS : CNL5ProcSet .
+  var F : Flag . var S : Status . 
+  var CPS : CProcSet . var PS : ProcSet . 
+  var CWS : CWaitProcSet . var WS : WaitProcSet .
 
-  eq < {F,l1,-} {F,l1,-} CNL1PS > = < {F,l1,-} CNL1PS > [variant] .
-  eq < {F,l1,-} {F,l1,-} {F',l1,!} NL1PS > = < {F,l1,-} {F',l1,!} NL1PS > [variant] .
-  eq < {F,l1,-} {F,l1,-} {2,crit,!} NL1PS > = < {F,l1,-} {2,crit,!} NL1PS > [variant] .
+  eq < {F,l0,-} {F,l0,-} CPS > = < {F,l0,-} CPS > .
+  eq < {F,l1,-} {F,l1,-} CPS > = < {F,l1,-} CPS > .
+  eq < {F,l5,-} {F,l5,-} CPS > = < {F,l5,-} CPS > .
 
-  eq < {F,l5,-} {F,l5,-} CNL5PS > = < {F,l5,-} CNL5PS > [variant] .
-  eq < {F,l5,-} {F,l5,-} {F',l5,!} NL5PS > = < {F,l5,-} {F',l5,!} NL5PS > [variant] .
-  eq < {F,l5,-} {F,l5,-} {2,crit,!} NL5PS > = < {F,l5,-} {2,crit,!} NL5PS > [variant] .
+  rl [l1] : < {F,l0,-} CPS >         =>  < {F,l0,-} {1,l1,-} CPS > .
+  rl [l2] : < {F,l1,-} {0,S,!} PS >  =>  < {F,l1,-} {F,l1,!} {0,S,-} PS > .
+  rl [l0] : < {F,l5,-} CPS >         =>  < {F,l5,-} {F,l0,-} CPS > .
 
- ---NOTE: coherent completion required.
-endm)
+endm
 
----   true (complete with depth 16)
-(lfmc < CIS > |= [] ex?  .)
-
+red modelCheck(< {0,l0,-} {0,l0,!} >,[] ex?) .
+search [,3] < {0,l0,-} {0,l0,!} > =>* S:State .
+show search graph .

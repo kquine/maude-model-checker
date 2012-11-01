@@ -116,14 +116,27 @@ StateFoldingGraph::getNextState(int stateNr, int index) const
 void
 StateFoldingGraph::dump(ostream& o, int stateNr, PrettyPrinter* stateP, PrettyPrinter* transP) const
 {
-	o << " " << stateNr;
-	if (graph->getStateParent(stateNr) > 0)
-		o << "(parent " << graph->getStateParent(stateNr) << ")" ;
-	dump_fold(o, stateNr);
-	o << ": ";
-	stateP->print(cout, getStateDag(stateNr));
-	o << endl;
+#ifndef TDEBUG
+	if (const FoldedState* fs = dynamic_cast<const FoldedState*>(foldGraph[stateNr]))
+	{
+	}
+	else
+	{
+#endif
+		o << " " << stateNr;
+		if (graph->getStateParent(stateNr) > 0)
+			o << "(parent " << graph->getStateParent(stateNr) << ")" ;
+#ifdef TDEBUG
+		dump_fold(o, stateNr);
+#endif
+		o << ": ";
+		stateP->print(cout, getStateDag(stateNr));
+		o << endl;
+#ifndef TDEBUG
+	}
+#endif
 
+#ifdef TDEBUG
 	// print transitions
 	for (int j = 0; j < graph->getNrTransitions(stateNr); ++j)
 	{
@@ -134,6 +147,7 @@ StateFoldingGraph::dump(ostream& o, int stateNr, PrettyPrinter* stateP, PrettyPr
 		dump_fold(o, nx);
 		o << endl;
 	}
+#endif
 }
 
 void

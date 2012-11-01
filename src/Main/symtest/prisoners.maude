@@ -1,0 +1,78 @@
+
+--- The prisoner problem by Jayadev Misra.
+
+load symbolic-checker
+
+(fmod NUMBERS is
+  sort Number .
+  op 0 : -> Number [ctor] .
+  op s : -> Number [ctor] .
+  op __ : Number Number -> Number [ctor comm assoc id: 0] .
+endfm)
+
+(mod PRISONERS is 
+  protecting NUMBERS .
+
+  --- a prisoner: either a leader or a follower
+  --- a leader : the counter and the total # of the prisoners
+  --- a follower : the id and the # of the vote by himself
+  sorts Prisoner Leader Follower .
+  subsorts Leader Follower < Prisoner .
+  op `{_`,_`} : Number Number -> Leader [ctor] .  
+  op `[_`,_`] : Number Number -> Follower [ctor] . 
+
+  --- a set of prisoners: only one leader is allowed.
+  sort PrisonerSet FollowerSet .
+  subsorts Follower < FollowerSet Prisoner < PrisonerSet .
+  op empty : -> FollowerSet [ctor] .
+  op __ : FollowerSet FollowerSet -> FollowerSet [ctor assoc comm id: empty] .
+  op __ : FollowerSet PrisonerSet -> PrisonerSet [ctor ditto] .
+  op __ : PrisonerSet FollowerSet -> PrisonerSet [ctor ditto] .
+endm)
+
+(mod PRISONER-GAME is
+  pr PRISONERS .
+
+  --- the configuration: switch | prisoners | announced?
+  sort Conf .
+  op _|_|_ : Switch PrisonerSet Bool -> Conf [ctor] .
+
+  sort Switch .
+  ops on off : -> Switch [ctor] .
+
+  var PS : PrisonerSet . vars I N C : Number .
+
+  rl [vote0]:  off | [I,0] PS | false  =>   on | [I,  s] PS | false .
+  rl [vote1]:  off | [I,s] PS | false  =>   on | [I,s s] PS | false .
+  rl [leadI]:   on | {C,N} PS | false  =>  off | {s C,N} PS | false .
+
+  --- the announce step is defined as the equation:
+  eq [leadA]:  off | {N N,N} PS | false  =  off | {N N,N} PS | true  [variant] .
+endm)
+
+(rew  off | {0,s s s} [0,0] [s,0] [s s,0] | false .)
+(rew   on | {0,s s s} [0,0] [s,0] [s s,0] | false .)
+
+(mod CHECK-PRISONERS is 
+  including PRISONER-GAME .
+  including SYMBOLIC-CHECKER .
+
+  subsort Conf < State .
+
+  ops announced inv wff : -> Prop .
+
+  var S : Switch . var PS : PrisonerSet . var FS : FollowerSet .
+  vars I N C : Number .
+
+  eq S | PS | true  |= announced  =  true [variant] .
+  eq S | PS | false |= announced  =  true [variant] .
+
+ --- inv:  (on) C <= #votes   (off) C <= #votes + 1
+endm)
+
+eof
+
+set verbose on .
+
+red modelCheck(init(1),([] inv)) .
+red modelCheck(init(1),<> announced) .

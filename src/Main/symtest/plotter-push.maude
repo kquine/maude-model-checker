@@ -64,6 +64,9 @@ mod PLOTTER-SATISFACTION-ABS is
 
   eq [ST :: m :: down :: right :: m :: down :: right :: ST']
    = [ST :: m :: down :: right                       :: ST'] .
+
+--- the equation "eq [ST :: NST :: NST :: ST'] = [ST :: NST :: ST'] ."
+--- would be used, but it is not confluent.
 endm
 
 set verbose on .

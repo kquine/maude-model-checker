@@ -1,0 +1,154 @@
+
+---From: Beyond regular model checking, Dana Fisman and Amir Pnueli
+--- 
+---    repeat
+---       for p := 1 to N - 1 do
+---ready:    (P[i], S[p]) := (p, i)
+---wait:     await S[p] != i  or  ALL j!=i. P[j] < P[i]
+---crit:  P[i] := 0
+---    forever
+
+fmod NUMBERS is
+  sort Number .
+  op 0 : -> Number [ctor] .
+  op s : -> Number [ctor] .
+  op __ : Number Number -> Number [ctor comm assoc id: 0] .
+endfm
+
+fmod PROCS is
+  sort Proc .
+  op * : -> Proc [ctor] .
+
+  sort ProcSet EmptyProcSet NEProcSet .
+  subsorts Proc < NEProcSet < ProcSet .
+  subsort EmptyProcSet < ProcSet .
+  op none : -> EmptyProcSet [ctor] .
+  op __ : ProcSet ProcSet -> ProcSet [ctor comm assoc id: none] .
+  op __ : EmptyProcSet EmptyProcSet -> EmptyProcSet [ctor ditto] .
+  op __ : NEProcSet NEProcSet -> NEProcSet [ctor ditto] .
+endfm
+
+fmod BAGS is
+  pr PROCS .
+  pr NUMBERS .
+
+  sorts Bag EmptyBag NEBag .
+  subsorts EmptyBag NEBag < Bag .
+  op [_|_] : Number ProcSet -> Bag [ctor] .
+  op [_|_] : Number EmptyProcSet -> EmptyBag [ctor] .
+  op [_|_] : Number NEProcSet -> NEBag [ctor] .
+endfm
+
+fmod BAGLISTS is
+  pr BAGS .
+
+  sorts BagList EmptyBagList NEBagList .
+  subsort Bag < BagList .
+  subsort EmptyBag < EmptyBagList .
+  subsort NEBag < NEBagList .
+  subsorts EmptyBagList NEBagList < BagList .
+  op nil : -> EmptyBagList [ctor] .
+  op __ : BagList BagList -> BagList [ctor assoc id: nil] .
+  op __ : NEBagList NEBagList -> NEBagList [ctor assoc id: nil] .
+  op __ : EmptyBagList EmptyBagList -> EmptyBagList [ctor assoc id: nil] .
+endfm
+
+mod PETERSON-MUTEX is
+  pr BAGLISTS .
+
+  --- #process, #idleProcess | bags
+  sort Conf .
+  op _,_|_ : Number Number BagList -> Conf .
+
+  vars I J N M : Number .  vars PS PS' : ProcSet . var B : Bag .  
+  vars LBS RBS : BagList . var NBS : NEBagList . var EBS : EmptyBagList .
+
+--- an idle proc can increase its priority
+  rl [init]: N, s M | [0 | PS]   RBS 
+          => N,   M | [0 | * PS] RBS .
+
+--- a proc can increase it priority if it has the single maximum priority
+  rl [inc1]: N, M | LBS [I |    *] [s I | none] EBS
+          => N, M | LBS [I | none] [s I |    *] EBS .
+
+--- a proc can increase its priority if it is not the latest proc acquiring 
+--- the current priority.
+  rl [inc2]: N, M | LBS [I | * * PS] [s I |   PS'] RBS
+          => N, M | LBS [I |   * PS] [s I | * PS'] RBS .
+
+--- a proc in critical section can go to idle status
+  rl [exit]: s N,   M | LBS [N | * PS] 
+          => s N, s M | LBS [N |   PS] .
+endm
+
+mod PETERSON-MUTEX-INF is
+  pr PETERSON-MUTEX .
+
+  vars I J N M : Number .  vars PS PS' : ProcSet . var B : Bag .  
+  var BS : BagList . var NBS : NEBagList . var EBS : EmptyBagList .
+
+--- add extra process
+  rl [join]:   N,   M | BS 
+          => s N, s M | BS [N | none] .
+endm
+
+---(
+search s s s, s s s | [0 | none] [s | none] [s s | none]
+   =>* C:Conf .
+---)
+
+load model-checker
+
+mod PETERSON-MUTEX-MC is
+  pr MODEL-CHECKER .
+  pr PETERSON-MUTEX .
+
+  subsort Conf < State .
+
+  op ex? : -> Prop . 
+
+  vars I J N M : Number .  vars BS : BagList . 
+
+  eq s N, M | BS [N | none] |= ex? = true .
+  eq s N, M | BS [N |    *] |= ex? = true .
+  eq   N, M | BS            |= ex? = false [owise] .
+endm
+
+---(
+red modelCheck((s s s, s s s | [0 | none] [s | none] [s s | none]), [] ex?) .
+---)
+
+
+mod PETERSON-MUTEX-INF-MC is
+  pr PETERSON-MUTEX-MC .
+  pr PETERSON-MUTEX-INF .
+
+  vars I J N M : Number .  vars PS PS' : ProcSet . 
+  vars LBS RBS : BagList .  var NBS : NEBagList . var EBS : EmptyBagList . 
+
+--- NOT Coherent!
+
+  eq s s N M, s s M | LBS [N M | none] [s N M | none] 
+   =   s N M,   s M | LBS [N M | none] .
+
+  eq s s N M, s M | LBS [I | none] [s I | none] NBS
+   =   s N M,   M | LBS [I | none] shift(NBS) .
+
+  eq s s N M, M | [0 | * * * PS] RBS [s N M | none]
+   =   s N M, M | [0 |   * * PS] RBS .
+
+  eq s s N M, M | [0 | *] [s | *] RBS
+   =   s N M, M | [0 | *] shift(RBS) .
+
+
+  op shift : BagList ~> BagList .
+  eq shift([s I | PS] RBS) = [I | PS] shift(RBS) .
+  eq shift(nil) = nil .
+endm
+
+search [50] s s, s s | [0 | none] [s | none] 
+   =>* C:Conf .
+
+set verbose on .
+red modelCheck((s s, s s | [0 | none] [s | none]), [] ex?) .
+

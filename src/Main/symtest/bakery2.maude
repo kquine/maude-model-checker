@@ -1,0 +1,120 @@
+
+--- Lamport's Bakery protocol in Maude.
+--- From: All About Maude - A High-Performance Logical Framework. 
+fmod BAKERY-SYNTAX is 
+  sorts Number NzNumber .
+  subsort NzNumber < Number .
+  op 0 : -> Number [ctor] .
+  op s : -> NzNumber [ctor] .
+  op __ : Number Number -> Number [ctor comm assoc id: 0] .
+  op __ : NzNumber NzNumber -> NzNumber [ctor ditto] .
+
+  sorts Mode ModeWait RedMode RedModeWait . 
+  subsorts RedModeWait < RedMode ModeWait < Mode .
+  op idle : -> RedModeWait . 
+  op wait : NzNumber -> RedModeWait . 
+  op wait : Number -> ModeWait .
+  op crit : NzNumber -> RedMode . 
+  op crit : Number -> Mode . 
+
+  sorts Proc ProcWait RedProc RedProcWait .
+  subsorts RedProcWait < RedProc ProcWait < Proc . 
+  op [_] : RedModeWait -> RedProcWait . 
+  op [_] : ModeWait -> ProcWait . 
+  op [_] : RedMode -> RedProc . 
+  op [_] : Mode -> Proc . 
+
+  sorts ProcSet ProcWaitSet RedProcSet RedProcWaitSet . 
+  subsort Proc < ProcSet .
+  subsort ProcWait < ProcWaitSet .
+  subsort RedProc < RedProcSet .
+  subsort RedProcWait < RedProcWaitSet .
+  subsorts RedProcWaitSet < ProcWaitSet RedProcSet < ProcSet .
+  op none : -> RedProcWaitSet . 
+  op __ : ProcSet ProcSet -> ProcSet [ctor assoc comm id: none] .
+  op __ : ProcWaitSet ProcWaitSet -> ProcWaitSet [ctor ditto] .
+  op __ : RedProcSet RedProcSet -> RedProcSet [ctor ditto] .
+  op __ : RedProcWaitSet RedProcWaitSet -> RedProcWaitSet [ctor ditto] .
+
+  sort Conf . 
+  op _;_;_ : Number Number ProcSet -> Conf .
+endfm
+
+mod BAKERY is
+  protecting BAKERY-SYNTAX . 
+  
+  var PS : ProcSet . var P : Proc .  vars N M K : Number . 
+  
+  rl [wake] : N ; M ; [idle] PS    => s N ;   M ; [wait(N)] PS .
+  rl [crit] : N ; M ; [wait(M)] PS =>   N ;   M ; [crit(M)] PS .
+  rl [exit] : N ; M ; [crit(M)] PS =>   N ; s M ; [idle] PS .
+
+endm
+
+mod BAKERY-INF is
+  pr BAKERY .
+
+  var PS : ProcSet . var P : Proc .  vars N M : Number . 
+
+  rl [join]  : N ; M ; PS  =>  N ; M ; [idle] PS .
+endm
+
+
+load model-checker
+
+mod BAKERY-SATISFACTION is
+  pr BAKERY .
+  pr SATISFACTION .
+
+  subsort Conf < State .
+
+  ops ex? ini : -> Prop . 
+
+  var WS : ProcWaitSet . var PS : ProcSet .  vars N M L K : Number .
+
+  eq N ; M ; WS |= ex? = true .
+  eq N ; M ; [crit(L)] WS |= ex? = true .
+  eq N ; M ; [crit(L)] [crit(K)] PS |= ex? = false .
+endm
+
+mod BAKERY-MC1 is
+  pr BAKERY-SATISFACTION .
+  pr MODEL-CHECKER .
+
+--- counter abstraction
+  var RPS : RedProcSet . vars N M : Number .
+
+  op red : RedProcSet ~> ProcSet .
+  eq red(     [idle] RPS) =    [idle] red(RPS) .
+  eq red([wait(s N)] RPS) = [wait(N)] red(RPS) .
+  eq red([crit(s N)] RPS) = [crit(N)] red(RPS) .
+  eq red(none)            = none .
+
+  eq s N ; s M ; RPS = N ; M ; red(RPS) .
+endm
+
+set verbose on .
+red modelCheck(0 ; 0 ; [idle] [idle], [] ex?) .
+
+mod BAKERY-MC2 is
+  pr BAKERY-INF .
+  pr BAKERY-MC1 .
+
+  var PS : ProcSet . vars N M I : Number .
+
+--- proc abstraction
+  eq N ; M ; [idle] [idle] PS = N ; M ; [idle] PS .
+
+  eq s s s N M ; M ; PS [wait(s N M)] [wait(s s N M)]
+   =   s s N M ; M ; PS [wait(s N M)] .
+
+--- coherent completion
+  rl [wake] : N ; M ; [idle] PS  =>  s N ; M ; [wait(N)] [idle] PS .
+endm
+
+red modelCheck(0 ; 0 ; [idle] [idle], [] ex?) .
+
+search 0 ; 0 ; [idle] =>* S:State .
+
+show search graph .
+
