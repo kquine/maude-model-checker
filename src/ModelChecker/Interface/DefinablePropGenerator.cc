@@ -120,6 +120,8 @@ DefinablePropGenerator::constructRules()
 		if (matchProps(i.argument()))	// only use rules that match at least one of prop patterns
 			genRules.append(makeRule(left, i.argument(), (*e)->getCondition()));
 	}
+	FOR_EACH_CONST(r, Vector<Rule*>, genRules)
+		cout << *r << endl;
 }
 
 bool

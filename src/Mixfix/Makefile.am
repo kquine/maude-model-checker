@@ -5,6 +5,7 @@ if BUILD_COMPILER
 endif
 
 libmixfix_a_CPPFLAGS = \
+    -I$(top_srcdir)/src/ModelChecker \
 	-I$(top_srcdir)/src/Utility \
 	-I$(top_srcdir)/src/Temporal \
 	-I$(top_srcdir)/src/Interface \
@@ -28,8 +29,7 @@ libmixfix_a_CPPFLAGS = \
 	-I$(top_srcdir)/src/Meta \
 	-I$(top_srcdir)/src/3rdParty \
 	-I$(top_srcdir)/src/FullCompiler \
-	-I$(top_srcdir)/src/ModelChecker \
-	-I$(top_srcdir)/src/StrategyLanguage
+	-I$(top_srcdir)/src/StrategyLanguage 
 
 libmixfix_a_SOURCES = \
 	syntaxContainer.cc \

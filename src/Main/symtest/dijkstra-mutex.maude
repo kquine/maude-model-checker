@@ -226,7 +226,7 @@ endm
 search < {0,l0,-} {0,l0,-} {0,l0,!} > =>* < CPS > .
 ---)
 
-load symbolic-checker
+load symbolic-checker-core
 
 (mod DIJKSTRA-MUTEX-SATISFACTION is
   pr SYMBOLIC-CHECKER .
@@ -249,9 +249,7 @@ load symbolic-checker
   eq < {F,crit,-} {F',crit,!} PS >  |= ex? = false [variant] .
 endm)
 
----(
 (lfmc [20] < CIS > |= [] ex? .)
----)
 
 (mod DIJKSTRA-MUTEX-SATISFACTION-WIDENING is
   pr DIJKSTRA-MUTEX-SATISFACTION .

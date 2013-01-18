@@ -1,0 +1,27 @@
+
+fmod NUMBER is
+  sort Number .
+  ops 0 s : -> Number [ctor] .
+  op __ : Number Number -> Number [ctor comm assoc id: 0] .
+endfm
+
+fmod CONF is
+  pr NUMBER .
+  sort Conf .
+  op _|_/_ : Number NumberSet NumberSet -> Conf [ctor] .
+
+  sort NumberSet .
+  subsort Number < NumberSet .
+  op none : -> NumberSet [ctor] .
+  op _;_ : NumberSet NumberSet -> NumberSet [ctor comm assoc id: none] .
+
+
+  vars I J K : Number . vars NS1 NS2 : NumberSet .
+
+  eq I | (s I J) ; NS1 / NS2  =  I | NS1 / NS2 ; (s I J) [variant] .
+
+  eq I | NS1 / J ; K = I | NS1 / J [variant] .
+
+endfm
+
+get variants I | NS1 / none .

@@ -41,7 +41,7 @@ mod BAKERY is
 endm
 
 
-load symbolic-checker
+load symbolic-checker-core
 
 --- prop definitions for bakery
 (mod BAKERY-SATISFACTION1 is
@@ -92,7 +92,6 @@ endm)
   eq N ; M ; [crit(M1)] [crit(M2)] PS |= ex? = false [variant] .
 endm)
 
----(
 --- no counterexample
 (lmc [10] N:Name ; N:Name ; [idle] [idle] |= [] ex? .)
 
@@ -108,7 +107,6 @@ endm)
 ***( true, but non terminating
 (lfmc N ; N ; IS |= [] ex?  .)
 ***)
----)
 
 (mod BAKERY-SATISFACTION2-ABS is
   pr BAKERY-SATISFACTION2 .
