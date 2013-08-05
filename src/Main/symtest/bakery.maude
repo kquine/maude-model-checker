@@ -60,9 +60,7 @@ load symbolic-checker-core
   eq N ; 0 ; PS    |= ever-crit? = false [variant] . 
 endm)
 
---- set verbose on .
-
----( ?? not works for the core Maude version
+set verbose on .
 
 (lfmc N ; N ; [idle] [idle] |= [] (ever-wait? -> <> ever-crit?) .)
 
@@ -73,7 +71,6 @@ endm)
 
 *** spurious counterexample
 (lfmc N ; M ; WS:ProcWaitSet |= [] (ever-wait? -> <> ever-crit?) .)
----)
 
 (mod BAKERY-SATISFACTION2 is
   pr BAKERY .
@@ -104,30 +101,15 @@ endm)
 --- false (infinite graph, but a counterexample exists)
 (lfmc N ; N ; WS |= [] ex?  .)
 
-***( true, but non terminating
-(lfmc N ; N ; IS |= [] ex?  .)
-***)
-
 (mod BAKERY-SATISFACTION2-ABS is
   pr BAKERY-SATISFACTION2 .
 
   var PS : ProcSet .  vars N M L : Name . var IS : ProcIdleSet .
 
-  eq s s s N M ; M ; IS [wait(N M)] [wait(s N M)] [wait(s s N M)]
-   =   s s N M ; M ; IS [wait(N M)] [wait(s N M)]
+  eq s s s N M ; M ; PS [wait(s N M)] [wait(s s N M)]
+   =   s s N M ; M ; PS [wait(s N M)]
   [variant] .
-
-  eq s s s N M ; M ; IS [crit(L)] [wait(N M)] [wait(s N M)] [wait(s s N M)]
-   =   s s N M ; M ; IS [crit(L)] [wait(N M)] [wait(s N M)]
-  [variant] .
-
---- coherent completion 
-  rl [crit] :   
-      s s M ; M ; IS [wait(M)] [wait(s M)] 
-   => s s s M ; M ; IS [crit(M)] [wait(s M)] [wait(s s M)] .
 endm)
-
----NOTE: coherent completion may be replaced by stuterring simulation..
 
 (lfmc N ; N ; IS |= [] ex?  .)
 

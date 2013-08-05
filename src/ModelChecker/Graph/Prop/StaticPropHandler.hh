@@ -24,7 +24,7 @@ public:
 	typedef BasicPropHandler::PropSet	PropSet;
 
 	StaticPropHandler(const PropChecker* pc, const DagNodeSet& propDags,
-			  	  	  const NatSet& propSet, ProofTermGenerator* pfg = NULL);
+			  	  	  const NatSet& propSet, ProofTermSymbol* pfg = NULL);
 
 	bool isSatisfied(const PropHandler::PropSet* d, int propId) const;
 	bool isRelated(int propId) const;
@@ -33,7 +33,7 @@ private:
 	void update(PropSet* d, DagNode* t);
 
 	const PropChecker* pc;
-	ProofTermGenerator* pfg;
+	ProofTermSymbol* pfg;
 	const DagNodeSet& propDags;	// globalPropId |-> propDag
 	Vector<int> local2global;	// localPropId |-> globalPropId
 	Vector<int> global2local;	// globalPropId |-> localPropId (NONE for undefined..)

@@ -19,7 +19,7 @@ class TransitionState
 public:
 	TransitionState(RewritingContext* parent, DagNode* stateDag);
 	DagNode* getNextStateDag(RewritingContext* parent);
-	DagNode* getCurrProofDag(ProofTermGenerator* pfg) const;
+	DagNode* getCurrProofDag(ProofTermSymbol* pfg) const;
 	bool isFullyExplored() const;
 
 private:

@@ -77,7 +77,7 @@ fmod BURNS-PROCSETS is
   op __ : InitFlag0ProcSet InitFlag0ProcSet -> InitFlag0ProcSet [ctor ditto] .
 endfm
 
-load symbolic-checker .
+load symbolic-checker-core
 
 (fmod BURNS-PROCSET-TRIPLES is
   protecting BURNS-PROCSETS .
@@ -173,6 +173,7 @@ endm)
 ---(
 (lfmc [20] < IS:InitProcSet > |= [] ex? .)
 ---)
+
 
 (mod BURNS-MUTEX-SATISFACTION-ABS is
   pr BURNS-MUTEX-SATISFACTION .

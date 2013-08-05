@@ -22,7 +22,7 @@ namespace modelChecker {
 template <typename _PropertyAutomaton>
 class BFSGraph
 {
-	typedef CounterExampleGenerator::Edge	Edge;
+	typedef CounterExampleSymbol::Edge	Edge;
 public:
 	typedef typename ProductAutomaton<_PropertyAutomaton>::State				State;
 	typedef typename ProductAutomaton<_PropertyAutomaton>::Transition			Transition;

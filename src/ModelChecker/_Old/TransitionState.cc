@@ -72,7 +72,7 @@ TransitionState::getNextStateDag(RewritingContext* parent)
 }
 
 DagNode*
-TransitionState::getCurrProofDag(ProofTermGenerator* pfg) const
+TransitionState::getCurrProofDag(ProofTermSymbol* pfg) const
 {
 	return pfg->makeProofDag(rewriteState.get(), *rewriteState->getRule(), rewriteState->getContext());
 }

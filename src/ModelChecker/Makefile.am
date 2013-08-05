@@ -16,49 +16,19 @@ libModelChecker_a_CPPFLAGS = \
 	-I$(top_srcdir)/src/FreeTheory \
 	-I$(top_srcdir)/src/CUI_Theory \
 	-I$(top_srcdir)/src/AU_Theory \
-	-I$(top_srcdir)/src/ACU_Theory
+	-I$(top_srcdir)/src/ACU_Theory \
+	-I$(top_srcdir)/src/3rdParty
 
 
 libModelChecker_a_SOURCES = \
-	DataStruct/TermUtil.cc \
-	Graph/RewriteTransitionState.cc \
-	Graph/StateDagContainer.cc \
-	Graph/StateTransitionMetaGraph.cc \
-	Graph/StateFoldingGraph.cc \
-	Graph/Prop/SimplePropHandler.cc \
-	Graph/Prop/StaticPropHandler.cc \
-	Interface/PropChecker.cc \
-	Interface/PropInterpreter.cc \
-	Interface/ProofTermGenerator.cc \
-	Interface/SubstConstructor.cc \
-	Interface/CounterExampleGenerator.cc \
-	Interface/FairnessDecoder.cc \
-	Interface/DefinablePropGenerator.cc \
-	Interface/FoldingChecker.cc \
-	Interface/PrettyPrinter.cc \
-	FairSet/WeakFairSet.cc \
-	FairSet/StrongFairSet.cc \
-	FairSet/ParamRealizedSet.cc \
-	FairSet/ParamWeakFairSet.cc \
-	FairSet/ParamStrongFairSet.cc \
-	FairSet/CompositedFairSet.cc \
-	Fairness/paramFairLattice.cc \
-	Fairness/FormulaFairnessMap.cc \
-	Fairness/SystemWeakFairnessMap.cc \
-	Fairness/SystemStrongFairnessMap.cc \
-	Fairness/CompositedFairnessMap.cc \
-	Search/NDFSModelChecker.cc \
-	Search/SCCModelChecker.cc \
-	Search/SCCBuchiModelChecker.cc \
-	Search/StreettModelChecker.cc \
-	ltlrFairnessCheckerSymbol.cc \
-	SymbolicModelCheckerSymbol.cc
+	Symbol/ProofTermSymbol.cc \
+	Symbol/CounterExampleSymbol.cc \
+	Symbol/ltlrFairnessCheckerSymbol.cc
+	
 
 	
 noinst_HEADERS = \
-	ltlrFairnessCheckerSymbol.hh \
-	SymbolicModelCheckerSymbol.hh
-
+	Symbol/ltlrFairnessCheckerSymbol.hh
 
 
 

@@ -23,18 +23,18 @@ public:
 		NatSet label;
 		bool operator<(const PropHandler::PropSet& td) const	{ return label < safeCast(const PropSet*,&td)->label; }
 	};
-	BasicPropHandler(ProofTermGenerator* pfg);
+	BasicPropHandler(ProofTermSymbol* pfg);
 	void updateProp(PropHandler::PropSet* d, DagNode* t);
 	void updateProp(PropHandler::PropSet* d, RewriteTransitionState* t);
 
 protected:
 	virtual void update(PropSet* d, DagNode* t) = 0;
 private:
-	ProofTermGenerator* pfg;
+	ProofTermSymbol* pfg;
 };
 
 inline
-BasicPropHandler::BasicPropHandler(ProofTermGenerator* pfg): pfg(pfg) {}
+BasicPropHandler::BasicPropHandler(ProofTermSymbol* pfg): pfg(pfg) {}
 
 inline void
 BasicPropHandler::updateProp(PropHandler::PropSet* d, DagNode* t)

@@ -4,7 +4,7 @@
 ---    repeat
 ---       for p := 1 to N - 1 do
 ---ready:    (P[i], S[p]) := (p, i)
----wait:     await S[p] != i  or  ALL j!=i. P[i] < P[i]
+---wait:     await S[p] != i  or  ALL j!=i. P[j] < P[i]
 ---crit:  P[i] := 0
 ---    forever
 

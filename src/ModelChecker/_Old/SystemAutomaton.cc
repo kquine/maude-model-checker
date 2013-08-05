@@ -23,7 +23,7 @@
 namespace modelChecker {
 
 SystemAutomaton::SystemAutomaton(RewritingContext* sysContext, PropDagNodeSet& propositions,
-		PropChecker* propChecker, ProofTermGenerator* proofTerm)
+		PropChecker* propChecker, ProofTermSymbol* proofTerm)
 	: sysContext(sysContext), propositions(propositions), propChecker(propChecker)
 {
 	Assert(!propositions.hasEvent(), "State/Event automaton required");

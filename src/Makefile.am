@@ -1,7 +1,7 @@
 SUBDIRS = \
-	ModelChecker \
 	3rdParty \
 	Utility \
+	ModelChecker \
 	Temporal \
 	Interface \
 	Core \

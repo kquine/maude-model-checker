@@ -23,7 +23,7 @@ class SystemGraphFactory
 public:
 	enum TransitionIndicator	{ DEFAULT_TRANSITION, RULE_TRANSITION, PROOF_TRANSITION };
 
-	SystemGraphFactory(RewritingContext* parent, const PropChecker* sc, const PropChecker* ec, ProofTermGenerator* pg,
+	SystemGraphFactory(RewritingContext* parent, const PropChecker* sc, const PropChecker* ec, ProofTermSymbol* pg,
 			const DagNodeSet& propDags, const NatSet& stateProps, const NatSet& eventProps,
 			TransitionIndicator ti = DEFAULT_TRANSITION);
 
@@ -45,7 +45,7 @@ private:
 	TransitionIndicator trans_info;
 	const PropChecker* stateChecker;
 	const PropChecker* eventChecker;
-	ProofTermGenerator* pg;
+	ProofTermSymbol* pg;
 	const DagNodeSet& propDags;
 	const NatSet& stateProps;
 	const NatSet& eventProps;
@@ -53,7 +53,7 @@ private:
 
 inline
 SystemGraphFactory::SystemGraphFactory(RewritingContext* parent, const PropChecker* sc, const PropChecker* ec,
-		ProofTermGenerator* pg, const DagNodeSet& propDags,
+		ProofTermSymbol* pg, const DagNodeSet& propDags,
 		const NatSet& stateProps, const NatSet& eventProps, TransitionIndicator ti):
 			parent(parent), stateChecker(sc), eventChecker(ec), pg(pg), propDags(propDags),
 			stateProps(stateProps), eventProps(eventProps), trans_info(ti) {}

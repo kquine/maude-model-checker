@@ -21,7 +21,7 @@
 namespace modelChecker {
 
 SESystemAutomaton::SESystemAutomaton(RewritingContext* sysContext,
-		PropDagNodeSet& propositions, PropChecker* propChecker, ProofTermGenerator* proofTerm)
+		PropDagNodeSet& propositions, PropChecker* propChecker, ProofTermSymbol* proofTerm)
 	: sysContext(sysContext), propositions(propositions), propChecker(propChecker)
 {
 	graph.reset(new SEStateTransitionGraph(sysContext, proofTerm));

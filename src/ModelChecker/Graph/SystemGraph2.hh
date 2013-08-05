@@ -11,7 +11,7 @@
 
 namespace modelChecker {
 
-class SystemGraph2: public CounterExampleGenerator::DagGraph
+class SystemGraph2: public CounterExampleSymbol::DagGraph
 {
 public:
 	virtual ~SystemGraph2() {}

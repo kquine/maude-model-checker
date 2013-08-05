@@ -22,10 +22,10 @@ namespace modelChecker {
 // NOTE2:  we do not maintain the entire partial order structure, but a only "collapsed" structure..
 // NOTE3: we will not implement backward folding until its logical meaning is clear..
 //
-class StateFoldingGraph: public CounterExampleGenerator::DagGraph
+class StateFoldingGraph: public CounterExampleSymbol::DagGraph
 {
 	NO_COPYING(StateFoldingGraph);
-	typedef CounterExampleGenerator::Edge	Edge;
+	typedef CounterExampleSymbol::Edge	Edge;
 public:
 	StateFoldingGraph(SystemGraph2* graph, const FoldingChecker* sfc);
 	virtual ~StateFoldingGraph() {}

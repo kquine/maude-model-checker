@@ -157,7 +157,7 @@ endm
 
 --- search < [0 : 0,l1] [s : 0,l1] [s s : 0,l1] > =>* < PS > .
 
-load symbolic-checker .
+load symbolic-checker-core
 
 
 (mod BURNS-MUTEX-SATISFACTION is

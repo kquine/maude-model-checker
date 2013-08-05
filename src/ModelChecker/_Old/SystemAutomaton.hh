@@ -21,7 +21,7 @@ class SystemAutomaton: public SystemGraph, public StateTransitionDagMap
 	NO_COPYING(SystemAutomaton);
 public:
 	SystemAutomaton(RewritingContext* sysContext, PropDagNodeSet& propositions,
-			PropChecker* propChecker, ProofTermGenerator* proofTerm);
+			PropChecker* propChecker, ProofTermSymbol* proofTerm);
 
 	int getNrStates() const;
 	int getNrTransitions(int stateNr) const;

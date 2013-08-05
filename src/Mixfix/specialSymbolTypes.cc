@@ -55,4 +55,6 @@
   MACRO(SocketManagerSymbol, SymbolType::SOCKET_MANAGER_SYMBOL)
   MACRO(InterpreterManagerSymbol, SymbolType::INTERPRETER_MANAGER_SYMBOL)
   MACRO(LTLRFairnessCheckerSymbol, SymbolType::LTLR_FAIRCHECKER_SYMBOL)
+  MACRO(LTLRProofTermSymbol, SymbolType::LTLR_PROOF_TERM_SYMBOL)
+  MACRO(LTLRCounterExampleSymbol, SymbolType::LTLR_COUNTEREXAMPLE_SYMBOL)
   MACRO(SymbolicModelCheckerSymbol, SymbolType::SYMBOLIC_MODEL_CHECKER_SYMBOL)

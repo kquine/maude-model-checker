@@ -10,7 +10,6 @@
 #include "vector.hh"
 
 //      forward declarations
-#include "temporal.hh"
 #include "interface.hh"
 #include "core.hh"
 #include "freeTheory.hh"
@@ -32,20 +31,16 @@
 //      built in class definitions
 #include "bindingMacros.hh"
 
-#include "CounterExampleGenerator.hh"
+#include "CounterExampleSymbol.hh"
 
 //#define TDEBUG
 
 namespace modelChecker {
 
-CounterExampleGenerator::CounterExampleGenerator():
-		deadlockTransSymbol(NULL), counterexampleSymbol(NULL),
-		transitionSymbol(NULL), transitionListSymbol(NULL), nilTransitionListSymbol(NULL) {}
+CounterExampleSymbol::CounterExampleSymbol(int id): FreeSymbol(id, 2) {}
 
 DagNode*
-CounterExampleGenerator::makeCounterexample(const DagGraph& dg,
-								  	  	    const list<Edge>& path,
-								  	  	    const list<Edge>& cycle) const
+CounterExampleSymbol::makeCounterexample(const DagGraph& dg, const list<Edge>& path, const list<Edge>& cycle)
 {
 #ifdef TDEBUG
 	cout << "counter example: " << endl;
@@ -59,13 +54,12 @@ CounterExampleGenerator::makeCounterexample(const DagGraph& dg,
 	static Vector<DagNode*> args(2);
 	args[0] = makeTransitionList(dg, path);
 	args[1] = makeTransitionList(dg, cycle);
-	return counterexampleSymbol->makeDagNode(args);
+	return this->makeDagNode(args);
 }
 
 
 DagNode*
-CounterExampleGenerator::makeTransitionList(const DagGraph& dg,
-											const list<Edge>& path) const
+CounterExampleSymbol::makeTransitionList(const DagGraph& dg, const list<Edge>& path) const
 {
     if (path.empty())
         return nilTransitionListSymbol->makeDagNode();
@@ -79,69 +73,68 @@ CounterExampleGenerator::makeTransitionList(const DagGraph& dg,
 }
 
 DagNode*
-CounterExampleGenerator::makeTransition(const DagGraph& dg, int stateNr, int count) const
+CounterExampleSymbol::makeTransition(const DagGraph& dg, int stateNr, int count) const
 {
 	static Vector<DagNode*> targs(2);
 	targs[0] = dg.getStateDag(stateNr);
 	targs[1] = dg.getTransitionDag(stateNr, count);
-	if (targs[1] == NULL)
-		targs[1] = deadlockTransSymbol->makeDagNode();
 	return transitionSymbol->makeDagNode(targs);
 }
 
 bool
-CounterExampleGenerator::attachSymbol(const char* purpose, Symbol* symbol)
+CounterExampleSymbol::attachData(const Vector<Sort*>& opDeclaration, const char* purpose, const Vector<const char*>& data)
 {
-	BIND_SYMBOL(purpose, symbol, deadlockTransSymbol, Symbol*);
+    NULL_DATA(purpose, LTLRCounterExampleSymbol, data);
+    return  FreeSymbol::attachData(opDeclaration, purpose, data);
+}
+
+bool
+CounterExampleSymbol::attachSymbol(const char* purpose, Symbol* symbol)
+{
     BIND_SYMBOL(purpose, symbol, transitionSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, transitionListSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, nilTransitionListSymbol, Symbol*);
-	BIND_SYMBOL(purpose, symbol, counterexampleSymbol, Symbol*);
 	return false;
 }
 
 bool
-CounterExampleGenerator::attachTerm(const char* purpose, Term* term)
+CounterExampleSymbol::attachTerm(const char* purpose, Term* term)
 {
     BIND_TERM(purpose, term, falseTerm);
     return false;
 }
 
 void
-CounterExampleGenerator::copyAttachments(CounterExampleGenerator* orig, SymbolMap* map)
+CounterExampleSymbol::copyAttachments(CounterExampleSymbol* orig, SymbolMap* map)
 {
-    COPY_TERM(orig, falseTerm, map);
-    COPY_SYMBOL(orig, deadlockTransSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, transitionSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, transitionListSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, nilTransitionListSymbol, map, Symbol*);
-	COPY_SYMBOL(orig, counterexampleSymbol, map, Symbol*);
+    COPY_TERM(orig, falseTerm, map);
 }
 
 void
-CounterExampleGenerator::getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols)
+CounterExampleSymbol::getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols)
 {
-	APPEND_SYMBOL(purposes, symbols, deadlockTransSymbol);
     APPEND_SYMBOL(purposes, symbols, transitionSymbol);
 	APPEND_SYMBOL(purposes, symbols, transitionListSymbol);
 	APPEND_SYMBOL(purposes, symbols, nilTransitionListSymbol);
-	APPEND_SYMBOL(purposes, symbols, counterexampleSymbol);
 }
 
 void
-CounterExampleGenerator::getTermAttachments(Vector<const char*>& purposes, Vector<Term*>& terms)
+CounterExampleSymbol::getTermAttachments(Vector<const char*>& purposes, Vector<Term*>& terms)
 {
     APPEND_TERM(purposes, terms, falseTerm);
 }
 
 void
-CounterExampleGenerator::postInterSymbolPass()
+CounterExampleSymbol::postInterSymbolPass()
 {
     PREPARE_TERM(falseTerm);
 }
 
 void
-CounterExampleGenerator::reset()
+CounterExampleSymbol::reset()
 {
     falseTerm.reset();	// so false dag can be garbage collected
 }

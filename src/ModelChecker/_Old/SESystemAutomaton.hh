@@ -21,7 +21,7 @@ class SESystemAutomaton:  public SystemEventGraph, public StateTransitionDagMap
 	NO_COPYING(SESystemAutomaton);
 public:
 	SESystemAutomaton(RewritingContext* sysContext, PropDagNodeSet& propositions,
-			PropChecker* propChecker, ProofTermGenerator* proofTerm);
+			PropChecker* propChecker, ProofTermSymbol* proofTerm);
 
 	int getNrStates() const;
 	int getNrTransitions(int stateNr) const;

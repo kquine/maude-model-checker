@@ -1,1 +1,3 @@
---enable-debug=yes ARCHFLAGS="i386" CC="gcc-mp-4.6" CXX="g++-mp-4.6" CPPFLAGS="-I/opt/local/include -I/Users/kquine/usr/include" LDFLAGS="-L/opt/local/lib" CFLAGS="-g3 -gdwarf-2 " CXXFLAGS="-g3 -gdwarf-2" TECLA_LIBS="/USERS/kquine/usr/lib/libtecla.a -lcurses"
+--enable-debug=yes ARCHFLAGS="i386" CC="gcc-mp-4.6" CXX="g++-mp-4.6" CPPFLAGS="-I/opt/local/include -I/Users/kquine/usr/include" LDFLAGS="-L/opt/local/lib" CFLAGS="-g3 -gdwarf-2 " CXXFLAGS="-g3 -gdwarf-2" TECLA_LIBS="/USERS/kquine/usr/lib/libtecla.a -lcurses" GMP_LIBS="/opt/local/lib/libgmpxx.a /opt/local/lib/libgmp.a" LIBSIGSEGV_LIB="/opt/local/lib/libsigsegv.a"  BUDDY_LIB="/usr/local/lib/libbdd.a"
+
+CC="${CC}" CXX="${CXX}"

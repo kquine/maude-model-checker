@@ -22,13 +22,13 @@ public:
 		const Rule* rule;
 	};
 
-	RuleTransitionHandler(ProofTermGenerator* pfg): pfg(pfg) {}
+	RuleTransitionHandler(ProofTermSymbol* pfg): pfg(pfg) {}
 
 	DagNode* getDag(const TransitionData* thData, DagNode* stateDag);
 	void updateStateData(StateData* sdata);
 	void setTransitionData(TransitionData* td, const StateData* sd, const RewriteTransitionState* rs);
 private:
-	ProofTermGenerator* pfg;
+	ProofTermSymbol* pfg;
 };
 
 inline DagNode*

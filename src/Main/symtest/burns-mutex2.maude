@@ -101,7 +101,7 @@ endm
 
 --- search < s s s | [0 : 0,l1] [s : 0,l1] [s s : 0,l1] > =>+ C:Conf .
 
-load symbolic-checker .
+load symbolic-checker-core
 
 (mod BURNS-MUTEX-SATISFACTION is
   pr SYMBOLIC-CHECKER .

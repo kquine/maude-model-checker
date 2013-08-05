@@ -79,7 +79,7 @@ SymbolicModelCheckerSymbol::attachSymbol(const char* purpose, Symbol* symbol)
 	BIND_SYMBOL(purpose, symbol, unboundedSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, succSymbol, SuccSymbol*);
 	BIND_SYMBOL(purpose, symbol, resultreportSymbol, Symbol*);
-	if (CounterExampleGenerator::attachSymbol(purpose, symbol))	return true;
+	if (CounterExampleSymbol::attachSymbol(purpose, symbol))	return true;
 	return TemporalSymbol::attachSymbol(purpose, symbol);
 }
 
@@ -87,7 +87,7 @@ bool
 SymbolicModelCheckerSymbol::attachTerm(const char* purpose, Term* term)
 {
 	BIND_TERM(purpose, term, trueTerm);
-	if (CounterExampleGenerator::attachTerm(purpose, term))	return true;
+	if (CounterExampleSymbol::attachTerm(purpose, term))	return true;
 	return TemporalSymbol::attachTerm(purpose, term);
 }
 
@@ -107,7 +107,7 @@ SymbolicModelCheckerSymbol::copyAttachments(Symbol* original, SymbolMap* map)
 	COPY_SYMBOL(orig, succSymbol, map, SuccSymbol*);
 	COPY_SYMBOL(orig, resultreportSymbol, map, Symbol*);
 	COPY_TERM(orig, trueTerm, map);
-	CounterExampleGenerator::copyAttachments(orig, map);
+	CounterExampleSymbol::copyAttachments(orig, map);
 	TemporalSymbol::copyAttachments(original, map);
 }
 
@@ -133,7 +133,7 @@ SymbolicModelCheckerSymbol::getSymbolAttachments(Vector<const char*>& purposes, 
 	APPEND_SYMBOL(purposes, symbols, unboundedSymbol);
 	APPEND_SYMBOL(purposes, symbols, succSymbol);
 	APPEND_SYMBOL(purposes, symbols, resultreportSymbol);
-	CounterExampleGenerator::getSymbolAttachments(purposes, symbols);
+	CounterExampleSymbol::getSymbolAttachments(purposes, symbols);
 	TemporalSymbol::getSymbolAttachments(purposes, symbols);
 }
 
@@ -141,7 +141,7 @@ void
 SymbolicModelCheckerSymbol::getTermAttachments(Vector<const char*>& purposes, Vector<Term*>& terms)
 {
 	APPEND_TERM(purposes, terms, trueTerm);
-	CounterExampleGenerator::getTermAttachments(purposes, terms);
+	CounterExampleSymbol::getTermAttachments(purposes, terms);
 	TemporalSymbol::getTermAttachments(purposes, terms);
 }
 
@@ -149,7 +149,7 @@ void
 SymbolicModelCheckerSymbol::postInterSymbolPass()
 {
 	PREPARE_TERM(trueTerm);
-	CounterExampleGenerator::postInterSymbolPass();
+	CounterExampleSymbol::postInterSymbolPass();
 	TemporalSymbol::postInterSymbolPass();
 }
 
@@ -157,7 +157,7 @@ void
 SymbolicModelCheckerSymbol::reset()
 {
 	trueTerm.reset();  // so true dag can be garbage collected
-	CounterExampleGenerator::reset();
+	CounterExampleSymbol::reset();
 	TemporalSymbol::reset();  // parents reset() tasks
 }
 

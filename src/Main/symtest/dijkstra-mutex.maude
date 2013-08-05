@@ -249,7 +249,9 @@ load symbolic-checker-core
   eq < {F,crit,-} {F',crit,!} PS >  |= ex? = false [variant] .
 endm)
 
+---(
 (lfmc [20] < CIS > |= [] ex? .)
+---)
 
 (mod DIJKSTRA-MUTEX-SATISFACTION-WIDENING is
   pr DIJKSTRA-MUTEX-SATISFACTION .
@@ -257,7 +259,9 @@ endm)
   vars F F' : Flag .  var CIS : CInitProcSet .
   var NL1PS : NL1ProcSet . var NL5PS : NL5ProcSet .
   var CNL1PS : CNL1ProcSet . var CNL5PS : CNL5ProcSet .
+  var CPS : CProcSet .
 
+---(
   eq < {F,l1,-} {F,l1,-} CNL1PS > = < {F,l1,-} CNL1PS > [variant] .
   eq < {F,l1,-} {F,l1,-} {F',l1,!} NL1PS > = < {F,l1,-} {F',l1,!} NL1PS > [variant] .
   eq < {F,l1,-} {F,l1,-} {2,crit,!} NL1PS > = < {F,l1,-} {2,crit,!} NL1PS > [variant] .
@@ -265,9 +269,14 @@ endm)
   eq < {F,l5,-} {F,l5,-} CNL5PS > = < {F,l5,-} CNL5PS > [variant] .
   eq < {F,l5,-} {F,l5,-} {F',l5,!} NL5PS > = < {F,l5,-} {F',l5,!} NL5PS > [variant] .
   eq < {F,l5,-} {F,l5,-} {2,crit,!} NL5PS > = < {F,l5,-} {2,crit,!} NL5PS > [variant] .
+---)
+  eq < {F,l1,-} {F,l1,-} CPS > = < {F,l1,-} CPS > [variant] .
+  eq < {F,l5,-} {F,l5,-} CPS > = < {F,l5,-} CPS > [variant] .
 
- ---NOTE: coherent completion required.
 endm)
+
+set verbose on .
+
 
 ---   true (complete with depth 16)
 (lfmc < CIS > |= [] ex?  .)

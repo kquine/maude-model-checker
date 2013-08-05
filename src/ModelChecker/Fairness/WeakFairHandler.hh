@@ -29,7 +29,7 @@ public:
 		bool empty() const;
 	};
 
-	WeakFairHandler(const Vector<Bdd>& fTable, ProofTermGenerator* pfg = NULL);
+	WeakFairHandler(const Vector<Bdd>& fTable, ProofTermSymbol* pfg = NULL);
 	virtual ~WeakFairHandler() {}
 	int getNrFairness() const;
 

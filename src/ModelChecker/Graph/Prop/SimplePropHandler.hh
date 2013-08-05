@@ -23,7 +23,7 @@ public:
 	typedef BasicPropHandler::PropSet	PropSet;
 
 	SimplePropHandler(const PropChecker* pc, const DagNodeSet& propDags,
-					  const NatSet& propSet, ProofTermGenerator* pfg = NULL);
+					  const NatSet& propSet, ProofTermSymbol* pfg = NULL);
 
 	bool isSatisfied(const PropHandler::PropSet* d, int propId) const;
 	bool isRelated(int propId) const;

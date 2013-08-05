@@ -21,7 +21,7 @@
 #include "Graph/StateFoldingGraph.hh"
 
 class SymbolicModelCheckerSymbol: public TemporalSymbol,
-                                  private modelChecker::CounterExampleGenerator
+                                  private modelChecker::CounterExampleSymbol
 {
 	NO_COPYING(SymbolicModelCheckerSymbol);
 public:

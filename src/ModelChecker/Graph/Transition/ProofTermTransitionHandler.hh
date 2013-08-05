@@ -22,18 +22,18 @@ public:
 	};
 	struct TransitionData	{ int transitionCount; };
 
-	ProofTermTransitionHandler(ProofTermGenerator* pfg, RewritingContext* parentContext);
+	ProofTermTransitionHandler(ProofTermSymbol* pfg, RewritingContext* parentContext);
 
 	DagNode* getDag(const TransitionData* thData, DagNode* stateDag);
 	void updateStateData(StateData* sdata);
 	void setTransitionData(TransitionData* td, const StateData* sd, const RewriteTransitionState* rs);
 private:
-	ProofTermGenerator* pfg;
+	ProofTermSymbol* pfg;
 	RewritingContext* parent;
 };
 
 inline
-ProofTermTransitionHandler::ProofTermTransitionHandler(ProofTermGenerator* pfg, RewritingContext* parentContext):
+ProofTermTransitionHandler::ProofTermTransitionHandler(ProofTermSymbol* pfg, RewritingContext* parentContext):
 	pfg(pfg), parent(parentContext) {}
 
 inline DagNode*

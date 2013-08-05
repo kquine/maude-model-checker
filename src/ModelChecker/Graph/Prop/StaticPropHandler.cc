@@ -27,7 +27,7 @@
 namespace modelChecker {
 
 StaticPropHandler::StaticPropHandler(const PropChecker* pc, const DagNodeSet& propDags,
-        							 const NatSet& propSet, ProofTermGenerator* pfg):
+        							 const NatSet& propSet, ProofTermSymbol* pfg):
 	BasicPropHandler(pfg), pc(pc), propDags(propDags)
 {
 	global2local.expandTo(propSet.max() + 1);

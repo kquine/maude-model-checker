@@ -553,9 +553,14 @@ MixfixModule::newFancySymbol(Token prefixName,
     case SymbolType::INTERPRETER_MANAGER_SYMBOL:
       return new InterpreterManagerSymbol(name);
     case SymbolType::LTLR_FAIRCHECKER_SYMBOL:
-          return new LTLRFairnessCheckerSymbol(name, nrArgs);
-    case SymbolType::SYMBOLIC_MODEL_CHECKER_SYMBOL:
-          return new SymbolicModelCheckerSymbol(name, nrArgs);
+          return new modelChecker::LTLRFairnessCheckerSymbol(name, nrArgs);
+    case SymbolType::LTLR_PROOF_TERM_SYMBOL:
+          return new modelChecker::ProofTermSymbol(name);
+    case SymbolType::LTLR_COUNTEREXAMPLE_SYMBOL:
+    	return new modelChecker::CounterExampleSymbol(name);
+
+//    case SymbolType::SYMBOLIC_MODEL_CHECKER_SYMBOL:
+//          return new SymbolicModelCheckerSymbol(name, nrArgs);
     }
 
   int lineNr = prefixName.lineNumber();
