@@ -29,7 +29,7 @@ namespace modelChecker {
 
 struct SCCModelChecker::PrefixBFSGraph: public SCCBFSGraph
 {
-	PrefixBFSGraph(SCCModelChecker* mc, const StateMap<Uint>& H, int root):
+	PrefixBFSGraph(SCCModelChecker* mc, const StateMap<int>& H, int root):
 		SCCBFSGraph(mc,H,root,mc->prod.getInitialStates()) {}
 	bool inDomain(const State& s) const	{ return !map.invalid(s) && map.contains(s); }
 	bool isTarget(const State& s) const	{ return inDomain(s) && map.get(s) >= root; }
@@ -41,7 +41,7 @@ class SCCModelChecker::CycleCompBFSGraph: public SCCBFSGraph
 	const State des;
 	Vector<State> initial;
 public:
-	CycleCompBFSGraph(SCCModelChecker* mc, const StateMap<Uint>& H, int root, const State& start, const State& des):
+	CycleCompBFSGraph(SCCModelChecker* mc, const StateMap<int>& H, int root, const State& start, const State& des):
 		SCCBFSGraph(mc,H,root,initial), des(des) { initial.append(start); }
 	bool inDomain(const State& s) const	{ return !map.invalid(s) && map.contains(s) && map.get(s) >= root; }
 	bool isTarget(const State& s) const	{ return s == des; }
@@ -53,7 +53,7 @@ class SCCModelChecker::CycleBFSGraph: public SCCBFSGraph
 	FairSet::Goal* goal;
 	Vector<State> initial;
 public:
-	CycleBFSGraph(SCCModelChecker* mc, const StateMap<Uint>& H, int root, const State& start, FairSet::Goal* goal):
+	CycleBFSGraph(SCCModelChecker* mc, const StateMap<int>& H, int root, const State& start, FairSet::Goal* goal):
 		SCCBFSGraph(mc,H,root,initial), goal(goal) { initial.append(start); }
 	bool inDomain(const State& s) const	{ return !map.invalid(s) && map.contains(s) && map.get(s) >= root; }
 	bool isTarget(const State& s) const	{ return false; }
@@ -65,7 +65,7 @@ public:
 };
 
 
-SCCModelChecker::SCCModelChecker(Automaton& prod, FairnessMap& fm): prod(prod), fairMap(fm), max(0) {}
+SCCModelChecker::SCCModelChecker(Automaton& prod, FairnessMap& fm): max(0), fairMap(fm), prod(prod) {}
 
 bool
 SCCModelChecker::findCounterExample()

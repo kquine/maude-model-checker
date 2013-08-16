@@ -55,9 +55,9 @@
 #include "Graph/StateEventSystemGraph.hh"
 #include "Graph/StateEventEnabledSystemGraph.hh"
 #include "Search/ModelCheckerFactory.hh"
-#include "ProofTermGenerator.hh"
-#include "CounterExampleGenerator.hh"
-#include "FairnessDecoder.hh"
+#include "Interface/ProofTermGenerator.hh"
+#include "Interface/CounterExampleGenerator.hh"
+#include "Interface/FairnessDecoder.hh"
 #include "Param/RealizedPropGenerator.hh"
 #include "ltlrFairnessCheckerSymbol.hh"
 

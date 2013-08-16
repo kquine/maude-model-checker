@@ -33,7 +33,7 @@ class NDFSModelChecker::PrefixBFSGraph : public BFSGraph<BuchiAutomaton2>
 {
 public:
 	PrefixBFSGraph(Automaton& prod, const PtrVector<StateSet>& stateMap, const State& cycleState):
-		BFSGraph<BuchiAutomaton2>(prod, prod.getInitialStates()), stateMap(stateMap), cycleState(cycleState) {}
+		BFSGraph<BuchiAutomaton2>(prod, prod.getInitialStates()), cycleState(cycleState), stateMap(stateMap) {}
 
 	bool isTarget(const State& s) const
 	{
@@ -46,7 +46,7 @@ public:
 	bool inDomain(const State& s) const
 	{
 		// We do not further search states which have not been visited during DFS...
-		if (s.system < stateMap.size())
+		if ( (size_t)s.system < stateMap.size())
 			return stateMap[s.system]->dfs1Seen.contains(s.property);
 		else
 			return false;
@@ -175,7 +175,7 @@ NDFSModelChecker::dfs2(const State& initial)
 			int sysIndex = dfs2.top()->pick().systemIndex;
 			dfs2.top()->next();
 
-			Assert(ns.system < intersectionStates.size(), "visited system state for the first time on dfs2");
+			Assert( (size_t) ns.system < intersectionStates.size(), "visited system state for the first time on dfs2");
 			StateSet* sset = intersectionStates[ns.system];
 			if ( sset->onDfs1Stack.contains(ns.property))	// found an accepted cycle
 			{

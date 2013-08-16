@@ -72,7 +72,7 @@ StateEventEnabledSystemGraph<SEELH>::computeNextState(int stateNr, int index)
 		Vector<DagNode*> proofDags;
 
 		// first compute each transition
-		for( struct {DagNode* ns; int tc;} i = {NULL,0}; i.ns = rts.getNextStateDag(BaseSystemGraph::initial); ++ i.tc)
+		for( struct {DagNode* ns; int tc;} i = {NULL,0}; (i.ns = rts.getNextStateDag(BaseSystemGraph::initial)); ++ i.tc)
 		{
 			int nextState = insertState(i.ns);
 			transitions.append(new Transition(nextState, i.tc));
@@ -107,7 +107,7 @@ StateEventEnabledSystemGraph<SEELH>::createState(const Vector<DagNode*>& proofDa
 	State* s = new State;
 	BaseSystemGraph::lHandler.updateStateEventLabel(stateDag, s, proofDags, transitions);	// compute the state/event labels at once
 
-	for (int i = 0; i < transitions.size(); ++i)
+	for (unsigned int i = 0; i < transitions.size(); ++i)
 	{
 		if (transitionPtrSet.insert(transitions[i]).second)		// if a new transition identified
 			s->transitions.append(transitions.move(i));	// NOTE: transfer ownership..

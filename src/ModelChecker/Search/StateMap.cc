@@ -12,14 +12,13 @@ namespace modelChecker {
 template <class T> inline bool
 StateMap<T>::invalid(const product::State& s) const
 {
-	return s.system >= map.size();
+	return (size_t)s.system >= map.size();
 }
 
 template <class T> inline bool
 StateMap<T>::expand(const product::State& s)
 {
-	int oldSize = map.size();
-	if (s.system >= map.size())
+	if ( (size_t)s.system >= map.size())
 	{
 		map.expandTo(s.system + 1);
 		return true;

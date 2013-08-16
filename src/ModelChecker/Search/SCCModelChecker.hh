@@ -35,7 +35,7 @@ protected:
 	//
 	struct SCC
 	{
-		Uint root;
+		int root;
 		auto_ptr<FairSet> incoming_fair;
 		auto_ptr<FairSet> acc_fair;
 
@@ -69,7 +69,7 @@ protected:
 	virtual SCC* findAcceptedSCC(const Vector<State>& initials) = 0;
 
 	int max;			// dfs index
-	StateMap<Uint> H;
+	StateMap<int> H;
 	FairnessMap& fairMap;
 
 private:
@@ -87,11 +87,11 @@ private:
 class SCCModelChecker::SCCBFSGraph: public BFSGraph<GenBuchiAutomaton>
 {
 public:
-	SCCBFSGraph(SCCModelChecker* mc, const StateMap<Uint>& H, int root, const Vector<State>& initials):
+	SCCBFSGraph(SCCModelChecker* mc, const StateMap<int>& H, int root, const Vector<State>& initials):
 		BFSGraph<GenBuchiAutomaton>(mc->prod, initials), root(root), map(H), mc(mc) {}
 protected:
 	int root;
-	const StateMap<Uint>& map;
+	const StateMap<int>& map;
 	SCCModelChecker* mc;
 };
 

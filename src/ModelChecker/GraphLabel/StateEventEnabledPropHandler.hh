@@ -41,14 +41,15 @@ StateEventEnabledPropHandler::StateEventEnabledPropHandler(const DagNodeSet& ato
 template <typename _EventLabel> void
 StateEventEnabledPropHandler::updateStateEventLabel(DagNode* stateDag, StateLabel* s, const Vector<DagNode*>& transDags, PtrVector<_EventLabel>& es) const
 {
-	for (int i = 0; i < transDags.size(); ++i)
+	for (unsigned int i = 0 ; i < transDags.size() ; ++i)
 	{
 		StateEventPropHandler::updateEventLabel(transDags[i], es[i], NULL);
 	}
 
-	for (int i = statePropMap.size() - 1; i >= 0; --i)
+	for (unsigned int i = statePropMap.size(); i > 0; --i)
 	{
-		const map<int,int>::const_iterator enb = enabledPropMap.find(statePropMap[i]);
+		int localId = statePropMap[i-1];
+		const map<int,int>::const_iterator enb = enabledPropMap.find(localId);
 		if (enb != enabledPropMap.end())	// if an enabled prop
 		{
 			typedef typename  PtrVector<_EventLabel>::const_iterator PtrVectorConstIterator;
@@ -57,15 +58,15 @@ StateEventEnabledPropHandler::updateStateEventLabel(DagNode* stateDag, StateLabe
 			{
 				if(satisfiesEventProp(enb->second, **j))
 				{
-					s->label.insert(i);
+					s->label.insert(i-1);
 					break;
 				}
 			}
 		}
 		else
 		{
-			if (spChecker.computeLabel(stateDag, atoms.index2DagNode(statePropMap[i])))
-				s->label.insert(i);
+			if (spChecker.computeLabel(stateDag, atoms.index2DagNode(localId)))
+				s->label.insert(i-1);
 		}
 	}
 }

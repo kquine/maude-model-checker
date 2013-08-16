@@ -66,7 +66,7 @@ PtrVector<T>::expandTo(size_type newLength, bool alloc)
 {
 	int old = vec.size();
 	vec.expandTo(newLength);
-	for (int i = old; i < newLength; ++i)
+	for (size_t i = old; i < newLength; ++i)
 		vec[i] = alloc ? new T : NULL;
 }
 
