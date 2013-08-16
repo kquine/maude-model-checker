@@ -11,12 +11,14 @@
 
 namespace modelChecker {
 
-class LabeledKripkeStructure: public modelChecker::KripkeStructure
+class LabeledKripkeStructure: public KripkeStructure
 {
 public:
 	virtual ~LabeledKripkeStructure() {}
-	virtual bool satisfiesEventFormula(Bdd formula, int stateNr, int transitionNr) const = 0;
-	virtual Bdd satisfiesEventFormula(Bdd formula, int stateNr) const = 0;	// return constrains by events
+	bool satisfiesStateEventFormula(Bdd formula, int stateNr, int transitionNr);
+protected:
+	virtual bool isEventProp(int propId) const = 0;
+	virtual bool satisfiesEventProp(int propId, int stateNr, int transitionNr) = 0;
 };
 
 }

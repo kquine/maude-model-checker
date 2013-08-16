@@ -9,13 +9,12 @@
 #define MODELCHECKER_HH_
 #include <list>
 #include "macros.hh"
-#include "Interface/CounterExampleGenerator.hh"
 
 namespace modelChecker {
 
 class ModelChecker
 {
-	typedef CounterExampleGenerator::Edge	Edge;
+	typedef pair<int,int>	Edge;
 public:
 	virtual ~ModelChecker()	{}
 	virtual bool findCounterExample() = 0;

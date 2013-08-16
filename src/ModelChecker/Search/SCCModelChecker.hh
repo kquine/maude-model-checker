@@ -17,7 +17,7 @@
 namespace modelChecker
 {
 
-class SCCModelChecker: public modelChecker::ModelChecker
+class SCCModelChecker: public ModelChecker
 {
 	NO_COPYING(SCCModelChecker);
 public:

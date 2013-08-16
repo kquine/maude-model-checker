@@ -22,7 +22,7 @@
 //      utility class definitions
 #include "natSet.hh"
 #include "BFSGraph.hh"
-#include "DataStruct/PtrStack.hh"
+#include "DataStructure/PtrStack.hh"
 
 
 #include "StreettModelChecker.hh"

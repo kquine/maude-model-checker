@@ -8,6 +8,7 @@
 #ifndef STATEDAGGRAPH_HH_
 #define STATEDAGGRAPH_HH_
 #include "hashConsSet.hh"
+#include "dagNode.hh"
 
 namespace modelChecker {
 

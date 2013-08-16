@@ -21,14 +21,30 @@ libModelChecker_a_CPPFLAGS = \
 
 
 libModelChecker_a_SOURCES = \
-	Symbol/ProofTermSymbol.cc \
-	Symbol/CounterExampleSymbol.cc \
-	Symbol/ltlrFairnessCheckerSymbol.cc
-	
+	DataStructure/TermUtil.cc \
+	Param/RealizedPropGenerator.cc \
+	Automaton/KripkeStructure.cc \
+	Automaton/LabeledKripkeStructure.cc \
+	Graph/RewriteTransitionState.cc \
+	Graph/StateDagContainer.cc \
+	GraphLabel/PropInterpreter.cc \
+	GraphLabel/PropChecker.cc \
+	GraphLabel/StatePropHandler.cc \
+	GraphLabel/StateEventPropHandler.cc \
+    Search/ModelCheckerFactory.cc \
+    Search/NDFSModelChecker.cc \
+    Search/SCCModelChecker.cc \
+    Search/SCCBuchiModelChecker.cc \
+    Search/StreettModelChecker.cc \
+	Interface/ProofTermGenerator.cc \
+	Interface/CounterExampleGenerator.cc \
+	Interface/FairnessDecoder.cc \
+	ltlrFairnessCheckerSymbol.cc 
 
 	
 noinst_HEADERS = \
-	Symbol/ltlrFairnessCheckerSymbol.hh
+	ltlrFairnessCheckerSymbol.hh \
+	SymbolicModelCheckerSymbol.hh
 
 
 

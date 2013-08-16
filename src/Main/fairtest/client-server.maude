@@ -1,4 +1,4 @@
-load ltlr-checker
+load ltlr-checker2
 
 mod CLIENT-SERVER is
     protecting NAT .
@@ -31,7 +31,6 @@ endm
 mod CLIENT-SERVER-CHECK is
     protecting CLIENT-SERVER .
     inc LTLR-MODEL-CHECKER .
-    inc SPATIAL-ACTION-PATTERN .
 
     subsort Conf < State .
 
@@ -44,23 +43,18 @@ mod CLIENT-SERVER-CHECK is
     op __ : Conf Context$Conf -> Context$Conf [ditto] .
 
     op [] : -> Context$Conf [ctor] .	--- defined for each sort of rules' rhs
-    op _\_ : Qid Oid -> StateAssignment [ctor prec 63] .    --- defined only for used symbol
-
-    op modelCheckFair : State Formula FairnessSet ~> ModelCheckResult
-	[special (id-hook LTLRFairnessCheckerSymbol
-              op-hook assignmentSymbol (_\_ : Qid Oid ~> StateAssignment)
-              op-hook holeSymbol       ([] : ~> Context$Conf))] .
 
 *********************************
 *** Predicate
 *********************************
 
-    op enabled : Action -> Prop .
-
     op init : -> State .
     op Just : Action -> Formula .
     op Fair : Action -> Formula .
     op FairnessAssumptions : -> Formula .
+
+    op test : Oid -> Prop .  
+    eq X [C, S, N, nil] |= test(C) = true .
 
     ops req rec : Oid -> Action .
     ops reply : Oid Oid -> Action .
@@ -70,12 +64,6 @@ mod CLIENT-SERVER-CHECK is
 
     var X : Conf .  vars A B : Action . var CNT : Cnts . 
     vars C S I : Oid .  vars M N : Nat . var W : Nat? .
-
-    eq X [C, S, N, nil] |= enabled({'req : 'C \ C}) = true .
-
-    eq X (C <- {S,M}) [C,S,N,W] |= enabled({'rec : 'C \ C}) = true .
-
-    eq X (S <- {C, N}) [S] |= enabled({'reply : 'S \ S ; 'C \ C}) = true .
 
     eq Just(A) = (<> [] enabled(A)) -> ([] <> A) .
     eq Fair(A) = ([] <> enabled(A)) -> ([] <> A) .
@@ -94,9 +82,12 @@ endm
 set verbose on .
 
 --- TEST
-red modelCheckFair(init,FairnessAssumptions -> <> rec(b),
+red modelCheckFair(init,FairnessAssumptions -> 
+    <> (rec(O:Oid) /\ reply(O:Oid,O':Oid) /\ test(O':Oid)),
 	((fair : enabled(reply(a,b)) => reply(a,b)) ; 
 	 (just : enabled(req(O:Oid)) => req(O:Oid)))) .
+
+q
 
 eof 
 

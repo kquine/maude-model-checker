@@ -9,12 +9,13 @@
 #define NDFSMODELCHECKER_HH_
 #include "buchiAutomaton2.hh"
 #include "ModelChecker.hh"
-#include "DataStruct/PtrVector.hh"
+#include "DataStructure/PtrVector.hh"
+#include "Graph/DagGraphMap.hh"
 #include "Automaton/ProductAutomaton.hh"
 
 namespace modelChecker {
 
-class NDFSModelChecker: public modelChecker::ModelChecker
+class NDFSModelChecker: public ModelChecker
 {
 	NO_COPYING(NDFSModelChecker);
 	typedef ProductAutomaton<BuchiAutomaton2>	Automaton;

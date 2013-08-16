@@ -12,7 +12,7 @@
 
 namespace modelChecker {
 
-class SCCBuchiModelChecker : public modelChecker::SCCModelChecker
+class SCCBuchiModelChecker : public SCCModelChecker
 {
 	NO_COPYING(SCCBuchiModelChecker);
 public:

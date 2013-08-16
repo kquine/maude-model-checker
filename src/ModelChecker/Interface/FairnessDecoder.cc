@@ -9,11 +9,9 @@
 #include "vector.hh"
 
 //      forward declarations
-#include "temporal.hh"
 #include "interface.hh"
 #include "core.hh"
 #include "freeTheory.hh"
-#include "higher.hh"
 
 //      interface class definitions
 #include "symbol.hh"
@@ -23,26 +21,19 @@
 //		temporal class definitions
 #include "logicFormula.hh"
 
-//		higher class definitions
-#include "stateTransitionGraph.hh"
-
-//		core class definitions
-#include "symbolMap.hh"
-
 //      free theory class definitions
 #include "freeDagNode.hh"
 
-//		built in class definitions
-#include "bindingMacros.hh"
-
+// ltlr definitions
 #include "FairnessDecoder.hh"
 
 
 namespace modelChecker {
 
-FairnessDecoder::FairnessDecoder():
-		fairnessSymbol(NULL), fairnessSetSymbol(NULL), emptyFairnessSetSymbol(NULL),
-		strongFairTypeSymbol(NULL), weakFairTypeSymbol(NULL) {}
+FairnessDecoder::FairnessDecoder(Symbol* fairnessSymbol, Symbol* strongFairTypeSymbol, Symbol* weakFairTypeSymbol,
+		Symbol* fairnessSetSymbol, Symbol* emptyFairnessSetSymbol):
+				fairnessSymbol(fairnessSymbol), strongFairTypeSymbol(strongFairTypeSymbol), weakFairTypeSymbol(weakFairTypeSymbol),
+				fairnessSetSymbol(fairnessSetSymbol), emptyFairnessSetSymbol(emptyFairnessSetSymbol) {}
 
 Vector<FairnessDecoder::Fairness>
 FairnessDecoder::interpreteFairnessSet(DagNode* fairnessSetDag) const
@@ -93,38 +84,6 @@ FairnessDecoder::translateFormula(int subformulaIndex, const LogicFormula& formu
 	default:						CantHappen("Fairness formula cannot contains temporal operator");
 									return bdd_false();
 	}
-}
-
-
-bool
-FairnessDecoder::attachSymbol(const char* purpose, Symbol* symbol)
-{
-    BIND_SYMBOL(purpose, symbol, fairnessSymbol, Symbol*);
-    BIND_SYMBOL(purpose, symbol, strongFairTypeSymbol, Symbol*);
-	BIND_SYMBOL(purpose, symbol, weakFairTypeSymbol, Symbol*);
-    BIND_SYMBOL(purpose, symbol, fairnessSetSymbol, Symbol*);
-    BIND_SYMBOL(purpose, symbol, emptyFairnessSetSymbol, Symbol*);
-    return false;
-}
-
-void
-FairnessDecoder::copyAttachments(FairnessDecoder* orig, SymbolMap* map)
-{
-	COPY_SYMBOL(orig, fairnessSymbol, map, Symbol*);
-	COPY_SYMBOL(orig, strongFairTypeSymbol, map, Symbol*);
-	COPY_SYMBOL(orig, weakFairTypeSymbol, map, Symbol*);
-	COPY_SYMBOL(orig, fairnessSetSymbol, map, Symbol*);
-	COPY_SYMBOL(orig, emptyFairnessSetSymbol, map, Symbol*);
-}
-
-void
-FairnessDecoder::getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols)
-{
-    APPEND_SYMBOL(purposes, symbols, fairnessSymbol);
-    APPEND_SYMBOL(purposes, symbols, strongFairTypeSymbol);
-    APPEND_SYMBOL(purposes, symbols, weakFairTypeSymbol);
-    APPEND_SYMBOL(purposes, symbols, fairnessSetSymbol);
-    APPEND_SYMBOL(purposes, symbols, emptyFairnessSetSymbol);
 }
 
 

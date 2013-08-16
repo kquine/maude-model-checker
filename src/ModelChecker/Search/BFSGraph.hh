@@ -11,7 +11,6 @@
 #include <tr1/unordered_map>
 #include "macros.hh"
 #include "Automaton/ProductAutomaton.hh"
-#include "Interface/CounterExampleGenerator.hh"
 #include "StateMap.hh"
 
 namespace modelChecker {
@@ -22,7 +21,7 @@ namespace modelChecker {
 template <typename _PropertyAutomaton>
 class BFSGraph
 {
-	typedef CounterExampleSymbol::Edge	Edge;
+	typedef pair<int,int>	Edge;
 public:
 	typedef typename ProductAutomaton<_PropertyAutomaton>::State				State;
 	typedef typename ProductAutomaton<_PropertyAutomaton>::Transition			Transition;

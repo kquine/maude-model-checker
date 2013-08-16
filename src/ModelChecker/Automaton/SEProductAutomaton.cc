@@ -41,7 +41,7 @@ namespace product {
 			for (this->tr.propertyIndex = this->ts->begin(); this->tr.propertyIndex != this->ts->end(); ++this->tr.propertyIndex)
 			{
 				// check state-props
-				test = graph->satisfiesEventFormula(
+				test = graph->satisfiesStateEventFormula(
 						PropertyTransitionAdaptor<PA>::getFormula(*this->tr.propertyIndex), this->tr.source.system);
 				if (test.first)
 				{

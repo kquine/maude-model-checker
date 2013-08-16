@@ -7,7 +7,7 @@
 
 #ifndef FAIRNESSMAP_HH_
 #define FAIRNESSMAP_HH_
-#include "FairSet/FairSet.hh"
+#include "FairSet.hh"
 #include "Automaton/ProductAutomaton.hh"
 
 namespace modelChecker {

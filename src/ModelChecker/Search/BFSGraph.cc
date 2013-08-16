@@ -5,6 +5,14 @@
  *      Author: kquine
  */
 
+//utility stuff
+#include "macros.hh"
+#include "vector.hh"
+
+//      utility class definitions
+#include "natSet.hh"
+
+// ltlr definitions
 #include "BFSGraph.hh"
 
 namespace modelChecker {

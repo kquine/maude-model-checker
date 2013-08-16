@@ -128,7 +128,8 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
 
       --- counterexamples
       term-hook falseTerm             (false)
-      op-hook deadlockTransSymbol     (deadlock : ~> MetaEdge)
+      term-hook deadlockTerm          ((deadlock).MetaEdge)
+)
       op-hook transitionSymbol        ({_,_} : State MetaEdge ~> Transition)
       op-hook transitionListSymbol    (__ : TransitionList TransitionList ~> TransitionList)
       op-hook nilTransitionListSymbol (nil : ~> TransitionList)
@@ -138,6 +139,7 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
       op-hook resultreportSymbol      (result:_real:_bound:_complete:_ : ModelCheckResult Bool Nat Bool ~> BoundedModelCheckReport) 
      )] .
 endfm
+
 
 ****************************************
 ***  Full Maude Narrowing Connector  ***

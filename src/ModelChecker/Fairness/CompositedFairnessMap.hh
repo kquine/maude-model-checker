@@ -7,8 +7,8 @@
 
 #ifndef COMPOSITEDFAIRNESSMAP_HH_
 #define COMPOSITEDFAIRNESSMAP_HH_
-#include "FairSet/CompositedFairSet.hh"
-#include "DataStruct/PtrVector.hh"
+#include "CompositedFairSet.hh"
+#include "DataStructure/PtrVector.hh"
 #include "FairnessMap.hh"
 
 namespace modelChecker {

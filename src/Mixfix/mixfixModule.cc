@@ -146,9 +146,8 @@
 #include "userLevelRewritingContext.hh"
 
 // model checkers
-#include "Symbol/ltlrFairnessCheckerSymbol.hh"
-#include "Symbol/ProofTermSymbol.hh"
-#include "Symbol/CounterExampleSymbol.hh"
+#include "ltlrFairnessCheckerSymbol.hh"
+//#include "SymbolicModelCheckerSymbol.hh"
 
 #include "interpreter.hh"
 #include "global.hh"  // HACK shouldn't be accessing global variables

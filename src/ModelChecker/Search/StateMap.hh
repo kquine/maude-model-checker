@@ -8,7 +8,7 @@
 #ifndef STATEMAP_HH_
 #define STATEMAP_HH_
 #include <tr1/unordered_map>
-#include "DataStruct/PtrVector.hh"
+#include "DataStructure/PtrVector.hh"
 #include "Automaton/ProductAutomaton.hh"
 
 namespace modelChecker {
