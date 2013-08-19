@@ -29,65 +29,73 @@
 
 namespace modelChecker {
 
-template <typename SELabelHandler>
-struct BaseSystemGraphTraits<StateEventSystemGraph<SELabelHandler> >
+
+template <typename SPH, typename EPH>
+StateEventSystemGraph<SPH,EPH>::StateEventSystemGraph(RewritingContext* initial, const SPH& sph, const EPH& eph, ProofTermGenerator& ptg):
+	Super(initial,ptg), spHandler(sph), epHandler(eph)
 {
-	typedef typename SELabelHandler::StateLabel		StateLabel;
-	typedef typename SELabelHandler::EventLabel		EventLabel;
+	insertState(Super::initial->root());
+}
 
-	struct Transition: public EventLabel
+template <typename SPH, typename EPH> inline DagNode*
+StateEventSystemGraph<SPH,EPH>::makeTransitionDag(int stateNr, int index) const
+{
+	int transitionIndex = Super::seen[stateNr]->transitions[index]->transitionIndex;
+	auto_ptr<RewriteTransitionState>  tr(new RewriteTransitionState(Super::initial, Super::getStateDag(stateNr)));
+	for (int i = -1; i < transitionIndex; ++i)
+		tr->getNextStateDag(Super::initial);
+	return Super::ptGenerator.makeProofDag(tr->getPosition(), *tr->getRule(), tr->getSubstitution());
+}
+
+template <typename SPH, typename EPH> int
+StateEventSystemGraph<SPH,EPH>::computeNextState(int stateNr, int index)
+{
+	State* n = Super::seen[stateNr];
+	int nrTransitions = Super::getNrTransitions(stateNr);
+
+	if (index < nrTransitions)
+		return n->transitions[index]->nextState;
+	if (n->explore.get() == NULL)	// fully explored
+		return NONE;
+
+	while (nrTransitions <= index)
 	{
-		int nextState;
-		int transitionIndex;	// to construct a proofterm
-
-		Transition(int nextState, int transitionIndex): nextState(nextState), transitionIndex(transitionIndex) {}
-
-		bool operator<(const Transition& t) const { return nextState < t.nextState || EventLabel::operator<(t); }
-
-		DagNode* makeTransitionDag(RewritingContext* initial, DagNode* stateDag, ProofTermGenerator& ptg) const
+		if (DagNode* ns = n->explore->getNextStateDag(Super::initial))		// if there is a next state
 		{
-			auto_ptr<RewriteTransitionState>  tr(new RewriteTransitionState(initial, stateDag));
-			for (int i = -1; i < transitionIndex; ++i)
-				tr->getNextStateDag(initial);
-			return ptg.makeProofDag(tr->getPosition(), *tr->getRule(), tr->getSubstitution());
+			int nextState = insertState(ns);
+			if (insertTransition(nextState, n))	// if a new transition identified
+				++ nrTransitions;
+			MemoryCell::okToCollectGarbage();
 		}
-	};
+		else
+		{
+			n->explore.reset();	// remove active state
+			return NONE;		// no more transition,, (fully explored transitions)
+		}
+    }
+	return n->transitions[index]->nextState;
+}
 
-	struct trans_ptr_compare { bool operator() (const Transition* a, const Transition* b) const
+template <typename SPH, typename EPH> inline int
+StateEventSystemGraph<SPH,EPH>::insertState(DagNode* stateDag)
+{
+	int nextState = StateDagContainer::insertDag(stateDag);
+	if (nextState == Super::getNrStates())	// if a new state identified
 	{
-		return (*a) < (*b); }
-	};
+		DagNode* cannStateDag = Super::getStateDag(nextState);
+		State* s =  new State(Super::initial, cannStateDag);
+		spHandler.updateLabel(cannStateDag, *s);
+		Super::seen.append(s);
+	}
+	return nextState;
+}
 
-	struct ActiveState: public RewriteTransitionState
-	{
-		set<Transition*, trans_ptr_compare> transitionPtrSet;	// to distinguish equivalent transitions
-		int transitionCount;									// to recover the corresponding proofterm
-
-		ActiveState(RewritingContext* parent, DagNode* stateDag):
-					RewriteTransitionState(parent,stateDag), transitionCount(-1) {}
-	};
-
-	struct State: public StateLabel
-	{
-		PtrVector<Transition> transitions;
-		auto_ptr<ActiveState> explore;
-
-		State(RewritingContext* parent, DagNode* stateDag): explore(new ActiveState(parent,stateDag)) {}
-	};
-};
-
-template <typename SELH>
-StateEventSystemGraph<SELH>::StateEventSystemGraph(RewritingContext* initial, SELH& selh, ProofTermGenerator& ptg):
-	BaseSystemGraph(initial, selh, ptg) {}
-
-template <typename SELH> bool
-StateEventSystemGraph<SELH>::insertTransition(int nextState, State* n)
+template <typename SPH, typename EPH> inline bool
+StateEventSystemGraph<SPH,EPH>::insertTransition(int nextState, State* n)
 {
 	ActiveState* as = n->explore.get();
 	auto_ptr<Transition> t(new Transition(nextState, ++ as->transitionCount));
-	DagNode* proofDag = BaseSystemGraph::ptGenerator.makeProofDag(as->getPosition(), *as->getRule(), as->getSubstitution());
-
-	BaseSystemGraph::lHandler.updateEventLabel(proofDag, t.get(), n);	// may use the state label for fairness
+	epHandler.updateLabel(Super::ptGenerator.makeProofDag(as->getPosition(), *as->getRule(), as->getSubstitution()), *t);
 
 	if (as->transitionPtrSet.insert(t.get()).second)	// if a new transition identified
 	{
@@ -96,5 +104,7 @@ StateEventSystemGraph<SELH>::insertTransition(int nextState, State* n)
 	}
 	return false;
 }
+
+
 
 } /* namespace modelChecker */
