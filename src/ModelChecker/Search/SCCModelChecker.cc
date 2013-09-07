@@ -20,7 +20,6 @@
 
 //      utility class definitions
 #include "natSet.hh"
-#include "DataStructure/PtrStack.hh"
 
 #include "SCCModelChecker.hh"
 
@@ -39,10 +38,10 @@ struct SCCModelChecker::PrefixBFSGraph: public SCCBFSGraph
 class SCCModelChecker::CycleCompBFSGraph: public SCCBFSGraph
 {
 	const State des;
-	Vector<State> initial;
+	vector<State> initial;
 public:
 	CycleCompBFSGraph(SCCModelChecker* mc, const StateMap<int>& H, int root, const State& start, const State& des):
-		SCCBFSGraph(mc,H,root,initial), des(des) { initial.append(start); }
+		SCCBFSGraph(mc,H,root,initial), des(des) { initial.push_back(start); }
 	bool inDomain(const State& s) const	{ return !map.invalid(s) && map.contains(s) && map.get(s) >= root; }
 	bool isTarget(const State& s) const	{ return s == des; }
 	bool isTarget(const Transition& t)	{ return isTarget(t.target); }
@@ -51,15 +50,15 @@ public:
 class SCCModelChecker::CycleBFSGraph: public SCCBFSGraph
 {
 	FairSet::Goal* goal;
-	Vector<State> initial;
+	vector<State> initial;
 public:
 	CycleBFSGraph(SCCModelChecker* mc, const StateMap<int>& H, int root, const State& start, FairSet::Goal* goal):
-		SCCBFSGraph(mc,H,root,initial), goal(goal) { initial.append(start); }
+		SCCBFSGraph(mc,H,root,initial), goal(goal) { initial.push_back(start); }
 	bool inDomain(const State& s) const	{ return !map.invalid(s) && map.contains(s) && map.get(s) >= root; }
 	bool isTarget(const State& s) const	{ return false; }
 	bool isTarget(const Transition& t)
 	{
-		auto_ptr<FairSet> fs(mc->fairMap.makeFairSet(t));
+		unique_ptr<FairSet> fs(mc->fairMap.makeFairSet(t));
 		return goal->empty() ? true : mc->fairMap.updateFairGoal(goal, fs.get());
 	}
 };
@@ -70,11 +69,11 @@ SCCModelChecker::SCCModelChecker(Automaton& prod, FairnessMap& fm): max(0), fair
 bool
 SCCModelChecker::findCounterExample()
 {
-	auto_ptr<SCC> res(findAcceptedSCC(prod.getInitialStates()));;
+	unique_ptr<SCC> res(findAcceptedSCC(prod.getInitialStates()));;
 
-	if (res.get() != NULL)
+	if (res )
 	{
-		auto_ptr<FairSet::Goal> goal(res->acc_fair->makeFairGoal());
+		unique_ptr<FairSet::Goal> goal(res->acc_fair->makeFairGoal());
 		//
 		// prefix
 		//
@@ -133,18 +132,26 @@ SCCModelChecker::SCCStack::nextSucc()
 	dfsStack.top()->next();
 }
 
-SCCModelChecker::SCC*
+const SCCModelChecker::SCC&
 SCCModelChecker::SCCStack::topSCC()
 {
-	return sccStack.top();
+	return *sccStack.top();
+}
+
+unique_ptr<SCCModelChecker::SCC>
+SCCModelChecker::SCCStack::releaseSCC()
+{
+	unique_ptr<SCC> r = std::move(sccStack.top());
+	sccStack.pop();
+	return r;
 }
 
 void
-SCCModelChecker::SCCStack::dfsPush(const State& s, auto_ptr<FairSet>& a)
+SCCModelChecker::SCCStack::dfsPush(const State& s, unique_ptr<FairSet> a)
 {
 	mc->H.set(s, ++mc->max);
-	sccStack.push(new SCC(mc->max, a));
-	dfsStack.push(mc->prod.makeTransitionIterator(s));
+	sccStack.emplace(new SCC(mc->max, std::move(a)));
+	dfsStack.emplace(mc->prod.makeTransitionIterator(s));
 }
 
 void
@@ -183,21 +190,21 @@ SCCModelChecker::SCCStack::sccPop(bool unvisit)
 }
 
 void
-SCCModelChecker::SCCStack::merge(int threshold, auto_ptr<FairSet>& back)
+SCCModelChecker::SCCStack::merge(int threshold, unique_ptr<FairSet> back)
 {
 	while ( threshold <  sccStack.top()->root )
 	{
-		if (sccStack.top()->acc_fair.get() != NULL)
+		if (sccStack.top()->acc_fair)
 			mc->fairMap.mergeFairSet(back.get(), sccStack.top()->acc_fair.get());
-		if (sccStack.top()->incoming_fair.get() != NULL)
+		if (sccStack.top()->incoming_fair)
 			mc->fairMap.mergeFairSet(back.get(), sccStack.top()->incoming_fair.get());
 		sccStack.pop();
 	}
-	auto_ptr<FairSet>& top_acc = sccStack.top()->acc_fair;
-	if (top_acc.get() != NULL)
+	unique_ptr<FairSet>& top_acc = sccStack.top()->acc_fair;
+	if (top_acc)
 		mc->fairMap.mergeFairSet(top_acc.get(), back.get());
 	else
-		top_acc.reset(back.release());
+		top_acc = std::move(back);
 }
 
 }

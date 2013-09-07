@@ -25,71 +25,46 @@
 #include "rewritingContext.hh"
 
 // ltlr definitions
+#include "PropHandler.hh"
 #include "StateSystemGraph.hh"
 
 namespace modelChecker {
 
-template <typename SPH>
-StateSystemGraph<SPH>::StateSystemGraph(RewritingContext* initial, const SPH& sph, ProofTermGenerator& ptg):
-	Super(initial, ptg), spHandler(sph)
+template <typename PH>
+StateSystemGraph<PH>::StateSystemGraph(RewritingContext& initial, PropChecker& spc, ProofTermGenerator& ptg):
+	Super(initial, ptg), statePC(spc) {}
+
+template <typename PH>
+unique_ptr<PropSet>
+StateSystemGraph<PH>::updateStateLabel(DagNode* stateDag, State& s)
 {
-	insertState(Super::initial->root());
+	unique_ptr<PropSet> truePropIds(statePC.computeCheckResult(stateDag)); 	// compute all state props
+	spHandler.updateLabel(*truePropIds, s);								// store the formula state props
+	return truePropIds;
 }
 
-template <typename SPH> inline DagNode*
-StateSystemGraph<SPH>::makeTransitionDag(int stateNr, int index) const
+template <typename PH>
+unique_ptr<typename StateSystemGraph<PH>::State>
+StateSystemGraph<PH>::createState(DagNode* stateDag) const
 {
-	ProofTermGenerator& ptg = Super::ptGenerator;
-	const Rule* rl = Super::seen[stateNr]->transitions[index]->rule;
-	return ptg.makeProofDag(NULL,*rl, NULL);
+	return unique_ptr<State>(new State(Super::initial, stateDag));
 }
 
-
-template <typename SPH> int
-StateSystemGraph<SPH>::computeNextState(int stateNr, int index)
+template <typename PH> inline bool
+StateSystemGraph<PH>::insertTransition(int nextState, State& n)
 {
-	State* n = Super::seen[stateNr];
-	int nrTransitions = Super::getNrTransitions(stateNr);
-
-	if (index < nrTransitions)
-		return n->transitions[index]->nextState;
-	if (n->explore.get() == NULL)	// fully explored
-		return NONE;
-
-	while (nrTransitions <= index)
+	if (n.explore->nextStateSet.insert(nextState).second)	// if a new transition identified
 	{
-		if (DagNode* ns = n->explore->getNextStateDag(Super::initial))		// if there is a next state
-		{
-			int nextState = insertState(ns);
-			if (n->explore->nextStateSet.insert(nextState).second)	// if a new transition identified
-			{
-				n->transitions.append(new Transition(nextState, n->explore->getRule()));
-				++ nrTransitions;
-			}
-			MemoryCell::okToCollectGarbage();
-		}
-		else
-		{
-			n->explore.reset();	// remove active state
-			return NONE;		// no more transition,, (fully explored transitions)
-		}
-    }
-	return n->transitions[index]->nextState;
-}
-
-template <typename SPH> inline int
-StateSystemGraph<SPH>::insertState(DagNode* stateDag)
-{
-	int nextState = StateDagContainer::insertDag(stateDag);
-	if (nextState == Super::getNrStates())	// if a new state identified
-	{
-		DagNode* cannStateDag = Super::getStateDag(nextState);
-		State* s =  new State(Super::initial, cannStateDag);
-		spHandler.updateLabel(cannStateDag, *s);
-		Super::seen.append(s);
+		n.transitions.emplace_back(new Transition(nextState, n.explore->getRule()));
+		return true;
 	}
-	return nextState;
+	return false;
 }
 
+template <typename PH> inline  DagNode*
+BaseSystemGraphTraits<StateSystemGraph<PH> >::Transition::makeDag(RewritingContext&, DagNode*, ProofTermGenerator& ptg) const
+{
+	return ptg.makeProofDag(nullptr,*rule, nullptr);
+}
 
 } /* namespace modelChecker */

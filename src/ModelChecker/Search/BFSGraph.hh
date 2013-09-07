@@ -27,7 +27,7 @@ public:
 	typedef typename ProductAutomaton<_PropertyAutomaton>::Transition			Transition;
 	typedef typename ProductAutomaton<_PropertyAutomaton>::TransitionIterator	TransitionIterator;
 
-	BFSGraph(ProductAutomaton<_PropertyAutomaton>& graph, const Vector<State>& initials);
+	BFSGraph(ProductAutomaton<_PropertyAutomaton>& graph, const vector<State>& initials);
 	virtual ~BFSGraph() {}
 
 	virtual bool inDomain(const State& s) const = 0;
@@ -43,7 +43,7 @@ private:
 
 	queue<State> toVisit;
 	StateMap<Step> parent;	// parent state + transition index
-	const Vector<State>& initials;
+	const vector<State>& initials;
 };
 
 

@@ -8,18 +8,19 @@
 #ifndef SCCBUCHIMODELCHECKER_HH_
 #define SCCBUCHIMODELCHECKER_HH_
 #include "SCCModelChecker.hh"
-#include "Fairness/CompositedFairnessMap.hh"
+#include "Automaton/FairnessMap.hh"
 
 namespace modelChecker {
 
 class SCCBuchiModelChecker : public SCCModelChecker
 {
-	NO_COPYING(SCCBuchiModelChecker);
 public:
-	SCCBuchiModelChecker(Automaton& prod, CompositedFairnessMap& fm);
+	SCCBuchiModelChecker(Automaton& prod, FairnessMap& fm);
+	SCCBuchiModelChecker(const SCCBuchiModelChecker&) = delete;
+	SCCBuchiModelChecker& operator=(const SCCBuchiModelChecker&) = delete;
 
 private:
-	SCC* findAcceptedSCC(const Vector<State>& initials);
+	unique_ptr<SCC> findAcceptedSCC(const Vector<State>& initials);
 };
 
 }

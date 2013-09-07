@@ -7,7 +7,7 @@
 
 #ifndef STATEEVENTSYSTEMGRAPH_HH_
 #define STATEEVENTSYSTEMGRAPH_HH_
-#include "BaseSystemGraph.hh"
+#include "BaseSystemGraphNoEnabled.hh"
 
 namespace modelChecker {
 
@@ -15,65 +15,77 @@ namespace modelChecker {
  * an ordinary state/event-based RW system graph.
  * every state proposition should be defined by equations (no special treatment for enabled props here)
  */
-template <typename StatePropHandler, typename EventPropHandler>
-class StateEventSystemGraph: public BaseSystemGraph<StateEventSystemGraph<StatePropHandler,EventPropHandler> >
+template <typename SPH, typename EPH>
+class StateEventSystemGraph: public BaseSystemGraphNoEnabled<StateEventSystemGraph<SPH,EPH> >
 {
-	friend class BaseSystemGraph<StateEventSystemGraph<StatePropHandler,EventPropHandler> >;
-	typedef BaseSystemGraph<StateEventSystemGraph<StatePropHandler,EventPropHandler> >			Super;
-	typedef BaseSystemGraphTraits<StateEventSystemGraph<StatePropHandler,EventPropHandler> >	StateEventSystemGraphTraits;
-	typedef typename StateEventSystemGraphTraits::StateLabel									StateLabel;
-	typedef typename StateEventSystemGraphTraits::EventLabel									EventLabel;
-	typedef typename StateEventSystemGraphTraits::State											State;
-	typedef typename StateEventSystemGraphTraits::ActiveState									ActiveState;
-	typedef typename StateEventSystemGraphTraits::Transition									Transition;
-
+	friend class BaseSystemGraph<StateEventSystemGraph<SPH,EPH> >;
+	friend class BaseSystemGraphNoEnabled<StateEventSystemGraph<SPH,EPH> >;
+	typedef BaseSystemGraphNoEnabled<StateEventSystemGraph<SPH,EPH> >	Super;
+	typedef BaseSystemGraphTraits<StateEventSystemGraph<SPH,EPH> >		StateEventSystemGraphTraits;
 public:
-	StateEventSystemGraph(RewritingContext* initial, const StatePropHandler& sph, const EventPropHandler& eph, ProofTermGenerator& ptg);
+	StateEventSystemGraph(RewritingContext& initial, PropChecker& spc, PropChecker& epc, ProofTermGenerator& ptg);
+	virtual ~StateEventSystemGraph() {}
+
+	bool satisfiesStateProp(int propId, int stateNr) const;
+	bool satisfiesEventProp(int propId, int stateNr, int transitionNr) const;
+
+protected:
+	typedef typename StateEventSystemGraphTraits::State					State;
+	typedef typename StateEventSystemGraphTraits::ActiveState			ActiveState;
+	typedef typename StateEventSystemGraphTraits::Transition			Transition;
+
+	/* implements */ virtual unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, State& s);
+	/* implements */ virtual unique_ptr<State> createState(DagNode* stateDag) const;
+
+	virtual unique_ptr<PropSet> updateTransitionLabel(RewriteTransitionState& rts, Transition& t, State& s);
+	virtual unique_ptr<Transition> createTransition(int nextState, int transitionIndex) const;
+
+	SPH spHandler;
 
 private:
-	DagNode* makeTransitionDag(int stateNr, int transitionNr) const;
-	int computeNextState(int stateNr, int index);
-	int insertState(DagNode* stateDag);
-	bool insertTransition(int nextState, State* n);
+	bool insertTransition(int nextState, State& n);
 
-	const StatePropHandler& spHandler;
-	const StatePropHandler& epHandler;
+	EPH epHandler;
+	PropChecker& statePC;
+	PropChecker& eventPC;
 };
 
-template <typename StatePropHandler, typename EventPropHandler>
-struct BaseSystemGraphTraits<StateEventSystemGraph<StatePropHandler,EventPropHandler> >
+template <typename SPH, typename EPH>
+struct BaseSystemGraphTraits<StateEventSystemGraph<SPH,EPH> >
 {
-	typedef typename StatePropHandler::Label		StateLabel;
-	typedef typename EventPropHandler::Label		EventLabel;
-
-	struct Transition: public EventLabel
+	struct Transition: public EPH::Label
 	{
 		Transition(int nextState, int transitionIndex): nextState(nextState), transitionIndex(transitionIndex) {}
-		bool operator<(const Transition& t) const { return nextState < t.nextState || EventLabel::operator<(t); }
+		virtual ~Transition() {}
+
+		virtual bool operator<(const Transition& t) const;
+		DagNode* makeDag(RewritingContext& parent, DagNode* stateDag, ProofTermGenerator& ptg) const;
+
 		int nextState;
 		int transitionIndex;	// to construct a proofterm
 	};
 
 	struct trans_ptr_compare
 	{
-		bool operator() (const Transition* a, const Transition* b) const { return (*a) < (*b); }
+		bool operator() (const Transition* a, const Transition* b) const;
 	};
 
 	struct ActiveState: public RewriteTransitionState
 	{
-		ActiveState(RewritingContext* parent, DagNode* stateDag): RewriteTransitionState(parent,stateDag), transitionCount(-1) {}
+		ActiveState(RewritingContext& parent, DagNode* stateDag): RewriteTransitionState(parent,stateDag), transitionCount(-1) {}
 		set<Transition*, trans_ptr_compare> transitionPtrSet;	// to distinguish equivalent transitions
 		int transitionCount;									// to recover the corresponding proofterm
 	};
 
-	struct State: public StateLabel
+	struct State: public SPH::Label
 	{
-		State(RewritingContext* parent, DagNode* stateDag): explore(new ActiveState(parent,stateDag)) {}
-		PtrVector<Transition> transitions;
-		auto_ptr<ActiveState> explore;
+		State(RewritingContext& parent, DagNode* stateDag): explore(new ActiveState(parent,stateDag)) {}
+		virtual ~State() {}
+
+		vector<unique_ptr<Transition> > transitions;
+		unique_ptr<ActiveState> explore;
 	};
 };
-
 
 } /* namespace modelChecker */
 

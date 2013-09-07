@@ -7,7 +7,6 @@
 
 #ifndef BASESYSTEMGRAPH_HH_
 #define BASESYSTEMGRAPH_HH_
-#include "DataStructure/PtrVector.hh"
 #include "RewriteTransitionState.hh"
 #include "StateDagContainer.hh"
 #include "DagGraphMap.hh"
@@ -22,13 +21,15 @@ struct BaseSystemGraphTraits;
 template <class T>
 class BaseSystemGraph: public DagGraphMap, public SystemGraph, protected StateDagContainer
 {
-	NO_COPYING(BaseSystemGraph);
-
 	typedef typename BaseSystemGraphTraits<T>::State		State;
 	typedef typename BaseSystemGraphTraits<T>::Transition	Transition;
-
 public:
-	BaseSystemGraph(RewritingContext* initial, ProofTermGenerator& ptg);
+	BaseSystemGraph(RewritingContext& initial, ProofTermGenerator& ptg);
+	BaseSystemGraph(const BaseSystemGraph&) = delete;
+	BaseSystemGraph& operator=(const BaseSystemGraph&) = delete;
+	virtual ~BaseSystemGraph() {}
+
+	void init();
 
 	int getNrStates() const;
 	int getNrTransitions(int stateNr) const;
@@ -38,11 +39,11 @@ public:
 	int getNextState(int stateNr, int index);
 
 protected:
-	/* virtual */ DagNode* makeTransitionDag(int stateNr, int transitionNr) const;
-	/* virtual */ int computeNextState(int stateNr, int index);
+	/* virtual */ int insertState(DagNode* stateDag) /* = 0 */;
+	/* virtual */ int computeNextState(int stateNr, int index) /* = 0 */;
 
-	PtrVector<State> seen;			// state information
-	RewritingContext* initial;
+	vector<unique_ptr<State> > seen;			// state information
+	RewritingContext& initial;
 	ProofTermGenerator& ptGenerator;
 };
 

@@ -13,11 +13,13 @@ namespace modelChecker {
 
 class RewriteTransitionState: private RewriteSearchState
 {
-	NO_COPYING(RewriteTransitionState);
 public:
-	RewriteTransitionState(RewritingContext* parent, DagNode* stateDag);
+	RewriteTransitionState(RewritingContext& parent, DagNode* stateDag);
+	RewriteTransitionState(const RewriteTransitionState&) = delete;
+	RewriteTransitionState& operator=(const RewriteTransitionState&) = delete;
+
 	virtual ~RewriteTransitionState() {}
-	DagNode* getNextStateDag(RewritingContext* parent);
+	DagNode* getNextStateDag(RewritingContext& parent);
 
 	const PositionState* getPosition() const;
 	const Rule* getRule() const;

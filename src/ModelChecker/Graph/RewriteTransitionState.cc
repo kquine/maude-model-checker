@@ -23,17 +23,17 @@
 
 namespace modelChecker {
 
-RewriteTransitionState::RewriteTransitionState(RewritingContext* parent, DagNode* stateDag):
-		RewriteSearchState(parent->makeSubcontext(stateDag), NONE,
+RewriteTransitionState::RewriteTransitionState(RewritingContext& parent, DagNode* stateDag):
+		RewriteSearchState(parent.makeSubcontext(stateDag), NONE,
 				RewriteSearchState::GC_CONTEXT|RewriteSearchState::SET_UNREWRITABLE|PositionState::SET_UNSTACKABLE,
 				0, UNBOUNDED) {}
 
 DagNode*
-RewriteTransitionState::getNextStateDag(RewritingContext* parent)
+RewriteTransitionState::getNextStateDag(RewritingContext& parent)
 {
 	RewritingContext* context = getContext();
 	bool success = findNextRewrite();
-	transferCount(*parent);
+	transferCount(parent);
 
 	if (success)
 	{
@@ -46,8 +46,8 @@ RewriteTransitionState::getNextStateDag(RewritingContext* parent)
 		}
 		DagNode* replacement = getReplacement();
 		RewriteSearchState::DagPair r = rebuildDag(replacement);
-		const auto_ptr<RewritingContext> c(context->makeSubcontext(r.first));
-		parent->incrementRlCount();
+		const unique_ptr<RewritingContext> c(context->makeSubcontext(r.first));
+		parent.incrementRlCount();
 		if (trace)
 		{
 			c->tracePostRuleRewrite(r.second);
@@ -57,7 +57,7 @@ RewriteTransitionState::getNextStateDag(RewritingContext* parent)
 		c->reduce();
 		if (c->traceAbort())
 			return NULL;
-		parent->addInCount(*c);
+		parent.addInCount(*c);
 		return r.first;
 	}
 	else

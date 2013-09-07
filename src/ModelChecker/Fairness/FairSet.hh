@@ -31,9 +31,9 @@ struct FairSet::Goal
 struct FairSet::Bad
 {
 	virtual ~Bad() {}
-	virtual bool isBad(const FairSet* f) const = 0;
+	virtual bool isBad(const FairSet& f) const = 0;
 	virtual bool empty() const = 0;
-	virtual void merge(const Bad* b) = 0;
+	virtual void merge(const Bad& b) = 0;
 };
 
 }

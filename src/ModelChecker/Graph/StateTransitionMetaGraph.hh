@@ -24,9 +24,11 @@ namespace modelChecker {
 
 class StateTransitionMetaGraph: public SystemGraph, public DagGraphMap
 {
-	NO_COPYING(StateTransitionMetaGraph);
 public:
 	StateTransitionMetaGraph(RewritingContext* initial, Symbol* stateSymbol, Symbol* transitionSymbol);
+	StateTransitionMetaGraph(const StateTransitionMetaGraph&) = delete;
+	StateTransitionMetaGraph& operator=(const StateTransitionMetaGraph&) = delete;
+
 	virtual ~StateTransitionMetaGraph() {}
 
 	int getNrStates() const;
@@ -52,7 +54,7 @@ private:
 	Symbol* transitionSymbol;
 
 	// state information
-	PtrVector<State> seen;
+	vector<unique_ptr<State> > seen;
 	RewritingContext* initial;
 
 	// hash-cons information
@@ -79,7 +81,7 @@ struct StateTransitionMetaGraph::Transition
 struct StateTransitionMetaGraph::ActiveState: public RewriteTransitionState, private DagRoot
 {
 	typedef set<Transition*, bool (*)(const Transition*,const Transition*)> TransitionPtrSet;
-	auto_ptr<TransitionPtrSet> transitionPtrSet;
+	unique_ptr<TransitionPtrSet> transitionPtrSet;
 
 	ActiveState(RewritingContext* parent, DagNode* activeDag):
 		DagRoot(activeDag), RewriteTransitionState(parent,activeDag),
@@ -94,7 +96,7 @@ struct StateTransitionMetaGraph::State
 {
 	int hashConsIndex;
 	int parentIndex;
-	auto_ptr<ActiveState> explore;
+	unique_ptr<ActiveState> explore;
 	PtrVector<Transition> transitions;
 
 	State(int hashConsIndex, int parentIndex, RewritingContext* parentContext, DagNode* activeDag):
@@ -110,7 +112,7 @@ StateTransitionMetaGraph::getNrStates() const
 inline int
 StateTransitionMetaGraph::getNrTransitions(int stateNr) const
 {
-	Assert(seen[stateNr] != NULL, "StateTransitionMetaGraph::getNrTransitions: Invalid state lookup");
+	Assert(seen[stateNr], "StateTransitionMetaGraph::getNrTransitions: Invalid state lookup");
 	return seen[stateNr]->transitions.size();
 }
 
@@ -124,12 +126,12 @@ StateTransitionMetaGraph::getStateDag(int stateNr) const
 inline DagNode*
 StateTransitionMetaGraph::getTransitionDag(int stateNr, int index) const
 {
-	Assert(stateNr < seen.size() && seen[stateNr] != NULL,
+	Assert(stateNr < seen.size() && seen[stateNr],
 			"StateTransitionMetaGraph::getTransitionDag: Invalid state lookup");
 	Assert((index == 0 && getNrTransitions(stateNr) == 0) || index < getNrTransitions(stateNr),
 				"StateTransitionMetaGraph::getTransitionDag: Invalid transition lookup");
 
-	return (index == 0 && getNrTransitions(stateNr) == 0) ? NULL	// deadlock
+	return (index == 0 && getNrTransitions(stateNr) == 0) ? nullptr	// deadlock
 			: hashConsSet.getCanonical(seen[stateNr]->transitions[index]->hashConsIndex);
 }
 

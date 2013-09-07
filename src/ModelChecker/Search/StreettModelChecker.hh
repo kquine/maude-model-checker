@@ -7,21 +7,22 @@
 
 #ifndef STREETTMODELCHECKER_HH_
 #define STREETTMODELCHECKER_HH_
-#include "Fairness/CompositedFairnessMap.hh"
+#include "Automaton/FairnessMap.hh"
 #include "SCCModelChecker.hh"
 
 namespace modelChecker {
 
 class StreettModelChecker: public modelChecker::SCCModelChecker
 {
-	NO_COPYING(StreettModelChecker);
 public:
-	StreettModelChecker(Automaton& prod, CompositedFairnessMap& fm);
+	StreettModelChecker(Automaton& prod, FairnessMap& fm);
+	StreettModelChecker(const StreettModelChecker&) = delete;
+	StreettModelChecker& operator=(const StreettModelChecker&) = delete;
 
 private:
-	SCC* findAcceptedSCC(const Vector<State>& initials);
-	SCC* findAcceptedSCC(queue<State>& region, FairSet::Bad* bad);
-	FairSet::Bad* makeNewBadGoal(const auto_ptr<FairSet>& fair, const FairSet::Bad* old);
+	unique_ptr<SCC> findAcceptedSCC(const Vector<State>& initials);
+	unique_ptr<SCC> findAcceptedSCC(queue<State>& region, FairSet::Bad* bad);
+	FairSet::Bad* makeNewBadGoal(const unique_ptr<FairSet>& fair, const FairSet::Bad* old);
 };
 
 

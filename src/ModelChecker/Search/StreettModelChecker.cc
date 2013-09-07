@@ -22,29 +22,28 @@
 //      utility class definitions
 #include "natSet.hh"
 #include "BFSGraph.hh"
-#include "DataStructure/PtrStack.hh"
 
 
 #include "StreettModelChecker.hh"
 
 namespace modelChecker {
 
-StreettModelChecker::StreettModelChecker(Automaton& prod, CompositedFairnessMap& fm): SCCModelChecker(prod,fm) {}
+StreettModelChecker::StreettModelChecker(Automaton& prod, FairnessMap& fm): SCCModelChecker(prod,fm) {}
 
-SCCModelChecker::SCC*
+unique_ptr<SCCModelChecker::SCC>
 StreettModelChecker::findAcceptedSCC(const Vector<State>& initials)
 {
 	queue<State> region;
 	FOR_EACH_CONST(i, Vector<State>, initials)
 		region.push(*i);
-	return findAcceptedSCC(region, NULL);
+	return findAcceptedSCC(region, nullptr);
 }
 
-SCCModelChecker::SCC*
+unique_ptr<SCCModelChecker::SCC>
 StreettModelChecker::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
 {
 	SCCStack stack(this);
-	auto_ptr<FairSet> emptyFairPtr;
+	unique_ptr<FairSet> emptyFairPtr;
 
 	while ( !region.empty())
 	{
@@ -52,7 +51,7 @@ StreettModelChecker::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
 		region.pop();
 		if (H.expand(cur) || !H.contains(cur))
 		{
-			stack.dfsPush(cur, emptyFairPtr);
+			stack.dfsPush(cur, std::move(emptyFairPtr));
 			//
 			// main loop
 			//
@@ -61,7 +60,7 @@ StreettModelChecker::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
 				if (stack.hasNextSucc())
 				{
 					Transition t = stack.pickSucc();
-					auto_ptr<FairSet> a(fairMap.makeFairSet(t));
+					unique_ptr<FairSet> a(fairMap.makeFairSet(t));
 					stack.nextSucc();
 
 					/*
@@ -70,15 +69,15 @@ StreettModelChecker::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
 					cout << endl;
 					*/
 
-					if (bad != NULL && bad->isBad(a.get()))		// if bad transition
+					if (bad != nullptr && bad->isBad(*a))		// if bad transition
 						region.push(t.target);
 					else
 					{
 						if (H.expand(t.target) || !H.contains(t.target))	// if not visited yet
-							stack.dfsPush(t.target, a);
+							stack.dfsPush(t.target, std::move(a));
 						else if (H.get(t.target) > 0)						// if on the dfs stack..
 						{
-							stack.merge(H.get(t.target), a);
+							stack.merge(H.get(t.target), std::move(a));
 
 							/*
 							cout << "merged:  ";
@@ -87,25 +86,24 @@ StreettModelChecker::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
 							*/
 
 
-							if ( fairMap.satisfiedFairSet(stack.topSCC()->acc_fair.get()) )
+							if ( fairMap.satisfiedFairSet(stack.topSCC().acc_fair.get()) )
 							{
-								return new SCC(*stack.topSCC());
+								return stack.releaseSCC();
 							}
 						}
 					}
 				}
 				else	// SCC pop
 				{
-					auto_ptr<FairSet::Bad> new_bad(makeNewBadGoal(stack.topSCC()->acc_fair, bad));
+					unique_ptr<FairSet::Bad> new_bad(makeNewBadGoal(stack.topSCC().acc_fair, bad));
 					//
 					//	If there is a new bad goal, try to revisit the SCC
 					//
-					if (new_bad.get() != NULL)
+					if (new_bad)
 					{
 						queue<State> new_region;
 						new_region.push(stack.sccPop(true));	// pop the top SCC with *unvisit*
-						SCC* scc = findAcceptedSCC(new_region, new_bad.get());
-						if (scc != NULL)
+						if (unique_ptr<SCC> scc = findAcceptedSCC(new_region, new_bad.get()))
 							return scc;
 					}
 					else
@@ -114,23 +112,23 @@ StreettModelChecker::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
 			}
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 FairSet::Bad*
-StreettModelChecker::makeNewBadGoal(const auto_ptr<FairSet>& fair, const FairSet::Bad* old)
+StreettModelChecker::makeNewBadGoal(const unique_ptr<FairSet>& fair, const FairSet::Bad* old)
 {
-	if (fair.get() != NULL)
+	if (fair)
 	{
-		auto_ptr<FairSet::Bad> new_bad(fair->makeBadGoal());
+		unique_ptr<FairSet::Bad> new_bad(fair->makeBadGoal());
 		if ( !new_bad->empty())
 		{
-			if (old != NULL)
-				new_bad->merge(old);
+			if (old)
+				new_bad->merge(*old);
 			return new_bad.release();
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 }

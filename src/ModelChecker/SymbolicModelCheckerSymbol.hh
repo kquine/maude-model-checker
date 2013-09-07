@@ -26,10 +26,11 @@ namespace modelChecker {
 
 class SymbolicModelCheckerSymbol: public TemporalSymbol
 {
-	NO_COPYING(SymbolicModelCheckerSymbol);
 	typedef DagGraphMap::Edge	Edge;
 public:
 	SymbolicModelCheckerSymbol(int id, int arity);
+	SymbolicModelCheckerSymbol(const SymbolicModelCheckerSymbol&) = delete;
+	SymbolicModelCheckerSymbol& operator=(const SymbolicModelCheckerSymbol&) = delete;
 
     bool attachData(const Vector<Sort*>& opDeclaration, const char* purpose, const Vector<const char*>& data);
     bool attachSymbol(const char* purpose, Symbol* symbol);
@@ -84,8 +85,8 @@ private:
     	StateFoldingGraph* gph;
     };
 
-    bool interpreteBoolDag(DagNode* dag);
-    long interpreteNatDag(DagNode* dag);
+    bool interpretBoolDag(DagNode* dag);
+    long interpretNatDag(DagNode* dag);
     DagNode* makeModelCheckReportDag(bool result, int bound, bool complete, bool subsumption,
     		const ModelChecker& mc, StateFoldingGraph& nsg, const DagGraphMap& dags, FoldingChecker* sfc);
 

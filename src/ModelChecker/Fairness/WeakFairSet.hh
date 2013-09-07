@@ -7,34 +7,32 @@
 
 #ifndef WEAKFAIRSET_HH_
 #define WEAKFAIRSET_HH_
-
 #include "FairSet.hh"
 
 namespace modelChecker {
 
-class WeakFairSet: public modelChecker::FairSet
+class WeakFairSet: public FairSet
 {
 public:
 	struct Goal;
 	struct Bad;
 
-	WeakFairSet(const NatSet& satisfied);
+	WeakFairSet(const NatSet& falsified);
 	void merge(const WeakFairSet* wf);
 
-	bool isSatisfied(const NatSet& all) const;
+	bool isSatisfied() const;
 	void dump(ostream& o) const;
 	FairSet::Goal* makeFairGoal() const;
 	FairSet::Bad* makeBadGoal() const;
 
 protected:
-	NatSet satisfiedWeakFair;
+	NatSet falsifiedWeakFair;
 };
 
 class WeakFairSet::Goal: public FairSet::Goal
 {
 public:
 	Goal(const WeakFairSet* fs);
-	virtual ~Goal() {}
 	bool empty() const;
 	bool update(const FairSet* f);
 	void dump(ostream& o) const;
@@ -44,10 +42,9 @@ protected:
 
 struct WeakFairSet::Bad: public FairSet::Bad
 {
-	virtual ~Bad() {}
-	bool isBad(const FairSet* f) const	{ return false; }
+	bool isBad(const FairSet& f) const	{ return false; }
 	bool empty() const					{ return true; }
-	void merge(const FairSet::Bad* b)		{}
+	void merge(const FairSet::Bad& b)	{ }
 };
 
 }

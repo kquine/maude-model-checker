@@ -24,18 +24,18 @@
 #define _LTLRFAIRNESSCHECKERSYMBOL_HH
 #include "temporalSymbol.hh"
 #include "cachedDag.hh"
-#include "Fairness/FairnessMap.hh"
-
+#include "Formula/FormulaBuilder.hh"
 
 namespace modelChecker {
 
-class LTLRFairnessCheckerSymbol : public TemporalSymbol
+class LTLRFairnessCheckerSymbol : public TemporalSymbol, public FormulaBuilder
 {
-	typedef pair<LogicFormula,int>	Formula;
-
-    NO_COPYING(LTLRFairnessCheckerSymbol);
 public:
     LTLRFairnessCheckerSymbol(int id, int arity);
+    LTLRFairnessCheckerSymbol(const LTLRFairnessCheckerSymbol&) = delete;
+    LTLRFairnessCheckerSymbol& operator=(const LTLRFairnessCheckerSymbol&) = delete;
+
+    int build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const;
 
     bool attachData(const Vector<Sort*>& opDeclaration, const char* purpose, const Vector<const char*>& data);
     bool attachSymbol(const char* purpose, Symbol* symbol);
@@ -49,10 +49,6 @@ public:
     void reset();
 
 private:
-    Formula* makeFormula(DagNode* formulaDag, DagNodeSet& atoms, RewritingContext& context) const;
-    FairnessMap* makeFairnessMap(DagNode* fairnessDag, DagNodeSet& atoms, RewritingContext& context) const;
-
-
     Symbol* fairnessSymbol;
     Symbol* strongFairTypeSymbol;
     Symbol* weakFairTypeSymbol;
@@ -83,6 +79,12 @@ private:
     CachedDag deadlockTerm;
     CachedDag trueTerm;
 };
+
+inline int
+LTLRFairnessCheckerSymbol::build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const
+{
+	return TemporalSymbol::build(formula, propositions, dagNode);
+}
 
 }
 #endif        /* _LTLRFAIRNESSCHECKERSYMBOL_HH */

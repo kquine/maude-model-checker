@@ -54,11 +54,11 @@ namespace modelChecker {
 
 SymbolicModelCheckerSymbol::SymbolicModelCheckerSymbol(int id, int arity):
 	TemporalSymbol(id, arity),
-	satisfiesSymbol(NULL), metaStateSymbol(NULL), metaTransitionSymbol(NULL),
-	subsumeFoldingRelSymbol(NULL), renameFoldingRelSymbol(NULL), compatibleTransSymbol(NULL),
-	prettyPrintStateSymbol(NULL), prettyPrintTransSymbol(NULL),
-    unboundedSymbol(NULL), succSymbol(NULL),
-    resultreportSymbol(NULL)
+	satisfiesSymbol(nullptr), metaStateSymbol(nullptr), metaTransitionSymbol(nullptr),
+	subsumeFoldingRelSymbol(nullptr), renameFoldingRelSymbol(nullptr), compatibleTransSymbol(nullptr),
+	prettyPrintStateSymbol(nullptr), prettyPrintTransSymbol(nullptr),
+    unboundedSymbol(nullptr), succSymbol(nullptr),
+    resultreportSymbol(nullptr)
 {}
 
 bool
@@ -189,10 +189,10 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//
 	//	0. arguments
 	//
-	auto_ptr<RewritingContext> sysContext(context.makeSubcontext(d->getArgument(0)));
-	auto_ptr<RewritingContext> formulaCxt(context.makeSubcontext(negate(d->getArgument(1))));
-    auto_ptr<RewritingContext> boolCxt(context.makeSubcontext(d->getArgument(2)));
-    auto_ptr<RewritingContext> boundCxt(context.makeSubcontext(d->getArgument(3)));
+	unique_ptr<RewritingContext> sysContext(context.makeSubcontext(d->getArgument(0)));
+	unique_ptr<RewritingContext> formulaCxt(context.makeSubcontext(negate(d->getArgument(1))));
+    unique_ptr<RewritingContext> boolCxt(context.makeSubcontext(d->getArgument(2)));
+    unique_ptr<RewritingContext> boundCxt(context.makeSubcontext(d->getArgument(3)));
 
 	formulaCxt->reduce();	context.addInCount(*formulaCxt);
 	boolCxt->reduce();		context.addInCount(*boolCxt);
@@ -212,8 +212,8 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 		IssueAdvisory("negated LTL formula " << QUOTE(formulaCxt->root()) <<" did not reduce to a valid negative normal form.");
 		return TemporalSymbol::eqRewrite(subject, context);
 	}
-	bool subsumption = interpreteBoolDag(boolCxt->root());
-	long globalBound = interpreteNatDag(boundCxt->root());
+	bool subsumption = interpretBoolDag(boolCxt->root());
+	long globalBound = interpretNatDag(boundCxt->root());
 #ifdef TDEBUG
 	cout << "top = " << top << endl;
 	formula.dump(cout);
@@ -225,7 +225,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	BuchiAutomaton2 propAutomaton(&formula, top);
 	StateTransitionMetaGraph graph(sysContext.get(), metaStateSymbol, metaTransitionSymbol);
 
-	auto_ptr<FoldingChecker> sfc(new FoldingChecker(graph,
+	unique_ptr<FoldingChecker> sfc(new FoldingChecker(graph,
 			(subsumption ? subsumeFoldingRelSymbol : renameFoldingRelSymbol), trueTerm.getDag(), &context));
 	StateFoldingGraph nsg(&graph, sfc.get());
 
@@ -233,7 +233,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	SystemAutomaton systemAutomaton(&nsg, graph, propositions, &stateChecker);
 	ProductAutomaton<BuchiAutomaton2> prod(systemAutomaton, propAutomaton);
 
-	auto_ptr<ModelChecker> mc;
+	unique_ptr<ModelChecker> mc;
 	PrettyPrinter printState(prettyPrintStateSymbol, &context);
 	PrettyPrinter printTrans(prettyPrintTransSymbol, &context);
 
@@ -278,7 +278,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 }
 
 bool
-SymbolicModelCheckerSymbol::interpreteBoolDag(DagNode* dag)
+SymbolicModelCheckerSymbol::interpretBoolDag(DagNode* dag)
 {
     if (dag->symbol() == this->trueTerm.getDag()->symbol())
     	return true;
@@ -291,10 +291,10 @@ SymbolicModelCheckerSymbol::interpreteBoolDag(DagNode* dag)
 }
 
 long
-SymbolicModelCheckerSymbol::interpreteNatDag(DagNode* dag)
+SymbolicModelCheckerSymbol::interpretNatDag(DagNode* dag)
 {
 	S_DagNode* tmpBoundDag = dynamic_cast<S_DagNode*>(dag);
-	if (tmpBoundDag != NULL)
+	if (tmpBoundDag != nullptr)
 		return tmpBoundDag->getNumber().get_si();
 	else
 	{
@@ -319,18 +319,18 @@ SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool
 			list<Edge> cycle;
 			if (concretePath(nsg,sfc,mc.getLeadIn(), mc.getCycle(), path, cycle))
 			{
-				res_args[0] = NULL; //FIXME: ceGenerator.makeCounterexample(nsg.getDagGraphMap(), path, cycle);
+				res_args[0] = nullptr; //FIXME: ceGenerator.makeCounterexample(nsg.getDagGraphMap(), path, cycle);
 				res_args[1] = trueTerm.getDag();
 			}
 			else	// spurious counterexample
 			{
-				res_args[0] = NULL; //FIXME: ceGenerator.makeCounterexample(nsg.getDagGraphMap(), mc.getLeadIn(), mc.getCycle());
+				res_args[0] = nullptr; //FIXME: ceGenerator.makeCounterexample(nsg.getDagGraphMap(), mc.getLeadIn(), mc.getCycle());
 				res_args[1] = falseTerm.getDag();
 			}
 		}
 		else	// renaming equivalence (no spurious counterexample)
 		{
-			res_args[0] = NULL; //FIXME: ceGenerator.makeCounterexample(nsg.getDagGraphMap(), mc.getLeadIn(), mc.getCycle());
+			res_args[0] = nullptr; //FIXME: ceGenerator.makeCounterexample(nsg.getDagGraphMap(), mc.getLeadIn(), mc.getCycle());
 			res_args[1] = trueTerm.getDag();
 		}
 	}
@@ -399,7 +399,7 @@ SymbolicModelCheckerSymbol::constConcrPath(StateFoldingGraph& gph, FoldingChecke
 		{
 			int index = 0;
 			int next = NONE;
-			DagNode* fd = NULL; //FIXME; gph.getDagGraphMap().getTransitionDag(pos->first,pos->second);
+			DagNode* fd = nullptr; //FIXME; gph.getDagGraphMap().getTransitionDag(pos->first,pos->second);
 			pos ++;
 
 			while ((next = gph.getUnderlyingGraph().getNextState(spos, index)) != NONE)
@@ -431,7 +431,7 @@ SymbolicModelCheckerSymbol::FoldingChecker::FoldingChecker(
 bool
 SymbolicModelCheckerSymbol::FoldingChecker::fold(int s, int t) const
 {
-	Assert(trueDag != NULL, "StateFoldingChecker::fold: trueDag not set");
+	Assert(trueDag != nullptr, "StateFoldingChecker::fold: trueDag not set");
 	static Vector<DagNode*> args(2);
 	args[0] = dags.getStateDag(s);
 	args[1] = dags.getStateDag(t);
@@ -440,7 +440,7 @@ SymbolicModelCheckerSymbol::FoldingChecker::fold(int s, int t) const
 #ifdef TDEBUG
 	cout << checkDag << " is reduced to ";
 #endif
-	const auto_ptr<RewritingContext> testContext(
+	const unique_ptr<RewritingContext> testContext(
 			parentContext->makeSubcontext(checkDag));
 	testContext->reduce();
 	bool result = trueDag->equal(testContext->root());
@@ -489,7 +489,7 @@ SymbolicModelCheckerSymbol::SystemAutomaton::satisfiesStateProp(int propId, int 
 	else
 	{
 		testedProps.insert(propId);
-		if (pc->computeLabel(dags.getStateDag(stateNr), props.index2DagNode(propId)))
+		if (pc->computeProp(dags.getStateDag(stateNr), props.index2DagNode(propId)))
 		{
 			trueProps.insert(propId);
 			return true;

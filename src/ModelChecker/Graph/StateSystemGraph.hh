@@ -7,59 +7,70 @@
 
 #ifndef STATESYSTEMGRAPH_HH_
 #define STATESYSTEMGRAPH_HH_
-#include "BaseSystemGraph.hh"
+#include "BaseSystemGraphNoEnabled.hh"
+#include "Formula/PropChecker.hh"
+#include "Fairness/FairnessChecker.hh"
 
 namespace modelChecker {
 
-template <typename StatePropHandler>
-class StateSystemGraph: public BaseSystemGraph<StateSystemGraph<StatePropHandler> >
+template <typename PropHandler>
+class StateSystemGraph: public BaseSystemGraphNoEnabled<StateSystemGraph<PropHandler> >
 {
-	friend class BaseSystemGraph<StateSystemGraph<StatePropHandler> >;
-	typedef BaseSystemGraph<StateSystemGraph<StatePropHandler> >			Super;
-	typedef BaseSystemGraphTraits<StateSystemGraph<StatePropHandler> >		StateSystemGraphTraits;
-	typedef typename StateSystemGraphTraits::StateLabel						StateLabel;
-	typedef typename StateSystemGraphTraits::State							State;
-	typedef typename StateSystemGraphTraits::ActiveState					ActiveState;
-	typedef typename StateSystemGraphTraits::Transition						Transition;
+	friend class BaseSystemGraph<StateSystemGraph<PropHandler> >;
+	friend class BaseSystemGraphNoEnabled<StateSystemGraph<PropHandler> >;
+	typedef BaseSystemGraphNoEnabled<StateSystemGraph<PropHandler> >	Super;
+	typedef BaseSystemGraphTraits<StateSystemGraph<PropHandler> >		StateSystemGraphTraits;
 public:
-	StateSystemGraph(RewritingContext* initial, const StatePropHandler& sph, ProofTermGenerator& ptg);
+	StateSystemGraph(RewritingContext& initial, PropChecker& spc,ProofTermGenerator& ptg);
+	virtual ~StateSystemGraph() {}
+
+	bool satisfiesStateProp(int propId, int stateNr) const;
+
+protected:
+	typedef typename StateSystemGraphTraits::State						State;
+	typedef typename StateSystemGraphTraits::ActiveState				ActiveState;
+	typedef typename StateSystemGraphTraits::Transition					Transition;
+
+	/* implements */ unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, State& s);
+	/* implements */ virtual unique_ptr<State> createState(DagNode* stateDag) const;
 
 private:
-	DagNode* makeTransitionDag(int stateNr, int transitionNr) const;
-	int computeNextState(int stateNr, int index);
-	int insertState(DagNode* stateDag);
+	bool insertTransition(int nextState, State& n);
 
-	const StatePropHandler& spHandler;
+	PropHandler spHandler;
+	PropChecker& statePC;
 };
 
-template <typename StatePropHandler>
-struct BaseSystemGraphTraits<StateSystemGraph<StatePropHandler> >
+template <typename PropHandler>
+struct BaseSystemGraphTraits<StateSystemGraph<PropHandler> >
 {
-	typedef typename StatePropHandler::Label	StateLabel;
-
 	struct Transition
 	{
 		Transition(int nextState, const Rule* rule): nextState(nextState), rule(rule) {}
+		DagNode* makeDag(RewritingContext&, DagNode*, ProofTermGenerator& ptg) const;
+
 		int nextState;
 		const Rule* rule;
 	};
 
 	struct ActiveState: public RewriteTransitionState
 	{
-		ActiveState(RewritingContext* parent, DagNode* stateDag): RewriteTransitionState(parent,stateDag) {}
+		ActiveState(RewritingContext& parent, DagNode* stateDag): RewriteTransitionState(parent,stateDag) {}
 		set<int> nextStateSet;
 	};
 
-	struct State: public StateLabel
+	struct State: public PropHandler::Label
 	{
-		State(RewritingContext* parent, DagNode* stateDag): explore(new ActiveState(parent,stateDag)) {}
-		PtrVector<Transition> transitions;
-		auto_ptr<ActiveState> explore;
+		State(RewritingContext& parent, DagNode* stateDag): explore(new ActiveState(parent,stateDag)) {}
+		virtual ~State() {}
+
+		vector<unique_ptr<Transition> > transitions;
+		unique_ptr<ActiveState> explore;
 	};
 };
 
 } /* namespace modelChecker */
 
-#include "StateSystemGraph.cc"	// to separate the implementation for the template
+#include "StateSystemGraph.cc"
 
 #endif /* STATESYSTEMGRAPH_HH_ */

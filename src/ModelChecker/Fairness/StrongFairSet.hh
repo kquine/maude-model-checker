@@ -47,9 +47,9 @@ struct StrongFairSet::Bad: public FairSet::Bad
 public:
 	Bad(const StrongFairSet* fs);
 	virtual ~Bad() {}
-	bool isBad(const FairSet* f) const;
+	bool isBad(const FairSet& f) const;
 	bool empty() const;
-	void merge(const FairSet::Bad* b);
+	void merge(const FairSet::Bad& b);
 private:
 	NatSet badFairs;
 };

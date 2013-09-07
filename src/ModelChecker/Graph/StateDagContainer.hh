@@ -15,6 +15,8 @@ namespace modelChecker {
 class StateDagContainer
 {
 public:
+	virtual ~StateDagContainer() {}
+
 	int getNrStates() const;
 	DagNode* getStateDag(int index) const;	// return the dag for the index
 	int insertDag(DagNode* dag);			// return the state index

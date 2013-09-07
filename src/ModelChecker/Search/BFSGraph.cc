@@ -27,7 +27,7 @@ struct BFSGraph<PA>::Step		// used for counter-example generation
 };
 
 template <class PA>
-BFSGraph<PA>::BFSGraph(ProductAutomaton<PA>& graph, const Vector<State>& initials):
+BFSGraph<PA>::BFSGraph(ProductAutomaton<PA>& graph, const vector<State>& initials):
 	graph(graph), initials(initials) {}
 
 template <class PA> typename BFSGraph<PA>::State
@@ -35,15 +35,15 @@ BFSGraph<PA>::doBFS(list<Edge>& path)
 {
 	list<pair<int,int> > temp_path;
 
-	FOR_EACH_CONST(i, typename Vector<State>, initials)
+	for(const State& i : initials)
 	{
-		if (isTarget(*i))	// if initial state is a target state
-			return *i;
-		else if (inDomain(*i))
+		if (isTarget(i))	// if initial state is a target state
+			return i;
+		else if (inDomain(i))
 		{
-			toVisit.push(*i);
-			parent.expand(*i);
-			parent.set(*i,Step());
+			toVisit.push(i);
+			parent.expand(i);
+			parent.set(i,Step());
 		}
 	}
 	Assert(!(toVisit.empty()), "no initial states in domain.");
@@ -54,7 +54,7 @@ BFSGraph<PA>::doBFS(list<Edge>& path)
 		State s = toVisit.front();
 		toVisit.pop();
 
-		const auto_ptr<TransitionIterator> ts(graph.makeTransitionIterator(s));
+		const unique_ptr<TransitionIterator> ts(graph.makeTransitionIterator(s));
 		while (ts->hasNext())
 		{
 			Transition t = ts->pick();

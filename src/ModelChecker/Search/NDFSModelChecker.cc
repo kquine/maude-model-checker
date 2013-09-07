@@ -21,7 +21,6 @@
 //      utility class definitions
 #include "natSet.hh"
 #include "BFSGraph.hh"
-#include "DataStructure/PtrStack.hh"
 
 #include "NDFSModelChecker.hh"
 
@@ -32,7 +31,7 @@ namespace modelChecker {
 class NDFSModelChecker::PrefixBFSGraph : public BFSGraph<BuchiAutomaton2>
 {
 public:
-	PrefixBFSGraph(Automaton& prod, const PtrVector<StateSet>& stateMap, const State& cycleState):
+	PrefixBFSGraph(Automaton& prod, const vector<unique_ptr<StateSet> >& stateMap, const State& cycleState):
 		BFSGraph<BuchiAutomaton2>(prod, prod.getInitialStates()), cycleState(cycleState), stateMap(stateMap) {}
 
 	bool isTarget(const State& s) const
@@ -54,7 +53,7 @@ public:
 
 private:
 	const State cycleState;
-	const PtrVector<StateSet>& stateMap;
+	const vector<unique_ptr<StateSet> >& stateMap;
 };
 
 
@@ -63,12 +62,12 @@ NDFSModelChecker::NDFSModelChecker(Automaton& prod): prod(prod) {}
 bool
 NDFSModelChecker::findCounterExample()
 {
-	intersectionStates.expandTo(1);
+	intersectionStates.resize(1);
 	bool result = false;
 
-	FOR_EACH_CONST(i, Vector<State>, prod.getInitialStates())
+	for(const State& i : prod.getInitialStates())
 	{
-		if ( dfs1(*i) )
+		if ( dfs1(i) )
 		{
 			result = true;
 			break;
@@ -94,11 +93,11 @@ NDFSModelChecker::findCounterExample()
 bool
 NDFSModelChecker::dfs1(const State& initial)
 {
-	PtrStack<TransitionIterator> dfs1;
+	stack<unique_ptr<TransitionIterator> > dfs1;
 	intersectionStates[initial.system]->dfs1Seen.insert(initial.property);
 	intersectionStates[initial.system]->onDfs1Stack.insert(initial.property);
 	leadIn.push_back(make_pair(NONE,NONE));	// dummy node to make "leadIn" have the same size with dfs1 stack.
-	dfs1.push(prod.makeTransitionIterator(initial));
+	dfs1.emplace(prod.makeTransitionIterator(initial));
 
 	while (!dfs1.empty())
 	{
@@ -115,13 +114,13 @@ NDFSModelChecker::dfs1(const State& initial)
 					continue;	// skip already visited
 			}
 			else
-				intersectionStates.expandTo(ns.system + 1);
+				intersectionStates.resize(ns.system + 1);
 
 			// if not visited yet
 			intersectionStates[ns.system]->dfs1Seen.insert(ns.property);
 			intersectionStates[ns.system]->onDfs1Stack.insert(ns.property);
 			leadIn.push_back(make_pair(dfs1.top()->getSource().system, sysIndex));
-			dfs1.push(prod.makeTransitionIterator(ns));
+			dfs1.emplace(prod.makeTransitionIterator(ns));
 
 			// if a trap state, then stop immediately (a cycle part counterexample will be an empty list)
 			if (trap(ns.property))
@@ -162,10 +161,10 @@ NDFSModelChecker::dfs1(const State& initial)
 local_inline bool
 NDFSModelChecker::dfs2(const State& initial)
 {
-	PtrStack<TransitionIterator> dfs2;
+	stack<unique_ptr<TransitionIterator> > dfs2;
 	intersectionStates[initial.system]->dfs2Seen.insert(initial.property);
 	cycle.push_back(make_pair(NONE,NONE));	// dummy node to make "cycle" have the same size with dfs2 stack.
-	dfs2.push(prod.makeTransitionIterator(initial));
+	dfs2.emplace(prod.makeTransitionIterator(initial));
 
 	while (!dfs2.empty())
 	{
@@ -176,19 +175,19 @@ NDFSModelChecker::dfs2(const State& initial)
 			dfs2.top()->next();
 
 			Assert( (size_t) ns.system < intersectionStates.size(), "visited system state for the first time on dfs2");
-			StateSet* sset = intersectionStates[ns.system];
-			if ( sset->onDfs1Stack.contains(ns.property))	// found an accepted cycle
+			StateSet& sset = *intersectionStates[ns.system];
+			if ( sset.onDfs1Stack.contains(ns.property))	// found an accepted cycle
 			{
 				cycleState = ns;
 				cycle.push_back(make_pair(dfs2.top()->getSource().system, sysIndex));
 				cycle.pop_front();		// remove dummy
 				return true;
 			}
-			if ( !sset->dfs2Seen.contains(ns.property))	// not visited yet during DFS2
+			if ( !sset.dfs2Seen.contains(ns.property))	// not visited yet during DFS2
 			{
-				sset->dfs2Seen.insert(ns.property);
+				sset.dfs2Seen.insert(ns.property);
 				cycle.push_back(make_pair(dfs2.top()->getSource().system, sysIndex));
-				dfs2.push(prod.makeTransitionIterator(ns));
+				dfs2.emplace(prod.makeTransitionIterator(ns));
 			}
 			// skip
 		}

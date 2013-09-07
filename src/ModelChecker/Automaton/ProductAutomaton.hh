@@ -32,7 +32,7 @@ public:
 	virtual ~ProductAutomaton() {}
 
 	virtual TransitionIterator* makeTransitionIterator(const State& state);
-	const Vector<State>& getInitialStates() const;
+	const vector<State>& getInitialStates() const;
 
 	KripkeStructure& getSystemAutomaton() const;
 	const _PropertyAutomaton& getPropertyAutomaton() const;
@@ -43,7 +43,7 @@ protected:
 	const _PropertyAutomaton& property;
 
 private:
-	Vector<State> initialStates;
+	vector<State> initialStates;
 };
 
 

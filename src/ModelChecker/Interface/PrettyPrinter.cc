@@ -41,11 +41,11 @@ PrettyPrinter::PrettyPrinter(Symbol* prettyPrintSymbol, RewritingContext* contex
 void
 PrettyPrinter::print(ostream& o, DagNode* target) const
 {
-	Assert(prettyPrintSymbol != NULL, "StateFoldingGraph::StateFoldingGraph: null printStateSymbol");
+	Assert(prettyPrintSymbol != nullptr, "StateFoldingGraph::StateFoldingGraph: null printStateSymbol");
 	static Vector<DagNode*> args(1);
 	args[0] = target;
 	DagNode* printDag = prettyPrintSymbol->makeDagNode(args);
-	const auto_ptr<RewritingContext> printContext(
+	const unique_ptr<RewritingContext> printContext(
 			parentContext->makeSubcontext(printDag));
 	printContext->reduce();
 	parentContext->addInCount(*printContext);

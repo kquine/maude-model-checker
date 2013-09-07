@@ -13,25 +13,25 @@
 namespace modelChecker {
 
 
-WeakFairSet::WeakFairSet(const NatSet& satisfied): satisfiedWeakFair(satisfied) {}
+WeakFairSet::WeakFairSet(const NatSet& falsified): falsifiedWeakFair(falsified) {}
 
 void
 WeakFairSet::merge(const WeakFairSet* wf)
 {
-	satisfiedWeakFair.insert(wf->satisfiedWeakFair);
+	falsifiedWeakFair.intersect(wf->falsifiedWeakFair);
 }
 
 
 bool
-WeakFairSet::isSatisfied(const NatSet& all) const
+WeakFairSet::isSatisfied() const
 {
-	return all == satisfiedWeakFair;
+	return falsifiedWeakFair.empty();
 }
 
 void
 WeakFairSet::dump(ostream& o) const
 {
-	o << "(weak: " << satisfiedWeakFair << ")";
+	o << "(weak: " << falsifiedWeakFair << ")";
 }
 
 
@@ -47,7 +47,7 @@ WeakFairSet::makeBadGoal() const
 	return new Bad;
 }
 
-WeakFairSet::Goal::Goal(const WeakFairSet* fs): weakFairGoal(fs->satisfiedWeakFair) {}
+WeakFairSet::Goal::Goal(const WeakFairSet* fs): weakFairGoal(fs->falsifiedWeakFair) {}
 
 bool
 WeakFairSet::Goal::empty() const
@@ -59,11 +59,11 @@ bool
 WeakFairSet::Goal::update(const FairSet* f)
 {
 	const WeakFairSet* nf = safeCast(const WeakFairSet*,f);
-	if (weakFairGoal.disjoint(nf->satisfiedWeakFair))
+	if (weakFairGoal.disjoint(nf->falsifiedWeakFair))
 		return false;
 	else
 	{
-		weakFairGoal.subtract(nf->satisfiedWeakFair);
+		weakFairGoal.subtract(nf->falsifiedWeakFair);	// FIXME: satisfied -> falsified??
 		return true;
 	}
 }

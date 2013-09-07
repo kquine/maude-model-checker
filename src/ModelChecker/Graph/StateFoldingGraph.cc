@@ -38,7 +38,7 @@ StateFoldingGraph::incrementLevel()
 	{
 		int mStateNr = maximalStates[i];
 		MaximalState* ms = safeCast(MaximalState*,foldGraph[mStateNr]);
-		Assert(ms->trans.get() == NULL, "the maximal level, but already explored");
+		Assert(ms->trans, "the maximal level, but already explored");
 		ms->trans.reset(new Vector<pair<int,int> >());
 		for (int j = 0, n = NONE; (n = graph->getNextState(mStateNr, j)) != NONE; ++j)
 		{
@@ -49,8 +49,8 @@ StateFoldingGraph::incrementLevel()
 			if (FoldedState* fns = dynamic_cast<FoldedState*>(foldGraph[n]))
 			{
 				// if the target state is folded
-				FOR_EACH_CONST(k, set<int>, fns->foldRel)
-					ms->trans->append(make_pair(*k,j));
+				for(int k : fns->foldRel)
+					ms->trans->append(make_pair(k,j));
 			}
 			else
 			{
@@ -68,7 +68,7 @@ StateFoldingGraph::insertFoldedState(int stateNr)
 {
 	if (stateNr >= foldGraph.size())
 		foldGraph.expandTo(stateNr + 1, false);
-	if (foldGraph[stateNr] != NULL)	// do NOTHING if stateNr have already been created
+	if (foldGraph[stateNr])	// do NOTHING if stateNr have already been created
 		return;
 
 	Vector<int> foldingStates;
@@ -88,7 +88,7 @@ StateFoldingGraph::insertFoldedState(int stateNr)
 	{
 		FoldedState* fs = new FoldedState();
 		foldGraph.replace(stateNr, fs);
-		FOR_EACH_CONST(j, Vector<int>, foldingStates)
+		for(int j : foldingStates)
 			fs->foldRel.insert(*j);
 	}
 }
@@ -97,11 +97,11 @@ StateFoldingGraph::insertFoldedState(int stateNr)
 int
 StateFoldingGraph::getNextState(int stateNr, int index)
 {
-	Assert(stateNr < foldGraph.size() && foldGraph[stateNr] != NULL,
+	Assert(stateNr < foldGraph.size() && foldGraph[stateNr],
 				"StateFoldingGraph::getNextState: unknown source state folding");
 
 	const MaximalState* ms = safeCast(const MaximalState*,foldGraph[stateNr]);
-	return ms->trans.get() == NULL ? NONE :
+	return ms->trans ? NONE :
 			(index < ms->trans->size() ? (*ms->trans)[index].first : NONE);
 }
 

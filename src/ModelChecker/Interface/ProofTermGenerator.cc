@@ -46,16 +46,17 @@ ProofTermGenerator::makeProofDag(const PositionState* ps, const Rule& rule, cons
 	args[0] = makeContextDag(ps, rule.getLhs()->getSort());
 	args[1] = makeRuleNameDag(rule.getLabel().id());
 	args[2] = makeSubstitutionDag(subst, &rule);
-    return prooftermSymbol->makeDagNode(args);
+
+	return prooftermSymbol->makeDagNode(args);
 }
 
 DagNode*
 ProofTermGenerator::makeContextDag(const PositionState* ps, const Sort* holeSort) const
 {
-	if (ps != NULL)
+	if (ps != nullptr)
 	{
 		Symbol* holeSymbol = findHoleOp(holeSort);
-		if (holeSymbol != NULL)
+		if (holeSymbol != nullptr)
 			return ps->rebuildDag(holeSymbol->makeDagNode()).first;
 	}
     return noContextSymbol->makeDagNode();
@@ -72,7 +73,7 @@ ProofTermGenerator::makeRuleNameDag(int ruleId) const
 DagNode*
 ProofTermGenerator::makeSubstitutionDag(const Substitution* substitution, const VariableInfo* variableInfo) const
 {
-	if (substitution != NULL && variableInfo != NULL)
+	if (substitution != nullptr && variableInfo != nullptr)
 	{
 		int nrVariable = variableInfo->getNrRealVariables();
 		if (nrVariable > 0)
@@ -82,7 +83,7 @@ ProofTermGenerator::makeSubstitutionDag(const Substitution* substitution, const 
 			{
 				Symbol* assignSymbol = findAssignOp(variableInfo->index2Variable(i));
 
-				if (assignSymbol != NULL)
+				if (assignSymbol != nullptr)
 					args.append(makeAssignmentDag(variableInfo->index2Variable(i), substitution->value(i), assignSymbol));
 			}
 			if (args.size() > 1)

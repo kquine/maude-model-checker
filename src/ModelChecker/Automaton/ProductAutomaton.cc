@@ -6,6 +6,7 @@
  */
 
 //	utility stuff
+#include <memory>
 #include "macros.hh"
 #include "vector.hh"
 
@@ -21,7 +22,6 @@
 #include "genBuchiAutomaton.hh"
 
 //	automaton definitions
-#include "DataStructure/PtrStack.hh"
 #include "ProductAutomaton.hh"
 
 namespace modelChecker {
@@ -31,7 +31,7 @@ ProductAutomaton<PA>::ProductAutomaton(KripkeStructure& system, const PA& proper
 	system(system), property(property)
 {
 	FOR_EACH_CONST(i, NatSet, property.getInitialStates())
-		initialStates.append(State(0,*i));
+		initialStates.emplace_back(0,*i);
 }
 
 template <typename PA> typename ProductAutomaton<PA>::TransitionIterator*
@@ -42,7 +42,7 @@ ProductAutomaton<PA>::makeTransitionIterator(const State& state)
 	return itor;
 }
 
-template <typename PA> const Vector<typename ProductAutomaton<PA>::State>&
+template <typename PA> const vector<typename ProductAutomaton<PA>::State>&
 ProductAutomaton<PA>::getInitialStates() const
 {
 	return initialStates;
@@ -167,11 +167,10 @@ ProductAutomaton<PA>::dump(ostream& o)
 	int nrStates = 0;
 	int nrTransitions = 0;
 
-	PtrStack<TransitionIterator> stk;
-	Vector<NatSet> visited;
-	visited.expandBy(1);
+	stack<unique_ptr<TransitionIterator> > stk;
+	vector<NatSet> visited(1);
 
-	const Vector<State>& initials = getInitialStates();
+	const vector<State>& initials = getInitialStates();
 	for (int i = initials.size() - 1; i >= 0; i--)
 	{
 		++nrStates;
@@ -190,8 +189,8 @@ ProductAutomaton<PA>::dump(ostream& o)
 
 			stk.top()->next();
 			++nrTransitions;
-			if (t.target.system >= visited.length())
-				visited.expandTo(t.target.system + 1);
+			if (t.target.system >= visited.size())
+				visited.resize(t.target.system + 1);
 
 			if (visited[t.target.system].contains(t.target.property))
 			{

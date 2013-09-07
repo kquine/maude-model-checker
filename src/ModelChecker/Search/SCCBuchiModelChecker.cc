@@ -21,26 +21,25 @@
 //      utility class definitions
 #include "natSet.hh"
 #include "BFSGraph.hh"
-#include "DataStructure/PtrStack.hh"
 
 #include "SCCBuchiModelChecker.hh"
 
 namespace modelChecker {
 
-SCCBuchiModelChecker::SCCBuchiModelChecker(Automaton& prod, CompositedFairnessMap& fm): SCCModelChecker(prod,fm) {}
+SCCBuchiModelChecker::SCCBuchiModelChecker(Automaton& prod, FairnessMap& fm): SCCModelChecker(prod,fm) {}
 
 
-SCCModelChecker::SCC*
+unique_ptr<SCCModelChecker::SCC>
 SCCBuchiModelChecker::findAcceptedSCC(const Vector<State>& initials)
 {
 	SCCStack stack(this);
-	auto_ptr<FairSet> emptyFairPtr;
+	unique_ptr<FairSet> emptyFairPtr;	//FIXME: will not work. Compare with the last version (that uses a reference of auto_ptr)
 
-	FOR_EACH_CONST(i, Vector<State>, initials)
+	for(const State& i : initials)
 	{
-		if (H.expand(*i) || !H.contains(*i))	// if the initial state has not visited yet..
+		if (H.expand(i) || !H.contains(i))	// if the initial state has not visited yet..
 		{
-			stack.dfsPush(*i, emptyFairPtr);
+			stack.dfsPush(i, std::move(emptyFairPtr));
 			//
 			// main loop
 			//
@@ -49,16 +48,16 @@ SCCBuchiModelChecker::findAcceptedSCC(const Vector<State>& initials)
 				if (stack.hasNextSucc())
 				{
 					Transition t = stack.pickSucc();
-					auto_ptr<FairSet> a(fairMap.makeFairSet(t));
+					unique_ptr<FairSet> a(fairMap.makeFairSet(t));
 					stack.nextSucc();
 
 					if (H.expand(t.target) || !H.contains(t.target))	// if the next state not visited yet..
-						stack.dfsPush(t.target, a);
+						stack.dfsPush(t.target, std::move(a));
 					else if (H.get(t.target) > 0)		// if on the dfs stack..
 					{
-						stack.merge(H.get(t.target), a);
-						if ( fairMap.satisfiedFairSet(stack.topSCC()->acc_fair.get()) )
-							return new SCC(*stack.topSCC());
+						stack.merge(H.get(t.target), std::move(a));
+						if ( fairMap.satisfiedFairSet(stack.topSCC().acc_fair.get()) )
+							return stack.releaseSCC();
 					}
 				}
 				else
@@ -66,7 +65,7 @@ SCCBuchiModelChecker::findAcceptedSCC(const Vector<State>& initials)
 			}
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 

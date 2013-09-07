@@ -33,32 +33,24 @@ namespace product {
 	SETransitionIterator<PA>::computeNextTransition(KripkeStructure* ks, bool first)
 	{
 		LabeledKripkeStructure* graph = static_cast<LabeledKripkeStructure*>(ks);
-		pair<bool,Bdd> test;
 
 		switch(first)
 		{
 		case 1:
 			for (this->tr.propertyIndex = this->ts->begin(); this->tr.propertyIndex != this->ts->end(); ++this->tr.propertyIndex)
 			{
-				// check state-props
-				test = graph->satisfiesStateEventFormula(
-						PropertyTransitionAdaptor<PA>::getFormula(*this->tr.propertyIndex), this->tr.source.system);
-				if (test.first)
+				for (this->tr.systemIndex = 0; ; ++this->tr.systemIndex)
 				{
-					label = test.second;
-					for (this->tr.systemIndex = 0; ; ++this->tr.systemIndex)
-					{
-						this->tr.target.system = ks->getNextState(this->tr.source.system,this->tr.systemIndex);
-						if (this->tr.target.system == NONE)
-							break;
+					this->tr.target.system = ks->getNextState(this->tr.source.system,this->tr.systemIndex);
+					if (this->tr.target.system == NONE)
+						break;
 
-						// check event-props
-						if (graph->satisfiesEventFormula(label, this->tr.source.system, this->tr.systemIndex))
-						{
-							this->tr.target.property = PropertyTransitionAdaptor<PA>::getNextState(*this->tr.propertyIndex);
-							return;
+					// check state/event props
+					if (graph->satisfiesFormula(PropertyTransitionAdaptor<PA>::getFormula(*this->tr.propertyIndex), this->tr.source.system, this->tr.systemIndex))
+					{
+						this->tr.target.property = PropertyTransitionAdaptor<PA>::getNextState(*this->tr.propertyIndex);
+						return;
 		default:;
-						}
 					}
 				}
 			}

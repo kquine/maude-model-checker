@@ -7,29 +7,22 @@
 
 #ifndef FAIRNESSDECODER_HH_
 #define FAIRNESSDECODER_HH_
-#include "bddUser.hh"
 #include "logicFormula.hh"
 
 namespace modelChecker {
 
-class FairnessDecoder : private BddUser
+class FairnessDecoder
 {
 public:
-	enum FairnessType {STRONG_FAIRNESS, WEAK_FAIRNESS};
-	struct Fairness
-	{
-		FairnessType type;
-		DagNode* prem;
-		DagNode* cons;
-	};
+	enum FairnessType	{ STRONG_FAIRNESS, WEAK_FAIRNESS };
+	struct Fairness		{ FairnessType type;  DagNode* prem;  DagNode* cons; };
 
-	FairnessDecoder(Symbol* fairnessSymbol, Symbol* strongFairTypeSymbol, Symbol* weakFairTypeSymbol,
-			Symbol* fairnessSetSymbol, Symbol* emptyFairnessSetSymbol);
-	Vector<Fairness> interpreteFairnessSet(DagNode* fairessSetDag) const;
-	Bdd translateFormula(int subformulaIndex, const LogicFormula& formula) const;
+	FairnessDecoder(Symbol* fairnessSymbol, Symbol* strongFairTypeSymbol, Symbol* weakFairTypeSymbol, Symbol* fairnessSetSymbol, Symbol* emptyFairnessSetSymbol);
+
+	Fairness decodeFairnessDag(DagNode* fairnessDag) const;
+	bool interpreteFairnessSet(DagNode* fairessSetDag, std::function<int(DagNode*)> func) const;	// return true if there is no problem
 
 private:
-    Fairness interpreteFairnessDag(DagNode* fairnessDag) const;
 
     Symbol* fairnessSymbol;
     Symbol* strongFairTypeSymbol;

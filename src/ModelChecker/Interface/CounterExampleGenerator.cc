@@ -45,9 +45,9 @@ CounterExampleGenerator::makeCounterexample(const DagGraphMap& dg, const list<Ed
 #ifdef TDEBUG
 	cout << "counter example: " << endl;
 	cout << "  path: ";
-	FOR_EACH_CONST(i, list<Edge>, path) cout << i->first << "=(" << i->second << ")=> ";
+	for (Edge& i : path) cout << i.first << "=(" << i.second << ")=> ";
 	cout << "\n  cycle: ";
-	FOR_EACH_CONST(j, list<Edge>, cycle) cout << j->first << "=(" << j->second << ")=> ";
+	for (Edge& j : cycle) cout << j.first << "=(" << j.second << ")=> ";
 	cout << endl;
 #endif
 
@@ -66,8 +66,8 @@ CounterExampleGenerator::makeTransitionList(const DagGraphMap& dg, const list<Ed
     else
     {
 		Vector<DagNode*> args;
-		FOR_EACH_CONST(i, list<Edge>, path)
-			args.append(makeTransition(dg, i->first, i->second));
+		for(const Edge& i : path)
+			args.append(makeTransition(dg, i.first, i.second));
 		return (args.length() == 1) ? args[0] : transitionListSymbol->makeDagNode(args);
     }
 }
@@ -78,7 +78,7 @@ CounterExampleGenerator::makeTransition(const DagGraphMap& dg, int stateNr, int 
 	static Vector<DagNode*> targs(2);
 	targs[0] = dg.getStateDag(stateNr);
 	targs[1] = dg.getTransitionDag(stateNr, count);
-	if (targs[1] == NULL)
+	if (targs[1] == nullptr)
 		targs[1] = deadlockDag;
 	return transitionSymbol->makeDagNode(targs);
 }

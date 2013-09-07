@@ -7,8 +7,8 @@
 
 #ifndef STATEMAP_HH_
 #define STATEMAP_HH_
-#include <tr1/unordered_map>
-#include "DataStructure/PtrVector.hh"
+#include <memory>
+#include <unordered_map>
 #include "Automaton/ProductAutomaton.hh"
 
 namespace modelChecker {
@@ -19,7 +19,7 @@ namespace modelChecker {
 template <class T>
 class StateMap
 {
-	typedef tr1::unordered_map<int,T> IntMap;
+	typedef unordered_map<int,T> IntMap;
 public:
 	bool invalid(const product::State& s) const;
 	bool expand(const product::State& s);			// should be called first
@@ -29,7 +29,7 @@ public:
 	const T& get(const product::State& s) const;
 private:
 	// NOTE: we assume that stateNr is successively increased, so we use Vector.
-	PtrVector<IntMap> map;		// systemNr -> propertyNr -> dfs_number
+	vector<unique_ptr<IntMap> > map;		// systemNr -> propertyNr -> dfs_number
 };
 
 }

@@ -7,9 +7,9 @@
 
 #ifndef NDFSMODELCHECKER_HH_
 #define NDFSMODELCHECKER_HH_
+#include <memory>
 #include "buchiAutomaton2.hh"
 #include "ModelChecker.hh"
-#include "DataStructure/PtrVector.hh"
 #include "Graph/DagGraphMap.hh"
 #include "Automaton/ProductAutomaton.hh"
 
@@ -17,7 +17,6 @@ namespace modelChecker {
 
 class NDFSModelChecker: public ModelChecker
 {
-	NO_COPYING(NDFSModelChecker);
 	typedef ProductAutomaton<BuchiAutomaton2>	Automaton;
 	typedef Automaton::State					State;
 	typedef Automaton::Transition				Transition;
@@ -25,6 +24,8 @@ class NDFSModelChecker: public ModelChecker
 
 public:
 	NDFSModelChecker(Automaton& prod);
+	NDFSModelChecker(const NDFSModelChecker&) = delete;
+	NDFSModelChecker& operator=(const NDFSModelChecker&) = delete;
 
 	bool findCounterExample();
 
@@ -42,7 +43,7 @@ private:
 	bool trap(int propertyIndex) const;		// return true if a single self loop with transition "true"
 
 	State cycleState;						// intersection of cycle and prefix after nested dfs
-	PtrVector<StateSet> intersectionStates;
+	vector<unique_ptr<StateSet> > intersectionStates;
 	Automaton& prod;
 };
 

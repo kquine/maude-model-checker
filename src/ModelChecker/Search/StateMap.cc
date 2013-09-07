@@ -20,7 +20,7 @@ StateMap<T>::expand(const product::State& s)
 {
 	if ( (size_t)s.system >= map.size())
 	{
-		map.expandTo(s.system + 1);
+		map.resize(s.system + 1);
 		return true;
 	}
 	return false;

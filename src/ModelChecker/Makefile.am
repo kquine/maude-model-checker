@@ -21,27 +21,50 @@ libModelChecker_a_CPPFLAGS = \
 
 
 libModelChecker_a_SOURCES = \
-	DataStructure/TermUtil.cc \
-	Param/RealizedPropGenerator.cc \
 	Automaton/KripkeStructure.cc \
 	Automaton/LabeledKripkeStructure.cc \
+	Formula/PropSet.cc \
+	Formula/PropositionTable.cc \
+	Formula/PropChecker.cc \
+	Formula/EnabledPropTransferer.cc \
+	Formula/FormulaBuilder.cc \
+	Formula/ParamPropSet.cc \
+	Formula/ParamPropositionTable.cc \
+	Formula/ParamSubstitution.cc \
+	Formula/ParamSubstitutionBuilder.cc \
+	Formula/ParamPropChecker.cc \
+	Formula/ParamEnabledPropTransferer.cc \
+	Formula/ParamVarInfo.cc \
+	Formula/RealizedPropGenerator.cc \
+	Fairness/FairnessTable.cc \
+	Fairness/ParamFairnessTable.cc \
+	Fairness/FairnessChecker.cc \
+	Fairness/WeakFairnessChecker.cc \
+	Fairness/ParamWeakFairnessChecker.cc \
+	Fairness/StrongFairnessChecker.cc \
+	Fairness/ParamStrongFairnessChecker.cc \
+	Fairness/CompositeFairnessChecker.cc \
+	Fairness/WeakFairSet.cc \
+	Fairness/StrongFairSet.cc \
+	Fairness/CompositeFairSet.cc \
 	Graph/RewriteTransitionState.cc \
 	Graph/StateDagContainer.cc \
-	GraphLabel/PropInterpreter.cc \
-	GraphLabel/PropChecker.cc \
-	GraphLabel/StatePropHandler.cc \
-	GraphLabel/StateEventPropHandler.cc \
+	Graph/LabelPropHandler.cc \
+	Graph/LabelFairHandler.cc \
     Search/ModelCheckerFactory.cc \
     Search/NDFSModelChecker.cc \
     Search/SCCModelChecker.cc \
     Search/SCCBuchiModelChecker.cc \
     Search/StreettModelChecker.cc \
-	Interface/ProofTermGenerator.cc \
-	Interface/CounterExampleGenerator.cc \
-	Interface/FairnessDecoder.cc \
-	ltlrFairnessCheckerSymbol.cc 
-
+    Interface/PropInterpreter.cc \
+    Interface/PropEvaluator.cc \
+    Interface/FairnessDecoder.cc \
+    Interface/ProofTermGenerator.cc \
+    Interface/CounterExampleGenerator.cc \
+    Utility/TermUtil.cc \
+    ltlrFairnessCheckerSymbol.cc 
 	
+
 noinst_HEADERS = \
 	ltlrFairnessCheckerSymbol.hh \
 	SymbolicModelCheckerSymbol.hh

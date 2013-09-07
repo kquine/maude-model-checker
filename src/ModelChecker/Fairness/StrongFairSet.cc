@@ -83,10 +83,10 @@ StrongFairSet::Bad::Bad(const StrongFairSet* fs)
 }
 
 bool
-StrongFairSet::Bad::isBad(const FairSet* f) const
+StrongFairSet::Bad::isBad(const FairSet& f) const
 {
-	const StrongFairSet* nf = safeCast(const StrongFairSet*,f);
-	return !badFairs.disjoint(nf->supp_fair);
+	const StrongFairSet& nf = static_cast<const StrongFairSet&>(f);
+	return !badFairs.disjoint(nf.supp_fair);
 }
 
 bool
@@ -96,10 +96,10 @@ StrongFairSet::Bad::empty() const
 }
 
 void
-StrongFairSet::Bad::merge(const FairSet::Bad* b)
+StrongFairSet::Bad::merge(const FairSet::Bad& b)
 {
-	const Bad* nb = safeCast(const Bad*, b);
-	badFairs.insert(nb->badFairs);
+	const Bad& nb = static_cast<const Bad&>(b);
+	badFairs.insert(nb.badFairs);
 }
 
 }

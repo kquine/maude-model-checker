@@ -39,14 +39,14 @@ StateTransitionMetaGraph::getNextState(int stateNr, int index)
 	State* n = seen[stateNr];
 	if (index < nrTransitions)
 		return n->transitions[index]->nextState;
-	if (n->explore.get() == NULL)	// fully explored
+	if (n->explore)	// fully explored
 	{
 		return NONE;
 	}
 	while (nrTransitions <= index)
 	{
 		DagNode* ns = n->explore->getNextStateDag(initial);
-		if (ns != NULL && ns->symbol() == transitionSymbol)		// if there is a next transition
+		if (ns != nullptr && ns->symbol() == transitionSymbol)		// if there is a next transition
 		{
 			FreeDagNode* mtDag = safeCast(FreeDagNode*, ns);
 			DagNode* transDag = mtDag->getArgument(0);
@@ -86,7 +86,7 @@ bool
 StateTransitionMetaGraph::insertTransition(State* s, int nextState, DagNode* transitionDag)
 {
 	RewriteTransitionState* rewriteState = s->explore.get();
-	auto_ptr<Transition> t(new Transition(nextState, insertDag(transitionDag, transId)));
+	unique_ptr<Transition> t(new Transition(nextState, insertDag(transitionDag, transId)));
 
 	if (s->explore->transitionPtrSet->insert(t.get()).second)	// if a new transition identified
 	{

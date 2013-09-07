@@ -22,7 +22,6 @@ namespace modelChecker {
 //
 class StateFoldingGraph: public SystemGraph
 {
-	NO_COPYING(StateFoldingGraph);
 public:
 	struct FoldingRel
 	{
@@ -30,6 +29,9 @@ public:
 	};
 
 	StateFoldingGraph(SystemGraph* graph, const FoldingRel* sfc);
+	StateFoldingGraph(const StateFoldingGraph&) = delete;
+	StateFoldingGraph& operator=(const StateFoldingGraph&) = delete;
+
 	virtual ~StateFoldingGraph() {}
 
 	int getNrStates() const;
@@ -50,7 +52,7 @@ private:
 	};
 	struct MaximalState: public State
 	{
-		auto_ptr<Vector<pair<int,int> > > trans;	// (next state, orig trIndex)
+		unique_ptr<Vector<pair<int,int> > > trans;	// (next state, orig trIndex)
 	};
 	struct FoldedState: public State
 	{
@@ -59,10 +61,10 @@ private:
 
 	void insertFoldedState(int stateNr);
 
-	SystemGraph* graph;				// underlying graph
+	SystemGraph* graph;							// underlying graph
 
-	PtrVector<State> foldGraph;		// folding graph (the same stateIndex with the underlying graph)
-	const FoldingRel* sfc;		// state folding checker
+	vector<unique_ptr<State> > foldGraph;		// folding graph (the same stateIndex with the underlying graph)
+	const FoldingRel* sfc;						// state folding checker
 
 	Vector<int> maximalStates;		// the maximal state indices
 	Vector<int> levelIndices;		// the vector of the least indices with each level (in maximalStates)
@@ -80,7 +82,7 @@ StateFoldingGraph::getNrTransitions(int stateNr) const
 {
 	Assert(stateNr < foldGraph.size(), "StateFoldingGraph::getNrTransitions: invalid state lookup");
 	const MaximalState* ms = safeCast(const MaximalState*,foldGraph[stateNr]);
-	return ms->trans.get() == NULL? NONE: ms->trans->size();
+	return ms->trans ? NONE: ms->trans->size();
 }
 
 inline SystemGraph&
@@ -104,7 +106,7 @@ StateFoldingGraph::getCurrLevel() const
 inline bool
 StateFoldingGraph::boundState(int stateNr) const
 {
-	return safeCast(const MaximalState*,foldGraph[stateNr])->trans.get() == NULL;
+	return safeCast(const MaximalState*,foldGraph[stateNr])->trans;
 }
 
 
