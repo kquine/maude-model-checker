@@ -14,10 +14,13 @@ namespace modelChecker {
 
 class ModelChecker
 {
-	typedef pair<int,int>	Edge;
 public:
+	typedef pair<int,int>	Edge;
+
 	virtual ~ModelChecker()	{}
+
 	virtual bool findCounterExample() = 0;
+	virtual const DagSystemGraph& getSystemGraph() const = 0;
 
 	const list<Edge>& getLeadIn() const;
 	const list<Edge>& getCycle() const;

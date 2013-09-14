@@ -22,128 +22,50 @@
 #include "genBuchiAutomaton.hh"
 
 //	automaton definitions
+#include "Graph/StateSystemGraph.hh"
 #include "ProductAutomaton.hh"
 
 namespace modelChecker {
 
-template <typename PA>
-ProductAutomaton<PA>::ProductAutomaton(KripkeStructure& system, const PA& property):
-	system(system), property(property)
+template <typename SA, typename PA>
+ProductAutomaton<SA,PA>::ProductAutomaton(unique_ptr<SA> system, unique_ptr<PA> property):
+	systemAut(move(system)), propertyAut(move(property))
 {
-	FOR_EACH_CONST(i, NatSet, property.getInitialStates())
-		initialStates.emplace_back(0,*i);
+	for(auto i : propertyAut->getInitialStates())
+		initialStates.emplace_back(0,i);
 }
 
-template <typename PA> typename ProductAutomaton<PA>::TransitionIterator*
-ProductAutomaton<PA>::makeTransitionIterator(const State& state)
+template <typename SA, typename PA>
+inline unique_ptr<typename ProductAutomaton<SA,PA>::TransitionIterator>
+ProductAutomaton<SA,PA>::makeTransitionIterator(const State& state)
 {
-	TransitionIterator* itor = new TransitionIterator(this, state);
-	itor->init();
-	return itor;
+	TransitionIterator* ti = new TransitionIterator(*systemAut, *propertyAut, state);
+	ti->init();
+	return unique_ptr<TransitionIterator>(ti);
 }
 
-template <typename PA> const vector<typename ProductAutomaton<PA>::State>&
-ProductAutomaton<PA>::getInitialStates() const
+//
+// an iterator for state-only graphs (formula, not fairness)
+//
+template <typename SA>
+struct StateOnlyProductTransitionIteratorTraits
 {
-	return initialStates;
-}
-
-
-template <typename PA> inline KripkeStructure&
-ProductAutomaton<PA>::getSystemAutomaton() const
-{
-	return system;
-}
-
-template <typename PA> inline const PA&
-ProductAutomaton<PA>::getPropertyAutomaton() const
-{
-	return property;
-}
-
-
-namespace product
-{
-	//
-	// specialization for transitions of BuchiAutomaton
-	//
-	template <>
-	struct PropertyTransitionAdaptor<BuchiAutomaton2>
-	{
-		typedef BuchiAutomaton2::Transition		Transition;
-		typedef BuchiAutomaton2::TransitionMap	TransitionSet;
-		static int getNextState(const Transition& t)		{ return t.first; }
-		static const Bdd& getFormula(const Transition&t)	{ return t.second; }
-	};
-
-	//
-	// specialization for transitions of GenBuchiAutomaton
-	//
-	template <>
-	struct PropertyTransitionAdaptor<GenBuchiAutomaton>
-	{
-		typedef GenBuchiAutomaton::FairTransition		Transition;
-		typedef GenBuchiAutomaton::FairTransitionSet	TransitionSet;
-		static int getNextState(const Transition& t)		{ return t.first.first; }
-		static const Bdd& getFormula(const Transition&t)	{ return t.second; }
-	};
-
-
 	template <typename PA>
-	TransitionIterator<PA>::TransitionIterator(ProductAutomaton<PA>* parent, const State& state)
-	{
-		tr.source = state;
-		sysGraph = &parent->getSystemAutomaton();
-		ts = &parent->getPropertyAutomaton().getTransitions(state.property);
-		// NOTE: computeNextTransition cannot be called here since it is virtual.
-	}
-
-	template <typename PA> inline bool
-	TransitionIterator<PA>::hasNext() const
-	{
-		return tr.systemIndex != NONE;
-	}
-
-	template <typename PA> inline const Transition<PA>&
-	TransitionIterator<PA>::pick() const
-	{
-		return tr;
-	}
-
-	template <typename PA> inline void
-	TransitionIterator<PA>::init()
-	{
-		computeNextTransition(sysGraph, true);
-	}
-
-	template <typename PA> inline void
-	TransitionIterator<PA>::next()
-	{
-		computeNextTransition(sysGraph, false);
-	}
-
-	template <typename PA> inline const State&
-	TransitionIterator<PA>::getSource() const
-	{
-		return tr.source;
-	}
-
-	template <typename PA> void
-	TransitionIterator<PA>::computeNextTransition(KripkeStructure* ks, bool first)
+	void computeNextTransition(bool first, typename AutomatonTraits<PA>::Transition& tr, const typename AutomatonTraits<PA>::PropertyTransitionSet& ts, SA& ks)
 	{
 		switch(first)
 		{
 		case 1:
-			for (tr.propertyIndex = ts->begin(); tr.propertyIndex != ts->end(); ++tr.propertyIndex)
+			for (tr.propertyIndex = ts.begin(); tr.propertyIndex != ts.end(); ++tr.propertyIndex)
 			{
-				if (ks->satisfiesStateFormula(PropertyTransitionAdaptor<PA>::getFormula(*tr.propertyIndex), tr.source.system))
+				if (ks.satisfiesStateFormula(AutomatonTraits<PA>::getFormula(*tr.propertyIndex), tr.source.first))
 				{
 					for (tr.systemIndex = 0; ; ++tr.systemIndex)
 					{
-						tr.target.system = ks->getNextState(tr.source.system, tr.systemIndex);
-						if (tr.target.system == NONE)
+						tr.target.first = ks.getNextState(tr.source.first, tr.systemIndex);
+						if (tr.target.first == NONE)
 							break;
-						tr.target.property = PropertyTransitionAdaptor<PA>::getNextState(*tr.propertyIndex);
+						tr.target.second = AutomatonTraits<PA>::getNextState(*tr.propertyIndex);
 						return;
 		default:;
 					}
@@ -152,73 +74,62 @@ namespace product
 			/* no break */
 		}
 		tr.systemIndex = NONE;
-		tr.target.system = NONE;
-		tr.target.property = NONE;
+		tr.target = make_pair(NONE,NONE);
 	}
-}
+};
+
 
 //
-// test code
+// an iterator for state/event graphs (formula, not fairness)
 //
-
-template <typename PA> void
-ProductAutomaton<PA>::dump(ostream& o)
+template <typename SA>
+struct StateEventProductTransitionIteratorTraits
 {
-	int nrStates = 0;
-	int nrTransitions = 0;
+	Bdd label;	// temporary label
 
-	stack<unique_ptr<TransitionIterator> > stk;
-	vector<NatSet> visited(1);
-
-	const vector<State>& initials = getInitialStates();
-	for (int i = initials.size() - 1; i >= 0; i--)
+	template <typename PA>
+	void computeNextTransition(bool first, typename AutomatonTraits<PA>::Transition& tr, const typename AutomatonTraits<PA>::PropertyTransitionSet& ts, SA& ks)
 	{
-		++nrStates;
-		stk.push(makeTransitionIterator(initials[i]));
-
-		visited[0].insert(initials[i].property);
-		o << "initial visit: " << initials[i] << " with the first next state: " << stk.top()->pick().target << endl;
-	}
-
-	while(!stk.empty())
-	{
-		if(stk.top()->hasNext())
+		switch(first)
 		{
-			Transition t = stk.top()->pick();
-			cout << "pick a transition: " << stk.top()->getSource() << " -> " << t.target << endl;
-
-			stk.top()->next();
-			++nrTransitions;
-			if (t.target.system >= visited.size())
-				visited.resize(t.target.system + 1);
-
-			if (visited[t.target.system].contains(t.target.property))
+		case 1:
+			for (tr.propertyIndex = ts.begin(); tr.propertyIndex != ts.end(); ++tr.propertyIndex)
 			{
-				// skip
-			}
-			else
-			{
-				visited[t.target.system].insert(t.target.property);
-				stk.push(makeTransitionIterator(t.target));
+				pair<bool,Bdd> test = ks.satisfiesStateFormula(AutomatonTraits<PA>::getFormula(*tr.propertyIndex), tr.source.first);
 
-				++nrStates;
-				o << "visit: " << t.target << "  with the first next state: " <<  stk.top()->pick().target << endl;
+				if (test.first)
+				{
+					label = test.second;
+					for (tr.systemIndex = 0; ; ++tr.systemIndex)
+					{
+						tr.target.first = ks->getNextState(tr.source.systemAut, tr.systemIndex);
+						if (tr.target.first == NONE)
+							break;
+
+						// check state/event props
+						if (ks.satisfiesStateEventFormula(label, tr.source.systemAut, tr.systemIndex))
+						{
+							tr.target.property = AutomatonTraits<PA>::getNextState(*tr.propertyIndex);
+							return;
+			default:;
+						}
+					}
+				}
 			}
+			/* no break */
 		}
-		else
-		{
-			o << "-------------------pop" << endl;
-			stk.pop();
-		}
+		tr.systemIndex = NONE;
+		tr.target = make_pair(NONE,NONE);
 	}
-	o << "visited state : " << nrStates << ", visited transition: " << nrTransitions << endl;
+};
 
-	int totalTr = 0;
-	for (int i = 0; i < system.getNrStates(); ++i)
-		totalTr += system.getNrTransitions(i);
 
-	o << "total system state: " << system.getNrStates() << ", total system transition: " << totalTr << endl;
-}
+//
+// transition iterator specializations
+//
+template <>
+struct ProductTransitionIteratorTraits<StateSystemGraph>: StateOnlyProductTransitionIteratorTraits<StateSystemGraph> {};
+
 
 
 }

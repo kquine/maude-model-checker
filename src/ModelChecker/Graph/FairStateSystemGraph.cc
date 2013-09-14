@@ -25,29 +25,30 @@
 #include "rewritingContext.hh"
 
 // ltlr definitions
-
-#include "FairHandler.hh"
 #include "FairStateSystemGraph.hh"
 
 namespace modelChecker {
 
-template <typename PH, typename FH>
-FairStateSystemGraph<PH,FH>::FairStateSystemGraph(RewritingContext& initial, PropChecker& spc, FairnessChecker& fc, ProofTermGenerator& ptg):
-		Super(initial, spc, ptg), fairC(fc) {}
+FairStateSystemGraph::FairStateSystemGraph(RewritingContext& initial, PropChecker& spc, const NatSet& formulaPropIds, FairnessChecker& fc, ProofTermGenerator& ptg):
+		Super(initial, spc, ptg), fairC(fc), formulaPropIds(formulaPropIds) {}
 
-template <typename PH, typename FH>
+unique_ptr<FairSet>
+FairStateSystemGraph::makeFairSet(int stateNr, int transitionNr) const
+{
+	return static_cast<State&>(*Super::seen[stateNr]).fs->clone();
+}
+
 unique_ptr<PropSet>
-FairStateSystemGraph<PH,FH>::updateStateLabel(DagNode* stateDag, PreState& s)
+FairStateSystemGraph::updateStateLabel(DagNode* stateDag, PreState& s)
 {
 	unique_ptr<PropSet> truePropIds = Super::updateStateLabel(stateDag,s);
-	unique_ptr<FairSet> currFS(fairC.computeAllFairness(*truePropIds));	// compute all state fairness conditions
-	fHandler.updateLabel(*currFS, static_cast<State&>(s));
+	static_cast<State&>(s).fs = fairC.computeAllFairness(*truePropIds);		// compute all state fairness conditions
+	s.label.intersect(formulaPropIds);										// keep only state formula props
 	return truePropIds;
 }
 
-template <typename PH, typename FH>
-unique_ptr<typename FairStateSystemGraph<PH,FH>::PreState>
-FairStateSystemGraph<PH,FH>::createState(DagNode* stateDag) const
+unique_ptr<FairStateSystemGraph::PreState>
+FairStateSystemGraph::createState(DagNode* stateDag) const
 {
 	return unique_ptr<PreState>(new State(Super::initial, stateDag));
 }

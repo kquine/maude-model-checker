@@ -8,23 +8,23 @@
 #ifndef COUNTEREXAMPLEGENERATOR_HH_
 #define COUNTEREXAMPLEGENERATOR_HH_
 #include <list>
-#include "Graph/DagGraphMap.hh"
+#include "Automaton/DagSystemGraph.hh"
 
 namespace modelChecker {
 
 class CounterExampleGenerator
 {
-	typedef DagGraphMap::Edge	Edge;
+	using Edge = pair<int,int>;
 
 public:
 	CounterExampleGenerator(Symbol* counterexampleSymbol, Symbol* transitionSymbol,
 			Symbol* transitionListSymbol, Symbol* nilTransitionListSymbol, DagNode* deadlockDag);
 
-	DagNode* makeCounterexample(const DagGraphMap& dg, const list<Edge>& path, const list<Edge>& cycle) const;
+	DagNode* makeCounterexample(const DagSystemGraph& dg, const list<Edge>& path, const list<Edge>& cycle) const;
 
 private:
-    DagNode* makeTransitionList(const DagGraphMap& dg, const list<Edge>& path) const;
-    DagNode* makeTransition(const DagGraphMap& dg, int stateNr, int count) const;
+    DagNode* makeTransitionList(const DagSystemGraph& dg, const list<Edge>& path) const;
+    DagNode* makeTransition(const DagSystemGraph& dg, int stateNr, int count) const;
 
     Symbol* counterexampleSymbol;
     Symbol* transitionSymbol;

@@ -28,30 +28,32 @@
 
 namespace modelChecker {
 
-StreettModelChecker::StreettModelChecker(Automaton& prod, FairnessMap& fm): SCCModelChecker(prod,fm) {}
+template <typename Automaton>
+StreettModelChecker<Automaton>::StreettModelChecker(unique_ptr<Automaton> graph): SCCModelChecker<Automaton>(move(graph)) {}
 
-unique_ptr<SCCModelChecker::SCC>
-StreettModelChecker::findAcceptedSCC(const Vector<State>& initials)
+template <typename Automaton>
+unique_ptr<typename SCCModelChecker<Automaton>::SCC>
+StreettModelChecker<Automaton>::findAcceptedSCC(const vector<State>& initials)
 {
 	queue<State> region;
-	FOR_EACH_CONST(i, Vector<State>, initials)
-		region.push(*i);
+	for(const State& i : initials)
+		region.push(i);
 	return findAcceptedSCC(region, nullptr);
 }
 
-unique_ptr<SCCModelChecker::SCC>
-StreettModelChecker::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
+template <typename Automaton>
+unique_ptr<typename SCCModelChecker<Automaton>::SCC>
+StreettModelChecker<Automaton>::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
 {
 	SCCStack stack(this);
-	unique_ptr<FairSet> emptyFairPtr;
 
 	while ( !region.empty())
 	{
 		State cur = region.front();
 		region.pop();
-		if (H.expand(cur) || !H.contains(cur))
+		if (! Super::H.contains(cur))
 		{
-			stack.dfsPush(cur, std::move(emptyFairPtr));
+			stack.dfsPush(cur,nullptr);
 			//
 			// main loop
 			//
@@ -60,7 +62,7 @@ StreettModelChecker::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
 				if (stack.hasNextSucc())
 				{
 					Transition t = stack.pickSucc();
-					unique_ptr<FairSet> a(fairMap.makeFairSet(t));
+					unique_ptr<FairSet> a(Super::graph->makeFairSet(t));
 					stack.nextSucc();
 
 					/*
@@ -73,11 +75,11 @@ StreettModelChecker::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
 						region.push(t.target);
 					else
 					{
-						if (H.expand(t.target) || !H.contains(t.target))	// if not visited yet
+						if (!Super::H.contains(t.target))	// if not visited yet
 							stack.dfsPush(t.target, std::move(a));
-						else if (H.get(t.target) > 0)						// if on the dfs stack..
+						else if (Super::H.get(t.target) > 0)						// if on the dfs stack..
 						{
-							stack.merge(H.get(t.target), std::move(a));
+							stack.merge(Super::H.get(t.target), std::move(a));
 
 							/*
 							cout << "merged:  ";
@@ -85,17 +87,16 @@ StreettModelChecker::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
 							cout << endl;
 							*/
 
-
-							if ( fairMap.satisfiedFairSet(stack.topSCC().acc_fair.get()) )
+							if ( stack.topSCC()->acc_fair->isSatisfied() )
 							{
-								return stack.releaseSCC();
+								return move(stack.topSCC());
 							}
 						}
 					}
 				}
 				else	// SCC pop
 				{
-					unique_ptr<FairSet::Bad> new_bad(makeNewBadGoal(stack.topSCC().acc_fair, bad));
+					unique_ptr<FairSet::Bad> new_bad(makeNewBadGoal(stack.topSCC()->acc_fair, bad));
 					//
 					//	If there is a new bad goal, try to revisit the SCC
 					//
@@ -115,17 +116,18 @@ StreettModelChecker::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad)
 	return nullptr;
 }
 
-FairSet::Bad*
-StreettModelChecker::makeNewBadGoal(const unique_ptr<FairSet>& fair, const FairSet::Bad* old)
+template <typename Automaton>
+unique_ptr<FairSet::Bad>
+StreettModelChecker<Automaton>::makeNewBadGoal(const unique_ptr<FairSet>& fair, const FairSet::Bad* old)
 {
 	if (fair)
 	{
-		unique_ptr<FairSet::Bad> new_bad(fair->makeBadGoal());
+		unique_ptr<FairSet::Bad> new_bad = fair->makeBadGoal();
 		if ( !new_bad->empty())
 		{
 			if (old)
 				new_bad->merge(*old);
-			return new_bad.release();
+			return new_bad;
 		}
 	}
 	return nullptr;

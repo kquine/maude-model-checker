@@ -26,58 +26,21 @@
 namespace modelChecker {
 
 
-struct SCCModelChecker::PrefixBFSGraph: public SCCBFSGraph
+template <typename Automaton>
+SCCModelChecker<Automaton>::SCCModelChecker(unique_ptr<Automaton> graph): max(0), graph(move(graph)) {}
+
+template <typename Automaton> bool
+SCCModelChecker<Automaton>::findCounterExample()
 {
-	PrefixBFSGraph(SCCModelChecker* mc, const StateMap<int>& H, int root):
-		SCCBFSGraph(mc,H,root,mc->prod.getInitialStates()) {}
-	bool inDomain(const State& s) const	{ return !map.invalid(s) && map.contains(s); }
-	bool isTarget(const State& s) const	{ return inDomain(s) && map.get(s) >= root; }
-	bool isTarget(const Transition& t)	{ return isTarget(t.target); }
-};
-
-class SCCModelChecker::CycleCompBFSGraph: public SCCBFSGraph
-{
-	const State des;
-	vector<State> initial;
-public:
-	CycleCompBFSGraph(SCCModelChecker* mc, const StateMap<int>& H, int root, const State& start, const State& des):
-		SCCBFSGraph(mc,H,root,initial), des(des) { initial.push_back(start); }
-	bool inDomain(const State& s) const	{ return !map.invalid(s) && map.contains(s) && map.get(s) >= root; }
-	bool isTarget(const State& s) const	{ return s == des; }
-	bool isTarget(const Transition& t)	{ return isTarget(t.target); }
-};
-
-class SCCModelChecker::CycleBFSGraph: public SCCBFSGraph
-{
-	FairSet::Goal* goal;
-	vector<State> initial;
-public:
-	CycleBFSGraph(SCCModelChecker* mc, const StateMap<int>& H, int root, const State& start, FairSet::Goal* goal):
-		SCCBFSGraph(mc,H,root,initial), goal(goal) { initial.push_back(start); }
-	bool inDomain(const State& s) const	{ return !map.invalid(s) && map.contains(s) && map.get(s) >= root; }
-	bool isTarget(const State& s) const	{ return false; }
-	bool isTarget(const Transition& t)
-	{
-		unique_ptr<FairSet> fs(mc->fairMap.makeFairSet(t));
-		return goal->empty() ? true : mc->fairMap.updateFairGoal(goal, fs.get());
-	}
-};
-
-
-SCCModelChecker::SCCModelChecker(Automaton& prod, FairnessMap& fm): max(0), fairMap(fm), prod(prod) {}
-
-bool
-SCCModelChecker::findCounterExample()
-{
-	unique_ptr<SCC> res(findAcceptedSCC(prod.getInitialStates()));;
+	unique_ptr<SCC> res(findAcceptedSCC(graph->getInitialStates()));;
 
 	if (res )
 	{
-		unique_ptr<FairSet::Goal> goal(res->acc_fair->makeFairGoal());
+		unique_ptr<FairSet::Goal> goal = res->acc_fair->makeFairGoal();
 		//
 		// prefix
 		//
-		PrefixBFSGraph prefix_bfs(this, H, res->root);
+		PrefixBFSGraph prefix_bfs(*this, H, res->root);
 		const State& root = prefix_bfs.doBFS(leadIn);
 		//
 		// cycle
@@ -85,7 +48,7 @@ SCCModelChecker::findCounterExample()
 		State s = root;
 		do
 		{
-			CycleBFSGraph cycle_bfs(this, H, res->root, s, goal.get());
+			CycleBFSGraph cycle_bfs(*this, H, res->root, s, *goal);
 			s = cycle_bfs.doBFS(cycle);
 		} while( !goal->empty());
 		//
@@ -93,7 +56,7 @@ SCCModelChecker::findCounterExample()
 		//
 		if (s != root)
 		{
-			CycleCompBFSGraph comp_bfs(this, H, res->root, s, root);
+			CycleCompBFSGraph comp_bfs(*this, H, res->root, s, root);
 			comp_bfs.doBFS(cycle);
 		}
 		return true;
@@ -101,16 +64,17 @@ SCCModelChecker::findCounterExample()
 	return false;
 }
 
-SCCModelChecker::SCCStack::SCCStack(SCCModelChecker* mc): mc(mc) {}
+template <typename Automaton>
+SCCModelChecker<Automaton>::SCCStack::SCCStack(SCCModelChecker* mc): mc(mc) {}
 
-bool
-SCCModelChecker::SCCStack::empty() const
+template <typename Automaton> bool
+SCCModelChecker<Automaton>::SCCStack::empty() const
 {
 	return sccStack.empty();
 }
 
-bool
-SCCModelChecker::SCCStack::hasNextSucc()
+template <typename Automaton> bool
+SCCModelChecker<Automaton>::SCCStack::hasNextSucc()
 {
 	while ( !dfsStack.empty() &&
 			sccStack.top()->root <= mc->H.get(dfsStack.top()->getSource()) &&
@@ -120,49 +84,44 @@ SCCModelChecker::SCCStack::hasNextSucc()
 	return  !dfsStack.empty() && sccStack.top()->root <= mc->H.get(dfsStack.top()->getSource());
 }
 
-const SCCModelChecker::Transition&
-SCCModelChecker::SCCStack::pickSucc() const
+template <typename Automaton>
+const typename SCCModelChecker<Automaton>::Transition&
+SCCModelChecker<Automaton>::SCCStack::pickSucc() const
 {
 	return dfsStack.top()->pick();
 }
 
-void
-SCCModelChecker::SCCStack::nextSucc()
+template <typename Automaton> void
+SCCModelChecker<Automaton>::SCCStack::nextSucc()
 {
 	dfsStack.top()->next();
 }
 
-const SCCModelChecker::SCC&
-SCCModelChecker::SCCStack::topSCC()
+template <typename Automaton>
+unique_ptr<typename SCCModelChecker<Automaton>::SCC>&
+SCCModelChecker<Automaton>::SCCStack::topSCC()
 {
-	return *sccStack.top();
+	return sccStack.top();
 }
 
-unique_ptr<SCCModelChecker::SCC>
-SCCModelChecker::SCCStack::releaseSCC()
-{
-	unique_ptr<SCC> r = std::move(sccStack.top());
-	sccStack.pop();
-	return r;
-}
-
-void
-SCCModelChecker::SCCStack::dfsPush(const State& s, unique_ptr<FairSet> a)
+template <typename Automaton> void
+SCCModelChecker<Automaton>::SCCStack::dfsPush(const State& s, unique_ptr<FairSet> a)
 {
 	mc->H.set(s, ++mc->max);
 	sccStack.emplace(new SCC(mc->max, std::move(a)));
-	dfsStack.emplace(mc->prod.makeTransitionIterator(s));
+	dfsStack.emplace(mc->graph->makeTransitionIterator(s));
 }
 
-void
-SCCModelChecker::SCCStack::dfsPop()
+template <typename Automaton> void
+SCCModelChecker<Automaton>::SCCStack::dfsPop()
 {
 	stateStack.push(dfsStack.top()->getSource());	// keep states of the top SCC for later use
 	dfsStack.pop();
 }
 
-SCCModelChecker::State
-SCCModelChecker::SCCStack::sccPop(bool unvisit)
+template <typename Automaton>
+typename SCCModelChecker<Automaton>::State
+SCCModelChecker<Automaton>::SCCStack::sccPop(bool unvisit)
 {
 	Assert(mc->H.get(stateStack.top()) == sccStack.top()->root, "SCC Error (root index)");
 
@@ -189,20 +148,20 @@ SCCModelChecker::SCCStack::sccPop(bool unvisit)
 	return root;
 }
 
-void
-SCCModelChecker::SCCStack::merge(int threshold, unique_ptr<FairSet> back)
+template <typename Automaton> void
+SCCModelChecker<Automaton>::SCCStack::merge(int threshold, unique_ptr<FairSet> back)
 {
 	while ( threshold <  sccStack.top()->root )
 	{
 		if (sccStack.top()->acc_fair)
-			mc->fairMap.mergeFairSet(back.get(), sccStack.top()->acc_fair.get());
+			back->merge(*sccStack.top()->acc_fair, mc->graph->getFairnessTable());
 		if (sccStack.top()->incoming_fair)
-			mc->fairMap.mergeFairSet(back.get(), sccStack.top()->incoming_fair.get());
+			back->merge(*sccStack.top()->incoming_fair, mc->graph->getFairnessTable());
 		sccStack.pop();
 	}
 	unique_ptr<FairSet>& top_acc = sccStack.top()->acc_fair;
 	if (top_acc)
-		mc->fairMap.mergeFairSet(top_acc.get(), back.get());
+		top_acc->merge(*back, mc->graph->getFairnessTable());
 	else
 		top_acc = std::move(back);
 }

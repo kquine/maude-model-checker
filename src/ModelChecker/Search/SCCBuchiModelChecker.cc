@@ -26,20 +26,20 @@
 
 namespace modelChecker {
 
-SCCBuchiModelChecker::SCCBuchiModelChecker(Automaton& prod, FairnessMap& fm): SCCModelChecker(prod,fm) {}
+template <typename Automaton>
+SCCBuchiModelChecker<Automaton>::SCCBuchiModelChecker(unique_ptr<Automaton> graph): SCCModelChecker<Automaton>(move(graph)) {}
 
-
-unique_ptr<SCCModelChecker::SCC>
-SCCBuchiModelChecker::findAcceptedSCC(const Vector<State>& initials)
+template <typename Automaton>
+unique_ptr<typename SCCModelChecker<Automaton>::SCC>
+SCCBuchiModelChecker<Automaton>::findAcceptedSCC(const vector<State>& initials)
 {
 	SCCStack stack(this);
-	unique_ptr<FairSet> emptyFairPtr;	//FIXME: will not work. Compare with the last version (that uses a reference of auto_ptr)
 
 	for(const State& i : initials)
 	{
-		if (H.expand(i) || !H.contains(i))	// if the initial state has not visited yet..
+		if (!Super::H.contains(i))	// if the initial state has not visited yet..
 		{
-			stack.dfsPush(i, std::move(emptyFairPtr));
+			stack.dfsPush(i,nullptr);
 			//
 			// main loop
 			//
@@ -48,16 +48,16 @@ SCCBuchiModelChecker::findAcceptedSCC(const Vector<State>& initials)
 				if (stack.hasNextSucc())
 				{
 					Transition t = stack.pickSucc();
-					unique_ptr<FairSet> a(fairMap.makeFairSet(t));
+					unique_ptr<FairSet> a(Super::graph->makeFairSet(t));
 					stack.nextSucc();
 
-					if (H.expand(t.target) || !H.contains(t.target))	// if the next state not visited yet..
+					if (!Super::H.contains(t.target))	// if the next state not visited yet..
 						stack.dfsPush(t.target, std::move(a));
-					else if (H.get(t.target) > 0)		// if on the dfs stack..
+					else if (Super::H.get(t.target) > 0)		// if on the dfs stack..
 					{
-						stack.merge(H.get(t.target), std::move(a));
-						if ( fairMap.satisfiedFairSet(stack.topSCC().acc_fair.get()) )
-							return stack.releaseSCC();
+						stack.merge(Super::H.get(t.target), std::move(a));
+						if ( stack.topSCC()->acc_fair->isSatisfied() )
+							return move(stack.topSCC());
 					}
 				}
 				else

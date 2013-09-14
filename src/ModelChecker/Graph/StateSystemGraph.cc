@@ -1,7 +1,7 @@
 /*
  * StateSystemGraph.cc
  *
- *  Created on: Aug 12, 2013
+ *  Created on: Sep 11, 2013
  *      Author: kquine
  */
 
@@ -25,33 +25,35 @@
 #include "rewritingContext.hh"
 
 // ltlr definitions
-#include "PropHandler.hh"
 #include "StateSystemGraph.hh"
 
 namespace modelChecker {
 
-template <typename PH>
-StateSystemGraph<PH>::StateSystemGraph(RewritingContext& initial, PropChecker& spc, ProofTermGenerator& ptg):
+StateSystemGraph::StateSystemGraph(RewritingContext& initial, PropChecker& spc, ProofTermGenerator& ptg):
 	Super(initial, ptg), statePC(spc) {}
 
-template <typename PH>
+bool
+StateSystemGraph::satisfiesStateProp(int propId, int stateNr) const
+{
+	return Super::seen[stateNr]->label.contains(propId);
+}
+
 unique_ptr<PropSet>
-StateSystemGraph<PH>::updateStateLabel(DagNode* stateDag, State& s)
+StateSystemGraph::updateStateLabel(DagNode* stateDag, State& s)
 {
 	unique_ptr<PropSet> truePropIds(statePC.computeCheckResult(stateDag)); 	// compute all state props
-	spHandler.updateLabel(*truePropIds, s);								// store the formula state props
+	s.label.insert(truePropIds->getTruePropIds());							// store the formula state props
 	return truePropIds;
 }
 
-template <typename PH>
-unique_ptr<typename StateSystemGraph<PH>::State>
-StateSystemGraph<PH>::createState(DagNode* stateDag) const
+unique_ptr<typename StateSystemGraph::State>
+StateSystemGraph::createState(DagNode* stateDag) const
 {
 	return unique_ptr<State>(new State(Super::initial, stateDag));
 }
 
-template <typename PH> inline bool
-StateSystemGraph<PH>::insertTransition(int nextState, State& n)
+bool
+StateSystemGraph::insertTransition(int nextState, State& n)
 {
 	if (n.explore->nextStateSet.insert(nextState).second)	// if a new transition identified
 	{
@@ -61,8 +63,8 @@ StateSystemGraph<PH>::insertTransition(int nextState, State& n)
 	return false;
 }
 
-template <typename PH> inline  DagNode*
-BaseSystemGraphTraits<StateSystemGraph<PH> >::Transition::makeDag(RewritingContext&, DagNode*, ProofTermGenerator& ptg) const
+DagNode*
+BaseSystemGraphTraits<StateSystemGraph>::Transition::makeDag(RewritingContext&, DagNode*, ProofTermGenerator& ptg) const
 {
 	return ptg.makeProofDag(nullptr,*rule, nullptr);
 }

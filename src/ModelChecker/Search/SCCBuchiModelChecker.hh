@@ -8,21 +8,27 @@
 #ifndef SCCBUCHIMODELCHECKER_HH_
 #define SCCBUCHIMODELCHECKER_HH_
 #include "SCCModelChecker.hh"
-#include "Automaton/FairnessMap.hh"
 
 namespace modelChecker {
 
-class SCCBuchiModelChecker : public SCCModelChecker
+template <typename Automaton>
+class SCCBuchiModelChecker : public SCCModelChecker<Automaton>
 {
 public:
-	SCCBuchiModelChecker(Automaton& prod, FairnessMap& fm);
-	SCCBuchiModelChecker(const SCCBuchiModelChecker&) = delete;
-	SCCBuchiModelChecker& operator=(const SCCBuchiModelChecker&) = delete;
+	SCCBuchiModelChecker(unique_ptr<Automaton> graph);
 
 private:
-	unique_ptr<SCC> findAcceptedSCC(const Vector<State>& initials);
+	using Super 		= SCCModelChecker<Automaton>;
+	using State 		= typename Super::State;
+	using Transition	= typename Super::Transition;
+	using SCC 			= typename Super::SCC;
+	using SCCStack		= typename Super::SCCStack;
+
+	unique_ptr<SCC> findAcceptedSCC(const vector<State>& initials) override;
 };
 
 }
+
+#include "SCCBuchiModelChecker.cc"
 
 #endif /* SCCBUCHIMODELCHECKER_H_ */

@@ -7,25 +7,30 @@
 
 #ifndef STREETTMODELCHECKER_HH_
 #define STREETTMODELCHECKER_HH_
-#include "Automaton/FairnessMap.hh"
 #include "SCCModelChecker.hh"
 
 namespace modelChecker {
 
-class StreettModelChecker: public modelChecker::SCCModelChecker
+template <typename Automaton>
+class StreettModelChecker: public SCCModelChecker<Automaton>
 {
 public:
-	StreettModelChecker(Automaton& prod, FairnessMap& fm);
-	StreettModelChecker(const StreettModelChecker&) = delete;
-	StreettModelChecker& operator=(const StreettModelChecker&) = delete;
+	StreettModelChecker(unique_ptr<Automaton> graph);
 
 private:
-	unique_ptr<SCC> findAcceptedSCC(const Vector<State>& initials);
+	using Super 		= SCCModelChecker<Automaton>;
+	using State 		= typename Super::State;
+	using Transition	= typename Super::Transition;
+	using SCC 			= typename Super::SCC;
+	using SCCStack		= typename Super::SCCStack;
+
+	unique_ptr<SCC> findAcceptedSCC(const vector<State>& initials) override;
 	unique_ptr<SCC> findAcceptedSCC(queue<State>& region, FairSet::Bad* bad);
-	FairSet::Bad* makeNewBadGoal(const unique_ptr<FairSet>& fair, const FairSet::Bad* old);
+	unique_ptr<FairSet::Bad> makeNewBadGoal(const unique_ptr<FairSet>& fair, const FairSet::Bad* old);
 };
 
-
 }
+
+#include "StreettModelChecker.cc"
 
 #endif /* STREETTMODELCHECKER_HH_ */

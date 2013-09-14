@@ -41,11 +41,13 @@
 #include "quotedIdentifierDagNode.hh"
 
 // ltlr class definitions
-#include "Formula/ParamPropositionTable.hh"
-#include "Fairness/ParamFairnessTable.hh"
-#include "Search/ModelCheckerFactory.hh"
+#include "PropTable/ParamPropositionTable.hh"
+#include "FairTable/ParamFairnessTable.hh"
+#include "Interface/FairnessDecoder.hh"
 #include "Interface/CounterExampleGenerator.hh"
 #include "Utility/TermUtil.hh"
+#include "Utility/StringStream.hh"
+#include "ModelCheckerManager.hh"
 #include "ltlrFairnessCheckerSymbol.hh"
 
 
@@ -204,167 +206,85 @@ LTLRFairnessCheckerSymbol::reset()
 
 
 bool
-LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context)
+LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context) noexcept
 {
     Assert(this == subject->symbol(), "bad symbol");
     FreeDagNode* d = safeCast(FreeDagNode*,subject);
     //
-    // 1. declare the argument contexts
+    // 1. declare the argument contexts, and reduce the formula/fairness arguments into the normal forms
     //
     unique_ptr<RewritingContext> sysCxt(context.makeSubcontext(d->getArgument(0)));
-	unique_ptr<RewritingContext> formulaCxt(context.makeSubcontext(negate(d->getArgument(1))));
-	unique_ptr<RewritingContext> fairnessCxt(context.makeSubcontext(d->getArgument(2)));
+	unique_ptr<RewritingContext> formulaCxt(context.makeSubcontext(negate(d->getArgument(1))));		formulaCxt->reduce();	context.addInCount(*formulaCxt);
+	unique_ptr<RewritingContext> fairnessCxt(context.makeSubcontext(d->getArgument(2)));			fairnessCxt->reduce();	context.addInCount(*fairnessCxt);
 	//
-	// 2. reduce the formula/fairness arguments into the normal forms
+	// 2. create a prop table and a fairness decoder
 	//
-	formulaCxt->reduce();	context.addInCount(*formulaCxt);
-	fairnessCxt->reduce();	context.addInCount(*fairnessCxt);
+	PropInterpreter pInterpreter(satisfiesSymbol, actionmatchSymbol, enabledSymbol);
+	unique_ptr<PropositionTable> propTable(TermUtil::checkGround(fairnessCxt->root()) ? new PropositionTable(pInterpreter) : new ParamPropositionTable(pInterpreter));
+	FairnessDecoder fDecoder(*this, *propTable, fairnessSymbol, strongFairTypeSymbol, weakFairTypeSymbol, fairnessSetSymbol, emptyFairnessSetSymbol);
 	//
-	// 3. check if the formula is ground
+	// 3. interpret the formula and the fairness conditions
 	//
-	if (! TermUtil::checkGround(formulaCxt->root()))
-	{
-		IssueAdvisory("negated LTL formula " << QUOTE(formulaCxt->root()) <<" is not a ground term.");
-		return TemporalSymbol::eqRewrite(subject, context);
-	}
-	//
-	// 4. check if the fairness conditions are ground, and create prop/fairness tables accordingly.
-	//
-    bool noParam = TermUtil::checkGround(fairnessCxt->root());
-    PropInterpreter pInterpreter(satisfiesSymbol,actionmatchSymbol,enabledSymbol);
-    FairnessDecoder fDecoder(fairnessSymbol,strongFairTypeSymbol,weakFairTypeSymbol,fairnessSetSymbol,emptyFairnessSetSymbol);
-    unique_ptr<PropositionTable> propTable(noParam ? new PropositionTable(pInterpreter) : new ParamPropositionTable(pInterpreter));
-    unique_ptr<FairnessTable> fairTable(noParam ? new FairnessTable(*propTable,fDecoder,*this) : new ParamFairnessTable(*propTable,fDecoder,*this));
+    unique_ptr<Formula> formula;
+    unique_ptr<AbstractFairnessTable> fairTable;
+    try {
+    	formula = interpretFormula(formulaCxt->root(), *propTable);
+    	fairTable = fDecoder.interpretFairnessSet(fairnessCxt->root());
+    } catch (const invalid_argument& e)
+    {
+    	IssueAdvisory(e.what());
+    	return TemporalSymbol::eqRewrite(subject, context);
+    }
     //
-	// 5. convert a formula dag into a LogicFormula.
-    //
-	ModelCheckerFactory::Formula formula;
-	formula.top = build(formula.data, propTable->getDagNodeSet(), formulaCxt->root());
-	if (formula.top == NONE)
-	{
-		IssueAdvisory("negated LTL formula " << QUOTE(formulaCxt->root()) <<" did not reduce to a valid negative normal form.");
-		return TemporalSymbol::eqRewrite(subject, context);
-	}
-	for (int i = propTable->cardinality() - 1; i >= 0; --i)  formula.formulaPropIds.insert(i);
-	propTable->updatePropTable();
-	//
-	// 6. interpret fairness formulas..
-	//
-	if (! fDecoder.interpreteFairnessSet(fairnessCxt->root(), [&fairTable](DagNode* d){ return fairTable->insertFairnessDag(d); }))
-	{
-		IssueAdvisory("fairness condition " << QUOTE(fairnessCxt->root()) <<" did not reduce to a valid term.");
-		return TemporalSymbol::eqRewrite(subject, context);
-	}
-    cout << "weak : " << fairTable->nrWeakFairness() << ", strong : " << fairTable->nrStrongFairness() << endl;
-    //
-    // 7. construct a suitable model checker
+    // 4. construct a suitable model checker
     //
     PropEvaluator stateEval(satisfiesSymbol, realizedPropSymbol, trueTerm.getDag());
     PropEvaluator eventEval(actionmatchSymbol, realizedActionSymbol, trueTerm.getDag());
-    ProofTermGenerator ptg(safeCast(MixfixModule*,getModule()),prooftermSymbol,assignOp,holeOp,substitutionSymbol,emptySubstSymbol,qidSymbol,unlabeledSymbol,noContextSymbol);
-    ModelCheckerFactory mcfac(*propTable, *fairTable, formula, stateEval, eventEval, ptg, context);
-
-
-    /*
-    //TODO: first, compute state prop ids, and event prop ids.
-    // second, compute if there is a state "param" prop id, or an event "param" prop id.
-    // 		create PropCheckers accordingly
-    // third, distinguish a pure state fairness formula from a state/event fairness formula.
-    //      also identify a param fairness formula. construct FairnessCheckers accordingly.
-    // fourth, if there is an enabled prop in fairness, compute a set of enabled prop ids in fairness.
+    ProofTermGenerator ptg(static_cast<MixfixModule*>(getModule()),prooftermSymbol,assignOp,holeOp,substitutionSymbol,emptySubstSymbol,qidSymbol,unlabeledSymbol,noContextSymbol);
+    ModelCheckerManager mcm(*formula, *propTable, move(fairTable), stateEval, eventEval, ptg, *sysCxt);
+    //
+    // 5. perform the model checking
+    //
+    CounterExampleGenerator cg(counterexampleSymbol,transitionSymbol,transitionListSymbol,nilTransitionListSymbol,deadlockTerm.getDag());
+    DagNode* resultDag = mcm.findCounterExample() ? cg.makeCounterexample(mcm.getDagSystemGraph(), mcm.getLeadIn(), mcm.getCycle()) : trueTerm.getDag();
 
     //
-    // TEST CODE
+    // print state space size..
     //
+    if (globalVerboseFlag)
+    {
+		int nrSystemStates = mcm.getDagSystemGraph().getNrStates();
+		int totalNrTransitions = 0;
+		for (int i=0; i < nrSystemStates; i++)
+			totalNrTransitions += mcm.getDagSystemGraph().getNrTransitions(i);
 
-    Vector<Bdd> weakFairnessTable;
-    Vector<int> stateWeakFairIds;
-    Vector<int> seWeakFairIds;
-
-    WeakFairnessChecker swfc(stateWeakFairIds, weakFairnessTable);
-    WeakFairnessChecker sewfc(seWeakFairIds, weakFairnessTable);
-
-    Vector<int> localPropIds;
-
-    StateSystemGraph<LabelPropHandler> s1(*sysCxt, stateChecker, prGenerator);
-    FairStateSystemGraph<LabelPropHandler,LabelFairHandler> s2(*sysCxt, stateChecker, swfc, prGenerator);
-    StateEventSystemGraph<LabelPropHandler,LabelPropHandler> s3(*sysCxt, stateChecker, eventChecker, prGenerator);
-    FairStateEventSystemGraph<LabelPropHandler,LabelPropHandler,LabelFairHandler,LabelFairHandler> s4(*sysCxt, stateChecker, eventChecker, swfc, sewfc, prGenerator);
-    StateEventEnabledSystemGraph<LabelPropHandler,LabelPropHandler> s5(*sysCxt, stateChecker, eventChecker, prGenerator);
-    FairStateEventEnabledSystemGraph<LabelPropHandler,LabelPropHandler,LabelFairHandler,LabelFairHandler>
-			s6(*sysCxt, stateChecker, eventChecker, enpc, swfc, sewfc, prGenerator);
-
-    //StateEventEnabledPropHandler sel(propositions, stateProps, eventProps, enabledPropMap, stateChecker, eventChecker);
-    //StateEventEnabledSystemGraph<StateEventEnabledPropHandler> sa(sysContext.get(), sel, prGenerator);
-
-    s1.init();
-    s2.init();
-    s3.init();
-    s4.init();
-    s5.init();
-    s6.init();
-
-    SystemGraph& sg = s6;
-    DagGraphMap& dg = s6;
-
-
-	// construct a graph
-	stack<int> curr;
-	NatSet visited;
-	curr.push(0);
-	while (!curr.empty())
-	{
-		int p = curr.top();
-		curr.pop();
-		cout << "visit: " << p << endl;
-		visited.insert(p);
-
-		for(int index = 0; ;++index)
-		{
-			int next = sg.getNextState(p, index);
-
-			if (next != NONE)
-			{
-				DagNode* transitionDag = dg.getTransitionDag(p, index);
-				cout << dg.getStateDag(p) << " --[ " << transitionDag << " ]-> " << dg.getStateDag(next) << endl;
-
-				if (! visited.contains(next))
-					curr.push(next);
-			}
-			else
-				break;
-		}
-	}
-
-	cout << "#State: " << sg.getNrStates() << endl;
-
-
-//	for (int i = 0; i < sa.getNrStates(); ++i)
-//	{
-//		cout << i << " : " << sa.getStateLabel(i).label << endl;
-//		for (int j = 0; j < sa.getNrTransitions(i); ++j)
-//			cout << "\t" << j << " : " << sa.getEventLabel(i, j).label << " -> " << sa.getNextState(i,j) << endl;
-//	}
-
-	context.addInCount(*sysCxt);
-	return context.builtInReplace(subject, trueTerm.getDag());
-
-	//
-	// END of TEST
-	//
-	 */
-
-    //
-    // 8. perform the model checking
-    //
-    CounterExampleGenerator ceGenerator(counterexampleSymbol,transitionSymbol,transitionListSymbol,nilTransitionListSymbol,deadlockTerm.getDag());
-    DagNode* resultDag = //mcfac.getModelChecker()->findCounterExample() ?
-    		trueTerm.getDag()
-    		//: ceGenerator.makeCounterexample(mcfac.getDagGraphMap(), mcfac.getModelChecker()->getLeadIn(), mcfac.getModelChecker()->getCycle())
-    		;
+		cout << "ModelChecker: Examined " << nrSystemStates <<
+				" system state" << pluralize(nrSystemStates) << " and " <<
+				totalNrTransitions << " transition" << pluralize(totalNrTransitions) << '.' << endl;
+    }
 
     context.addInCount(*sysCxt);
     return context.builtInReplace(subject, resultDag);
+}
+
+unique_ptr<LTLRFairnessCheckerSymbol::Formula>
+LTLRFairnessCheckerSymbol::interpretFormula(DagNode* formulaDag, PropositionTable& propTable) const
+{
+	if (! TermUtil::checkGround(formulaDag))
+		throw invalid_argument(StringStream() << "negated LTL formula " << QUOTE(formulaDag) << " did not reduce to a valid negative normal form.");
+	else
+	{
+		unique_ptr<Formula> formula(new Formula);
+		formula->top = build(formula->data, propTable.getDagNodeSet(), formulaDag);
+		if (formula->top == NONE)
+			throw invalid_argument(StringStream() << "negated LTL formul " << QUOTE(formulaDag) << "a did not reduce to a valid negative normal form.");
+		else
+		{
+			for (int i = propTable.cardinality() - 1; i >= 0; --i)  formula->formulaPropIds.insert(i);
+			propTable.updatePropTable();
+			return formula;
+		}
+	}
 }
 
 

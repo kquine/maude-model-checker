@@ -40,7 +40,7 @@ CounterExampleGenerator::CounterExampleGenerator(Symbol* counterexampleSymbol, S
 				deadlockDag(deadlockDag) {}
 
 DagNode*
-CounterExampleGenerator::makeCounterexample(const DagGraphMap& dg, const list<Edge>& path, const list<Edge>& cycle) const
+CounterExampleGenerator::makeCounterexample(const DagSystemGraph& dg, const list<Edge>& path, const list<Edge>& cycle) const
 {
 #ifdef TDEBUG
 	cout << "counter example: " << endl;
@@ -59,7 +59,7 @@ CounterExampleGenerator::makeCounterexample(const DagGraphMap& dg, const list<Ed
 
 
 DagNode*
-CounterExampleGenerator::makeTransitionList(const DagGraphMap& dg, const list<Edge>& path) const
+CounterExampleGenerator::makeTransitionList(const DagSystemGraph& dg, const list<Edge>& path) const
 {
     if (path.empty())
         return nilTransitionListSymbol->makeDagNode();
@@ -73,7 +73,7 @@ CounterExampleGenerator::makeTransitionList(const DagGraphMap& dg, const list<Ed
 }
 
 DagNode*
-CounterExampleGenerator::makeTransition(const DagGraphMap& dg, int stateNr, int count) const
+CounterExampleGenerator::makeTransition(const DagSystemGraph& dg, int stateNr, int count) const
 {
 	static Vector<DagNode*> targs(2);
 	targs[0] = dg.getStateDag(stateNr);

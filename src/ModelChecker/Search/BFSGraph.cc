@@ -17,21 +17,12 @@
 
 namespace modelChecker {
 
-template <class PA>
-struct BFSGraph<PA>::Step		// used for counter-example generation
-{
-	Step() : systemIndex(NONE) {}
-	Step(const State& p, int index) : parent(p), systemIndex(index) {}
-	State parent;
-	int systemIndex;
-};
+template <typename Automaton>
+BFSGraph<Automaton>::BFSGraph(Automaton& graph, const vector<State>& initials): graph(graph), initials(initials) {}
 
-template <class PA>
-BFSGraph<PA>::BFSGraph(ProductAutomaton<PA>& graph, const vector<State>& initials):
-	graph(graph), initials(initials) {}
-
-template <class PA> typename BFSGraph<PA>::State
-BFSGraph<PA>::doBFS(list<Edge>& path)
+template <typename Automaton>
+typename BFSGraph<Automaton>::State
+BFSGraph<Automaton>::doBFS(list<Edge>& path)
 {
 	list<pair<int,int> > temp_path;
 
@@ -42,7 +33,6 @@ BFSGraph<PA>::doBFS(list<Edge>& path)
 		else if (inDomain(i))
 		{
 			toVisit.push(i);
-			parent.expand(i);
 			parent.set(i,Step());
 		}
 	}
@@ -64,13 +54,13 @@ BFSGraph<PA>::doBFS(list<Edge>& path)
 			{
 				if (isTarget(t))	// if we found a path to the target, generate a path and return the target state.
 				{
-					temp_path.push_front(make_pair(s.system, t.systemIndex));
+					temp_path.push_front(make_pair(s.first, t.systemIndex));
 					for(;;)
 					{
 						const Step &c = parent.get(s);		// always find such c in parent since we use queue.
 						if (c.systemIndex == NONE)	// if initial states
 							break;
-						temp_path.push_front(make_pair(c.parent.system, c.systemIndex));
+						temp_path.push_front(make_pair(c.parent.first, c.systemIndex));
 						s = c.parent;
 					}
 					path.splice(path.end(), temp_path);	// append to the end of path..
@@ -78,7 +68,7 @@ BFSGraph<PA>::doBFS(list<Edge>& path)
 				}
 				else
 				{
-					if (parent.expand(t.target) || !parent.contains(t.target))	// if not already visited
+					if (!parent.contains(t.target))	// if not already visited
 					{
 						parent.set(t.target, Step(s, t.systemIndex));
 						toVisit.push(t.target);

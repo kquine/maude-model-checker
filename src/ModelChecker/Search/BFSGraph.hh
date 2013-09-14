@@ -7,27 +7,26 @@
 
 #ifndef BFSGRAPH_HH_
 #define BFSGRAPH_HH_
+#include <list>
 #include <queue>
-#include <tr1/unordered_map>
 #include "macros.hh"
-#include "Automaton/ProductAutomaton.hh"
-#include "StateMap.hh"
+#include "Utility/StateMap.hh"
 
 namespace modelChecker {
 
 //
 //	Used for short counter example generation (by breadth first search).
 //
-template <typename _PropertyAutomaton>
+template <typename Automaton>
 class BFSGraph
 {
 	typedef pair<int,int>	Edge;
 public:
-	typedef typename ProductAutomaton<_PropertyAutomaton>::State				State;
-	typedef typename ProductAutomaton<_PropertyAutomaton>::Transition			Transition;
-	typedef typename ProductAutomaton<_PropertyAutomaton>::TransitionIterator	TransitionIterator;
+	typedef typename Automaton::State				State;
+	typedef typename Automaton::Transition			Transition;
+	typedef typename Automaton::TransitionIterator	TransitionIterator;
 
-	BFSGraph(ProductAutomaton<_PropertyAutomaton>& graph, const vector<State>& initials);
+	BFSGraph(Automaton& graph, const vector<State>& initials);
 	virtual ~BFSGraph() {}
 
 	virtual bool inDomain(const State& s) const = 0;
@@ -36,7 +35,7 @@ public:
 	State doBFS(list<Edge>& path);
 
 protected:
-	ProductAutomaton<_PropertyAutomaton>& graph;
+	Automaton& graph;
 
 private:
 	struct Step;		// used for counter-example generation
@@ -46,6 +45,14 @@ private:
 	const vector<State>& initials;
 };
 
+template <typename Automaton>
+struct BFSGraph<Automaton>::Step		// used for counter-example generation
+{
+	Step() : systemIndex(NONE) {}
+	Step(const State& p, int index) : parent(p), systemIndex(index) {}
+	State parent;
+	int systemIndex;
+};
 
 }
 

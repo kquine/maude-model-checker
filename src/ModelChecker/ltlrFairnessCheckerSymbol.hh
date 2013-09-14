@@ -24,18 +24,20 @@
 #define _LTLRFAIRNESSCHECKERSYMBOL_HH
 #include "temporalSymbol.hh"
 #include "cachedDag.hh"
-#include "Formula/FormulaBuilder.hh"
+#include "Interface/FormulaBuilder.hh"
+#include "ModelCheckerManager.hh"
 
 namespace modelChecker {
 
 class LTLRFairnessCheckerSymbol : public TemporalSymbol, public FormulaBuilder
 {
+	typedef ModelCheckerManager::Formula	Formula;
 public:
     LTLRFairnessCheckerSymbol(int id, int arity);
     LTLRFairnessCheckerSymbol(const LTLRFairnessCheckerSymbol&) = delete;
     LTLRFairnessCheckerSymbol& operator=(const LTLRFairnessCheckerSymbol&) = delete;
 
-    int build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const;
+    int build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const	{ return TemporalSymbol::build(formula,propositions,dagNode); }
 
     bool attachData(const Vector<Sort*>& opDeclaration, const char* purpose, const Vector<const char*>& data);
     bool attachSymbol(const char* purpose, Symbol* symbol);
@@ -44,11 +46,13 @@ public:
     void getDataAttachments(const Vector<Sort*>& opDeclaration, Vector<const char*>& purposes, Vector<Vector<const char*> >& data);
     void getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols);
     void getTermAttachments(Vector<const char*>& purposes, Vector<Term*>& terms);
-    bool eqRewrite(DagNode* subject, RewritingContext& context);
+    bool eqRewrite(DagNode* subject, RewritingContext& context) noexcept;
     void postInterSymbolPass();
     void reset();
 
 private:
+    unique_ptr<Formula> interpretFormula(DagNode* formulaDag, PropositionTable& propTable) const;
+
     Symbol* fairnessSymbol;
     Symbol* strongFairTypeSymbol;
     Symbol* weakFairTypeSymbol;
@@ -79,12 +83,6 @@ private:
     CachedDag deadlockTerm;
     CachedDag trueTerm;
 };
-
-inline int
-LTLRFairnessCheckerSymbol::build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const
-{
-	return TemporalSymbol::build(formula, propositions, dagNode);
-}
 
 }
 #endif        /* _LTLRFAIRNESSCHECKERSYMBOL_HH */

@@ -10,24 +10,24 @@
 #include <memory>
 #include "buchiAutomaton2.hh"
 #include "ModelChecker.hh"
-#include "Graph/DagGraphMap.hh"
-#include "Automaton/ProductAutomaton.hh"
+#include "BFSGraph.hh"
 
 namespace modelChecker {
 
+template <typename Automaton>
 class NDFSModelChecker: public ModelChecker
 {
-	typedef ProductAutomaton<BuchiAutomaton2>	Automaton;
-	typedef Automaton::State					State;
-	typedef Automaton::Transition				Transition;
-	typedef Automaton::TransitionIterator		TransitionIterator;
+	typedef typename Automaton::State				State;
+	typedef typename Automaton::Transition			Transition;
+	typedef typename Automaton::TransitionIterator	TransitionIterator;
 
 public:
-	NDFSModelChecker(Automaton& prod);
+	NDFSModelChecker(unique_ptr<Automaton> prod);
 	NDFSModelChecker(const NDFSModelChecker&) = delete;
 	NDFSModelChecker& operator=(const NDFSModelChecker&) = delete;
 
-	bool findCounterExample();
+	bool findCounterExample() override;
+	const DagSystemGraph& getSystemGraph() const override	{ return prod->getSystemAutomaton(); }
 
 private:
 	struct StateSet
@@ -38,27 +38,36 @@ private:
 	};
 	class PrefixBFSGraph;					// for generating prefix counter example
 
+	bool trap(int propertyIndex) const;		// return true for a trap state
+	bool checkVisit(const State& ns);
+
 	bool dfs1(const State& initial);		// outer dfs
 	bool dfs2(const State& initial);		// inner dfs
-	bool trap(int propertyIndex) const;		// return true if a single self loop with transition "true"
 
 	State cycleState;						// intersection of cycle and prefix after nested dfs
-	vector<unique_ptr<StateSet> > intersectionStates;
-	Automaton& prod;
+	vector<unique_ptr<StateSet>> intersectionStates;
+
+	unique_ptr<Automaton> prod;
 };
 
-inline bool
-NDFSModelChecker::trap(int propertyIndex) const
+template <typename Automaton>
+class NDFSModelChecker<Automaton>::PrefixBFSGraph : public BFSGraph<Automaton>
 {
-	if (prod.getPropertyAutomaton().isAccepting(propertyIndex))
-	{
-		const BuchiAutomaton2::TransitionMap& cm = prod.getPropertyAutomaton().getTransitions(propertyIndex);
-		if (cm.size() == 1 && cm.begin()->first == propertyIndex && cm.begin()->second == bdd_true())
-			return true;
-	}
-	return false;
-}
+public:
+	PrefixBFSGraph(Automaton& prod, const vector<unique_ptr<StateSet> >& stateMap, const State& cycleState):
+		BFSGraph<Automaton>(prod, prod.getInitialStates()), cycleState(cycleState), stateMap(stateMap) {}
+
+	bool isTarget(const State& s) const	{ return s == cycleState; }
+	bool isTarget(const Transition& t)	{ return isTarget(t.target); }
+	bool inDomain(const State& s) const	{ return (size_t)s.first < stateMap.size() ? stateMap[s.first]->dfs1Seen.contains(s.second) : false; } // ignore unvisited states
+
+private:
+	const State cycleState;
+	const vector<unique_ptr<StateSet> >& stateMap;
+};
 
 }
+
+#include "NDFSModelChecker.cc"
 
 #endif /* NDFSMODELCHECKER_HH_ */

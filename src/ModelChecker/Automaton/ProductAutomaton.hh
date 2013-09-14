@@ -7,111 +7,64 @@
 
 #ifndef PRODUCTAUTOMATON_HH_
 #define PRODUCTAUTOMATON_HH_
-#include "KripkeStructure.hh"
+#include "AutomatonTraits.hh"
 
 namespace modelChecker {
 
-// forward declarations
-namespace product
-{
-	struct State;
-	template <typename _PropertyAutomaton> struct Transition;
-	template <typename _PropertyAutomaton> struct TransitionIterator;
-	template <typename _PropertyAutomaton> struct PropertyTransitionAdaptor;
-}
+template <typename SystemAutomaton> struct ProductTransitionIteratorTraits;
 
-template <typename _PropertyAutomaton>
+template <typename SA, typename PA>
 class ProductAutomaton
 {
 public:
-	typedef product::State									State;
-	typedef product::Transition<_PropertyAutomaton>			Transition;
-	typedef product::TransitionIterator<_PropertyAutomaton>	TransitionIterator;
+	using State = 		typename AutomatonTraits<PA>::State;
+	using Transition = 	typename AutomatonTraits<PA>::Transition;
+	struct TransitionIterator;
 
-	ProductAutomaton(KripkeStructure& system, const _PropertyAutomaton& property);
+	ProductAutomaton(unique_ptr<SA> system, unique_ptr<PA> property);
 	virtual ~ProductAutomaton() {}
 
-	virtual TransitionIterator* makeTransitionIterator(const State& state);
-	const vector<State>& getInitialStates() const;
+	const SA& getSystemAutomaton() const				{ return *systemAut; }
+	const PA& getPropertyAutomaton() const				{ return *propertyAut; }
+	const vector<State>& getInitialStates() const		{ return initialStates; }
 
-	KripkeStructure& getSystemAutomaton() const;
-	const _PropertyAutomaton& getPropertyAutomaton() const;
-	void dump(ostream& s);
-
-protected:
-	KripkeStructure& system;
-	const _PropertyAutomaton& property;
+	unique_ptr<TransitionIterator> makeTransitionIterator(const State& state);
 
 private:
+	friend class TransitionIterator;
+
+	unique_ptr<SA> systemAut;
+	unique_ptr<PA> propertyAut;
 	vector<State> initialStates;
 };
 
-
-namespace product
+template <typename SA, typename PA>
+struct ProductAutomaton<SA,PA>::TransitionIterator: private ProductTransitionIteratorTraits<SA>
 {
-	struct State
-	{
-		int system, property;
+public:
+	TransitionIterator(SA& sys, const PA& prop, const State& state): sysGraph(sys), ts(prop.getTransitions(state.second)) { tr.source = state; }
 
-		State():								system(NONE), property(NONE) {}
-		State(int system, int property): 		system(system), property(property) {}
-		bool operator==(const State& o) const	{ return system == o.system && property == o.property; }
-		bool operator!=(const State& o) const	{ return system != o.system || property != o.property; }
-		friend std::ostream& operator<<(std::ostream& o,const State& state)
-		{
-			o << "(" << state.system << "," <<  state.property << ")";
-			return o;
-		}
-	};
+	bool hasNext() const					{ return tr.systemIndex != NONE; }
+	const Transition& pick() const			{ return tr; }
+	const State& getSource() const			{ return tr.source; }
 
-	//
-	//	Product transition
-	//
-	template <typename _PropertyAutomaton>
-	struct Transition
-	{
-		State source;
-		State target;
-		int systemIndex;
-		typename PropertyTransitionAdaptor<_PropertyAutomaton>::TransitionSet::const_iterator propertyIndex;
-	};
-	//
-	//	Product transition iterator (state-only)
-	//
-	template <typename _PropertyAutomaton>
-	class TransitionIterator
-	{
-	public:
-		virtual ~TransitionIterator() {}
-		bool hasNext() const;
-		const Transition<_PropertyAutomaton>& pick() const;
-		void next();
-		const State& getSource() const;
+	void init()								{ computeNextTransition(true); }
+	void next()								{ computeNextTransition(false); }
 
-	protected:
-		TransitionIterator(ProductAutomaton<_PropertyAutomaton>* parent, const State& state);
-		void init();
-		virtual void computeNextTransition(KripkeStructure* ks, bool first);
+protected:
+	void computeNextTransition(bool first)	{ ProductTransitionIteratorTraits<SA>::template computeNextTransition<PA>(first,tr,ts,sysGraph); }
 
-		Transition<_PropertyAutomaton> tr;
-		KripkeStructure* sysGraph;
-		const typename PropertyTransitionAdaptor<_PropertyAutomaton>::TransitionSet* ts;
-		friend class ProductAutomaton<_PropertyAutomaton>;
-	};
+	SA& sysGraph;
+	const typename AutomatonTraits<PA>::PropertyTransitionSet& ts;
+	typename AutomatonTraits<PA>::Transition tr;
+};
 
-	//
-	//	Adaptor for property automaton
-	//
-	template <typename _PropertyAutomaton>
-	struct PropertyTransitionAdaptor
-	{
-		typedef typename _PropertyAutomaton::Transition		Transition;
-		typedef typename _PropertyAutomaton::TransitionSet	TransitionSet;
-		static int getNextState(const Transition&);
-		static const Bdd& getFormula(const Transition&);
-	};
-
-}
+template <typename SA>
+struct ProductTransitionIteratorTraits
+{
+	template <typename PA>
+	void computeNextTransition(bool first, typename AutomatonTraits<PA>::Transition& tr, const typename AutomatonTraits<PA>::PropertyTransitionSet& ts, SA& ks);
+};
 
 }
 

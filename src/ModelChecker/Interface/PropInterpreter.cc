@@ -6,6 +6,7 @@
  */
 
 // utility stuff
+#include <stdexcept>
 #include "macros.hh"
 #include "vector.hh"
 
@@ -21,6 +22,7 @@
 #include "dagArgumentIterator.hh"
 
 // ltlr definitions
+#include "Utility/StringStream.hh"
 #include "PropInterpreter.hh"
 
 namespace modelChecker {
@@ -51,7 +53,7 @@ PropInterpreter::getEnabledActionProp(DagNode* propDag) const
 		if (ei.valid())
 			return ei.argument();
 		else
-			CantHappen("PropInterpreter::getEnabledActionProp");
+			throw invalid_argument(StringStream() << "enabled proposition " << QUOTE(propDag) << " has no argument.");
 	}
 	return nullptr;
 }

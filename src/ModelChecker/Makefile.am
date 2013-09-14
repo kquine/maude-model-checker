@@ -21,47 +21,46 @@ libModelChecker_a_CPPFLAGS = \
 
 
 libModelChecker_a_SOURCES = \
-	Automaton/KripkeStructure.cc \
-	Automaton/LabeledKripkeStructure.cc \
-	Formula/PropSet.cc \
-	Formula/PropositionTable.cc \
-	Formula/PropChecker.cc \
-	Formula/EnabledPropTransferer.cc \
-	Formula/FormulaBuilder.cc \
-	Formula/ParamPropSet.cc \
-	Formula/ParamPropositionTable.cc \
-	Formula/ParamSubstitution.cc \
-	Formula/ParamSubstitutionBuilder.cc \
-	Formula/ParamPropChecker.cc \
-	Formula/ParamEnabledPropTransferer.cc \
-	Formula/ParamVarInfo.cc \
-	Formula/RealizedPropGenerator.cc \
-	Fairness/FairnessTable.cc \
-	Fairness/ParamFairnessTable.cc \
-	Fairness/FairnessChecker.cc \
-	Fairness/WeakFairnessChecker.cc \
-	Fairness/ParamWeakFairnessChecker.cc \
-	Fairness/StrongFairnessChecker.cc \
-	Fairness/ParamStrongFairnessChecker.cc \
-	Fairness/CompositeFairnessChecker.cc \
-	Fairness/WeakFairSet.cc \
-	Fairness/StrongFairSet.cc \
-	Fairness/CompositeFairSet.cc \
-	Graph/RewriteTransitionState.cc \
-	Graph/StateDagContainer.cc \
-	Graph/LabelPropHandler.cc \
-	Graph/LabelFairHandler.cc \
-    Search/ModelCheckerFactory.cc \
-    Search/NDFSModelChecker.cc \
-    Search/SCCModelChecker.cc \
-    Search/SCCBuchiModelChecker.cc \
-    Search/StreettModelChecker.cc \
+	Utility/TermUtil.cc \
+	PropSet/PropSet.cc \
+	PropSet/ParamPropSet.cc \
+	PropTable/PropositionTable.cc \
+	PropTable/ParamPropositionTable.cc \
+	PropTable/ParamSubstitution.cc \
+	PropChecker/PropChecker.cc \
+	PropChecker/EnabledPropTransferer.cc \
+	PropChecker/RealizedPropGenerator.cc \
+	PropChecker/ParamPropChecker.cc \
+	PropChecker/ParamEnabledPropTransferer.cc \
+	PropChecker/PropCheckerFactory.cc \
+	FairChecker/FairnessChecker.cc \
+	FairChecker/WeakFairnessChecker.cc \
+	FairChecker/ParamWeakFairnessChecker.cc \
+	FairChecker/StrongFairnessChecker.cc \
+	FairChecker/ParamStrongFairnessChecker.cc \
+	FairChecker/CompositeFairnessChecker.cc \
+	FairChecker/FairnessCheckerFactory.cc \
+	FairSet/WeakFairSet.cc \
+	FairSet/StrongFairSet.cc \
+	FairSet/CompositeFairSet.cc \
+	FairSet/ParamWeakFairSet.cc \
+	FairSet/ParamStrongFairSet.cc \
+	FairTable/CompositeFairnessTable.cc \
+	FairTable/FormulaFairnessTable.cc \
+	FairTable/ParamSubstitutionBuilder.cc \
+	FairTable/ParamVarInfo.cc \
+	GraphImpl/RewriteTransitionState.cc \
+	GraphImpl/StateDagContainer.cc \
+	GraphImpl/StateLabelGraph.cc \
+	Graph/StateSystemGraph.cc \
+	Graph/FairStateSystemGraph.cc \
     Interface/PropInterpreter.cc \
     Interface/PropEvaluator.cc \
     Interface/FairnessDecoder.cc \
     Interface/ProofTermGenerator.cc \
     Interface/CounterExampleGenerator.cc \
-    Utility/TermUtil.cc \
+    Interface/FormulaBuilder.cc \
+    ModelCheckerManager.cc \
     ltlrFairnessCheckerSymbol.cc 
 	
 
