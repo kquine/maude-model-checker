@@ -10,42 +10,26 @@
 #include "vector.hh"
 
 //      forward declarations
-#include "temporal.hh"
 #include "interface.hh"
 #include "core.hh"
-#include "freeTheory.hh"
 #include "higher.hh"
 
 //      interface class definitions
 #include "symbol.hh"
 #include "dagNodeSet.hh"
 #include "term.hh"
-#include "dagArgumentIterator.hh"
-#include "argumentIterator.hh"
-#include "subproblem.hh"
-#include "extensionInfo.hh"
 
 //		higher class definitions
-#include "stateTransitionGraph.hh"
-#include "searchState.hh"
 #include "matchSearchState.hh"
 
 // core class definitions
 #include "rewritingContext.hh"
-#include "lhsAutomaton.hh"
-#include "conditionState.hh"
-#include "equation.hh"
-#include "rule.hh"
-#include "termBag.hh"
-#include "rhsBuilder.hh"
 
 // ltlr definitions
 #include "Utility/TermUtil.hh"
 #include "ParamPropositionTable.hh"
 
 namespace modelChecker {
-
-ParamSubstitution::ParamSubstitution(vector<DagNode*>::size_type size): subst(size,nullptr) {}
 
 ParamPropositionTable::ParamPropositionTable(const PropInterpreter& pi): PropositionTable(pi)  {}
 
@@ -98,7 +82,7 @@ ParamPropositionTable::getParamMatches(int propId) const
 int
 ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContext& parentContext)
 {
-	int propId = PropositionTable::dagNode2Index(propDag);
+	const int propId = PropositionTable::dagNode2Index(propDag);
 	if (propId != NONE)	// if the dag has stored
 	{
 		if (! getInstancePropInfo(propId))	// if the instance relation has NOT been computed
@@ -116,7 +100,7 @@ ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContex
 
 		if (! temp.empty())	// if it is an instance
 		{
-			int newPropId = PropositionTable::cardinality();
+			const int newPropId = PropositionTable::cardinality();
 			PropositionTable::insert(propDag);
 			updatePropTable();
 
@@ -125,8 +109,7 @@ ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContex
 			propInfoTable[newPropId] = std::move(ipi);
 			return newPropId;
 		}
-		else
-			return NONE;
+		return NONE;
 	}
 }
 
@@ -134,7 +117,7 @@ ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContex
 void
 ParamPropositionTable::computeMatchingProps(DagNode* propDag, RewritingContext& parentContext, map<int,set<int> >& match)
 {
-	const map<const Symbol*, Vector<int> >::iterator it = paramPropSymbolMap.find(propDag->symbol());
+	auto it = paramPropSymbolMap.find(propDag->symbol());
 	if (it != paramPropSymbolMap.end())	// if no corresponding param props
 	{
 		unique_ptr<RewritingContext> dagCxt(parentContext.makeSubcontext(propDag));

@@ -38,7 +38,7 @@ ModelCheckerManager::ModelCheckerManager(Formula& formula, PropositionTable& pro
 {
 	statePropChecker = PropCheckerFactory::createChecker([&](int i){ return propTable.isStateProp(i); }, propTable, stateEval, sysContext);
 	eventPropChecker = PropCheckerFactory::createChecker([&](int i){ return propTable.isEventProp(i); }, propTable,eventEval,sysContext);
-	enalbedPropTransferer = PropCheckerFactory::createTransferer([&](int i){ return ! formula.formulaPropIds.contains(i); }, propTable);
+	enalbedPropTransferer = PropCheckerFactory::createTransferer([&](int i){ return propTable.isEnabledProp(i) && !formula.formulaPropIds.contains(i); }, propTable);
 
 	stateFairChecker = FairnessCheckerFactory::createChecker(true, fairTable.get());
 	eventFairChecker = FairnessCheckerFactory::createChecker(false, fairTable.get());

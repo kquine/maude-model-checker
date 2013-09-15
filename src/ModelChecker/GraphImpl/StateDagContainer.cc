@@ -28,11 +28,10 @@ int
 StateDagContainer::insertDag(DagNode* dag)
 {
 	int nextState;
-	int hashConsIndex = hashConsSet.insert(dag);
-	int mapSize = hashCons2dagIndex.size();
+	const unsigned int hashConsIndex = hashConsSet.insert(dag);	// NOTE: hashConsSet must always return a positive number
 
 	//DebugAdvisory("replacement dag = " << dag << "hashConsIndex = " << hashConsIndex);
-	if (hashConsIndex < mapSize)	// Seen before
+	if (hashConsIndex < hashCons2dagIndex.size())	// Seen before
 	{
 		nextState = hashCons2dagIndex[hashConsIndex];
 		if (nextState != NONE)
@@ -41,13 +40,11 @@ StateDagContainer::insertDag(DagNode* dag)
 	}
 	else	//	Definitely a new dag.
 	{
-		hashCons2dagIndex.resize(hashConsIndex + 1);
-		for (int i = mapSize; i < hashConsIndex; ++i)
-			hashCons2dagIndex[i] = NONE;
+		hashCons2dagIndex.resize(hashConsIndex + 1, NONE);
 	}
 	nextState = state2hashConsIndex.size();
 	hashCons2dagIndex[hashConsIndex] = nextState;
-	state2hashConsIndex.append(hashConsIndex);
+	state2hashConsIndex.push_back(hashConsIndex);
 
 	return nextState;
 }

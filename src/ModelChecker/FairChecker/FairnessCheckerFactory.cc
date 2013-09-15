@@ -14,14 +14,6 @@
 #include "interface.hh"
 #include "core.hh"
 
-//      interface class definitions
-#include "symbol.hh"
-#include "dagNodeSet.hh"
-
-// core class definitions
-#include "rewritingContext.hh"
-#include "symbolMap.hh"
-
 // ltlr definitions
 #include "CompositeFairnessChecker.hh"
 #include "ParamWeakFairnessChecker.hh"
@@ -40,21 +32,21 @@ FairnessCheckerFactory::createChecker(bool stateOnly, AbstractFairnessTable* fai
 			cfc->addComponent(createChecker(stateOnly, &cft->getComponent(i)));
 		return unique_ptr<FairnessChecker>(cfc);
 	}
-	if (ParamFairnessTable<Bdd>* pwft = dynamic_cast<ParamFairnessTable<Bdd>*>(fairTable))
+	if (ParamWeakFairnessTable* pwft = dynamic_cast<ParamWeakFairnessTable*>(fairTable))
 	{
-		return unique_ptr<FairnessChecker>(createChecker<ParamFairnessTable<Bdd>,ParamWeakFairnessChecker>(stateOnly,*pwft));
+		return unique_ptr<FairnessChecker>(createChecker<ParamWeakFairnessTable,ParamWeakFairnessChecker>(stateOnly,*pwft));
 	}
-	if (ParamFairnessTable<pair<Bdd,Bdd>>* psft = dynamic_cast<ParamFairnessTable<pair<Bdd,Bdd>>*>(fairTable))
+	if (ParamStrongFairnessTable* psft = dynamic_cast<ParamStrongFairnessTable*>(fairTable))
 	{
-		return unique_ptr<FairnessChecker>(createChecker<ParamFairnessTable<pair<Bdd,Bdd>>,ParamStrongFairnessChecker>(stateOnly,*psft));
+		return unique_ptr<FairnessChecker>(createChecker<ParamStrongFairnessTable,ParamStrongFairnessChecker>(stateOnly,*psft));
 	}
-	if (FairnessTable<Bdd>* wft = dynamic_cast<FairnessTable<Bdd>*>(fairTable))
+	if (WeakFairnessTable* wft = dynamic_cast<WeakFairnessTable*>(fairTable))
 	{
 		return unique_ptr<FairnessChecker>(createChecker<FairnessTable<Bdd>,WeakFairnessChecker>(stateOnly,*wft));
 	}
-	if (FairnessTable<pair<Bdd,Bdd>>* sft = dynamic_cast<FairnessTable<pair<Bdd,Bdd>>*>(fairTable))
+	if (StrongFairnessTable* sft = dynamic_cast<StrongFairnessTable*>(fairTable))
 	{
-		return unique_ptr<FairnessChecker>(createChecker<FairnessTable<pair<Bdd,Bdd>>,StrongFairnessChecker>(stateOnly,*sft));
+		return unique_ptr<FairnessChecker>(createChecker<StrongFairnessTable,StrongFairnessChecker>(stateOnly,*sft));
 	}
 	return nullptr;
 }

@@ -14,7 +14,6 @@
 #include "interface.hh"
 #include "core.hh"
 #include "higher.hh"
-#include "freeTheory.hh"
 
 //	interface class definitions
 #include "dagNode.hh"
@@ -25,8 +24,7 @@ namespace modelChecker {
 
 RewriteTransitionState::RewriteTransitionState(RewritingContext& parent, DagNode* stateDag):
 		RewriteSearchState(parent.makeSubcontext(stateDag), NONE,
-				RewriteSearchState::GC_CONTEXT|RewriteSearchState::SET_UNREWRITABLE|PositionState::SET_UNSTACKABLE,
-				0, UNBOUNDED) {}
+				RewriteSearchState::GC_CONTEXT|RewriteSearchState::SET_UNREWRITABLE|PositionState::SET_UNSTACKABLE, 0, UNBOUNDED) {}
 
 DagNode*
 RewriteTransitionState::getNextStateDag(RewritingContext& parent)
@@ -42,7 +40,7 @@ RewriteTransitionState::getNextStateDag(RewritingContext& parent)
 		{
 			context->tracePreRuleRewrite(getDagNode(), getRule());
 			if (context->traceAbort())
-				return NULL;
+				return nullptr;
 		}
 		DagNode* replacement = getReplacement();
 		RewriteSearchState::DagPair r = rebuildDag(replacement);
@@ -52,16 +50,16 @@ RewriteTransitionState::getNextStateDag(RewritingContext& parent)
 		{
 			c->tracePostRuleRewrite(r.second);
 			if (c->traceAbort())
-				return NULL;
+				return nullptr;
 		}
 		c->reduce();
 		if (c->traceAbort())
-			return NULL;
+			return nullptr;
 		parent.addInCount(*c);
 		return r.first;
 	}
 	else
-		return NULL;
+		return nullptr;
 }
 
 }

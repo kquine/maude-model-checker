@@ -8,7 +8,6 @@
 #ifndef STATESYSTEMGRAPH_HH_
 #define STATESYSTEMGRAPH_HH_
 #include "GraphImpl/BaseSystemGraphNoEnabled.hh"
-#include "GraphImpl/StateLabelGraph.hh"
 #include "PropChecker/PropChecker.hh"
 
 namespace modelChecker {
@@ -21,9 +20,9 @@ struct BaseSystemGraphTraits<StateSystemGraph>
 	struct Transition
 	{
 		Transition(int nextState, const Rule* rule): nextState(nextState), rule(rule) {}
-		DagNode* makeDag(RewritingContext&, DagNode*, ProofTermGenerator& ptg) const;
+		DagNode* makeDag(RewritingContext&, DagNode*, const ProofTermGenerator& ptg) const;
 
-		int nextState;
+		const int nextState;
 		const Rule* rule;
 	};
 
@@ -44,20 +43,21 @@ struct BaseSystemGraphTraits<StateSystemGraph>
 	};
 };
 
-class StateSystemGraph: public BaseSystemGraphNoEnabled<StateSystemGraph>, public StateLabelGraph
+class StateSystemGraph: public BaseSystemGraphNoEnabled<StateSystemGraph>
 {
 	friend class BaseSystemGraph<StateSystemGraph>;
 	friend class BaseSystemGraphNoEnabled<StateSystemGraph>;
-	typedef BaseSystemGraphNoEnabled<StateSystemGraph>			Super;
-	typedef BaseSystemGraphTraits<StateSystemGraph>				StateSystemGraphTraits;
 public:
-	StateSystemGraph(RewritingContext& initial, PropChecker& spc, ProofTermGenerator& ptg);
+	StateSystemGraph(RewritingContext& initial, PropChecker& spc, const ProofTermGenerator& ptg);
 	virtual ~StateSystemGraph() {}
 
+	bool satisfiesStateFormula(Bdd formula, int stateNr) const;
+
 protected:
-	typedef typename StateSystemGraphTraits::State						State;
-	typedef typename StateSystemGraphTraits::ActiveState				ActiveState;
-	typedef typename StateSystemGraphTraits::Transition					Transition;
+	using Super = 		BaseSystemGraphNoEnabled<StateSystemGraph>;
+	using State = 		typename BaseSystemGraphTraits<StateSystemGraph>::State;
+	using ActiveState =	typename BaseSystemGraphTraits<StateSystemGraph>::ActiveState;
+	using Transition =	typename BaseSystemGraphTraits<StateSystemGraph>::Transition;
 
 	/* implements */ virtual unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, State& s);
 	/* implements */ virtual unique_ptr<State> createState(DagNode* stateDag) const;
@@ -66,8 +66,6 @@ protected:
 	/* implements */ void closeTransition(const State& ) { /* Do nothing */ }
 
 private:
-	bool satisfiesStateProp(int propId, int stateNr) const override;
-
 	PropChecker& statePC;
 };
 

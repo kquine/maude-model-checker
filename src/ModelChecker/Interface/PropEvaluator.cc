@@ -29,7 +29,8 @@
 
 namespace modelChecker {
 
-PropEvaluator::PropEvaluator(Symbol* checkSymbol, Symbol* realizedSymbol, DagNode* trueDag): checkSymbol(checkSymbol), realizedSymbol(realizedSymbol), trueDagNode(trueDag) {}
+PropEvaluator::PropEvaluator(Symbol* checkSymbol, Symbol* realizedSymbol, DagNode* trueDag):
+		checkSymbol(checkSymbol), realizedSymbol(realizedSymbol), trueDagNode(trueDag) {}
 
 bool
 PropEvaluator::computeProp(DagNode* target, DagNode* prop, RewritingContext& context) const

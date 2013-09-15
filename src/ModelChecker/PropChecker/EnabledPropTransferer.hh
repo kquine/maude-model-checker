@@ -18,10 +18,10 @@ public:
 	EnabledPropTransferer(const vector<int>& enabledPropIds, const PropositionTable& propositions);
 	virtual ~EnabledPropTransferer() {}
 
-	virtual void computeEnabledPropIDs(PropSet& truePropIds, const vector<unique_ptr<PropSet> >& trueEventPropIds) const;
+	virtual void computeEnabledPropIDs(PropSet& truePropIds, const vector<unique_ptr<PropSet>>& trueEventPropIds) const;
 
 protected:
-	vector<int> enabledPropIds;
+	const vector<int> enabledPropIds;
 	const PropositionTable& propositions;
 };
 

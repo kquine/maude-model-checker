@@ -26,16 +26,17 @@ private:
 	struct PropVarInfo
 	{
 		PropVarInfo(int propId, const ParamPropositionTable& propTable, const ParamVarInfo& varInfo);
-		int propId;
+		const int propId;
 		vector<int> varMap;			// local var id -> global var id
 	};
 
-	void computeParamSubstitutions(vector<unique_ptr<PropVarInfo>>::const_iterator pos,
-			ParamSubstitution& subst, map<int,int>& propIdMap, const ParamPropSet& pps, vector<map<int,int>>& result) const;
-	void init(const set<int>& propIds);
+	using ParamPropTable = vector<unique_ptr<PropVarInfo>>;
 
-	vector<unique_ptr<PropVarInfo>> pidInfo;		// an "ordered" list of "param" prop ids
+	ParamPropTable pidInfo;		// an "ordered" list of "param" prop ids
 	const ParamPropositionTable& propTable;
+
+	void computeParamSubstitutions(ParamPropTable::const_iterator pos, ParamSubstitution& subst, map<int,int>& propIdMap, const ParamPropSet& pps, vector<map<int,int>>& result) const;
+	void init(const set<int>& propIds);
 };
 
 } /* namespace modelChecker */

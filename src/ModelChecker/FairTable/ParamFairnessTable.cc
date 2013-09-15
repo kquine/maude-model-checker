@@ -14,18 +14,6 @@
 #include "interface.hh"
 #include "core.hh"
 
-// interface class definitions
-#include "symbol.hh"
-#include "DagNodeSet.hh"
-#include "term.hh"
-
-// core class definitions
-#include "rewritingContext.hh"
-#include "dagArgumentIterator.hh"
-
-// temporal class definitions
-#include "logicFormula.hh"
-
 // ltlr definitions
 #include "ParamFairnessTable.hh"
 

@@ -5,23 +5,8 @@
  *      Author: kquine
  */
 
-//      utility stuff
-#include "macros.hh"
-#include "vector.hh"
-
-//      forward declarations
-#include "interface.hh"
-#include "core.hh"
-#include "temporal.hh"
-
-//      interface class definitions
-#include "symbol.hh"
-#include "dagNode.hh"
-
 //      utility class definitions
 #include "natSet.hh"
-#include "BFSGraph.hh"
-
 #include "SCCBuchiModelChecker.hh"
 
 namespace modelChecker {
@@ -33,17 +18,14 @@ template <typename Automaton>
 unique_ptr<typename SCCModelChecker<Automaton>::SCC>
 SCCBuchiModelChecker<Automaton>::findAcceptedSCC(const vector<State>& initials)
 {
-	SCCStack stack(this);
+	SCCStack stack(*this);
 
 	for(const State& i : initials)
 	{
 		if (!Super::H.contains(i))	// if the initial state has not visited yet..
 		{
 			stack.dfsPush(i,nullptr);
-			//
-			// main loop
-			//
-			while (! stack.empty() )
+			while (! stack.empty() )	// main loop
 			{
 				if (stack.hasNextSucc())
 				{
@@ -51,7 +33,7 @@ SCCBuchiModelChecker<Automaton>::findAcceptedSCC(const vector<State>& initials)
 					unique_ptr<FairSet> a(Super::graph->makeFairSet(t));
 					stack.nextSucc();
 
-					if (!Super::H.contains(t.target))	// if the next state not visited yet..
+					if (!Super::H.contains(t.target))			// if the next state not visited yet..
 						stack.dfsPush(t.target, std::move(a));
 					else if (Super::H.get(t.target) > 0)		// if on the dfs stack..
 					{

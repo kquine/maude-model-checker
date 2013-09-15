@@ -6,7 +6,6 @@
  */
 
 // utility stuff
-#include <memory>
 #include "macros.hh"
 #include "vector.hh"
 
@@ -14,21 +13,10 @@
 #include "interface.hh"
 #include "core.hh"
 
-//      interface class definitions
-#include "symbol.hh"
-#include "dagNodeSet.hh"
-
-// core class definitions
-#include "rewritingContext.hh"
-#include "symbolMap.hh"
-
 // ltlr definitions
-#include "Interface/PropEvaluator.hh"
 #include "PropChecker.hh"
 
-
 namespace modelChecker {
-
 
 PropChecker::PropChecker(const vector<int>& propIds, const PropositionTable& propositions, const PropEvaluator& pe, RewritingContext& context):
 		propIds(propIds), propositions(propositions), pEvaluator(pe), context(context)  {}
@@ -46,11 +34,9 @@ PropChecker::computeCheckResult(DagNode* target)
 	for (auto i = propIds.crbegin(); i != propIds.crend(); ++i)
 	{
 		if (pEvaluator.computeProp(target, propositions.index2DagNode(*i), context))
-				result->setTrue(*i);
+			result->setTrue(*i);
 	}
 	return result;
 }
-
-
 
 }

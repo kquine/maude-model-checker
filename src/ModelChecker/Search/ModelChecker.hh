@@ -15,32 +15,24 @@ namespace modelChecker {
 class ModelChecker
 {
 public:
-	typedef pair<int,int>	Edge;
+	using Edge =  pair<int,int>;
 
+	ModelChecker()			{}
 	virtual ~ModelChecker()	{}
+
+	ModelChecker(const ModelChecker&) = delete;
+	ModelChecker& operator=(const ModelChecker&) = delete;
 
 	virtual bool findCounterExample() = 0;
 	virtual const DagSystemGraph& getSystemGraph() const = 0;
 
-	const list<Edge>& getLeadIn() const;
-	const list<Edge>& getCycle() const;
+	const list<Edge>& getLeadIn() const		{ return leadIn; }
+	const list<Edge>& getCycle() const		{ return cycle; }
 
 protected:
 	list<Edge> leadIn;
 	list<Edge> cycle;
 };
-
-inline const list<pair<int,int> >&
-ModelChecker::getLeadIn() const
-{
-	return leadIn;
-}
-
-inline const list<pair<int,int> >&
-ModelChecker::getCycle() const
-{
-	return cycle;
-}
 
 }
 

@@ -18,20 +18,20 @@ namespace modelChecker {
 template<typename T>
 class indexed_set
 {
-	typedef map<T,unsigned int> EltMap;
-
 public:
-	typedef typename EltMap::iterator			iterator;
-	typedef typename EltMap::const_iterator		const_iterator;
+	using EltMap = 			map<T,unsigned int>;
+	using iterator =		typename EltMap::iterator;
+	using const_iterator =	typename EltMap::const_iterator;
+	using size_type =		typename vector<const_iterator>::size_type;
 
-	indexed_set();
-	virtual ~indexed_set();
+	indexed_set()			{ }
+	virtual ~indexed_set()	{ }
 
 	indexed_set(indexed_set&&) noexcept;
 	indexed_set& operator=(indexed_set&&) noexcept;	// move
 
-	const T& operator[](unsigned int i) const;
-	T& operator[](unsigned int i);
+	const T& operator[](size_type i) const;
+	T& operator[](size_type i);
 
 	iterator begin();
 	const_iterator begin() const noexcept;
@@ -41,10 +41,10 @@ public:
 	const_iterator find(const T& element) const;
 	iterator find(T& element);
 
-	unsigned int insert(const T& element);
+	size_type insert(const T& element);
 	void swap(indexed_set& other);
 
-	unsigned int size() const;
+	size_type size() const;
 	void clear();
 
 private:
@@ -52,14 +52,12 @@ private:
 	vector<typename EltMap::const_iterator> indexMap;
 };
 
-template<typename T> indexed_set<T>::indexed_set()	{ }
-template<typename T> indexed_set<T>::~indexed_set()	{ }
-
 template<typename T>
 indexed_set<T>::indexed_set(indexed_set&& other) noexcept:
 	eltMap(std::move(other.eltMap)), indexMap(std::move(other.indexMap)) {}
 
-template<typename T> indexed_set<T>&
+template<typename T>
+inline indexed_set<T>&
 indexed_set<T>::operator=(indexed_set&& other) noexcept
 {
 	eltMap = std::move(other.eltMap);
@@ -67,55 +65,61 @@ indexed_set<T>::operator=(indexed_set&& other) noexcept
 	return *this;
 }
 
-template<typename T> const T&
-indexed_set<T>::operator[](unsigned int i) const
+template<typename T> inline const T&
+indexed_set<T>::operator[](size_type i) const
 {
 	return indexMap[i]->first;
 }
 
-template<typename T> T&
-indexed_set<T>::operator[](unsigned int i)
+template<typename T> inline T&
+indexed_set<T>::operator[](size_type i)
 {
 	return indexMap[i]->first;
 }
 
-template<typename T> typename indexed_set<T>::const_iterator
+template<typename T>
+inline typename indexed_set<T>::const_iterator
 indexed_set<T>::begin() const noexcept
 {
 	return eltMap.begin();
 }
 
-template<typename T> typename indexed_set<T>::const_iterator
+template<typename T>
+inline typename indexed_set<T>::const_iterator
 indexed_set<T>::end() const noexcept
 {
 	return eltMap.end();
 }
 
-template<typename T> typename indexed_set<T>::iterator
+template<typename T> inline typename indexed_set<T>::iterator
 indexed_set<T>::begin()
 {
 	return eltMap.begin();
 }
 
-template<typename T> typename indexed_set<T>::iterator
+template<typename T>
+inline typename indexed_set<T>::iterator
 indexed_set<T>::end()
 {
 	return eltMap.end();
 }
 
-template<typename T> typename indexed_set<T>::const_iterator
+template<typename T>
+inline typename indexed_set<T>::const_iterator
 indexed_set<T>::find(const T& element) const
 {
 	return eltMap.find(element);
 }
 
-template<typename T> typename indexed_set<T>::iterator
+template<typename T>
+inline typename indexed_set<T>::iterator
 indexed_set<T>::find(T& element)
 {
 	return eltMap.find(element);
 }
 
-template<typename T> unsigned int
+template<typename T>
+inline typename indexed_set<T>::size_type
 indexed_set<T>::insert(const T& element)
 {
 	pair<typename EltMap::iterator,bool> p = eltMap.insert(typename EltMap::value_type(element,indexMap.size()));
@@ -124,20 +128,21 @@ indexed_set<T>::insert(const T& element)
 	return p.first->second;
 }
 
-template<typename T> void
+template<typename T> inline void
 indexed_set<T>::swap(indexed_set& other)
 {
 	indexMap.swap(other.indexMap);
 	eltMap.swap(other.eltMap);
 }
 
-template<typename T> unsigned int
+template<typename T>
+inline typename indexed_set<T>::size_type
 indexed_set<T>::size() const
 {
 	return indexMap.size();
 }
 
-template<typename T> void
+template<typename T> inline void
 indexed_set<T>::clear()
 {
 	indexMap.clear();

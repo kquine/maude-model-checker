@@ -5,27 +5,17 @@
  *      Author: kquine
  */
 
-// utility stuff
-#include <memory>
 #include "macros.hh"
 #include "vector.hh"
-
-// forward declarations
-#include "interface.hh"
-#include "core.hh"
-
-//      interface class definitions
-#include "symbol.hh"
-#include "dagNodeSet.hh"
-
-// core class definitions
-#include "rewritingContext.hh"
-#include "symbolMap.hh"
-
-// ltlr definitions
+#include "natSet.hh"
 #include "PropSet.hh"
 
 namespace modelChecker {
+
+PropSet::PropSet(PropSet&& other) noexcept
+{
+	truePropIds.swap(other.truePropIds);
+}
 
 const NatSet&
 PropSet::getTruePropIds() const

@@ -17,7 +17,7 @@ namespace modelChecker {
 class ParamPropositionTable: public PropositionTable
 {
 public:
-	ParamPropositionTable(const PropInterpreter& pi);
+	explicit ParamPropositionTable(const PropInterpreter& pi);
 
 	bool hasParamProp() const override;
 	bool isParamProp(int propId) const override;
@@ -33,9 +33,9 @@ public:
 private:
 	struct ParamInfo
 	{
-		ParamInfo(Term* t): pattern(new Pattern(t,false)) {}
+		explicit ParamInfo(Term* t): pattern(new Pattern(t,false)) {}
 
-		unique_ptr<Pattern> pattern;
+		const unique_ptr<Pattern> pattern;
 		vector<unique_ptr<ParamSubstitution> > substitutions;
 	};
 

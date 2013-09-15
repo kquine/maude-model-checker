@@ -13,14 +13,6 @@
 #include "interface.hh"
 #include "core.hh"
 
-// interface class definitions
-#include "symbol.hh"
-#include "dagNodeSet.hh"
-
-// core class definitions
-#include "rewritingContext.hh"
-#include "symbolMap.hh"
-
 // ltlr definitions
 #include "CompositeFairnessChecker.hh"
 

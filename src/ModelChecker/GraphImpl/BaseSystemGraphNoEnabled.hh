@@ -15,11 +15,11 @@ template <class T>
 class BaseSystemGraphNoEnabled: public BaseSystemGraph<T>
 {
 	friend class BaseSystemGraph<T>;
-	typedef BaseSystemGraph<T>								Super;
-	typedef typename BaseSystemGraphTraits<T>::State		State;
-	typedef typename BaseSystemGraphTraits<T>::Transition	Transition;
+	using Super			= BaseSystemGraph<T>;
+	using State			= typename BaseSystemGraphTraits<T>::State;
+	using Transition	= typename BaseSystemGraphTraits<T>::Transition;
 public:
-	BaseSystemGraphNoEnabled(RewritingContext& initial, ProofTermGenerator& ptg);
+	BaseSystemGraphNoEnabled(RewritingContext& initial, const ProofTermGenerator& ptg);
 	virtual ~BaseSystemGraphNoEnabled() {}
 
 private:

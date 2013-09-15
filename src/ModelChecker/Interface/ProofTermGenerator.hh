@@ -20,7 +20,7 @@ public:
 			Symbol* substitutionSymbol, Symbol* emptySubstSymbol, QuotedIdentifierSymbol* qidSymbol,
 			Symbol* unlabeledSymbol, Symbol* noContextSymbol);
 
-	DagNode* makeProofDag(const PositionState* ps, const Rule& rule, const Substitution* subst);
+	DagNode* makeProofDag(const PositionState* ps, const Rule& rule, const Substitution* subst) const;
 
 private:
     DagNode* makeContextDag(const PositionState* ps, const Sort* holeSort) const;

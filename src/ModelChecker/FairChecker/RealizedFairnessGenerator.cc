@@ -15,16 +15,6 @@
 #include "interface.hh"
 #include "core.hh"
 
-//      interface class definitions
-#include "symbol.hh"
-#include "dagNodeSet.hh"
-#include "term.hh"
-
-// core class definitions
-#include "rewritingContext.hh"
-#include "equation.hh"
-#include "dagArgumentIterator.hh"
-
 // ltlr definitions
 #include "FairSet/ParamWeakFairSet.hh"
 #include "FairSet/ParamStrongFairSet.hh"
@@ -52,28 +42,6 @@ RealizedFairnessGenerator<Formula>::generateRealizedFairness(const ParamPropSet&
 		}
 	}
 }
-
-
-template <typename Formula> bool
-RealizedFairnessGenerator<Formula>::satisfiesParamFormula(const ParamPropSet& pps, const map<int,int>& subst, Bdd formula) const
-{
-	for(;;)
-	{
-		if (formula == bdd_true())
-			return true;
-		else if (formula == bdd_false())
-			return false;
-		else
-		{
-			int propId = bdd_var(formula);
-			if (pps.getPropTable().isParamProp(propId))
-				formula = (subst.find(propId) != subst.end()) ? bdd_high(formula) : bdd_low(formula);
-			else
-				formula = pps.isTrue(propId) ? bdd_high(formula) : bdd_low(formula);
-		}
-	}
-}
-
 
 template <>
 struct RealizedFairnessGeneratorTraits<Bdd>

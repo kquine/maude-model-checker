@@ -7,6 +7,7 @@
 
 #ifndef STATEPROPCHECKER_HH_
 #define STATEPROPCHECKER_HH_
+#include <memory>
 #include "Interface/PropEvaluator.hh"
 #include "PropTable/PropositionTable.hh"
 #include "PropSet/PropSet.hh"
@@ -23,7 +24,7 @@ public:
 	virtual unique_ptr<PropSet> computeCheckResult(DagNode* target);
 
 private:
-	vector<int> propIds;					// either state props or event props
+	const vector<int> propIds;					// either state props or event props
 	const PropositionTable& propositions;
 	const PropEvaluator& pEvaluator;
 	RewritingContext& context;

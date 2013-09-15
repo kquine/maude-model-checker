@@ -21,9 +21,9 @@ public:
 	DagNode* getEnabledActionProp(DagNode* propDag) const;
 
 private:
-    Symbol* satisfiesSymbol;
-    Symbol* actionmatchSymbol;
-    Symbol* enabledSymbol;
+    const Symbol* satisfiesSymbol;
+    const Symbol* actionmatchSymbol;
+    const Symbol* enabledSymbol;
 };
 
 }

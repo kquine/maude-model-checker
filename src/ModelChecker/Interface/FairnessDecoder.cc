@@ -44,34 +44,32 @@ FairnessDecoder::FairnessDecoder(const FormulaBuilder& fBuilder, PropositionTabl
 unique_ptr<AbstractFairnessTable>
 FairnessDecoder::interpretFairnessSet(DagNode* fairSetDag) const
 {
-	vector<DagNode*> fairDags = parseFairnessSet(fairSetDag);
-	if (! fairDags.empty())
+	const vector<FairCond> fairConds = parseFairnessSet(fairSetDag);
+
+	if (! fairConds.empty())
 	{
-		vector<tuple<set<int>,bdd,bdd>> fairConds(fairDags.size());
+		vector<vector<FairCond>::const_iterator> wConds;	bool weakParam = false;
+		vector<vector<FairCond>::const_iterator> sConds;	bool strongParam = false;
 
-		vector<int> weakIds;	bool weakParam = false;
-		vector<int> strongIds;	bool strongParam = false;
-
-		for (unsigned int i = 0; i < fairDags.size(); ++i)
+		for (auto i = fairConds.cbegin(); i != fairConds.cend(); ++i)
 		{
-			fairConds[i] = interpretFairnessDag(fairDags[i]);
-			if (get<1>(fairConds[i]) == bdd_true())
+			if (get<1>(*i) == bdd_true())
 			{
-				weakParam |= (! fairDags[i]->isGround());
-				weakIds.push_back(i);
+				weakParam |= (! get<3>(*i)->isGround());
+				wConds.push_back(i);
 			}
 			else
 			{
-				strongParam |= (! fairDags[i]->isGround());
-				strongIds.push_back(i);
+				strongParam |= (! get<3>(*i)->isGround());
+				sConds.push_back(i);
 			}
 		}
 
 		unique_ptr<WeakFairnessTable>	wft(weakParam	? new ParamWeakFairnessTable(propTable)	  : new WeakFairnessTable(propTable));
 		unique_ptr<StrongFairnessTable> sft(strongParam ? new ParamStrongFairnessTable(propTable) : new StrongFairnessTable(propTable));
 
-		for (int i : weakIds)	wft->insertFairnessFormula(get<2>(fairConds[i]), get<0>(fairConds[i]), fairDags[i]);
-		for (int i : strongIds)	sft->insertFairnessFormula(make_pair(get<1>(fairConds[i]),get<2>(fairConds[i])), get<0>(fairConds[i]), fairDags[i]);
+		for (auto i : wConds)	wft->insertFairnessFormula(get<2>(*i), get<0>(*i), get<3>(*i));
+		for (auto i : sConds)	sft->insertFairnessFormula(make_pair(get<1>(*i),get<2>(*i)), get<0>(*i), get<3>(*i));
 
 		cout << "weak : " << wft->nrFairness() << ", strong : " << sft->nrFairness() << endl;
 
@@ -89,18 +87,18 @@ FairnessDecoder::interpretFairnessSet(DagNode* fairSetDag) const
 	return nullptr;
 }
 
-vector<DagNode*>
+vector<FairnessDecoder::FairCond>
 FairnessDecoder::parseFairnessSet(DagNode* fairSetDag) const
 {
-	vector<DagNode*> result;
+	vector<FairCond> result;
 	if (fairSetDag->symbol() == fairnessSymbol)
 	{
-		result.push_back(fairSetDag);
+		result.push_back(parseFairnessDag(fairSetDag));
 	}
 	else if (fairSetDag->symbol() == fairnessSetSymbol)
 	{
 		for (DagArgumentIterator fi(fairSetDag); fi.valid(); fi.next())
-			result.push_back(fi.argument());
+			result.push_back(parseFairnessDag(fi.argument()));
 	}
 	else
 	{
@@ -110,11 +108,11 @@ FairnessDecoder::parseFairnessSet(DagNode* fairSetDag) const
 	return result;
 }
 
-tuple<set<int>,bdd,bdd>
-FairnessDecoder::interpretFairnessDag(DagNode* fairnessDag) const
+FairnessDecoder::FairCond
+FairnessDecoder::parseFairnessDag(DagNode* fairnessDag) const
 {
 	Assert(fairnessDag->symbol() == fairnessSymbol, "FairnessDecoder::interpretFairnessDag: invalid fairness formula");
-	FreeDagNode* d = safeCast(FreeDagNode*, fairnessDag);
+	FreeDagNode* d = static_cast<FreeDagNode*>(fairnessDag);
 	LogicFormula premF, consF;
 
 	set<int> propIds;
@@ -122,7 +120,7 @@ FairnessDecoder::interpretFairnessDag(DagNode* fairnessDag) const
 	bdd cons = fBuilder.translateFairnessFormula(fBuilder.build(consF, propTable.getDagNodeSet(), d->getArgument(2)), consF, propIds);
 	propTable.updatePropTable();
 
-	return d->getArgument(0)->symbol() == weakFairTypeSymbol ? make_tuple(propIds,bdd_true(),prem>>cons) : make_tuple(propIds,prem,cons);
+	return d->getArgument(0)->symbol() == weakFairTypeSymbol ? make_tuple(propIds,bdd_true(),prem>>cons,fairnessDag) : make_tuple(propIds,prem,cons,fairnessDag);
 }
 
 }

@@ -15,7 +15,7 @@ class ParamSubstitutionBuilder;
 class ParamSubstitution
 {
 public:
-	ParamSubstitution(vector<DagNode*>::size_type size);
+	explicit ParamSubstitution(vector<DagNode*>::size_type size);
 	ParamSubstitution(const VariableInfo& vi, const Substitution& subst);
 	ParamSubstitution(const ParamSubstitution& src, const vector<int>& varMap);
 

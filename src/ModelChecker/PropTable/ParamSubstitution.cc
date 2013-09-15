@@ -13,20 +13,16 @@
 #include "interface.hh"
 #include "core.hh"
 
-//      interface class definitions
-#include "symbol.hh"
-#include "dagNodeSet.hh"
-#include "term.hh"
-
 // core class definitions
-#include "rewritingContext.hh"
-#include "equation.hh"
-#include "rule.hh"
+#include "variableInfo.hh"
+#include "substitution.hh"
 
 // ltlr definitions
 #include "ParamSubstitution.hh"
 
 namespace modelChecker {
+
+ParamSubstitution::ParamSubstitution(vector<DagNode*>::size_type size): subst(size,nullptr) {}
 
 ParamSubstitution::ParamSubstitution(const VariableInfo& vi, const Substitution& sb): subst(vi.getNrRealVariables())
 {
@@ -42,10 +38,7 @@ ParamSubstitution::ParamSubstitution(const ParamSubstitution& src, const vector<
 bool
 ParamSubstitution::isTotal() const
 {
-	for (DagNode* d : subst)
-		if (d == nullptr)
-			return false;
-	return true;
+	return none_of(subst.begin(), subst.end(), [] (DagNode* d) { return d == nullptr; });
 }
 
 bool

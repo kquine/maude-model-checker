@@ -20,11 +20,11 @@ namespace modelChecker {
 template <typename Automaton>
 class BFSGraph
 {
-	typedef pair<int,int>	Edge;
+	using Edge	= 				pair<int,int>;
 public:
-	typedef typename Automaton::State				State;
-	typedef typename Automaton::Transition			Transition;
-	typedef typename Automaton::TransitionIterator	TransitionIterator;
+	using State =				typename Automaton::State;
+	using Transition =			typename Automaton::Transition;
+	using TransitionIterator =	typename Automaton::TransitionIterator;
 
 	BFSGraph(Automaton& graph, const vector<State>& initials);
 	virtual ~BFSGraph() {}
@@ -41,14 +41,14 @@ private:
 	struct Step;		// used for counter-example generation
 
 	queue<State> toVisit;
-	StateMap<Step> parent;	// parent state + transition index
+	StateMap<Step> parent;			// parent state + transition index
 	const vector<State>& initials;
 };
 
 template <typename Automaton>
 struct BFSGraph<Automaton>::Step		// used for counter-example generation
 {
-	Step() : systemIndex(NONE) {}
+	Step() : Step(make_pair(NONE,NONE),NONE) {}
 	Step(const State& p, int index) : parent(p), systemIndex(index) {}
 	State parent;
 	int systemIndex;

@@ -17,14 +17,12 @@ namespace modelChecker {
 template <typename Automaton>
 class NDFSModelChecker: public ModelChecker
 {
-	typedef typename Automaton::State				State;
-	typedef typename Automaton::Transition			Transition;
-	typedef typename Automaton::TransitionIterator	TransitionIterator;
+	using State =				typename Automaton::State;
+	using Transition =			typename Automaton::Transition;
+	using TransitionIterator =	typename Automaton::TransitionIterator;
 
 public:
-	NDFSModelChecker(unique_ptr<Automaton> prod);
-	NDFSModelChecker(const NDFSModelChecker&) = delete;
-	NDFSModelChecker& operator=(const NDFSModelChecker&) = delete;
+	explicit NDFSModelChecker(unique_ptr<Automaton> prod);
 
 	bool findCounterExample() override;
 	const DagSystemGraph& getSystemGraph() const override	{ return prod->getSystemAutomaton(); }
@@ -36,15 +34,15 @@ private:
 	    NatSet onDfs1Stack;		// flags for states on dfs1 stack
 	    NatSet dfs2Seen;
 	};
-	class PrefixBFSGraph;					// for generating prefix counter example
+	class PrefixBFSGraph;						// for generating prefix counter example
 
-	bool trap(int propertyIndex) const;		// return true for a trap state
+	bool trap(const State& s) const;			// return true for a trap state
 	bool checkVisit(const State& ns);
 
-	bool dfs1(const State& initial);		// outer dfs
-	bool dfs2(const State& initial);		// inner dfs
+	bool dfs1(const State& initial);			// outer dfs
+	bool dfs2(const State& initial);			// inner dfs
 
-	State cycleState;						// intersection of cycle and prefix after nested dfs
+	State cycleState = make_pair(NONE,NONE);	// intersection of cycle and prefix after nested dfs
 	vector<unique_ptr<StateSet>> intersectionStates;
 
 	unique_ptr<Automaton> prod;

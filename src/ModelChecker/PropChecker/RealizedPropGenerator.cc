@@ -11,33 +11,21 @@
 #include "vector.hh"
 
 //      forward declarations
-#include "temporal.hh"
 #include "interface.hh"
 #include "core.hh"
-#include "freeTheory.hh"
 #include "higher.hh"
 
 //      interface class definitions
 #include "symbol.hh"
-#include "dagNodeSet.hh"
 #include "term.hh"
-#include "dagArgumentIterator.hh"
 #include "argumentIterator.hh"
-#include "subproblem.hh"
-#include "extensionInfo.hh"
 
 //		higher class definitions
-#include "stateTransitionGraph.hh"
 #include "matchSearchState.hh"
 
 // core class definitions
 #include "rewritingContext.hh"
-#include "lhsAutomaton.hh"
-#include "rewritingContext.hh"
-#include "conditionState.hh"
 #include "equation.hh"
-#include "termBag.hh"
-#include "rhsBuilder.hh"
 
 // ltlr definitions
 #include "Utility/TermUtil.hh"
@@ -124,7 +112,7 @@ unique_ptr<Rule>
 RealizedPropGenerator::makeRule(Term* left, Term* right, const Vector<ConditionFragment*>& condition) const
 {
 	Term* lterm = pEval.getRealizedTerm(left->deepCopy(nullptr));	// will be freed when the rule is freed
-	Term* rterm = right->deepCopy(nullptr);								// will be freed when the rule is freed
+	Term* rterm = right->deepCopy(nullptr);							// will be freed when the rule is freed
 
 	unique_ptr<Rule> rule(new Rule(NONE, lterm, rterm, condition));
 	rule->setModuleInfo(0, NONE);

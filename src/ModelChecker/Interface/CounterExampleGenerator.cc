@@ -12,32 +12,26 @@
 // forward declarations
 #include "interface.hh"
 #include "core.hh"
-#include "freeTheory.hh"
-#include "builtIn.hh"
-#include "higher.hh"
 
 // interface class definitions
 #include "symbol.hh"
 #include "dagNode.hh"
-#include "term.hh"
 
 //      core class definitions
 #include "dagArgumentIterator.hh"
 #include "rewritingContext.hh"
-#include "symbolMap.hh"
-#include "dagNodeSet.hh"
-#include "rule.hh"
 
 // ltlr definitions
 #include "CounterExampleGenerator.hh"
+
+//#define TDEBUG
 
 namespace modelChecker {
 
 CounterExampleGenerator::CounterExampleGenerator(Symbol* counterexampleSymbol, Symbol* transitionSymbol,
 		Symbol* transitionListSymbol, Symbol* nilTransitionListSymbol, DagNode* deadlockDag):
 				counterexampleSymbol(counterexampleSymbol), transitionSymbol(transitionSymbol),
-				transitionListSymbol(transitionListSymbol), nilTransitionListSymbol(nilTransitionListSymbol),
-				deadlockDag(deadlockDag) {}
+				transitionListSymbol(transitionListSymbol), nilTransitionListSymbol(nilTransitionListSymbol), deadlockDag(deadlockDag) {}
 
 DagNode*
 CounterExampleGenerator::makeCounterexample(const DagSystemGraph& dg, const list<Edge>& path, const list<Edge>& cycle) const
@@ -45,9 +39,9 @@ CounterExampleGenerator::makeCounterexample(const DagSystemGraph& dg, const list
 #ifdef TDEBUG
 	cout << "counter example: " << endl;
 	cout << "  path: ";
-	for (Edge& i : path) cout << i.first << "=(" << i.second << ")=> ";
+	for (auto i : path) cout << i.first << "=(" << i.second << ")=> ";
 	cout << "\n  cycle: ";
-	for (Edge& j : cycle) cout << j.first << "=(" << j.second << ")=> ";
+	for (auto j : cycle) cout << j.first << "=(" << j.second << ")=> ";
 	cout << endl;
 #endif
 

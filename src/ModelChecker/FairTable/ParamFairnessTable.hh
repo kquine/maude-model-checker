@@ -12,12 +12,17 @@
 
 namespace modelChecker {
 
+template <typename Formula> class ParamFairnessTable;
+
+using ParamWeakFairnessTable =		ParamFairnessTable<Bdd>;
+using ParamStrongFairnessTable =	ParamFairnessTable<pair<Bdd,Bdd>>;
+
 template <typename Formula>
 class ParamFairnessTable: public FairnessTable<Formula>
 {
-	typedef FairnessTable<Formula>				Super;
-	typedef typename Super::Fairness			Fairness;
-	typedef typename Super::GroundFairness		GroundFairness;
+	using Super = 			FairnessTable<Formula>;
+	using Fairness =		typename Super::Fairness;
+	using GroundFairness =	typename Super::GroundFairness;
 public:
 	ParamFairnessTable(PropositionTable& propTable);
 

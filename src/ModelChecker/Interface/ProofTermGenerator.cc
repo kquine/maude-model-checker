@@ -12,7 +12,6 @@
 // forward declarations
 #include "interface.hh"
 #include "core.hh"
-#include "freeTheory.hh"
 #include "strategyLanguage.hh"
 #include "mixfix.hh"
 
@@ -31,32 +30,28 @@
 
 namespace modelChecker {
 
-ProofTermGenerator::ProofTermGenerator(MixfixModule* module, Symbol* prooftermSymbol,
-		Symbol* assignOp, Symbol* holeOp,
-		Symbol* substitutionSymbol, Symbol* emptySubstSymbol, QuotedIdentifierSymbol* qidSymbol,
-		Symbol* unlabeledSymbol, Symbol* noContextSymbol):
+ProofTermGenerator::ProofTermGenerator(MixfixModule* module, Symbol* prooftermSymbol, Symbol* assignOp, Symbol* holeOp,
+		Symbol* substitutionSymbol, Symbol* emptySubstSymbol, QuotedIdentifierSymbol* qidSymbol, Symbol* unlabeledSymbol, Symbol* noContextSymbol):
 				module(module), prooftermSymbol(prooftermSymbol), assignOp(assignOp), holeOp(holeOp),
 				substitutionSymbol(substitutionSymbol), emptySubstSymbol(emptySubstSymbol), qidSymbol(qidSymbol),
 				unlabeledSymbol(unlabeledSymbol), noContextSymbol(noContextSymbol) {}
 
 DagNode*
-ProofTermGenerator::makeProofDag(const PositionState* ps, const Rule& rule, const Substitution* subst)
+ProofTermGenerator::makeProofDag(const PositionState* ps, const Rule& rule, const Substitution* subst) const
 {
     static Vector<DagNode*> args(3);
 	args[0] = makeContextDag(ps, rule.getLhs()->getSort());
 	args[1] = makeRuleNameDag(rule.getLabel().id());
 	args[2] = makeSubstitutionDag(subst, &rule);
-
 	return prooftermSymbol->makeDagNode(args);
 }
 
 DagNode*
 ProofTermGenerator::makeContextDag(const PositionState* ps, const Sort* holeSort) const
 {
-	if (ps != nullptr)
+	if (ps)
 	{
-		Symbol* holeSymbol = findHoleOp(holeSort);
-		if (holeSymbol != nullptr)
+		if (Symbol* holeSymbol = findHoleOp(holeSort))
 			return ps->rebuildDag(holeSymbol->makeDagNode()).first;
 	}
     return noContextSymbol->makeDagNode();
@@ -73,7 +68,7 @@ ProofTermGenerator::makeRuleNameDag(int ruleId) const
 DagNode*
 ProofTermGenerator::makeSubstitutionDag(const Substitution* substitution, const VariableInfo* variableInfo) const
 {
-	if (substitution != nullptr && variableInfo != nullptr)
+	if (substitution && variableInfo)
 	{
 		int nrVariable = variableInfo->getNrRealVariables();
 		if (nrVariable > 0)
@@ -81,9 +76,7 @@ ProofTermGenerator::makeSubstitutionDag(const Substitution* substitution, const 
 			Vector<DagNode*> args;  // size may vary
 			for (int i = 0; i < nrVariable ; i++)
 			{
-				Symbol* assignSymbol = findAssignOp(variableInfo->index2Variable(i));
-
-				if (assignSymbol != nullptr)
+				if (Symbol* assignSymbol = findAssignOp(variableInfo->index2Variable(i)))
 					args.append(makeAssignmentDag(variableInfo->index2Variable(i), substitution->value(i), assignSymbol));
 			}
 			if (args.size() > 1)

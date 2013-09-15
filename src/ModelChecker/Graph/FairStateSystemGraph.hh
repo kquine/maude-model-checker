@@ -14,14 +14,15 @@ namespace modelChecker {
 
 class FairStateSystemGraph: public StateSystemGraph
 {
-	typedef StateSystemGraph		Super;
-	typedef typename Super::State	PreState;
 public:
-	FairStateSystemGraph(RewritingContext& initial, PropChecker& spc, const NatSet& formulaPropIds, FairnessChecker& fc, ProofTermGenerator& ptg);
+	FairStateSystemGraph(RewritingContext& initial, PropChecker& spc, const NatSet& formulaPropIds, FairnessChecker& fc, const ProofTermGenerator& ptg);
 
 	unique_ptr<FairSet> makeFairSet(int stateNr, int transitionNr) const;
 
 private:
+	using Super =		StateSystemGraph;
+	using PreState =	typename Super::State;
+
 	struct State: public PreState
 	{
 		State(RewritingContext& parent, DagNode* stateDag): PreState(parent, stateDag) {}

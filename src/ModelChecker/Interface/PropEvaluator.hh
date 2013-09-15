@@ -24,7 +24,7 @@ public:
 private:
 	Symbol* checkSymbol;
 	Symbol* realizedSymbol;
-	DagNode* trueDagNode;
+	const DagNode* trueDagNode;
 };
 
 } /* namespace modelChecker */

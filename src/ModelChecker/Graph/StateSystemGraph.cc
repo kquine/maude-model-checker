@@ -13,7 +13,6 @@
 #include "interface.hh"
 #include "core.hh"
 #include "higher.hh"
-#include "freeTheory.hh"
 #include "strategyLanguage.hh"
 #include "mixfix.hh"
 
@@ -25,17 +24,18 @@
 #include "rewritingContext.hh"
 
 // ltlr definitions
+#include "Utility/BddUtil.hh"
 #include "StateSystemGraph.hh"
 
 namespace modelChecker {
 
-StateSystemGraph::StateSystemGraph(RewritingContext& initial, PropChecker& spc, ProofTermGenerator& ptg):
-	Super(initial, ptg), statePC(spc) {}
+StateSystemGraph::StateSystemGraph(RewritingContext& initial, PropChecker& spc, const ProofTermGenerator& ptg): Super(initial, ptg), statePC(spc) {}
 
 bool
-StateSystemGraph::satisfiesStateProp(int propId, int stateNr) const
+StateSystemGraph::satisfiesStateFormula(Bdd formula, int stateNr) const
 {
-	return Super::seen[stateNr]->label.contains(propId);
+	const NatSet& label = Super::seen[stateNr]->label;
+	return BddUtil::satisfiesFormula(formula, [&label] (int propId) { return label.contains(propId); });
 }
 
 unique_ptr<PropSet>
@@ -64,7 +64,7 @@ StateSystemGraph::insertTransition(int nextState, State& n)
 }
 
 DagNode*
-BaseSystemGraphTraits<StateSystemGraph>::Transition::makeDag(RewritingContext&, DagNode*, ProofTermGenerator& ptg) const
+BaseSystemGraphTraits<StateSystemGraph>::Transition::makeDag(RewritingContext&, DagNode*, const ProofTermGenerator& ptg) const
 {
 	return ptg.makeProofDag(nullptr,*rule, nullptr);
 }

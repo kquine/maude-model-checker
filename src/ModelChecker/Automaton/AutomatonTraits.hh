@@ -29,9 +29,10 @@ struct AutomatonTraits: public PropertyTransitionTraits<PA>
 	};
 };
 
-inline ostream& operator<<(ostream &o, const pair<int,int>& state)
+template <typename T1, typename T2>
+inline ostream& operator<<(ostream &o, const pair<T1,T2>& pair)
 {
-	o << "(" << state.first << "," <<  state.second << ")";
+	o << "(" << pair.first << "," <<  pair.second << ")";
 	return o;
 }
 

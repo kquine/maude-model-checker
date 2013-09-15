@@ -9,28 +9,6 @@
 #include "macros.hh"
 #include "vector.hh"
 
-//      forward declarations
-#include "temporal.hh"
-#include "interface.hh"
-#include "core.hh"
-#include "freeTheory.hh"
-
-// interface class definitions
-#include "symbol.hh"
-#include "DagNodeSet.hh"
-#include "term.hh"
-
-// core class definitions
-#include "rewritingContext.hh"
-#include "dagArgumentIterator.hh"
-
-// temporal class definitions
-#include "logicFormula.hh"
-
-//      free theory class definitions
-#include "freeDagNode.hh"
-
-
 // ltlr definitions
 #include "FairnessTable.hh"
 

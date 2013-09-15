@@ -33,7 +33,6 @@ libModelChecker_a_SOURCES = \
 	PropChecker/ParamPropChecker.cc \
 	PropChecker/ParamEnabledPropTransferer.cc \
 	PropChecker/PropCheckerFactory.cc \
-	FairChecker/FairnessChecker.cc \
 	FairChecker/WeakFairnessChecker.cc \
 	FairChecker/ParamWeakFairnessChecker.cc \
 	FairChecker/StrongFairnessChecker.cc \
@@ -51,7 +50,6 @@ libModelChecker_a_SOURCES = \
 	FairTable/ParamVarInfo.cc \
 	GraphImpl/RewriteTransitionState.cc \
 	GraphImpl/StateDagContainer.cc \
-	GraphImpl/StateLabelGraph.cc \
 	Graph/StateSystemGraph.cc \
 	Graph/FairStateSystemGraph.cc \
     Interface/PropInterpreter.cc \

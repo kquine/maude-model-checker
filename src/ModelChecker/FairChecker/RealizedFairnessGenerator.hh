@@ -7,6 +7,7 @@
 
 #ifndef REALIZEDFAIRNESSGENERATOR_HH_
 #define REALIZEDFAIRNESSGENERATOR_HH_
+#include "Utility/BddUtil.hh"
 #include "FairTable/ParamFairnessTable.hh"
 
 namespace modelChecker {
@@ -26,9 +27,15 @@ public:
 private:
 	bool satisfiesParamFormula(const ParamPropSet& pps, const map<int,int>& subst, Bdd formula) const;
 
-	vector<int> paramFairIds;
+	const vector<int> paramFairIds;
 	ParamFairnessTable<Formula>& fairTable;
 };
+
+template <typename Formula> inline bool
+RealizedFairnessGenerator<Formula>::satisfiesParamFormula(const ParamPropSet& pps, const map<int,int>& subst, Bdd formula) const
+{
+	return BddUtil::satisfiesFormula(formula, [&] (int propId) { return pps.getPropTable().isParamProp(propId) ? (subst.find(propId) != subst.end()) : (pps.isTrue(propId));});
+}
 
 } /* namespace modelChecker */
 

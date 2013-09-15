@@ -14,7 +14,6 @@
 #include "interface.hh"
 #include "core.hh"
 #include "variable.hh"
-#include "freeTheory.hh"
 #include "NA_Theory.hh"
 
 //      interface class definitions
@@ -24,13 +23,7 @@
 
 // core class definitions
 #include "dagArgumentIterator.hh"
-
-// symbols
-#include "freeSymbol.hh"
 #include "NA_Symbol.hh"
-
-// dagnodes
-#include "freeDagNode.hh"
 #include "variableDagNode.hh"
 
 // ltlr definitions
@@ -76,7 +69,6 @@ ParamVarInfo::index2Variable(int index) const
 {
 	return variables[index];
 }
-
 
 void
 ParamVarInfo::indexVariables(DagNode* dag)

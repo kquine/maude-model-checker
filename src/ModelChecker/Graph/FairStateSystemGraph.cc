@@ -13,7 +13,6 @@
 #include "interface.hh"
 #include "core.hh"
 #include "higher.hh"
-#include "freeTheory.hh"
 #include "strategyLanguage.hh"
 #include "mixfix.hh"
 
@@ -29,7 +28,7 @@
 
 namespace modelChecker {
 
-FairStateSystemGraph::FairStateSystemGraph(RewritingContext& initial, PropChecker& spc, const NatSet& formulaPropIds, FairnessChecker& fc, ProofTermGenerator& ptg):
+FairStateSystemGraph::FairStateSystemGraph(RewritingContext& initial, PropChecker& spc, const NatSet& formulaPropIds, FairnessChecker& fc, const ProofTermGenerator& ptg):
 		Super(initial, spc, ptg), fairC(fc), formulaPropIds(formulaPropIds) {}
 
 unique_ptr<FairSet>

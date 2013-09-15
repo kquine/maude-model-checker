@@ -7,7 +7,6 @@
 
 #ifndef REALIZEDPROPGENERATOR_HH_
 #define REALIZEDPROPGENERATOR_HH_
-#include "pattern.hh"
 #include "rule.hh"
 #include "searchState.hh"
 #include "PropSet/ParamPropSet.hh"
@@ -35,7 +34,7 @@ private:
     RewritingContext& parentContext;
     const PropEvaluator& pEval;
 
-	vector<int> paramPropIds;			// the corresponding param prop ids
+	const vector<int> paramPropIds;			// the corresponding param prop ids
 	ParamPropositionTable& propTable;
 };
 

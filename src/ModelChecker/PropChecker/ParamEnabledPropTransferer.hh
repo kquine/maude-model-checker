@@ -9,7 +9,6 @@
 #define PARAMENABLEDPROPTRANSFERER_HH_
 #include "PropTable/ParamPropositionTable.hh"
 #include "EnabledPropTransferer.hh"
-#include "ParamPropFilter.hh"
 
 namespace modelChecker {
 
@@ -21,7 +20,7 @@ public:
 	void computeEnabledPropIDs(PropSet& truePropIds, const vector<unique_ptr<PropSet> >& trueEventPropIds) const;
 
 private:
-	vector<int> paramEnabledPropIds;
+	const vector<int> paramEnabledPropIds;
 };
 
 } /* namespace modelChecker */

@@ -15,34 +15,17 @@ class RewriteTransitionState: private RewriteSearchState
 {
 public:
 	RewriteTransitionState(RewritingContext& parent, DagNode* stateDag);
+	virtual ~RewriteTransitionState() {}
+
 	RewriteTransitionState(const RewriteTransitionState&) = delete;
 	RewriteTransitionState& operator=(const RewriteTransitionState&) = delete;
 
-	virtual ~RewriteTransitionState() {}
 	DagNode* getNextStateDag(RewritingContext& parent);
 
-	const PositionState* getPosition() const;
-	const Rule* getRule() const;
-	const Substitution* getSubstitution() const;
+	const PositionState* getPosition() const	{ return this; }
+	const Rule* getRule() const					{ return RewriteSearchState::getRule(); }
+	const Substitution* getSubstitution() const	{ return getContext(); }
 };
-
-inline const PositionState*
-RewriteTransitionState::getPosition() const
-{
-	return this;
-}
-
-inline const Rule*
-RewriteTransitionState::getRule() const
-{
-	return RewriteSearchState::getRule();
-}
-
-inline const Substitution*
-RewriteTransitionState::getSubstitution() const
-{
-	return getContext();
-}
 
 }
 

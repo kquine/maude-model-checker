@@ -14,7 +14,6 @@
 #include "interface.hh"
 #include "core.hh"
 #include "higher.hh"
-#include "freeTheory.hh"
 #include "temporal.hh"
 
 //	interface class definitions

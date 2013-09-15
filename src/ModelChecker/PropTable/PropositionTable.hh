@@ -16,7 +16,7 @@ namespace modelChecker {
 class PropositionTable: private ProtectedDagNodeSet
 {
 public:
-	PropositionTable(const PropInterpreter& pi);
+	explicit PropositionTable(const PropInterpreter& pi);
 	virtual ~PropositionTable() {}
 
 	using ProtectedDagNodeSet::insert;
@@ -39,21 +39,20 @@ public:
 protected:
 	struct PropInfo
 	{
-		PropInfo(int isEvent, int enabledEvtId): isEvent(isEvent), enabledEventId(enabledEvtId) {}
+		PropInfo(bool isEvent, int enabledEvtId): isEvent{isEvent}, enabledEventId{enabledEvtId} {}
 		virtual ~PropInfo() {}
 
 		bool isEvent;
 		int enabledEventId;
 	};
+	virtual void updatePropInfo(unsigned int propId);
 
-	vector<unique_ptr<PropInfo> > propInfoTable;		// global prop id |-> propInfo
-
-	virtual void updatePropInfo(int propId);
+	vector<unique_ptr<PropInfo>> propInfoTable;		// global prop id |-> propInfo
 
 private:
 	int checkEnabled(DagNode* propDag);
 
-	unsigned int minIndex;	// the minimum index that has not been updated
+	unsigned int minIndex = 0;				// the minimum index that has not been updated
     const PropInterpreter& pInterpreter;
 };
 

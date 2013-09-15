@@ -13,21 +13,13 @@
 #include "interface.hh"
 #include "core.hh"
 
-// interface class definitions
-#include "symbol.hh"
-#include "dagNodeSet.hh"
-
-// core class definitions
-#include "rewritingContext.hh"
-#include "symbolMap.hh"
-
 // ltlr definitions
 #include "Utility/ContainerUtil.hh"
 #include "ParamWeakFairnessChecker.hh"
 
 namespace modelChecker {
 
-ParamWeakFairnessChecker::ParamWeakFairnessChecker(const vector<int>& weakFairIds, ParamFairnessTable<Bdd>& fTable):
+ParamWeakFairnessChecker::ParamWeakFairnessChecker(const vector<int>& weakFairIds, ParamWeakFairnessTable& fTable):
 	WeakFairnessChecker(ContainerUtil::filterVector(weakFairIds, [&](int i) { return ! fTable.isParamFairness(i); }),fTable),
 	RealizedFairnessGenerator<Bdd>(ContainerUtil::filterVector(weakFairIds, [&](int i) { return fTable.isParamFairness(i); }),fTable) {}
 

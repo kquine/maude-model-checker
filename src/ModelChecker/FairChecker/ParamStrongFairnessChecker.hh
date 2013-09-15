@@ -15,7 +15,7 @@ namespace modelChecker {
 class ParamStrongFairnessChecker: public StrongFairnessChecker, private RealizedFairnessGenerator<pair<Bdd,Bdd>>
 {
 public:
-	ParamStrongFairnessChecker(const vector<int>& strongFairIds, ParamFairnessTable<pair<Bdd,Bdd>>& fTable);
+	ParamStrongFairnessChecker(const vector<int>& strongFairIds, ParamStrongFairnessTable& fTable);
 
 	unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
 

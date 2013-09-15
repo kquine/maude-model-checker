@@ -14,18 +14,18 @@ namespace modelChecker {
 
 class ParamPropSet: public PropSet
 {
-	typedef map<int,set<int> > ParamMatchMap;
+	using ParamMatchMap =  map<int,set<int>>;
 public:
-	ParamPropSet(const ParamPropositionTable& propTable, const PropSet& base);
+	ParamPropSet(const ParamPropositionTable& propTable, PropSet&& base);
 
-	void setTrue(int propId);
-	void setTrue(const PropSet& ps);
+	void setTrue(int propId) override;
+	void setTrue(const PropSet& ps) override;
 
 	void setTrueParamSubst(int propId, const set<int>& substIds);
 	const set<int>& getTrueParamSubst(int propId) const;
 	const ParamPropositionTable& getPropTable() const;
 
-	void dump(ostream& s);
+	void dump(ostream& s) override;
 
 private:
 	ParamMatchMap trueParamSubstIds;	// paramId |-> a set of its realized substitution ids

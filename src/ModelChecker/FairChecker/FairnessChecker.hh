@@ -11,6 +11,7 @@
 #include "natSet.hh"
 #include "FairSet/FairSet.hh"
 #include "PropSet/PropSet.hh"
+#include "Utility/BddUtil.hh"
 
 namespace modelChecker {
 
@@ -22,9 +23,15 @@ public:
 	virtual unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) = 0;
 
 protected:
-	bool satisfiesFormula(const PropSet& trueProps, Bdd formula) const;
+	bool satisfiesFairFormula(const PropSet& trueProps, Bdd formula) const;
 
 };
+
+inline bool
+FairnessChecker::satisfiesFairFormula(const PropSet& trueProps, Bdd formula) const
+{
+	return BddUtil::satisfiesFormula(formula, [&trueProps] (int propId) { return trueProps.isTrue(propId); });
+}
 
 } /* namespace modelChecker */
 #endif /* FAIRNESSCHECKER_HH_ */

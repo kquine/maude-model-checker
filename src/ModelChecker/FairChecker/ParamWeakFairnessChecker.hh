@@ -15,7 +15,7 @@ namespace modelChecker {
 class ParamWeakFairnessChecker: public WeakFairnessChecker, private RealizedFairnessGenerator<Bdd>
 {
 public:
-	ParamWeakFairnessChecker(const vector<int>& weakFairIds, ParamFairnessTable<Bdd>& fTable);
+	ParamWeakFairnessChecker(const vector<int>& weakFairIds, ParamWeakFairnessTable& fTable);
 
 	unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
 

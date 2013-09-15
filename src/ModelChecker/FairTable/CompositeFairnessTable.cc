@@ -17,17 +17,14 @@ namespace modelChecker {
 bool
 CompositeFairnessTable::hasStrongFairness() const
 {
-	for (auto& i : fairTables)
-		if (i->hasStrongFairness()) return true;
-	return false;
+	return any_of(fairTables.begin(), fairTables.end(), [] (const unique_ptr<AbstractFairnessTable>& i) { return i->hasStrongFairness(); });
 }
 
 int
 CompositeFairnessTable::nrFairness() const
 {
 	int total = 0;
-	for (auto& i : fairTables)
-		total += i->nrFairness();
+	for (auto& i : fairTables) total += i->nrFairness();
 	return total;
 }
 

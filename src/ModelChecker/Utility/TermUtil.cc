@@ -59,25 +59,13 @@ TermUtil::constructTerm(DagNode* dag)
 	Symbol* s = dag->symbol();
 
 	if (VariableSymbol* vs = dynamic_cast<VariableSymbol*>(s))
-	{
-		VariableDagNode* vdag = safeCast(VariableDagNode*, dag);
-		return new VariableTerm(vs, vdag->id());
-	}
+		return new VariableTerm(vs, static_cast<VariableDagNode*>(dag)->id());
 	else if (FloatSymbol* fs = dynamic_cast<FloatSymbol*>(s))
-	{
-		FloatDagNode* fdag = safeCast(FloatDagNode*, dag);
-		return new FloatTerm(fs, fdag->getValue());
-	}
+		return new FloatTerm(fs, static_cast<FloatDagNode*>(dag)->getValue());
 	else if (QuotedIdentifierSymbol* qs = dynamic_cast<QuotedIdentifierSymbol*>(s))
-	{
-		QuotedIdentifierDagNode* qdag = safeCast(QuotedIdentifierDagNode*, dag);
-		return new QuotedIdentifierTerm(qs, qdag->getIdIndex());
-	}
+		return new QuotedIdentifierTerm(qs, static_cast<QuotedIdentifierDagNode*>(dag)->getIdIndex());
 	else if (StringSymbol* strs = dynamic_cast<StringSymbol*>(s))
-	{
-		StringDagNode* sdag = safeCast(StringDagNode*, dag);
-		return new StringTerm(strs, sdag->getValue());
-	}
+		return new StringTerm(strs, static_cast<StringDagNode*>(dag)->getValue());
 	else
 	{
 		Vector<Term*> argList(0, nrPreallocatedArgs);  // pre-allocate memory for speed
@@ -85,16 +73,16 @@ TermUtil::constructTerm(DagNode* dag)
 			argList.append(constructTerm(i.argument()));
 
 		if (S_DagNode* sdag = dynamic_cast<S_DagNode*>(dag))
-			return new S_Term(safeCast(S_Symbol*,s), sdag->getNumber(), argList[0]);
+			return new S_Term(static_cast<S_Symbol*>(s), sdag->getNumber(), argList[0]);
 		else
-			return  s->makeTerm(argList);
+			return s->makeTerm(argList);
 	}
 }
 
 bool
 TermUtil::checkGround(DagNode* dag)
 {
-	Symbol* s = dag->symbol();
+	auto s = dag->symbol();
 
 	if (dynamic_cast<VariableSymbol*>(s))
 	{
@@ -111,8 +99,7 @@ TermUtil::checkGround(DagNode* dag)
 		for (DagArgumentIterator i(*dag); i.valid(); i.next())
 			ground &= checkGround(i.argument());
 
-		if (ground)
-			dag->setGround();
+		if (ground) dag->setGround();
 		return ground;
 	}
 }

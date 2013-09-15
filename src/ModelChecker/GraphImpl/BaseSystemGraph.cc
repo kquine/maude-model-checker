@@ -12,17 +12,6 @@
 // forward declarations
 #include "interface.hh"
 #include "core.hh"
-#include "higher.hh"
-#include "freeTheory.hh"
-#include "strategyLanguage.hh"
-#include "mixfix.hh"
-
-// interface class definitions
-#include "symbol.hh"
-#include "dagNodeSet.hh"
-
-// core class definitions
-#include "rewritingContext.hh"
 
 // ltlr definitions
 #include "BaseSystemGraph.hh"
@@ -30,10 +19,10 @@
 namespace modelChecker {
 
 template <class T>
-BaseSystemGraph<T>::BaseSystemGraph(RewritingContext& initial, ProofTermGenerator& ptg):
+BaseSystemGraph<T>::BaseSystemGraph(RewritingContext& initial, const ProofTermGenerator& ptg):
 	initial(initial), ptGenerator(ptg) {}
 
-template <class T> void
+template <class T> inline void
 BaseSystemGraph<T>::init()
 {
 	initial.reduce();
@@ -68,7 +57,7 @@ BaseSystemGraph<T>::getTransitionDag(int stateNr, int index) const
 	return pd;
 }
 
-template <class T> int
+template <class T> inline int
 BaseSystemGraph<T>::getNextState(int stateNr, int index)
 {
 	return static_cast<T*>(this)->computeNextState(stateNr, index);

@@ -10,8 +10,7 @@
 namespace modelChecker {
 
 template <typename T>
-BaseSystemGraphNoEnabled<T>::BaseSystemGraphNoEnabled(RewritingContext& initial, ProofTermGenerator& ptg):
-	Super(initial, ptg) {}
+BaseSystemGraphNoEnabled<T>::BaseSystemGraphNoEnabled(RewritingContext& initial, const ProofTermGenerator& ptg): Super(initial, ptg) {}
 
 template <typename T> int
 BaseSystemGraphNoEnabled<T>::insertState(DagNode* stateDag)

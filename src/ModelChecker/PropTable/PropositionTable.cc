@@ -13,37 +13,33 @@
 #include "interface.hh"
 #include "core.hh"
 
-// core class definitions
-#include "rewritingContext.hh"
-#include "dagArgumentIterator.hh"
-
 // ltlr definitions
 #include "PropositionTable.hh"
 
 namespace modelChecker {
 
-PropositionTable::PropositionTable(const PropInterpreter& pi): minIndex(0), pInterpreter(pi) {}
+PropositionTable::PropositionTable(const PropInterpreter& pi): pInterpreter(pi) {}
 
 void
 PropositionTable::updatePropTable()
 {
-	for ( ; (unsigned int)ProtectedDagNodeSet::cardinality() > minIndex; ++ minIndex)
+	for ( ; (unsigned int)ProtectedDagNodeSet::cardinality() > minIndex; ++ minIndex)	//NOTE: cardinality always returns a positive number
 	{
-		if ( (unsigned int)minIndex >= propInfoTable.size() || ! propInfoTable[minIndex] )
+		if ( minIndex >= propInfoTable.size() || ! propInfoTable[minIndex] )
 			updatePropInfo(minIndex);	// may invoke the overridden function
 	}
 }
 
 void
-PropositionTable::updatePropInfo(int propId)
+PropositionTable::updatePropInfo(unsigned int propId)
 {
-	if ( (unsigned int)propId >= propInfoTable.size() )
+	if ( propId >= propInfoTable.size() )
 		propInfoTable.resize(propId + 1);
 
-	if (! propInfoTable[propId])	// update only once
+	if (! propInfoTable[propId])	// in order to update only once
 	{
 		DagNode* propDag = ProtectedDagNodeSet::index2DagNode(propId);
-		propInfoTable[propId].reset(new PropInfo(pInterpreter.isEventProp(propDag), checkEnabled(propDag)));
+		propInfoTable[propId].reset(new PropInfo{pInterpreter.isEventProp(propDag),checkEnabled(propDag)});
 	}
 }
 

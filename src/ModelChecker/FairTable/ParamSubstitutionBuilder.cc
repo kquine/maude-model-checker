@@ -11,19 +11,8 @@
 #include "vector.hh"
 
 //      forward declarations
-#include "temporal.hh"
 #include "interface.hh"
 #include "core.hh"
-
-//      interface class definitions
-#include "symbol.hh"
-#include "dagNodeSet.hh"
-#include "term.hh"
-
-// core class definitions
-#include "rewritingContext.hh"
-#include "equation.hh"
-#include "dagArgumentIterator.hh"
 
 // ltlr definitions
 #include "ParamSubstitutionBuilder.hh"
@@ -40,22 +29,21 @@ vector<map<int,int>>
 ParamSubstitutionBuilder::generateRealizedSubstitutions(const ParamPropSet& pps) const
 {
 	vector<map<int,int>> result;
-
 	map<int,int> propIdMap;
 	ParamSubstitution subst(ParamVarInfo::getNrVariables());
-	computeParamSubstitutions(pidInfo.cbegin(), subst, propIdMap, pps, result);
 
+	computeParamSubstitutions(pidInfo.cbegin(), subst, propIdMap, pps, result);
 	return result;
 }
 
 void
 ParamSubstitutionBuilder::computeParamSubstitutions(
-		vector<unique_ptr<PropVarInfo>>::const_iterator pos, ParamSubstitution& subst, map<int,int>& propSubstMap, const ParamPropSet& pps, vector<map<int,int>>& result) const
+		ParamPropTable::const_iterator pos, ParamSubstitution& subst, map<int,int>& propSubstMap, const ParamPropSet& pps, vector<map<int,int>>& result) const
 {
 	if (pos != pidInfo.cend())
 	{
-		ParamSubstitution orig(subst, (*pos)->varMap);
-		bool total = orig.isTotal();
+		const ParamSubstitution orig(subst, (*pos)->varMap);
+		const bool total = orig.isTotal();
 
 		for (int sid : pps.getTrueParamSubst((*pos)->propId))
 		{

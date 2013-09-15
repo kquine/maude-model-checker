@@ -7,13 +7,18 @@
 
 #ifndef FAIRNESSTABLE_HH_
 #define FAIRNESSTABLE_HH_
-#include <memory>
+#include <set>
 #include "bdd.h"
 #include "AbstractFairnessTable.hh"
 #include "Utility/indexedSet.hh"
 #include "PropTable/PropositionTable.hh"
 
 namespace modelChecker {
+
+template <typename Formula> class FairnessTable;
+
+using WeakFairnessTable	= 	FairnessTable<Bdd>;
+using StrongFairnessTable = FairnessTable<pair<Bdd,Bdd>>;
 
 template <typename Formula>
 class FairnessTable: public AbstractFairnessTable

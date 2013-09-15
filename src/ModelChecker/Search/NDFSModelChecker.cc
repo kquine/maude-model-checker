@@ -5,23 +5,8 @@
  *      Author: kquine
  */
 
-//      utility stuff
-#include "macros.hh"
-#include "vector.hh"
-
-//      forward declarations
-#include "interface.hh"
-#include "core.hh"
-#include "temporal.hh"
-
-//      interface class definitions
-#include "symbol.hh"
-#include "dagNode.hh"
-
-//      utility class definitions
 #include "natSet.hh"
 #include "BFSGraph.hh"
-
 #include "NDFSModelChecker.hh"
 
 //#define NO_PREFIX_OPT
@@ -35,24 +20,13 @@ template <typename Automaton> bool
 NDFSModelChecker<Automaton>::findCounterExample()
 {
 	intersectionStates.emplace_back(new StateSet);
-	bool result = false;
-
-	for(const State& i : prod->getInitialStates())
-	{
-		if ( dfs1(i) )
-		{
-			result = true;
-			break;
-		}
-	}
+	bool result = any_of(prod->getInitialStates().begin(), prod->getInitialStates().end(), [&](const State& i) {return this->dfs1(i);});
 
 #ifndef NO_PREFIX_OPT
-	if (result)	// prefix optimization if a counter example found
+	if (result)	// Shorten prefix of a counterexample using BFS if it's found
 	{
-		//	Shorten prefix-path using BFS if possible
 		leadIn.clear();
-		PrefixBFSGraph bfs(*prod, intersectionStates, cycleState);
-		bfs.doBFS(leadIn);
+		PrefixBFSGraph(*prod,intersectionStates,cycleState).doBFS(leadIn);
 	}
 #endif
 	return result;
@@ -60,11 +34,12 @@ NDFSModelChecker<Automaton>::findCounterExample()
 
 
 template <typename Automaton> bool
-NDFSModelChecker<Automaton>::trap(int propertyIndex) const
+NDFSModelChecker<Automaton>::trap(const State& s) const
 {
+	const int propertyIndex = s.second;
 	if (prod->getPropertyAutomaton().isAccepting(propertyIndex))
 	{
-		const BuchiAutomaton2::TransitionMap& cm = prod->getPropertyAutomaton().getTransitions(propertyIndex);
+		auto cm = prod->getPropertyAutomaton().getTransitions(propertyIndex);
 		if (cm.size() == 1 && cm.begin()->first == propertyIndex && cm.begin()->second == bdd_true())
 			return true;
 	}
@@ -78,10 +53,10 @@ NDFSModelChecker<Automaton>::checkVisit(const State& ns)
 		return intersectionStates[ns.first]->dfs1Seen.contains(ns.second);
 	else
 	{
-		while ( (size_t)ns.first >=  intersectionStates.size())
+		while (ns.first >= 0 && (size_t)ns.first >=  intersectionStates.size())
 			intersectionStates.emplace_back(new StateSet);	// allocate state space
-		return false;
 	}
+	return false;
 }
 
 template <typename Automaton> bool
@@ -111,7 +86,7 @@ NDFSModelChecker<Automaton>::dfs1(const State& initial)
 			dfs1.push(prod->makeTransitionIterator(ns));
 
 			// if a trap state, then stop immediately (a cycle part counterexample will be an empty list)
-			if (trap(ns.second))
+			if (trap(ns))
 			{
 				cycleState = ns;
 				leadIn.pop_front();		// remove dummy
@@ -125,10 +100,7 @@ NDFSModelChecker<Automaton>::dfs1(const State& initial)
 			{
 				if (dfs2(cur))
 				{
-					//
-					// complete the list "cycle" for the counterexample
-					//
-					while (dfs1.top()->getSource() != cycleState)
+					while (dfs1.top()->getSource() != cycleState)	// complete the list "cycle" for the counterexample
 					{
 						cycle.push_front(leadIn.back());
 						leadIn.pop_back();

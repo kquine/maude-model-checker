@@ -6,17 +6,12 @@
  */
 
 // utility stuff
-#include <memory>
 #include "macros.hh"
 #include "vector.hh"
 
 // forward declarations
 #include "interface.hh"
 #include "core.hh"
-
-// core class definitions
-#include "rewritingContext.hh"
-#include "symbolMap.hh"
 
 // ltlr definitions
 #include "Utility/ContainerUtil.hh"

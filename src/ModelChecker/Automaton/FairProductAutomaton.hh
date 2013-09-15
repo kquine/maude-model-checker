@@ -28,7 +28,7 @@ private:
 	CompositeFairnessTable* makeInitFairTable(unique_ptr<AbstractFairnessTable> systemFairTable) const;
 
 	unique_ptr<CompositeFairnessTable> fairTable;	// (system + formula) fairness table
-	const FormulaFairnessTable* formulaRef;				// a reference to the formula fairness table
+	const FormulaFairnessTable* formulaRef;			// a reference to the formula fairness table
 };
 
 } /* namespace modelChecker */
