@@ -15,7 +15,7 @@ namespace modelChecker {
 
 
 void
-WeakFairSet::setFalsified(int fairId)
+WeakFairSet::setFalsified(unsigned int fairId)
 {
 	falsifiedWeakFair.insert(fairId);
 }

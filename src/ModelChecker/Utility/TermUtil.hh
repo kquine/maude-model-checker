@@ -17,7 +17,7 @@ public:
 	static bool checkGround(DagNode* dag);	// set all ground flags, and return true if it is ground.
 
 private:
-	static constexpr int nrPreallocatedArgs = 3;
+	static constexpr unsigned int nrPreallocatedArgs = 3;
 };
 
 }

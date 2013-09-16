@@ -17,20 +17,18 @@ class ParamSubstitution
 public:
 	explicit ParamSubstitution(vector<DagNode*>::size_type size);
 	ParamSubstitution(const VariableInfo& vi, const Substitution& subst);
-	ParamSubstitution(const ParamSubstitution& src, const vector<int>& varMap);
+	ParamSubstitution(const ParamSubstitution& src, const vector<unsigned int>& varMap);
 
 	bool isTotal() const;
 	bool isConsistent(const ParamSubstitution& other) const;
 
 	const vector<DagNode*>& getSubst() const;
-	void setSubst(const ParamSubstitution& src, const vector<int>& varMap);
-	void setSubst(const vector<int>& varMap, const ParamSubstitution& src);
+	void setSubst(const ParamSubstitution& src, const vector<unsigned int>& varMap);
+	void setSubst(const vector<unsigned int>& varMap, const ParamSubstitution& src);
 
 private:
 	vector<DagNode*> subst;
 };
-
-
 
 } /* namespace modelChecker */
 #endif /* PARAMSUBSTITUTION_HH_ */

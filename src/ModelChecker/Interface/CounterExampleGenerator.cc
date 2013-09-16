@@ -67,7 +67,7 @@ CounterExampleGenerator::makeTransitionList(const DagSystemGraph& dg, const list
 }
 
 DagNode*
-CounterExampleGenerator::makeTransition(const DagSystemGraph& dg, int stateNr, int count) const
+CounterExampleGenerator::makeTransition(const DagSystemGraph& dg, unsigned int stateNr, unsigned int count) const
 {
 	static Vector<DagNode*> targs(2);
 	targs[0] = dg.getStateDag(stateNr);

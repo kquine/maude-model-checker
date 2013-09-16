@@ -19,28 +19,28 @@ FairnessTable<Formula>::FairnessTable(PropositionTable& propTable): propTable(pr
 
 
 template <typename Formula> const Formula&
-FairnessTable<Formula>::getFairFormula(int fairId) const
+FairnessTable<Formula>::getFairFormula(unsigned int fairId) const
 {
 	return fairFormulas[static_cast<GroundFairness&>(*fairTable[fairId]).formulaId];
 }
 
 template <typename Formula> bool
-FairnessTable<Formula>::isStateFairness(int fairId) const
+FairnessTable<Formula>::isStateFairness(unsigned int fairId) const
 {
 	return static_cast<GroundFairness&>(*fairTable[fairId]).noEvent;
 }
 
 template <typename Formula> bool
-FairnessTable<Formula>::isStateEventFairness(int fairId) const
+FairnessTable<Formula>::isStateEventFairness(unsigned int fairId) const
 {
 	return ! isStateFairness(fairId);
 }
 
-template <typename Formula> int
-FairnessTable<Formula>::insertFairnessFormula(const Formula& f, const set<int>& propIds, DagNode* fairDag)
+template <typename Formula> unsigned int
+FairnessTable<Formula>::insertFairnessFormula(const Formula& f, const set<unsigned int>& propIds, DagNode* fairDag)
 {
-	int oldSize = fairFormulas.size();
-	int fi = fairFormulas.insert(f);
+	auto oldSize = fairFormulas.size();
+	auto fi = fairFormulas.insert(f);
 	if (fi >= oldSize)	// when new fairness formula identified
 	{
 		formulaInfoMap.push_back(fairTable.size());
@@ -51,9 +51,9 @@ FairnessTable<Formula>::insertFairnessFormula(const Formula& f, const set<int>& 
 
 template <typename Formula>
 unique_ptr<typename FairnessTable<Formula>::GroundFairness>
-FairnessTable<Formula>::createFormulaFairness(int formulaId, const set<int>& propIds, DagNode* fairDag) const
+FairnessTable<Formula>::createFormulaFairness(unsigned int formulaId, const set<unsigned int>& propIds, DagNode*) const
 {
-	bool noEvent = none_of(propIds.begin(), propIds.end(), [&](int i){ return propTable.isEventProp(i); });
+	bool noEvent = none_of(propIds.begin(), propIds.end(), [&](unsigned int i){ return propTable.isEventProp(i); });
 	return unique_ptr<GroundFairness>(new GroundFairness(formulaId, noEvent));
 }
 

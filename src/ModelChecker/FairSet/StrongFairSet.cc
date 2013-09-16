@@ -14,13 +14,13 @@
 namespace modelChecker {
 
 void
-StrongFairSet::setSuppFalse(int fairId)
+StrongFairSet::setSuppFalse(unsigned int fairId)
 {
 	falsifiedSupp.insert(fairId);
 }
 
 void
-StrongFairSet::setConsFalse(int fairId)
+StrongFairSet::setConsFalse(unsigned int fairId)
 {
 	falsifiedCons.insert(fairId);
 }

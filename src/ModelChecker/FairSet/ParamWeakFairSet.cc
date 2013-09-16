@@ -14,10 +14,10 @@
 namespace modelChecker {
 
 void
-ParamWeakFairSet::merge(const FairSet& f, const AbstractFairnessTable& table)
+ParamWeakFairSet::merge(const FairSet& /* f */, const AbstractFairnessTable& /* table */)
 {
 	//TODO
-	CantHappen("NOT IMPLEMENTED");
+	CantHappen("ParamWeakFairSet::merge: Not Implemented");
 }
 
 unique_ptr<FairSet>

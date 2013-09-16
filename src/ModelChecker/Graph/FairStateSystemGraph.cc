@@ -32,7 +32,7 @@ FairStateSystemGraph::FairStateSystemGraph(RewritingContext& initial, PropChecke
 		Super(initial, spc, ptg), fairC(fc), formulaPropIds(formulaPropIds) {}
 
 unique_ptr<FairSet>
-FairStateSystemGraph::makeFairSet(int stateNr, int transitionNr) const
+FairStateSystemGraph::makeFairSet(unsigned int stateNr, unsigned int) const
 {
 	return static_cast<State&>(*Super::seen[stateNr]).fs->clone();
 }
@@ -40,9 +40,11 @@ FairStateSystemGraph::makeFairSet(int stateNr, int transitionNr) const
 unique_ptr<PropSet>
 FairStateSystemGraph::updateStateLabel(DagNode* stateDag, PreState& s)
 {
+	cout << "----- " << stateDag << endl;
 	unique_ptr<PropSet> truePropIds = Super::updateStateLabel(stateDag,s);
 	static_cast<State&>(s).fs = fairC.computeAllFairness(*truePropIds);		// compute all state fairness conditions
 	s.label.intersect(formulaPropIds);										// keep only state formula props
+	cout << "----- END\n" << endl;
 	return truePropIds;
 }
 

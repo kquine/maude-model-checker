@@ -46,7 +46,6 @@
 #include "Interface/FairnessDecoder.hh"
 #include "Interface/CounterExampleGenerator.hh"
 #include "Utility/TermUtil.hh"
-#include "Utility/StringStream.hh"
 #include "ModelCheckerManager.hh"
 #include "ltlrFairnessCheckerSymbol.hh"
 
@@ -55,17 +54,10 @@
 
 namespace modelChecker {
 
-LTLRFairnessCheckerSymbol::LTLRFairnessCheckerSymbol(int id, int arity): TemporalSymbol(id, arity),
-		fairnessSymbol(nullptr), strongFairTypeSymbol(nullptr), weakFairTypeSymbol(nullptr), fairnessSetSymbol(nullptr), emptyFairnessSetSymbol(nullptr),
-		counterexampleSymbol(nullptr), transitionSymbol(nullptr), transitionListSymbol(nullptr), nilTransitionListSymbol(nullptr),
-		prooftermSymbol(nullptr), assignOp(nullptr), holeOp(nullptr), substitutionSymbol(nullptr), emptySubstSymbol(nullptr), qidSymbol(nullptr),
-		unlabeledSymbol(nullptr), noContextSymbol(nullptr), realizedPropSymbol(nullptr), realizedActionSymbol(nullptr),
-		satisfiesSymbol(nullptr), actionmatchSymbol(nullptr), enabledSymbol(nullptr) {}
+LTLRFairnessCheckerSymbol::LTLRFairnessCheckerSymbol(int id, int arity): TemporalSymbol(id, arity) {}
 
 bool
-LTLRFairnessCheckerSymbol::attachData(const Vector<Sort*>& opDeclaration,
-                              const char* purpose,
-                              const Vector<const char*>& data)
+LTLRFairnessCheckerSymbol::attachData(const Vector<Sort*>& opDeclaration, const char* purpose, const Vector<const char*>& data)
 {
     NULL_DATA(purpose, LTLRFairnessCheckerSymbol, data);
     return  TemporalSymbol::attachData(opDeclaration, purpose, data);
@@ -141,9 +133,7 @@ LTLRFairnessCheckerSymbol::copyAttachments(Symbol* original, SymbolMap* map)
 }
 
 void
-LTLRFairnessCheckerSymbol::getDataAttachments(const Vector<Sort*>& opDeclaration,
-                                       Vector<const char*>& purposes,
-                                       Vector<Vector<const char*> >& data)
+LTLRFairnessCheckerSymbol::getDataAttachments(const Vector<Sort*>& opDeclaration, Vector<const char*>& purposes, Vector<Vector<const char*> >& data)
 {
     APPEND_DATA(purposes, data, LTLRFairnessCheckerSymbol);
     TemporalSymbol::getDataAttachments(opDeclaration, purposes, data);
@@ -213,15 +203,15 @@ LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context
     //
     // 1. declare the argument contexts, and reduce the formula/fairness arguments into the normal forms
     //
-    unique_ptr<RewritingContext> sysCxt(context.makeSubcontext(d->getArgument(0)));
-	unique_ptr<RewritingContext> formulaCxt(context.makeSubcontext(negate(d->getArgument(1))));		formulaCxt->reduce();	context.addInCount(*formulaCxt);
-	unique_ptr<RewritingContext> fairnessCxt(context.makeSubcontext(d->getArgument(2)));			fairnessCxt->reduce();	context.addInCount(*fairnessCxt);
+    const unique_ptr<RewritingContext> sysCxt(context.makeSubcontext(d->getArgument(0)));
+	const unique_ptr<RewritingContext> formulaCxt(context.makeSubcontext(negate(d->getArgument(1))));	formulaCxt->reduce();	context.addInCount(*formulaCxt);
+	const unique_ptr<RewritingContext> fairnessCxt(context.makeSubcontext(d->getArgument(2)));			fairnessCxt->reduce();	context.addInCount(*fairnessCxt);
 	//
 	// 2. create a prop table and a fairness decoder
 	//
-	PropInterpreter pInterpreter(satisfiesSymbol, actionmatchSymbol, enabledSymbol);
-	unique_ptr<PropositionTable> propTable(TermUtil::checkGround(fairnessCxt->root()) ? new PropositionTable(pInterpreter) : new ParamPropositionTable(pInterpreter));
-	FairnessDecoder fDecoder(*this, *propTable, fairnessSymbol, strongFairTypeSymbol, weakFairTypeSymbol, fairnessSetSymbol, emptyFairnessSetSymbol);
+	const PropInterpreter pInterpreter(satisfiesSymbol, actionmatchSymbol, enabledSymbol);
+	const unique_ptr<PropositionTable> propTable(TermUtil::checkGround(fairnessCxt->root()) ? new PropositionTable(pInterpreter) : new ParamPropositionTable(pInterpreter));
+	const FairnessDecoder fDecoder(*this, *propTable, fairnessSymbol, strongFairTypeSymbol, weakFairTypeSymbol, fairnessSetSymbol, emptyFairnessSetSymbol);
 	//
 	// 3. interpret the formula and the fairness conditions
 	//
@@ -238,54 +228,37 @@ LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context
     //
     // 4. construct a suitable model checker
     //
-    PropEvaluator stateEval(satisfiesSymbol, realizedPropSymbol, trueTerm.getDag());
-    PropEvaluator eventEval(actionmatchSymbol, realizedActionSymbol, trueTerm.getDag());
-    ProofTermGenerator ptg(static_cast<MixfixModule*>(getModule()),prooftermSymbol,assignOp,holeOp,substitutionSymbol,emptySubstSymbol,qidSymbol,unlabeledSymbol,noContextSymbol);
+    const PropEvaluator stateEval(satisfiesSymbol, realizedPropSymbol, trueTerm.getDag());
+    const PropEvaluator eventEval(actionmatchSymbol, realizedActionSymbol, trueTerm.getDag());
+    const ProofTermGenerator ptg(safeCast(MixfixModule*,getModule()),prooftermSymbol,assignOp,holeOp,substitutionSymbol,emptySubstSymbol,qidSymbol,unlabeledSymbol,noContextSymbol);
     ModelCheckerManager mcm(*formula, *propTable, move(fairTable), stateEval, eventEval, ptg, *sysCxt);
     //
     // 5. perform the model checking
     //
-    CounterExampleGenerator cg(counterexampleSymbol,transitionSymbol,transitionListSymbol,nilTransitionListSymbol,deadlockTerm.getDag());
-    DagNode* resultDag = mcm.findCounterExample() ? cg.makeCounterexample(mcm.getDagSystemGraph(), mcm.getLeadIn(), mcm.getCycle()) : trueTerm.getDag();
-
+    DagNode* resultDag;
+    try {
+    	const CounterExampleGenerator cg(counterexampleSymbol,transitionSymbol,transitionListSymbol,nilTransitionListSymbol,deadlockTerm.getDag());
+    	resultDag = mcm.findCounterExample() ? cg.makeCounterexample(mcm.getDagSystemGraph(), mcm.getLeadIn(), mcm.getCycle()) : trueTerm.getDag();
+    } catch (const logic_error& e)
+    {
+    	IssueAdvisory(e.what());
+    	return TemporalSymbol::eqRewrite(subject, context);
+    }
     //
-    // print state space size..
+    // 6. print state space size..
     //
     if (globalVerboseFlag)
     {
-		int nrSystemStates = mcm.getDagSystemGraph().getNrStates();
-		int totalNrTransitions = 0;
-		for (int i=0; i < nrSystemStates; i++)
-			totalNrTransitions += mcm.getDagSystemGraph().getNrTransitions(i);
-
-		cout << "ModelChecker: Examined " << nrSystemStates <<
-				" system state" << pluralize(nrSystemStates) << " and " <<
-				totalNrTransitions << " transition" << pluralize(totalNrTransitions) << '.' << endl;
+		auto totalStates = mcm.getDagSystemGraph().getNrStates();
+		auto totalTransitions = mcm.getDagSystemGraph().getTotalTransitions();
+		cout << "ModelChecker: Examined " << totalStates << " system state" << pluralize(totalStates)
+			 << " and " << totalTransitions << " transition" << pluralize(totalTransitions) << '.' << endl;
     }
-
     context.addInCount(*sysCxt);
     return context.builtInReplace(subject, resultDag);
 }
 
-unique_ptr<LTLRFairnessCheckerSymbol::Formula>
-LTLRFairnessCheckerSymbol::interpretFormula(DagNode* formulaDag, PropositionTable& propTable) const
-{
-	if (! TermUtil::checkGround(formulaDag))
-		throw invalid_argument(StringStream() << "negated LTL formula " << QUOTE(formulaDag) << " did not reduce to a valid negative normal form.");
-	else
-	{
-		unique_ptr<Formula> formula(new Formula);
-		formula->top = build(formula->data, propTable.getDagNodeSet(), formulaDag);
-		if (formula->top == NONE)
-			throw invalid_argument(StringStream() << "negated LTL formul " << QUOTE(formulaDag) << "a did not reduce to a valid negative normal form.");
-		else
-		{
-			for (int i = propTable.cardinality() - 1; i >= 0; --i)  formula->formulaPropIds.insert(i);
-			propTable.updatePropTable();
-			return formula;
-		}
-	}
-}
+
 
 
 }

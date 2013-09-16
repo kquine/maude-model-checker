@@ -17,9 +17,9 @@ SCCModelChecker<Automaton>::SCCModelChecker(unique_ptr<Automaton> graph): graph(
 template <typename Automaton> bool
 SCCModelChecker<Automaton>::findCounterExample()
 {
-	if (unique_ptr<SCC> res = findAcceptedSCC(graph->getInitialStates()))
+	if (const unique_ptr<SCC> res = findAcceptedSCC(graph->getInitialStates()))
 	{
-		unique_ptr<FairSet::Goal> goal = res->acc_fair->makeFairGoal();
+		const unique_ptr<FairSet::Goal> goal = res->acc_fair->makeFairGoal();
 		const State& root = PrefixBFSGraph(*this,H,res->root).doBFS(leadIn);	// prefix
 
 		State s = root;

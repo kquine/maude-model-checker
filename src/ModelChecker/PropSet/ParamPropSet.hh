@@ -14,16 +14,17 @@ namespace modelChecker {
 
 class ParamPropSet: public PropSet
 {
-	using ParamMatchMap =  map<int,set<int>>;
+	using ParamMatchMap =  map<unsigned int,set<unsigned int>>;
 public:
-	ParamPropSet(const ParamPropositionTable& propTable, PropSet&& base);
+	ParamPropSet(const ParamPropositionTable& propTable, PropSet&& base): PropSet(forward<PropSet>(base)), propTable(propTable)  {}
 
-	void setTrue(int propId) override;
+	bool isParamProp(unsigned int propId) const		{ return propTable.isParamProp(propId); }
+
+	void setTrue(unsigned int propId) override;
 	void setTrue(const PropSet& ps) override;
 
-	void setTrueParamSubst(int propId, const set<int>& substIds);
-	const set<int>& getTrueParamSubst(int propId) const;
-	const ParamPropositionTable& getPropTable() const;
+	void setTrueParamSubst(unsigned int propId, const set<unsigned int>& substIds);
+	const set<unsigned int>& getTrueParamSubst(unsigned int propId) const;
 
 	void dump(ostream& s) override;
 
@@ -31,7 +32,7 @@ private:
 	ParamMatchMap trueParamSubstIds;	// paramId |-> a set of its realized substitution ids
 
 	const ParamPropositionTable& propTable;
-	static const set<int> emptySet;
+	static const set<unsigned int> emptySet;
 };
 
 } /* namespace modelChecker */

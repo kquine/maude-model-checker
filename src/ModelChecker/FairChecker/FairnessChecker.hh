@@ -20,6 +20,7 @@ class FairnessChecker
 public:
 	virtual ~FairnessChecker() {}
 
+	virtual bool empty() const = 0;
 	virtual unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) = 0;
 
 protected:
@@ -30,7 +31,7 @@ protected:
 inline bool
 FairnessChecker::satisfiesFairFormula(const PropSet& trueProps, Bdd formula) const
 {
-	return BddUtil::satisfiesFormula(formula, [&trueProps] (int propId) { return trueProps.isTrue(propId); });
+	return BddUtil::satisfiesFormula(formula, [&trueProps] (unsigned int propId) { return trueProps.isTrue(propId); });
 }
 
 } /* namespace modelChecker */

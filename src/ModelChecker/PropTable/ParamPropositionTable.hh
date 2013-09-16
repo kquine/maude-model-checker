@@ -17,16 +17,18 @@ namespace modelChecker {
 class ParamPropositionTable: public PropositionTable
 {
 public:
+	using ParamPropMatch = map<unsigned int,set<unsigned int>>;
+
 	explicit ParamPropositionTable(const PropInterpreter& pi);
 
 	bool hasParamProp() const override;
-	bool isParamProp(int propId) const override;
+	bool isParamProp(unsigned int propId) const override;
 
-	int getParamNrVars(int propId) const;
-	Term* getParamVariable(int propId, int varId) const;
+	unsigned int getParamNrVars(unsigned int propId) const;
+	Term* getParamVariable(unsigned int propId, unsigned int varId) const;
 
-	const ParamSubstitution& getParamSubst(int propId, int substId) const;
-	const map<int,set<int> >* getParamMatches(int propId) const;
+	const ParamSubstitution& getParamSubst(unsigned int propId, unsigned int substId) const;
+	const ParamPropMatch* getParamMatches(unsigned int propId) const;
 
 	int insertInstanceAndUpdate(DagNode* propDag, RewritingContext& parentContext);
 
@@ -42,7 +44,7 @@ private:
 	struct InstancePropInfo: public PropInfo
 	{
 		InstancePropInfo(const PropInfo& opi): PropInfo(opi) {}
-		map<int,set<int> > matchingPropNSubstIds;
+		ParamPropMatch matchingPropNSubstIds;
 	};
 
 	struct ParamPropInfo: public PropInfo
@@ -51,24 +53,24 @@ private:
 		const unsigned int paramInfoId;
 	};
 
-	void updatePropInfo(int propId);
-	void computeMatchingProps(DagNode* propDag, RewritingContext& parentContext, map<int,set<int> >& match);
+	void updatePropInfo(unsigned int propId) override;
+	void computeMatchingProps(DagNode* propDag, RewritingContext& parentContext, ParamPropMatch& match);
 
-	const ParamPropInfo* getParamPropInfo(int propId) const;
-	const InstancePropInfo* getInstancePropInfo(int propId) const;
+	const ParamPropInfo* getParamPropInfo(unsigned int propId) const;
+	const InstancePropInfo* getInstancePropInfo(unsigned int propId) const;
 
 	vector<unique_ptr<ParamInfo>> paramInfoTable;
-	map<const Symbol*,Vector<int> > paramPropSymbolMap;		// top symbol |-> a set of the corresponding param prop ids
+	map<const Symbol*,vector<unsigned int> > paramPropSymbolMap;		// top symbol |-> a set of the corresponding param prop ids
 };
 
 inline const ParamPropositionTable::ParamPropInfo*
-ParamPropositionTable::getParamPropInfo(int propId) const
+ParamPropositionTable::getParamPropInfo(unsigned int propId) const
 {
 	return dynamic_cast<const ParamPropInfo*>(propInfoTable[propId].get());
 }
 
 inline const ParamPropositionTable::InstancePropInfo*
-ParamPropositionTable::getInstancePropInfo(int propId) const
+ParamPropositionTable::getInstancePropInfo(unsigned int propId) const
 {
 	return dynamic_cast<const InstancePropInfo*>(propInfoTable[propId].get());
 }

@@ -19,15 +19,15 @@
 
 namespace modelChecker {
 
-EnabledPropTransferer::EnabledPropTransferer(const vector<int>& enabledPropIds, const PropositionTable& propositions):
+EnabledPropTransferer::EnabledPropTransferer(const vector<unsigned int>& enabledPropIds, const PropositionTable& propositions):
 		enabledPropIds(enabledPropIds), propositions(propositions) {}
 
 void
 EnabledPropTransferer::computeEnabledPropIDs(PropSet& truePropIds, const vector<unique_ptr<PropSet>>& trueEventPropIds) const
 {
-	for (int i: enabledPropIds)
+	for (auto i: enabledPropIds)
 	{
-		const int propId = propositions.getEnabledEventId(i);
+		const auto propId = propositions.getEnabledEventId(i);
 		for (const unique_ptr<PropSet>& j  : trueEventPropIds)
 		{
 			if (j->isTrue(propId))

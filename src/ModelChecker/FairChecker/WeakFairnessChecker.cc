@@ -18,8 +18,14 @@
 
 namespace modelChecker {
 
-WeakFairnessChecker::WeakFairnessChecker(const vector<int>& weakFairIds, WeakFairnessTable& fTable):
+WeakFairnessChecker::WeakFairnessChecker(const vector<unsigned int>& weakFairIds, WeakFairnessTable& fTable):
 		weakFairIds(weakFairIds), fTable(fTable) {}
+
+bool
+WeakFairnessChecker::empty() const
+{
+	return weakFairIds.empty();
+}
 
 unique_ptr<FairSet>
 WeakFairnessChecker::computeAllFairness(const PropSet& trueProps)

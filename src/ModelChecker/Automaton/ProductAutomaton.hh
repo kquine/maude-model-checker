@@ -33,8 +33,8 @@ public:
 private:
 	friend class TransitionIterator;
 
-	unique_ptr<SA> systemAut;
-	unique_ptr<PA> propertyAut;
+	const unique_ptr<SA> systemAut;
+	const unique_ptr<PA> propertyAut;
 	vector<State> initialStates;
 };
 

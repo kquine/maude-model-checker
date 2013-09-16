@@ -9,12 +9,13 @@
 #define COUNTEREXAMPLEGENERATOR_HH_
 #include <list>
 #include "Automaton/DagSystemGraph.hh"
+#include "Search/ModelChecker.hh"
 
 namespace modelChecker {
 
 class CounterExampleGenerator
 {
-	using Edge = pair<int,int>;
+	using Edge = ModelChecker::Edge;
 
 public:
 	CounterExampleGenerator(Symbol* counterexampleSymbol, Symbol* transitionSymbol, Symbol* transitionListSymbol, Symbol* nilTransitionListSymbol, DagNode* deadlockDag);
@@ -23,7 +24,7 @@ public:
 
 private:
     DagNode* makeTransitionList(const DagSystemGraph& dg, const list<Edge>& path) const;
-    DagNode* makeTransition(const DagSystemGraph& dg, int stateNr, int count) const;
+    DagNode* makeTransition(const DagSystemGraph& dg, unsigned int stateNr, unsigned int count) const;
 
     Symbol* counterexampleSymbol;
     Symbol* transitionSymbol;

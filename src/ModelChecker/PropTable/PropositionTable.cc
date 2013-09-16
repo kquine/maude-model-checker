@@ -23,7 +23,7 @@ PropositionTable::PropositionTable(const PropInterpreter& pi): pInterpreter(pi) 
 void
 PropositionTable::updatePropTable()
 {
-	for ( ; (unsigned int)ProtectedDagNodeSet::cardinality() > minIndex; ++ minIndex)	//NOTE: cardinality always returns a positive number
+	for ( ; (unsigned int)this->cardinality() > minIndex; ++ minIndex)	//NOTE: cardinality always returns a positive number
 	{
 		if ( minIndex >= propInfoTable.size() || ! propInfoTable[minIndex] )
 			updatePropInfo(minIndex);	// may invoke the overridden function
@@ -38,7 +38,7 @@ PropositionTable::updatePropInfo(unsigned int propId)
 
 	if (! propInfoTable[propId])	// in order to update only once
 	{
-		DagNode* propDag = ProtectedDagNodeSet::index2DagNode(propId);
+		DagNode* propDag = this->index2DagNode(propId);
 		propInfoTable[propId].reset(new PropInfo{pInterpreter.isEventProp(propDag),checkEnabled(propDag)});
 	}
 }
@@ -48,11 +48,11 @@ PropositionTable::checkEnabled(DagNode* propDag)
 {
 	if (DagNode* ed = pInterpreter.getEnabledActionProp(propDag))
 	{
-		int eventId = ProtectedDagNodeSet::dagNode2Index(ed);
+		auto eventId = this->dagNode2Index(ed);
 		if (eventId == NONE)
 		{
-			eventId = ProtectedDagNodeSet::cardinality();
-			ProtectedDagNodeSet::insert(ed);
+			eventId = this->cardinality();
+			this->insert(ed);
 		}
 		updatePropInfo(eventId);	// update the event id; may invoke the overridden function
 		if (isEventProp(eventId))

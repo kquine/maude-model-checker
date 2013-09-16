@@ -19,9 +19,9 @@ public:
 
 	virtual ~StateDagContainer() {}
 
-	int getNrStates() const;
+	unsigned int getNrStates() const;
 	DagNode* getStateDag(size_type index) const;	// return the dag for the index
-	int insertDag(DagNode* dag);			// return the state index
+	unsigned int insertDag(DagNode* dag);			// return the state index
 
 private:
 	vector<size_type> state2hashConsIndex;	// stateIndex |-> hashconse index
@@ -29,7 +29,7 @@ private:
 	HashConsSet hashConsSet;
 };
 
-inline int
+inline unsigned int
 StateDagContainer::getNrStates() const
 {
 	return state2hashConsIndex.size();

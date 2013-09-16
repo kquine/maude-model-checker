@@ -31,55 +31,53 @@ namespace modelChecker {
 
 class LTLRFairnessCheckerSymbol : public TemporalSymbol, public FormulaBuilder
 {
-	typedef ModelCheckerManager::Formula	Formula;
 public:
     LTLRFairnessCheckerSymbol(int id, int arity);
+
     LTLRFairnessCheckerSymbol(const LTLRFairnessCheckerSymbol&) = delete;
     LTLRFairnessCheckerSymbol& operator=(const LTLRFairnessCheckerSymbol&) = delete;
 
-    int build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const	{ return TemporalSymbol::build(formula,propositions,dagNode); }
+    int build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const override	{ return TemporalSymbol::build(formula,propositions,dagNode); }
 
-    bool attachData(const Vector<Sort*>& opDeclaration, const char* purpose, const Vector<const char*>& data);
-    bool attachSymbol(const char* purpose, Symbol* symbol);
-    bool attachTerm(const char* purpose, Term* term);
-    void copyAttachments(Symbol* original, SymbolMap* map);
-    void getDataAttachments(const Vector<Sort*>& opDeclaration, Vector<const char*>& purposes, Vector<Vector<const char*> >& data);
-    void getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols);
-    void getTermAttachments(Vector<const char*>& purposes, Vector<Term*>& terms);
-    bool eqRewrite(DagNode* subject, RewritingContext& context) noexcept;
-    void postInterSymbolPass();
-    void reset();
+    bool attachData(const Vector<Sort*>& opDeclaration, const char* purpose, const Vector<const char*>& data) override;
+    bool attachSymbol(const char* purpose, Symbol* symbol) override;
+    bool attachTerm(const char* purpose, Term* term) override;
+    void copyAttachments(Symbol* original, SymbolMap* map) override;
+    void getDataAttachments(const Vector<Sort*>& opDeclaration, Vector<const char*>& purposes, Vector<Vector<const char*> >& data) override;
+    void getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols) override;
+    void getTermAttachments(Vector<const char*>& purposes, Vector<Term*>& terms) override;
+    bool eqRewrite(DagNode* subject, RewritingContext& context) noexcept override;
+    void postInterSymbolPass() override;
+    void reset() override;
 
 private:
-    unique_ptr<Formula> interpretFormula(DagNode* formulaDag, PropositionTable& propTable) const;
+    Symbol* fairnessSymbol = nullptr;
+    Symbol* strongFairTypeSymbol = nullptr;
+    Symbol* weakFairTypeSymbol = nullptr;
+    Symbol* fairnessSetSymbol = nullptr;
+    Symbol* emptyFairnessSetSymbol = nullptr;
 
-    Symbol* fairnessSymbol;
-    Symbol* strongFairTypeSymbol;
-    Symbol* weakFairTypeSymbol;
-    Symbol* fairnessSetSymbol;
-    Symbol* emptyFairnessSetSymbol;
-
-    Symbol* counterexampleSymbol;
-    Symbol* transitionSymbol;
-    Symbol* transitionListSymbol;
-    Symbol* nilTransitionListSymbol;
+    Symbol* counterexampleSymbol = nullptr;
+    Symbol* transitionSymbol = nullptr;
+    Symbol* transitionListSymbol = nullptr;
+    Symbol* nilTransitionListSymbol = nullptr;
     CachedDag falseTerm;
 
-    Symbol* prooftermSymbol;
-    Symbol* assignOp;
-    Symbol* holeOp;
-    Symbol* substitutionSymbol;
-    Symbol* emptySubstSymbol;
-    QuotedIdentifierSymbol* qidSymbol;
-    Symbol* unlabeledSymbol;
-    Symbol* noContextSymbol;
+    Symbol* prooftermSymbol = nullptr;
+    Symbol* assignOp = nullptr;
+    Symbol* holeOp = nullptr;
+    Symbol* substitutionSymbol = nullptr;
+    Symbol* emptySubstSymbol = nullptr;
+    QuotedIdentifierSymbol* qidSymbol = nullptr;
+    Symbol* unlabeledSymbol = nullptr;
+    Symbol* noContextSymbol = nullptr;
 
-    Symbol* realizedPropSymbol;
-    Symbol* realizedActionSymbol;
+    Symbol* realizedPropSymbol = nullptr;
+    Symbol* realizedActionSymbol = nullptr;
 
-    Symbol* satisfiesSymbol;
-    Symbol* actionmatchSymbol;
-	Symbol* enabledSymbol;
+    Symbol* satisfiesSymbol = nullptr;
+    Symbol* actionmatchSymbol = nullptr;
+	Symbol* enabledSymbol = nullptr;
     CachedDag deadlockTerm;
     CachedDag trueTerm;
 };

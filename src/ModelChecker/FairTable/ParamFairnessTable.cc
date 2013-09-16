@@ -25,35 +25,35 @@ ParamFairnessTable<Formula>::ParamFairnessTable(PropositionTable& propTable):
 
 
 template <typename Formula> bool
-ParamFairnessTable<Formula>::isParamFairness(int fairId) const
+ParamFairnessTable<Formula>::isParamFairness(unsigned int fairId) const
 {
 	return dynamic_cast<ParamFairness*>(Super::fairTable[fairId].get());
 }
 
 template <typename Formula> const Formula&
-ParamFairnessTable<Formula>::getFairFormula(int fairId) const
+ParamFairnessTable<Formula>::getFairFormula(unsigned int fairId) const
 {
 	return Super::getFairFormula(getBaseFairId(fairId));
 }
 
 template <typename Formula> bool
-ParamFairnessTable<Formula>::isStateFairness(int fairId) const
+ParamFairnessTable<Formula>::isStateFairness(unsigned int fairId) const
 {
 	return Super::isStateFairness(getBaseFairId(fairId));
 }
 
 template <typename Formula> const ParamSubstitutionBuilder&
-ParamFairnessTable<Formula>::getParamSubstBuilder(int fairId) const
+ParamFairnessTable<Formula>::getParamSubstBuilder(unsigned int fairId) const
 {
 	return static_cast<ParamFairness&>(*Super::fairTable[fairId]).builder;
 }
 
-template <typename Formula> int
-ParamFairnessTable<Formula>::insertFairnessInstance(int paramFairId, const map<int,int>& propSubst)
+template <typename Formula> unsigned int
+ParamFairnessTable<Formula>::insertFairnessInstance(unsigned int paramFairId, const RealizedSubst& propSubst)
 {
 	ParamFairness& pfi = static_cast<ParamFairness&>(*Super::fairTable[paramFairId]);
-	int oldSize = pfi.substs.size();
-	int si = pfi.substs.insert(propSubst);
+	auto oldSize = pfi.substs.size();
+	auto si = pfi.substs.insert(propSubst);
 	if (si >= oldSize)
 	{
 		pfi.instanceId.push_back(Super::fairTable.size());
@@ -65,15 +65,15 @@ ParamFairnessTable<Formula>::insertFairnessInstance(int paramFairId, const map<i
 
 template <typename Formula>
 unique_ptr<typename ParamFairnessTable<Formula>::GroundFairness>
-ParamFairnessTable<Formula>::createFormulaFairness(int formulaId, const set<int>& propIds, DagNode* fairDag) const
+ParamFairnessTable<Formula>::createFormulaFairness(unsigned int formulaId, const set<unsigned int>& propIds, DagNode* fairDag) const
 {
 	unique_ptr<GroundFairness> gfi = Super::createFormulaFairness(formulaId, propIds, fairDag);
 	return fairDag->isGround() ? move(gfi) : unique_ptr<ParamFairness>(new ParamFairness(*gfi,fairDag,propIds,paramPropTableRef));
 }
 
 
-template <typename Formula> inline int
-ParamFairnessTable<Formula>::getBaseFairId(int fairId) const
+template <typename Formula> inline unsigned int
+ParamFairnessTable<Formula>::getBaseFairId(unsigned int fairId) const
 {
 	if (InstanceFairnessInfo* ifi = dynamic_cast<InstanceFairnessInfo*>(Super::fairTable[fairId].get()))
 		return ifi->paramFairId;
@@ -82,15 +82,15 @@ ParamFairnessTable<Formula>::getBaseFairId(int fairId) const
 }
 
 template <typename Formula> void
-ParamFairnessTable<Formula>::updateInstanceBaseMap(const ParamFairness& pfi)
+ParamFairnessTable<Formula>::updateInstanceBaseMap(const ParamFairness& /* pfi */)
 {
-	//int last = pfi.substs.size() - 1;
+	//unsigned int last = pfi.substs.size() - 1;
 
 	//TODO:
 }
 
 template <typename Formula> bool
-ParamFairnessTable<Formula>::subsumed(const map<int,int>& s1, const map<int,int>& s2) const
+ParamFairnessTable<Formula>::subsumed(const RealizedSubst& s1, const RealizedSubst& s2) const
 {
 	//TODO:
 	return false;

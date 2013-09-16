@@ -17,7 +17,7 @@ template <typename Automaton>
 typename BFSGraph<Automaton>::State
 BFSGraph<Automaton>::doBFS(list<Edge>& path)
 {
-	list<pair<int,int> > temp_path;
+	list<pair<unsigned int,int> > temp_path;
 
 	for(const State& i : initials)
 	{

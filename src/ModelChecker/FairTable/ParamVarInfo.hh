@@ -21,10 +21,10 @@ class ParamVarInfo
 public:
 	ParamVarInfo(DagNode* dag);
 
-	int getNrVariables() const;
-	int variable2Index(VariableDagNode* variableDag) const;
-	int variable2Index(Term* variableTerm) const;
-	VariableDagNode* index2Variable(int index) const;
+	unsigned int getNrVariables() const;
+	unsigned int variable2Index(VariableDagNode* variableDag) const;
+	unsigned int variable2Index(Term* variableTerm) const;
+	VariableDagNode* index2Variable(unsigned int index) const;
 
 private:
 	void indexVariables(DagNode* dag);	// it's supposed to be called after TermUtil::checkGround.

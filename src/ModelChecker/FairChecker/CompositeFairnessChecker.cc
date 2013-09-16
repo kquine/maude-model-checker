@@ -25,6 +25,12 @@ CompositeFairnessChecker::addComponent(unique_ptr<FairnessChecker> checker)
 	fairCheckers.push_back(move(checker));
 }
 
+bool
+CompositeFairnessChecker::empty() const
+{
+	return all_of(fairCheckers.begin(), fairCheckers.end(), [] (const unique_ptr<FairnessChecker>& fc) { return fc->empty(); });
+}
+
 unique_ptr<FairSet>
 CompositeFairnessChecker::computeAllFairness(const PropSet& trueProps)
 {

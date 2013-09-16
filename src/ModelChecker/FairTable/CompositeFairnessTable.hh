@@ -16,11 +16,11 @@ class CompositeFairnessTable: public AbstractFairnessTable
 {
 public:
 	bool hasStrongFairness() const override;
-	int nrFairness() const override;
+	unsigned int nrFairness() const override;
 
-	int nrComponents() const;
+	unsigned int nrComponents() const;
 	void addComponent(unique_ptr<AbstractFairnessTable> table);
-	AbstractFairnessTable& getComponent(int i) const;
+	AbstractFairnessTable& getComponent(unsigned int i) const;
 
 private:
 	vector<unique_ptr<AbstractFairnessTable>> fairTables;	// own the tables!

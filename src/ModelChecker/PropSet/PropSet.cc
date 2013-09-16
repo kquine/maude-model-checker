@@ -24,13 +24,13 @@ PropSet::getTruePropIds() const
 }
 
 bool
-PropSet::isTrue(int propId) const
+PropSet::isTrue(unsigned int propId) const
 {
 	return truePropIds.contains(propId);
 }
 
 void
-PropSet::setTrue(int propId)
+PropSet::setTrue(unsigned int propId)
 {
 	truePropIds.insert(propId);
 }

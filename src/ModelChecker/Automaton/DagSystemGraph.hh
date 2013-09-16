@@ -16,8 +16,8 @@ class DagSystemGraph: public SystemGraph
 public:
 	virtual ~DagSystemGraph()	{}
 
-	virtual DagNode* getStateDag(int stateNr) const = 0;
-	virtual DagNode* getTransitionDag(int stateNr, int index) const = 0;
+	virtual DagNode* getStateDag(unsigned int stateNr) const = 0;
+	virtual DagNode* getTransitionDag(unsigned int stateNr, unsigned int index) const = 0;
 };
 
 } /* namespace modelChecker */

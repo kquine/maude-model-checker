@@ -115,7 +115,7 @@ FairnessDecoder::parseFairnessDag(DagNode* fairnessDag) const
 	FreeDagNode* d = static_cast<FreeDagNode*>(fairnessDag);
 	LogicFormula premF, consF;
 
-	set<int> propIds;
+	set<unsigned int> propIds;
 	bdd prem = fBuilder.translateFairnessFormula(fBuilder.build(premF, propTable.getDagNodeSet(), d->getArgument(1)), premF, propIds);
 	bdd cons = fBuilder.translateFairnessFormula(fBuilder.build(consF, propTable.getDagNodeSet(), d->getArgument(2)), consF, propIds);
 	propTable.updatePropTable();

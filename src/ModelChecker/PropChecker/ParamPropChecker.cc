@@ -14,14 +14,13 @@
 #include "core.hh"
 
 // ltlr definitions
-#include "Utility/ContainerUtil.hh"
 #include "ParamPropChecker.hh"
 
 namespace modelChecker {
 
-ParamPropChecker::ParamPropChecker(const vector<int>& propIds, ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context):
-				PropChecker(ContainerUtil::filterVector(propIds, [&](int i) { return ! propTable.isParamProp(i); }), propTable, pe, context),
-				RealizedPropGenerator(ContainerUtil::filterVector(propIds, [&](int i) { return propTable.isParamProp(i); }), propTable, pe, context) {}
+ParamPropChecker::ParamPropChecker(const vector<unsigned int>& groundPropIds, const vector<unsigned int>& paramPropIds,
+		ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context):
+				PropChecker(groundPropIds, propTable, pe, context), RealizedPropGenerator(paramPropIds, propTable, pe, context) {}
 
 unique_ptr<PropSet>
 ParamPropChecker::computeCheckResult(DagNode* target)

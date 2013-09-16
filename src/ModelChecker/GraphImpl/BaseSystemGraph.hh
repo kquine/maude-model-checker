@@ -30,16 +30,17 @@ public:
 
 	void init();
 
-	int getNrStates() const final;
-	int getNrTransitions(int stateNr) const final;
+	unsigned int getNrStates() const final;
+	unsigned int getNrTransitions(unsigned int stateNr) const final;
 
-	DagNode* getStateDag(int stateNr) const final;
-	DagNode* getTransitionDag(int stateNr, int index) const final;
-	int getNextState(int stateNr, int index) final;
+	DagNode* getStateDag(unsigned int stateNr) const final;
+	DagNode* getTransitionDag(unsigned int stateNr, unsigned int index) const final;
+	int getNextState(unsigned int stateNr, unsigned int index) final;	// return -1 if no more transitions
 
 protected:
-	/* virtual */ int insertState(DagNode* stateDag) /* = 0 */;
-	/* virtual */ int computeNextState(int stateNr, int index) /* = 0 */;
+	/* virtual */ unsigned int insertState(DagNode* stateDag) /* = 0 */;
+	/* virtual */ unsigned int computeNextState(unsigned int stateNr, unsigned int index) /* = 0 */;
+	/* virtual */ bool fullyExplored(unsigned int stateNr) const /* = 0 */;
 
 	vector<unique_ptr<State>> seen;			// state information
 	RewritingContext& initial;

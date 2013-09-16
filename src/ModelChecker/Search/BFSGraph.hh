@@ -11,6 +11,7 @@
 #include <queue>
 #include "macros.hh"
 #include "Utility/StateMap.hh"
+#include "ModelChecker.hh"
 
 namespace modelChecker {
 
@@ -20,7 +21,7 @@ namespace modelChecker {
 template <typename Automaton>
 class BFSGraph
 {
-	using Edge	= 				pair<int,int>;
+	using Edge	= 				ModelChecker::Edge;
 public:
 	using State =				typename Automaton::State;
 	using Transition =			typename Automaton::Transition;
@@ -48,7 +49,7 @@ private:
 template <typename Automaton>
 struct BFSGraph<Automaton>::Step		// used for counter-example generation
 {
-	Step() : Step(make_pair(NONE,NONE),NONE) {}
+	Step() : Step(make_pair(NONE,NONE), NONE) {}
 	Step(const State& p, int index) : parent(p), systemIndex(index) {}
 	State parent;
 	int systemIndex;

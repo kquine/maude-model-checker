@@ -40,13 +40,13 @@ ParamPropositionTable::hasParamProp() const
 }
 
 bool
-ParamPropositionTable::isParamProp(int propId) const
+ParamPropositionTable::isParamProp(unsigned int propId) const
 {
 	return getParamPropInfo(propId) != nullptr;
 }
 
-int
-ParamPropositionTable::getParamNrVars(int propId) const
+unsigned int
+ParamPropositionTable::getParamNrVars(unsigned int propId) const
 {
 	const ParamPropInfo* ppi = getParamPropInfo(propId);
 	Assert(ppi != nullptr, "ParamPropositionTable::getParamNrVars: not a param substitution");
@@ -54,7 +54,7 @@ ParamPropositionTable::getParamNrVars(int propId) const
 }
 
 Term*
-ParamPropositionTable::getParamVariable(int propId, int varId) const
+ParamPropositionTable::getParamVariable(unsigned int propId, unsigned int varId) const
 {
 	const ParamPropInfo* ppi = getParamPropInfo(propId);
 	Assert(ppi != nullptr, "ParamPropositionTable::getParamVariable: not a param substitution");
@@ -63,15 +63,15 @@ ParamPropositionTable::getParamVariable(int propId, int varId) const
 
 
 const ParamSubstitution&
-ParamPropositionTable::getParamSubst(int propId, int substId) const
+ParamPropositionTable::getParamSubst(unsigned int propId, unsigned int substId) const
 {
 	const ParamPropInfo* ppi = getParamPropInfo(propId);
 	Assert(ppi != nullptr, "ParamPropositionTable::getParamSubst: not a param substitution");
 	return *paramInfoTable[ppi->paramInfoId]->substitutions[substId];
 }
 
-const map<int,set<int> >*
-ParamPropositionTable::getParamMatches(int propId) const
+const ParamPropositionTable::ParamPropMatch*
+ParamPropositionTable::getParamMatches(unsigned int propId) const
 {
 	if (const InstancePropInfo* ipi = getInstancePropInfo(propId))
 		return & ipi->matchingPropNSubstIds;
@@ -95,13 +95,13 @@ ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContex
 	}
 	else // if the dag has not been stored (but it could have already been computed while not stored)
 	{
-		map<int,set<int> > temp;
+		ParamPropMatch temp;
 		computeMatchingProps(propDag, parentContext, temp);
 
 		if (! temp.empty())	// if it is an instance
 		{
-			const int newPropId = PropositionTable::cardinality();
-			PropositionTable::insert(propDag);
+			const int newPropId = this->cardinality();
+			this->insert(propDag);
 			updatePropTable();
 
 			unique_ptr<InstancePropInfo> ipi(new InstancePropInfo(*propInfoTable[newPropId]));
@@ -115,12 +115,12 @@ ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContex
 
 
 void
-ParamPropositionTable::computeMatchingProps(DagNode* propDag, RewritingContext& parentContext, map<int,set<int> >& match)
+ParamPropositionTable::computeMatchingProps(DagNode* propDag, RewritingContext& parentContext, ParamPropMatch& match)
 {
 	auto it = paramPropSymbolMap.find(propDag->symbol());
 	if (it != paramPropSymbolMap.end())	// if no corresponding param props
 	{
-		unique_ptr<RewritingContext> dagCxt(parentContext.makeSubcontext(propDag));
+		const unique_ptr<RewritingContext> dagCxt(parentContext.makeSubcontext(propDag));
 		for (int k : it->second)
 		{
 			if (const ParamPropInfo* ppi = getParamPropInfo(k))
@@ -140,7 +140,7 @@ ParamPropositionTable::computeMatchingProps(DagNode* propDag, RewritingContext& 
 }
 
 void
-ParamPropositionTable::updatePropInfo(int propId)
+ParamPropositionTable::updatePropInfo(unsigned int propId)
 {
 	PropositionTable::updatePropInfo(propId);	// first fill the basic info
 
@@ -154,7 +154,7 @@ ParamPropositionTable::updatePropInfo(int propId)
 		}
 		else
 		{
-			paramPropSymbolMap[propDag->symbol()].append(propId);	// register a related symbol for the prop (except for enalbed props)
+			paramPropSymbolMap[propDag->symbol()].push_back(propId);	// register a related symbol for the prop (except for enalbed props)
 			pInfoId = paramInfoTable.size();
 			paramInfoTable.emplace_back(new ParamInfo(TermUtil::constructTerm(propDag)));
 		}

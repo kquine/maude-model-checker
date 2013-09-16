@@ -17,7 +17,7 @@ class FairStateSystemGraph: public StateSystemGraph
 public:
 	FairStateSystemGraph(RewritingContext& initial, PropChecker& spc, const NatSet& formulaPropIds, FairnessChecker& fc, const ProofTermGenerator& ptg);
 
-	unique_ptr<FairSet> makeFairSet(int stateNr, int transitionNr) const;
+	unique_ptr<FairSet> makeFairSet(unsigned int stateNr, unsigned int transitionNr) const;
 
 private:
 	using Super =		StateSystemGraph;

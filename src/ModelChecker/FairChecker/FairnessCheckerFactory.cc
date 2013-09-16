@@ -15,9 +15,6 @@
 #include "core.hh"
 
 // ltlr definitions
-#include "CompositeFairnessChecker.hh"
-#include "ParamWeakFairnessChecker.hh"
-#include "ParamStrongFairnessChecker.hh"
 #include "FairnessCheckerFactory.hh"
 
 namespace modelChecker {
@@ -25,40 +22,61 @@ namespace modelChecker {
 unique_ptr<FairnessChecker>
 FairnessCheckerFactory::createChecker(bool stateOnly, AbstractFairnessTable* fairTable)
 {
-	if (CompositeFairnessTable* cft = dynamic_cast<CompositeFairnessTable*>(fairTable))
-	{
-		CompositeFairnessChecker* cfc = new CompositeFairnessChecker;
-		for (int i = 0; i < cft->nrComponents(); ++i)
-			cfc->addComponent(createChecker(stateOnly, &cft->getComponent(i)));
-		return unique_ptr<FairnessChecker>(cfc);
-	}
-	if (ParamWeakFairnessTable* pwft = dynamic_cast<ParamWeakFairnessTable*>(fairTable))
-	{
-		return unique_ptr<FairnessChecker>(createChecker<ParamWeakFairnessTable,ParamWeakFairnessChecker>(stateOnly,*pwft));
-	}
-	if (ParamStrongFairnessTable* psft = dynamic_cast<ParamStrongFairnessTable*>(fairTable))
-	{
-		return unique_ptr<FairnessChecker>(createChecker<ParamStrongFairnessTable,ParamStrongFairnessChecker>(stateOnly,*psft));
-	}
-	if (WeakFairnessTable* wft = dynamic_cast<WeakFairnessTable*>(fairTable))
-	{
-		return unique_ptr<FairnessChecker>(createChecker<FairnessTable<Bdd>,WeakFairnessChecker>(stateOnly,*wft));
-	}
-	if (StrongFairnessTable* sft = dynamic_cast<StrongFairnessTable*>(fairTable))
-	{
-		return unique_ptr<FairnessChecker>(createChecker<StrongFairnessTable,StrongFairnessChecker>(stateOnly,*sft));
-	}
+	unique_ptr<FairnessChecker> fc = createCheckerAux(stateOnly, fairTable);
+	return fc && !fc->empty() ? move(fc) : nullptr;
+}
+
+unique_ptr<FairnessChecker>
+FairnessCheckerFactory::createCheckerAux(bool stateOnly, AbstractFairnessTable* fairTable)
+{
+	if (CompositeFairnessTable* cft = dynamic_cast<CompositeFairnessTable*>(fairTable))			return createCompositeChecker(stateOnly,*cft);
+	if (ParamWeakFairnessTable* pwft = dynamic_cast<ParamWeakFairnessTable*>(fairTable))		return createParamChecker(stateOnly,*pwft);
+	if (ParamStrongFairnessTable* psft = dynamic_cast<ParamStrongFairnessTable*>(fairTable))	return createParamChecker(stateOnly,*psft);
+	if (WeakFairnessTable* wft = dynamic_cast<WeakFairnessTable*>(fairTable))					return createGroundChecker(stateOnly,*wft);
+	if (StrongFairnessTable* sft = dynamic_cast<StrongFairnessTable*>(fairTable))				return createGroundChecker(stateOnly,*sft);
 	return nullptr;
 }
 
-template <typename Table, typename Checker> Checker*
-FairnessCheckerFactory::createChecker(bool stateOnly, Table& table)
+template <> struct FairnessCheckerFactory::Traits<CompositeFairnessTable>	{ using Checker = CompositeFairnessChecker; };
+template <> struct FairnessCheckerFactory::Traits<ParamWeakFairnessTable>	{ using Checker = ParamWeakFairnessChecker;		using GroundChecker = WeakFairnessChecker; };
+template <> struct FairnessCheckerFactory::Traits<ParamStrongFairnessTable>	{ using Checker = ParamStrongFairnessChecker; 	using GroundChecker = StrongFairnessChecker; };
+template <> struct FairnessCheckerFactory::Traits<WeakFairnessTable>		{ using Checker = WeakFairnessChecker; };
+template <> struct FairnessCheckerFactory::Traits<StrongFairnessTable>		{ using Checker = StrongFairnessChecker; };
+
+unique_ptr<FairnessChecker>
+FairnessCheckerFactory::createCompositeChecker(bool stateOnly, CompositeFairnessTable& table)
 {
-	vector<int> targetIds;
-	for (int i = 0; i < table.nrFairness(); ++i)
+	CompositeFairnessChecker* cfc = new CompositeFairnessChecker;
+	for (unsigned int i = 0; i < table.nrComponents(); ++i)  cfc->addComponent(createCheckerAux(stateOnly, &table.getComponent(i)));
+	return unique_ptr<FairnessChecker>(cfc);
+}
+
+template <typename Table> unique_ptr<FairnessChecker>
+FairnessCheckerFactory::createGroundChecker(bool stateOnly, Table& table)
+{
+	return unique_ptr<FairnessChecker>(new typename Traits<Table>::Checker(computeTagetIds(stateOnly,table),table));
+}
+
+template <typename Table> unique_ptr<FairnessChecker>
+FairnessCheckerFactory::createParamChecker(bool stateOnly, Table& table)
+{
+	pair<vector<unsigned int>,vector<unsigned int>> propIds;	// (ground, param)
+	for (auto i : computeTagetIds(stateOnly,table)) (table.isParamFairness(i) ? propIds.second : propIds.first).push_back(i);
+
+	if (propIds.second.empty())
+		return unique_ptr<FairnessChecker>(new typename Traits<Table>::GroundChecker(propIds.first,table));
+	else
+		return unique_ptr<FairnessChecker>(new typename Traits<Table>::Checker(propIds.first, propIds.second, table));
+}
+
+template <typename Table> vector<unsigned int>
+FairnessCheckerFactory::computeTagetIds(bool stateOnly, const Table& table)
+{
+	vector<unsigned int> targetIds;
+	for (unsigned int i = 0; i < table.nrFairness(); ++i)
 		if (table.isStateFairness(i) == stateOnly)
 			targetIds.push_back(i);
-	return new Checker(targetIds, table);
+	return targetIds;
 }
 
 } /* namespace modelChecker */

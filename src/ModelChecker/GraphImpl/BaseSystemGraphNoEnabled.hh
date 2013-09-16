@@ -23,8 +23,9 @@ public:
 	virtual ~BaseSystemGraphNoEnabled() {}
 
 private:
-	/* implements */ int insertState(DagNode* stateDag);
-	/* implements */ int computeNextState(int stateNr, int index);
+	/* implements */ unsigned int insertState(DagNode* stateDag);
+	/* implements */ int computeNextState(unsigned int stateNr, unsigned int index);
+	/* implements */ bool fullyExplored(unsigned int stateNr) const;
 };
 
 } /* namespace modelChecker */

@@ -80,7 +80,7 @@ StreettModelChecker<Automaton>::findAcceptedSCC(queue<State>& region, FairSet::B
 				}
 				else	// SCC pop
 				{
-					if (unique_ptr<FairSet::Bad> new_bad = makeNewBadGoal(stack.topSCC()->acc_fair,bad))  // revisit the SCC ff there is a new bad goal
+					if (const unique_ptr<FairSet::Bad> new_bad = makeNewBadGoal(stack.topSCC()->acc_fair,bad))  // revisit the SCC ff there is a new bad goal
 					{
 						queue<State> new_region;
 						new_region.push(stack.sccPop(true));	// pop the top SCC with *unvisit*

@@ -70,11 +70,11 @@ ProofTermGenerator::makeSubstitutionDag(const Substitution* substitution, const 
 {
 	if (substitution && variableInfo)
 	{
-		int nrVariable = variableInfo->getNrRealVariables();
+		auto nrVariable = variableInfo->getNrRealVariables();
 		if (nrVariable > 0)
 		{
 			Vector<DagNode*> args;  // size may vary
-			for (int i = 0; i < nrVariable ; i++)
+			for (auto i = 0; i < nrVariable ; i++)
 			{
 				if (Symbol* assignSymbol = findAssignOp(variableInfo->index2Variable(i)))
 					args.append(makeAssignmentDag(variableInfo->index2Variable(i), substitution->value(i), assignSymbol));

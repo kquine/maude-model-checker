@@ -14,14 +14,18 @@
 #include "core.hh"
 
 // ltlr definitions
-#include "Utility/ContainerUtil.hh"
 #include "ParamWeakFairnessChecker.hh"
 
 namespace modelChecker {
 
-ParamWeakFairnessChecker::ParamWeakFairnessChecker(const vector<int>& weakFairIds, ParamWeakFairnessTable& fTable):
-	WeakFairnessChecker(ContainerUtil::filterVector(weakFairIds, [&](int i) { return ! fTable.isParamFairness(i); }),fTable),
-	RealizedFairnessGenerator<Bdd>(ContainerUtil::filterVector(weakFairIds, [&](int i) { return fTable.isParamFairness(i); }),fTable) {}
+ParamWeakFairnessChecker::ParamWeakFairnessChecker(const vector<unsigned int>& groundWeakFairIds, const vector<unsigned int>& paramWeakFairIds, ParamWeakFairnessTable& fTable):
+	WeakFairnessChecker(groundWeakFairIds,fTable), RealizedFairnessGenerator<Bdd>(paramWeakFairIds,fTable) {}
+
+bool
+ParamWeakFairnessChecker::empty() const
+{
+	return WeakFairnessChecker::empty() && RealizedFairnessGenerator<Bdd>::empty();
+}
 
 unique_ptr<FairSet>
 ParamWeakFairnessChecker::computeAllFairness(const PropSet& trueProps)

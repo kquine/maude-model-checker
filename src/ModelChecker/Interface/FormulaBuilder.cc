@@ -19,18 +19,40 @@
 #include "logicFormula.hh"
 
 // ltlr definitions
+#include "Utility/StringStream.hh"
+#include "Utility/TermUtil.hh"
 #include "FormulaBuilder.hh"
 
 namespace modelChecker {
 
+unique_ptr<FormulaBuilder::Formula>
+FormulaBuilder::interpretFormula(DagNode* formulaDag, PropositionTable& propTable) const
+{
+	if (! TermUtil::checkGround(formulaDag))
+		throw invalid_argument(StringStream() << "negated LTL formula " << QUOTE(formulaDag) << " did not reduce to a ground term.");
+	else
+	{
+		unique_ptr<Formula> formula(new Formula);
+		formula->top = build(formula->data, propTable.getDagNodeSet(), formulaDag);
+		if (formula->top == NONE)
+			throw invalid_argument(StringStream() << "negated LTL formul " << QUOTE(formulaDag) << "a did not reduce to a valid negative normal form.");
+		else
+		{
+			for (auto i = propTable.cardinality() - 1; i >= 0; --i)  formula->formulaPropIds.insert(i);
+			propTable.updatePropTable();
+			return formula;
+		}
+	}
+}
+
 bdd
-FormulaBuilder::translateFairnessFormula(int subformulaIndex, const LogicFormula& formula, set<int>& propIds) const
+FormulaBuilder::translateFairnessFormula(unsigned int subformulaIndex, const LogicFormula& formula, set<unsigned int>& propIds) const
 {
 	switch (formula.getOp(subformulaIndex))
 	{
 		case LogicFormula::PROPOSITION:
 		{
-			int pi = formula.getProp(subformulaIndex);
+			unsigned int pi = formula.getProp(subformulaIndex);
 			propIds.insert(pi);
 			return ithvar(pi);
 		}

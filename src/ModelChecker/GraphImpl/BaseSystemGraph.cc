@@ -29,27 +29,27 @@ BaseSystemGraph<T>::init()
 	static_cast<T*>(this)->insertState(initial.root());
 }
 
-template <class T> inline int
+template <class T> inline unsigned int
 BaseSystemGraph<T>::getNrStates() const
 {
 	return seen.size();
 }
 
-template <class T> inline int
-BaseSystemGraph<T>::getNrTransitions(int stateNr) const
+template <class T> inline unsigned int
+BaseSystemGraph<T>::getNrTransitions(unsigned int stateNr) const
 {
 	Assert(seen[stateNr], "BaseSystemGraph::getNrTransitions: Invalid state lookup");
 	return seen[stateNr]->transitions.size();
 }
 
 template <class T> inline DagNode*
-BaseSystemGraph<T>::getStateDag(int stateNr) const
+BaseSystemGraph<T>::getStateDag(unsigned int stateNr) const
 {
 	return StateDagContainer::getStateDag(stateNr);
 }
 
 template <class T> inline DagNode*
-BaseSystemGraph<T>::getTransitionDag(int stateNr, int index) const
+BaseSystemGraph<T>::getTransitionDag(unsigned int stateNr, unsigned int index) const
 {
 	Assert(seen[stateNr], "BaseSystemGraph::getTransitionDag: Invalid state lookup");
 	DagNode* const pd = seen[stateNr]->transitions[index]->makeDag(initial, getStateDag(stateNr), ptGenerator);
@@ -58,7 +58,7 @@ BaseSystemGraph<T>::getTransitionDag(int stateNr, int index) const
 }
 
 template <class T> inline int
-BaseSystemGraph<T>::getNextState(int stateNr, int index)
+BaseSystemGraph<T>::getNextState(unsigned int stateNr, unsigned int index)
 {
 	return static_cast<T*>(this)->computeNextState(stateNr, index);
 }

@@ -12,13 +12,13 @@ namespace modelChecker {
 template <class T> inline bool
 StateMap<T>::contains(const State& s) const
 {
-	return (size_t)s.first < map.size() && map[s.first]->find(s.second) != map[s.first]->end();	// NOTE: this returns false if s.first < 0
+	return s.first < map.size() && map[s.first]->find(s.second) != map[s.first]->end();
 }
 
 template <class T> inline void
 StateMap<T>::set(const State& s, const T& n)
 {
-	while ((size_t)s.first >= map.size()) map.emplace_back(new IntMap);	// allocate space
+	while (s.first >= map.size()) map.emplace_back(new IntMap);	// allocate space
 	(*map[s.first])[s.second] = n;
 }
 

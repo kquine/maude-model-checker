@@ -16,7 +16,7 @@ public:
 	virtual ~AbstractFairnessTable() {}
 
 	virtual bool hasStrongFairness() const = 0;
-	virtual int nrFairness() const = 0;
+	virtual unsigned int nrFairness() const = 0;
 };
 
 } /* namespace modelChecker */

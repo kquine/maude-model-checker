@@ -16,13 +16,14 @@ namespace modelChecker {
 class WeakFairnessChecker: public FairnessChecker
 {
 public:
-	WeakFairnessChecker(const vector<int>& weakFairIds, WeakFairnessTable& fTable);
+	WeakFairnessChecker(const vector<unsigned int>& weakFairIds, WeakFairnessTable& fTable);
 	virtual ~WeakFairnessChecker() {}
 
-	virtual unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps);
+	virtual bool empty() const override;
+	virtual unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
 
 private:
-	const vector<int> weakFairIds;
+	const vector<unsigned int> weakFairIds;
 	WeakFairnessTable& fTable;
 };
 

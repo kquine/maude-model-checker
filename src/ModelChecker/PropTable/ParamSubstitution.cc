@@ -26,11 +26,11 @@ ParamSubstitution::ParamSubstitution(vector<DagNode*>::size_type size): subst(si
 
 ParamSubstitution::ParamSubstitution(const VariableInfo& vi, const Substitution& sb): subst(vi.getNrRealVariables())
 {
-	for (int j = 0; j < vi.getNrRealVariables(); ++j)
+	for (auto j = 0; j < vi.getNrRealVariables(); ++j)
 		subst[j] = sb.value(j);
 }
 
-ParamSubstitution::ParamSubstitution(const ParamSubstitution& src, const vector<int>& varMap): subst(varMap.size())
+ParamSubstitution::ParamSubstitution(const ParamSubstitution& src, const vector<unsigned int>& varMap): subst(varMap.size())
 {
 	setSubst(src, varMap);
 }
@@ -57,14 +57,14 @@ ParamSubstitution::getSubst() const
 }
 
 void
-ParamSubstitution::setSubst(const ParamSubstitution& src, const vector<int>& varMap)
+ParamSubstitution::setSubst(const ParamSubstitution& src, const vector<unsigned int>& varMap)
 {
 	for (unsigned int j = 0; j < varMap.size(); ++j)
 		subst[j] = src.subst[varMap[j]];
 }
 
 void
-ParamSubstitution::setSubst(const vector<int>& varMap, const ParamSubstitution& src)
+ParamSubstitution::setSubst(const vector<unsigned int>& varMap, const ParamSubstitution& src)
 {
 	for (unsigned int j = 0; j < varMap.size(); ++j)
 		subst[varMap[j]] = src.subst[j];

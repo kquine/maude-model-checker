@@ -24,7 +24,7 @@
 
 namespace modelChecker {
 
-int
+unsigned int
 StateDagContainer::insertDag(DagNode* dag)
 {
 	int nextState;
@@ -46,6 +46,7 @@ StateDagContainer::insertDag(DagNode* dag)
 	hashCons2dagIndex[hashConsIndex] = nextState;
 	state2hashConsIndex.push_back(hashConsIndex);
 
+	Assert(nextState >= 0, "StateDagContainer::insertDag: violate integer limit.");
 	return nextState;
 }
 

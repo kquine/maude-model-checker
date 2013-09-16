@@ -21,9 +21,9 @@ public:
 	PropSet(PropSet&& other) noexcept;
 
 	const NatSet& getTruePropIds() const;
-	bool isTrue(int propId) const;
+	bool isTrue(unsigned int propId) const;
 
-	virtual void setTrue(int propId);
+	virtual void setTrue(unsigned int propId);
 	virtual void setTrue(const PropSet& ps);
 
 	virtual void dump(ostream& s);

@@ -5,6 +5,7 @@
  *      Author: kquine
  */
 
+#include <stdexcept>
 #include "BaseSystemGraphNoEnabled.hh"
 
 namespace modelChecker {
@@ -12,10 +13,10 @@ namespace modelChecker {
 template <typename T>
 BaseSystemGraphNoEnabled<T>::BaseSystemGraphNoEnabled(RewritingContext& initial, const ProofTermGenerator& ptg): Super(initial, ptg) {}
 
-template <typename T> int
+template <typename T> unsigned int
 BaseSystemGraphNoEnabled<T>::insertState(DagNode* stateDag)
 {
-	int nextState = StateDagContainer::insertDag(stateDag);
+	auto nextState = StateDagContainer::insertDag(stateDag);
 	if (nextState == Super::getNrStates())	// if a new state identified
 	{
 		DagNode* cannStateDag = Super::getStateDag(nextState);
@@ -27,22 +28,22 @@ BaseSystemGraphNoEnabled<T>::insertState(DagNode* stateDag)
 }
 
 template <typename T> int
-BaseSystemGraphNoEnabled<T>::computeNextState(int stateNr, int index)
+BaseSystemGraphNoEnabled<T>::computeNextState(unsigned int stateNr, unsigned int index)
 {
 	State& n = *Super::seen[stateNr];	//NOTE: the pointer address itself can be "moved" when the vector is reallocated
-	int nrTransitions = Super::getNrTransitions(stateNr);
+	auto nrTransitions = Super::getNrTransitions(stateNr);
 
 	if (index < nrTransitions)
 		return n.transitions[index]->nextState;
-	if (! n.explore)	// fully explored
-		return NONE;
+	if (! n.explore)
+		return NONE;	// fully explored
 
 	while (nrTransitions <= index)
 	{
 		T* self = static_cast<T*>(this);
 		if (DagNode* ns = n.explore->getNextStateDag(Super::initial))		// if there is a next state
 		{
-			int nextState = self->insertState(ns);
+			auto nextState = self->insertState(ns);
 			if (self->insertTransition(nextState, n))	// if a new transition identified
 				++ nrTransitions;
 			MemoryCell::okToCollectGarbage();
@@ -56,5 +57,6 @@ BaseSystemGraphNoEnabled<T>::computeNextState(int stateNr, int index)
 	}
 	return n.transitions[index]->nextState;
 }
+
 
 } /* namespace modelChecker */

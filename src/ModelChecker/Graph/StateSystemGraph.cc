@@ -32,10 +32,10 @@ namespace modelChecker {
 StateSystemGraph::StateSystemGraph(RewritingContext& initial, PropChecker& spc, const ProofTermGenerator& ptg): Super(initial, ptg), statePC(spc) {}
 
 bool
-StateSystemGraph::satisfiesStateFormula(Bdd formula, int stateNr) const
+StateSystemGraph::satisfiesStateFormula(Bdd formula, unsigned int stateNr) const
 {
 	const NatSet& label = Super::seen[stateNr]->label;
-	return BddUtil::satisfiesFormula(formula, [&label] (int propId) { return label.contains(propId); });
+	return BddUtil::satisfiesFormula(formula, [&label] (unsigned int propId) { return label.contains(propId); });
 }
 
 unique_ptr<PropSet>
@@ -53,7 +53,7 @@ StateSystemGraph::createState(DagNode* stateDag) const
 }
 
 bool
-StateSystemGraph::insertTransition(int nextState, State& n)
+StateSystemGraph::insertTransition(unsigned int nextState, State& n)
 {
 	if (n.explore->nextStateSet.insert(nextState).second)	// if a new transition identified
 	{

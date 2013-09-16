@@ -17,14 +17,14 @@ namespace modelChecker {
 class PropChecker
 {
 public:
-	PropChecker(const vector<int>& propIds, const PropositionTable& propositions, const PropEvaluator& pe, RewritingContext& context);
+	PropChecker(const vector<unsigned int>& propIds, const PropositionTable& propositions, const PropEvaluator& pe, RewritingContext& context);
 	virtual ~PropChecker() {}
 
-	int nrProps() const;
+	unsigned int nrProps() const;
 	virtual unique_ptr<PropSet> computeCheckResult(DagNode* target);
 
 private:
-	const vector<int> propIds;					// either state props or event props
+	const vector<unsigned int> propIds;					// either state props or event props
 	const PropositionTable& propositions;
 	const PropEvaluator& pEvaluator;
 	RewritingContext& context;

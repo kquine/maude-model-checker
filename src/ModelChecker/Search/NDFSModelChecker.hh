@@ -34,18 +34,18 @@ private:
 	    NatSet onDfs1Stack;		// flags for states on dfs1 stack
 	    NatSet dfs2Seen;
 	};
-	class PrefixBFSGraph;						// for generating prefix counter example
+	class PrefixBFSGraph;				// for generating prefix counter example
 
-	bool trap(const State& s) const;			// return true for a trap state
+	bool trap(const State& s) const;	// return true for a trap state
 	bool checkVisit(const State& ns);
 
-	bool dfs1(const State& initial);			// outer dfs
-	bool dfs2(const State& initial);			// inner dfs
+	bool dfs1(const State& initial);	// outer dfs
+	bool dfs2(const State& initial);	// inner dfs
 
-	State cycleState = make_pair(NONE,NONE);	// intersection of cycle and prefix after nested dfs
+	State cycleState;					// intersection of cycle and prefix after nested dfs
 	vector<unique_ptr<StateSet>> intersectionStates;
 
-	unique_ptr<Automaton> prod;
+	const unique_ptr<Automaton> prod;
 };
 
 template <typename Automaton>

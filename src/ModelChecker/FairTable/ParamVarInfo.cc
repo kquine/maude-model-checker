@@ -37,13 +37,13 @@ ParamVarInfo::ParamVarInfo(DagNode* dag)
 	indexVariables(dag);
 }
 
-int
+unsigned int
 ParamVarInfo::getNrVariables() const
 {
 	return variables.size();
 }
 
-int
+unsigned int
 ParamVarInfo::variable2Index(VariableDagNode* variableDag) const
 {
 	indexed_set<VariableDagNode*>::const_iterator ci = variables.find(variableDag);
@@ -53,7 +53,7 @@ ParamVarInfo::variable2Index(VariableDagNode* variableDag) const
 		throw logic_error(StringStream() << "No variable " << QUOTE(static_cast<DagNode*>(variableDag)) <<" found");
 }
 
-int
+unsigned int
 ParamVarInfo::variable2Index(Term* variableTerm) const
 {
 	for (auto i : variables)
@@ -65,7 +65,7 @@ ParamVarInfo::variable2Index(Term* variableTerm) const
 }
 
 VariableDagNode*
-ParamVarInfo::index2Variable(int index) const
+ParamVarInfo::index2Variable(unsigned int index) const
 {
 	return variables[index];
 }

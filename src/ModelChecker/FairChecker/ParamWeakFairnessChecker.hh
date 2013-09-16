@@ -15,12 +15,13 @@ namespace modelChecker {
 class ParamWeakFairnessChecker: public WeakFairnessChecker, private RealizedFairnessGenerator<Bdd>
 {
 public:
-	ParamWeakFairnessChecker(const vector<int>& weakFairIds, ParamWeakFairnessTable& fTable);
+	ParamWeakFairnessChecker(const vector<unsigned int>& groundWeakFairIds, const vector<unsigned int>& paramWeakFairIds, ParamWeakFairnessTable& fTable);
 
+	bool empty() const override;
 	unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
 
 private:
-	indexed_set<int> instanceWeakFairIds;
+	indexed_set<unsigned int> instanceWeakFairIds;
 };
 
 } /* namespace modelChecker */

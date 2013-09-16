@@ -28,14 +28,14 @@ public:
 	virtual ~FairnessTable() {}
 
 	bool hasStrongFairness() const override;
-	int nrFairness() const override				{ return fairTable.size();}
-	virtual bool isParamFairness(int) const		{ return false; }
+	unsigned int nrFairness() const override				{ return fairTable.size();}
+	virtual bool isParamFairness(unsigned int) const		{ return false; }
 
-	virtual const Formula& getFairFormula(int fairId) const;
-	virtual bool isStateFairness(int fairId) const;
-	bool isStateEventFairness(int fairId) const;
+	virtual const Formula& getFairFormula(unsigned int fairId) const;
+	virtual bool isStateFairness(unsigned int fairId) const;
+	bool isStateEventFairness(unsigned int fairId) const;
 
-	int insertFairnessFormula(const Formula& f, const set<int>& propIds, DagNode* fairDag);
+	unsigned int insertFairnessFormula(const Formula& f, const set<unsigned int>& propIds, DagNode* fairDag);
 
 protected:
 	struct Fairness    // empty base class
@@ -45,20 +45,20 @@ protected:
 
 	struct GroundFairness: public Fairness
 	{
-		GroundFairness(int fid, bool noEvent): formulaId(fid), noEvent(noEvent) {}
+		GroundFairness(unsigned int fid, bool noEvent): formulaId(fid), noEvent(noEvent) {}
 		virtual ~GroundFairness() {}
 
-		const int formulaId;
+		const unsigned int formulaId;
 		const bool noEvent;
 	};
 
-	virtual unique_ptr<GroundFairness> createFormulaFairness(int formulaId, const set<int>& propIds, DagNode* fairDag) const;
+	virtual unique_ptr<GroundFairness> createFormulaFairness(unsigned int formulaId, const set<unsigned int>& propIds, DagNode* fairDag) const;
 
 	vector<unique_ptr<Fairness>> fairTable;		// fairId |-> fairnessInfo
 
 private:
-	vector<int> formulaInfoMap;			// formulaId |-> fair id
-	indexed_set<Formula> fairFormulas;	// formulaId |-> fair formula
+	vector<unsigned int> formulaInfoMap;	// formulaId |-> fair id
+	indexed_set<Formula> fairFormulas;		// formulaId |-> fair formula
 
 	PropositionTable& propTable;
 };

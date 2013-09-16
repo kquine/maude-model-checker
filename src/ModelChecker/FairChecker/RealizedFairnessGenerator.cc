@@ -23,21 +23,27 @@
 namespace modelChecker {
 
 template <typename Formula>
-RealizedFairnessGenerator<Formula>::RealizedFairnessGenerator(const vector<int>& paramFairIds, ParamFairnessTable<Formula>& fairTable):
+RealizedFairnessGenerator<Formula>::RealizedFairnessGenerator(const vector<unsigned int>& paramFairIds, ParamFairnessTable<Formula>& fairTable):
 	paramFairIds(paramFairIds), fairTable(fairTable) {}
 
-template <typename Formula> void
-RealizedFairnessGenerator<Formula>::generateRealizedFairness(const ParamPropSet& pps, ParamFairSet& fs, indexed_set<int>& insIds)
+template <typename Formula> bool
+RealizedFairnessGenerator<Formula>::empty() const
 {
-	for (int i : paramFairIds)
+	return paramFairIds.empty();
+}
+
+template <typename Formula> void
+RealizedFairnessGenerator<Formula>::generateRealizedFairness(const ParamPropSet& pps, ParamFairSet& fs, indexed_set<unsigned int>& insIds)
+{
+	for (auto i : paramFairIds)
 	{
 		const ParamSubstitutionBuilder& builder = fairTable.getParamSubstBuilder(i);
-		vector<map<int,int>> rsubsts = builder.generateRealizedSubstitutions(pps);
+		vector<RealizedSubst> rsubsts = builder.generateRealizedSubstitutions(pps);
 
 		for (auto& rs : rsubsts)
 		{
-			int fi =  fairTable.insertFairnessInstance(i, rs);
-			this->setParamFairSet(fi, fs, fairTable.getFairFormula(fi), [&](Bdd f){ return this->satisfiesParamFormula(pps,rs,f); });
+			auto fi =  fairTable.insertFairnessInstance(i, rs);
+			this->setParamFairSet(fi, fs, fairTable.getFairFormula(fi), pps, rs);
 			insIds.insert(fi);
 		}
 	}
@@ -46,24 +52,29 @@ RealizedFairnessGenerator<Formula>::generateRealizedFairness(const ParamPropSet&
 template <>
 struct RealizedFairnessGeneratorTraits<Bdd>
 {
-	typedef ParamWeakFairSet	ParamFairSet;
-	void setParamFairSet(int fairId, ParamFairSet& fairSet, const Bdd& formula, function<bool(Bdd)> satisfiesFormula) const
+	using ParamFairSet = 	ParamWeakFairSet;
+	using RealizedSubst =	ParamSubstitutionBuilder::RealizedSubst;
+
+	void setParamFairSet(unsigned int fairId, ParamFairSet& fairSet, const Bdd& formula, const ParamPropSet& pps, const RealizedSubst& subst) const
 	{
-		if ( ! satisfiesFormula(formula) )
-			fairSet.setFalsified(fairId);
+		auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? (subst.find(propId) != subst.end()) : (pps.isTrue(propId));};
+
+		if ( !BddUtil::satisfiesFormula(formula, truth) )	fairSet.setFalsified(fairId);
 	}
 };
 
 template <>
 struct RealizedFairnessGeneratorTraits<pair<Bdd,Bdd>>
 {
-	typedef ParamStrongFairSet	ParamFairSet;
-	void setParamFairSet(int fairId, ParamFairSet& fairSet, const pair<Bdd,Bdd>& formula, function<bool(Bdd)> satisfiesFormula) const
+	using ParamFairSet = 	ParamStrongFairSet;
+	using RealizedSubst =	ParamSubstitutionBuilder::RealizedSubst;
+
+	void setParamFairSet(unsigned int fairId, ParamFairSet& fairSet, const pair<Bdd,Bdd>& formula, const ParamPropSet& pps, const RealizedSubst& subst) const
 	{
-		if ( ! satisfiesFormula(formula.first) )
-			fairSet.setSuppFalse(fairId);
-		if ( ! satisfiesFormula(formula.second) )
-			fairSet.setConsFalse(fairId);
+		auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? (subst.find(propId) != subst.end()) : (pps.isTrue(propId));};
+
+		if ( !BddUtil::satisfiesFormula(formula.first, truth) )		fairSet.setSuppFalse(fairId);
+		if ( !BddUtil::satisfiesFormula(formula.second, truth) )	fairSet.setConsFalse(fairId);
 	}
 };
 

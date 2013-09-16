@@ -27,7 +27,7 @@ namespace modelChecker {
 
 FormulaFairnessTable::FormulaFairnessTable(const GenBuchiAutomaton& aut): automaton(aut)
 {
-	for (int i = aut.getNrFairnessSets() - 1; i >= 0; --i)		// a set of all formula fairness ids
+	for (auto i = aut.getNrFairnessSets() - 1; i >= 0; --i)		// a set of all formula fairness ids
 		formulaFairnessIds.insert(i);
 }
 

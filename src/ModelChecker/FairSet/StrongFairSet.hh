@@ -18,8 +18,8 @@ public:
 	struct Goal;
 	struct Bad;
 
-	void setSuppFalse(int fairId);
-	void setConsFalse(int fairId);
+	void setSuppFalse(unsigned int fairId);
+	void setConsFalse(unsigned int fairId);
 
 	virtual void merge(const FairSet& f, const AbstractFairnessTable& table) override;
 	bool isSatisfied() const override;

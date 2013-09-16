@@ -19,8 +19,8 @@ namespace modelChecker {
 template <class T>
 class StateMap
 {
-	using IntMap =  unordered_map<int,T>;
-	using State =	pair<int,int>;
+	using IntMap =  unordered_map<unsigned int,T>;
+	using State =	pair<unsigned int,unsigned int>;
 
 public:
 	bool contains(const State& s) const;

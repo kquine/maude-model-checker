@@ -19,17 +19,17 @@ struct BaseSystemGraphTraits<StateSystemGraph>
 {
 	struct Transition
 	{
-		Transition(int nextState, const Rule* rule): nextState(nextState), rule(rule) {}
+		Transition(unsigned int nextState, const Rule* rule): nextState(nextState), rule(rule) {}
 		DagNode* makeDag(RewritingContext&, DagNode*, const ProofTermGenerator& ptg) const;
 
-		const int nextState;
+		const unsigned int nextState;
 		const Rule* rule;
 	};
 
 	struct ActiveState: public RewriteTransitionState
 	{
 		ActiveState(RewritingContext& parent, DagNode* stateDag): RewriteTransitionState(parent,stateDag) {}
-		set<int> nextStateSet;
+		set<unsigned int> nextStateSet;
 	};
 
 	struct State
@@ -51,7 +51,7 @@ public:
 	StateSystemGraph(RewritingContext& initial, PropChecker& spc, const ProofTermGenerator& ptg);
 	virtual ~StateSystemGraph() {}
 
-	bool satisfiesStateFormula(Bdd formula, int stateNr) const;
+	bool satisfiesStateFormula(Bdd formula, unsigned int stateNr) const;
 
 protected:
 	using Super = 		BaseSystemGraphNoEnabled<StateSystemGraph>;
@@ -62,7 +62,7 @@ protected:
 	/* implements */ virtual unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, State& s);
 	/* implements */ virtual unique_ptr<State> createState(DagNode* stateDag) const;
 
-	/* implements */ bool insertTransition(int nextState, State& n);
+	/* implements */ bool insertTransition(unsigned int nextState, State& n);
 	/* implements */ void closeTransition(const State& ) { /* Do nothing */ }
 
 private:

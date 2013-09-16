@@ -34,7 +34,7 @@
 
 namespace modelChecker {
 
-RealizedPropGenerator::RealizedPropGenerator(const vector<int>& paramPropIds, ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& parent):
+RealizedPropGenerator::RealizedPropGenerator(const vector<unsigned int>& paramPropIds, ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& parent):
 				parentContext(parent), pEval(pe), paramPropIds(paramPropIds), propTable(propTable)
 {
 	constructRules();
@@ -49,7 +49,7 @@ RealizedPropGenerator::getPropTable() const
 void
 RealizedPropGenerator::generateRealizedProps(DagNode* target, ParamPropSet& result)
 {
-	unique_ptr<RewritingContext> context(parentContext.makeSubcontext(pEval.getRealizedDag(target)));
+	const unique_ptr<RewritingContext> context(parentContext.makeSubcontext(pEval.getRealizedDag(target)));
 	SearchState sc(context.get(), 0, 0, 0);	// only for the top with extension (not respect frozen).
 
 	if (sc.findNextPosition())
@@ -57,12 +57,12 @@ RealizedPropGenerator::generateRealizedProps(DagNode* target, ParamPropSet& resu
 	parentContext.addInCount(*context);
 }
 
+//TODO: in this version, many redundant props are generated when considering spatial action patterns due to AC matching..
+// Using unifications is in general not allowed here, but we may consider it for simple spatial action patterns..
 void
 RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& context, ParamPropSet& result)
 {
-	//TODO: in this version, many redundant props are generated when considering spatial action patterns due to AC matching..
-	// Using unifications is in general not allowed here, but we may consider it for simple spatial action patterns..
-	//
+	cout << "Realized Props =[ ";
 	for(const unique_ptr<Rule>& r : genRules)
 	{
 		if (sc.findFirstSolution(r.get(), r->getExtLhsAutomaton()))
@@ -73,9 +73,12 @@ RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& contex
 				if (TermUtil::checkGround(res))	// it should NOT be a param prop
 				{
 					res->computeTrueSort(parentContext);
-					int pi = propTable.insertInstanceAndUpdate(res,parentContext);
+					auto pi = propTable.insertInstanceAndUpdate(res,parentContext);
 					if (pi != NONE)
+					{
 						result.setTrue(pi);
+						cout << propTable.index2DagNode(pi) << " ";
+					}
 				}
 				else
 					throw logic_error(StringStream() << "Derived term " << QUOTE(this) << " is non-ground and realized substitutions cannot be correctly generated.");
@@ -83,6 +86,7 @@ RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& contex
 			while (sc.findNextSolution());
 		}
 	}
+	cout << "]" << endl;
 }
 
 void

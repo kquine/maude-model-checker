@@ -49,11 +49,11 @@ NDFSModelChecker<Automaton>::trap(const State& s) const
 template <typename Automaton> bool
 NDFSModelChecker<Automaton>::checkVisit(const State& ns)
 {
-	if ( (size_t)ns.first <  intersectionStates.size() )
+	if ( (unsigned int)ns.first <  intersectionStates.size() )				// return true if ns.first = NONE
 		return intersectionStates[ns.first]->dfs1Seen.contains(ns.second);
 	else
 	{
-		while (ns.first >= 0 && (size_t)ns.first >=  intersectionStates.size())
+		while (ns.first >= 0 && (unsigned int)ns.first >=  intersectionStates.size())
 			intersectionStates.emplace_back(new StateSet);	// allocate state space
 	}
 	return false;
@@ -73,7 +73,7 @@ NDFSModelChecker<Automaton>::dfs1(const State& initial)
 		if (dfs1.top()->hasNext())
 		{
 			State ns = dfs1.top()->pick().target;
-			int sysIndex = dfs1.top()->pick().systemIndex;
+			unsigned int sysIndex = dfs1.top()->pick().systemIndex;
 			dfs1.top()->next();
 
 			if (checkVisit(ns))
@@ -131,10 +131,10 @@ NDFSModelChecker<Automaton>::dfs2(const State& initial)
 		if (dfs2.top()->hasNext())
 		{
 			State ns = dfs2.top()->pick().target;
-			int sysIndex = dfs2.top()->pick().systemIndex;
+			unsigned int sysIndex = dfs2.top()->pick().systemIndex;
 			dfs2.top()->next();
 
-			Assert( (size_t) ns.first < intersectionStates.size(), "visited system state for the first time on dfs2");
+			Assert( ns.first >= 0 && (unsigned int)ns.first < intersectionStates.size(), "visited system state for the first time on dfs2");
 			StateSet& sset = *intersectionStates[ns.first];
 			if ( sset.onDfs1Stack.contains(ns.second))	// found an accepted cycle
 			{

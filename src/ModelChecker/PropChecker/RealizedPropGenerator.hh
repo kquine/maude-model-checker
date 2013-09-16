@@ -17,7 +17,7 @@ namespace modelChecker {
 class RealizedPropGenerator
 {
 public:
-	RealizedPropGenerator(const vector<int>& paramPropIds, ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& parent);
+	RealizedPropGenerator(const vector<unsigned int>& paramPropIds, ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& parent);
 	virtual ~RealizedPropGenerator() {}
 
 	const ParamPropositionTable& getPropTable() const;
@@ -34,7 +34,7 @@ private:
     RewritingContext& parentContext;
     const PropEvaluator& pEval;
 
-	const vector<int> paramPropIds;			// the corresponding param prop ids
+	const vector<unsigned int> paramPropIds;			// the corresponding param prop ids
 	ParamPropositionTable& propTable;
 };
 

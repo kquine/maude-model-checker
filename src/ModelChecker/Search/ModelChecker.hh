@@ -15,7 +15,7 @@ namespace modelChecker {
 class ModelChecker
 {
 public:
-	using Edge =  pair<int,int>;
+	using Edge =  pair<unsigned int,int>;
 
 	ModelChecker()			{}
 	virtual ~ModelChecker()	{}

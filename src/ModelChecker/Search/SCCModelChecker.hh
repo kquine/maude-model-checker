@@ -32,10 +32,10 @@ protected:
 
 	struct SCC	//	scc = (root index, incoming fair set, scc acceptance fair set)
 	{
-		SCC(int root, unique_ptr<FairSet> incoming): root(root), incoming_fair(std::move(incoming)) {}
+		SCC(unsigned int root, unique_ptr<FairSet> incoming): root(root), incoming_fair(std::move(incoming)) {}
 
 		const unsigned int root;
-		unique_ptr<FairSet> incoming_fair;
+		const unique_ptr<FairSet> incoming_fair;
 		unique_ptr<FairSet> acc_fair;
 	};
 
@@ -64,9 +64,9 @@ protected:
 
 	virtual unique_ptr<SCC> findAcceptedSCC(const vector<State>& initials) = 0;
 
-	int max = 0;				// dfs index
+	unsigned int max = 0;				// dfs index
 	IndexMap H;
-	unique_ptr<Automaton> graph;
+	const unique_ptr<Automaton> graph;
 
 private:
 	class SCCBFSGraph;
@@ -82,7 +82,7 @@ template <typename Automaton>
 class SCCModelChecker<Automaton>::SCCBFSGraph: public BFSGraph<Automaton>
 {
 public:
-	SCCBFSGraph(SCCModelChecker<Automaton>& mc, const IndexMap& H, int root, const vector<State>& initials):
+	SCCBFSGraph(SCCModelChecker<Automaton>& mc, const IndexMap& H, unsigned int root, const vector<State>& initials):
 		BFSGraph<Automaton>(*mc.graph, initials), root(root), map(H), mc(mc) {}
 
 protected:
@@ -126,7 +126,7 @@ public:
 		SCCBFSGraph(mc,H,root,initial), goal(goal), initial{start} {}
 
 	bool inDomain(const State& s) const	{ return SCCBFSGraph::map.contains(s) && SCCBFSGraph::map.get(s) >= SCCBFSGraph::root; }
-	bool isTarget(const State& s) const	{ return false; }
+	bool isTarget(const State& ) const	{ return false; }
 	bool isTarget(const Transition& t)	{ return goal.empty() ? true : goal.update(*SCCBFSGraph::mc.graph->makeFairSet(t)); }
 
 private:

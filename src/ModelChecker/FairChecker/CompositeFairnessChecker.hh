@@ -24,7 +24,8 @@ public:
 
 	void addComponent(unique_ptr<FairnessChecker> checker);
 
-	unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps);
+	bool empty() const override;
+	unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
 
 private:
 	vector<unique_ptr<FairnessChecker>> fairCheckers;	// own the checkers!

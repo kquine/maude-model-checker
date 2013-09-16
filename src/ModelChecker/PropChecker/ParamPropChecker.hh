@@ -15,7 +15,8 @@ namespace modelChecker {
 class ParamPropChecker: public PropChecker, private RealizedPropGenerator
 {
 public:
-	ParamPropChecker(const vector<int>& propIds, ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context);
+	ParamPropChecker(const vector<unsigned int>& groundPropIds, const vector<unsigned int>& paramPropIds,
+			ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context);
 
 	unique_ptr<PropSet> computeCheckResult(DagNode* target) override;
 };

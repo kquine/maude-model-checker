@@ -20,8 +20,8 @@ public:
 
 	unique_ptr<FairSet> makeFairSet(const GenBuchiAutomaton::FairTransitionSet::const_iterator& index) const;
 
-	int nrFairness() const override			{ return formulaFairnessIds.size(); }
-	bool hasStrongFairness() const override	{ return false; }
+	unsigned int nrFairness() const override	{ return formulaFairnessIds.size(); }
+	bool hasStrongFairness() const override		{ return false; }
 
 private:
 	const GenBuchiAutomaton& automaton;

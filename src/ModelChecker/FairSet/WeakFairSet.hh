@@ -19,7 +19,7 @@ public:
 
 	virtual ~WeakFairSet() {}
 
-	void setFalsified(int fairId);
+	void setFalsified(unsigned int fairId);
 	virtual void merge(const FairSet& f, const AbstractFairnessTable& table) override;
 	void swapFalsified(NatSet& falsified);
 
@@ -51,9 +51,9 @@ protected:
 struct WeakFairSet::Bad: public FairSet::Bad
 {
 	virtual ~Bad() {}
-	bool isBad(const FairSet& f) const override	{ return false; }
+	bool isBad(const FairSet& ) const override	{ return false; }
 	bool empty() const override					{ return true; }
-	void merge(const FairSet::Bad& b) override	{ }
+	void merge(const FairSet::Bad& ) override	{ }
 };
 
 }

@@ -18,8 +18,15 @@
 
 namespace modelChecker {
 
-StrongFairnessChecker::StrongFairnessChecker(const vector<int>& strongFairIds, StrongFairnessTable& fTable):
+StrongFairnessChecker::StrongFairnessChecker(const vector<unsigned int>& strongFairIds, StrongFairnessTable& fTable):
 		strongFairIds(strongFairIds), fTable(fTable) {}
+
+bool
+StrongFairnessChecker::empty() const
+{
+	return strongFairIds.empty();
+}
+
 
 unique_ptr<FairSet>
 StrongFairnessChecker::computeAllFairness(const PropSet& trueProps)

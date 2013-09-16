@@ -15,13 +15,13 @@ namespace modelChecker {
 class EnabledPropTransferer
 {
 public:
-	EnabledPropTransferer(const vector<int>& enabledPropIds, const PropositionTable& propositions);
+	EnabledPropTransferer(const vector<unsigned int>& enabledPropIds, const PropositionTable& propositions);
 	virtual ~EnabledPropTransferer() {}
 
 	virtual void computeEnabledPropIDs(PropSet& truePropIds, const vector<unique_ptr<PropSet>>& trueEventPropIds) const;
 
 protected:
-	const vector<int> enabledPropIds;
+	const vector<unsigned int> enabledPropIds;
 	const PropositionTable& propositions;
 };
 
