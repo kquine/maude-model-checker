@@ -23,15 +23,12 @@ ParamSubstitutionBuilder::ParamSubstitutionBuilder(DagNode* fairnessDag, const s
 		ParamVarInfo(fairnessDag), propTable(propTable),
 		fairDag(fairnessDag)	// TODO;
 {
-	for (auto pid : propIds)
-	{
-		if (propTable.isParamProp(pid))
-		{
-			varMaps[pid] = initPropVarInfo(pid, propTable);
-			paramPids.push_back(pid);
-		}
-	}
-	sort(paramPids.begin(), paramPids.end(), [&](unsigned int a, unsigned int b) { return varMaps.at(a).size() > varMaps.at(b).size(); });	// sorted by a number of vars
+	for (auto p : propIds)
+		if (propTable.isParamProp(p))
+			pidInfo.emplace_back(new PropVarInfo(p, propTable, *this));
+
+	sort(pidInfo.begin(), pidInfo.end(),
+			[](const unique_ptr<PropVarInfo>& a, decltype(a) b) { return a->varMap.size() > b->varMap.size(); });	// sorted by a number of vars
 }
 
 
@@ -42,20 +39,20 @@ ParamSubstitutionBuilder::trueParamProps(const ParamPropSet& pps, const ParamSub
 	dumpParamSubst(subst);
 	cout << "true  = ";
 	NatSet result;
-	for (auto propId : paramPids)
+	for (auto& pi : pidInfo)
 	{
-		const unique_ptr<ParamSubstitution> propSubst(new ParamSubstitution(subst, varMaps.at(propId)));
+		const unique_ptr<ParamSubstitution> propSubst(new ParamSubstitution(subst, pi->varMap));
 		if (propSubst->isTotal())
 		{
-			auto& psubsts = propTable.getParamSubsts(propId);	// propTable maintains a "unique" pointer for a ParamSubstitution
+			auto& psubsts = propTable.getParamSubsts(pi->propId);	// propTable maintains a "unique" pointer for a ParamSubstitution
 			auto i = psubsts.find(propSubst);
 			if (i != psubsts.end())
 			{
-				auto& tsubst = pps.getTrueParamSubst(propId);	// ParamPropSet has a set of "true" ParamSubstitution refs (i.e., pointers)
-				if (tsubst.find(i->get()) != tsubst.end())
+				auto& tsubst = pps.getTrueParamSubst(pi->propId);	// ParamPropSet has a set of "true" ParamSubstitution refs (i.e., pointers)
+				if (tsubst.find(i->get()) != tsubst.end())			// TODO: ParamPropSet should be relatively small!
 				{
-					dumpPropSubst(propId, **i);
-					result.insert(propId);
+					dumpPropSubst(pi->propId, **i);
+					result.insert(pi->propId);
 				}
 			}
 		}
@@ -69,45 +66,35 @@ ParamSubstitutionBuilder::generateParamSubstitutions(const ParamPropSet& pps) co
 {
 	set<ParamSubstitution> result;
 	ParamSubstitution t(ParamVarInfo::getNrVariables());
-	computeParamSubstitutions(paramPids.cbegin(), t, pps, result);
+	computeParamSubstitutions(pidInfo.cbegin(), t, pps, result);
 
 	cout << "Generating for " << fairDag << endl;
 	return result;
 }
 
 void
-ParamSubstitutionBuilder::computeParamSubstitutions(vector<unsigned int>::const_iterator i, ParamSubstitution& t, const ParamPropSet& pps, set<ParamSubstitution>& result) const
+ParamSubstitutionBuilder::computeParamSubstitutions(vector<unique_ptr<PropVarInfo>>::const_iterator i, ParamSubstitution& t, const ParamPropSet& pps, set<ParamSubstitution>& result) const
 {
-	if (i != paramPids.cend())
+	if (i != pidInfo.cend())
 	{
-		auto vm = varMaps.at(*i);
-		const ParamSubstitution orig(t, vm);
-		for (auto target : pps.getTrueParamSubst(*i))
+		const ParamSubstitution orig(t, (*i)->varMap);
+		for (auto target : pps.getTrueParamSubst((*i)->propId))
 		{
 			if ( target->isConsistent(orig) )
 			{
-				t.setSubst(vm, *target);
+				t.setSubst((*i)->varMap, *target);
 				computeParamSubstitutions(i + 1, t, pps, result);
 
 				if (orig.isTotal()) break; 	// no need to compute more if old is total (i.e., no 'bot')
 			}
 		}
-		t.setSubst(vm, orig);	// the "bottom" case
+		t.setSubst((*i)->varMap, orig);	// the "bottom" case
 		computeParamSubstitutions(i + 1, t, pps, result);
 	}
 	else
 	{
 		result.insert(t);	//  collect the result (with copy)
 	}
-}
-
-vector<unsigned int>
-ParamSubstitutionBuilder::initPropVarInfo(unsigned int propId, const ParamPropositionTable& propTable) const
-{
-	vector<unsigned int> vm(propTable.getParamNrVars(propId));
-	for (unsigned int i = 0; i < vm.size(); ++i)
-		vm[i] = this->variable2Index(propTable.getParamVariable(propId, i));
-	return vm;
 }
 
 void
@@ -134,6 +121,13 @@ ParamSubstitutionBuilder::dumpPropSubst(unsigned int propId, const ParamSubstitu
 	for (unsigned int i = 0; i < s.getSubst().size(); ++i)
 		cout << "[" << static_cast<Term*>(propTable.getParamVariable(propId,i)) << " = " << s.getSubst()[i] << "] ";
 	cout << "} ";
+}
+
+ParamSubstitutionBuilder::PropVarInfo::PropVarInfo(unsigned int propId, const ParamPropositionTable& propTable, const ParamVarInfo& varInfo): propId(propId)
+{
+	varMap.resize(propTable.getParamNrVars(propId));
+	for (unsigned int i = 0; i < varMap.size(); ++i)
+		varMap[i] = varInfo.variable2Index(propTable.getParamVariable(propId, i));
 }
 
 

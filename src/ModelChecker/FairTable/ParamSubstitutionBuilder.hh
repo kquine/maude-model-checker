@@ -24,16 +24,19 @@ public:
 	set<ParamSubstitution> generateParamSubstitutions(const ParamPropSet& pps) const;		// returns a set of param substitutions (NONE for bot)
 
 private:
-	void computeParamSubstitutions(vector<unsigned int>::const_iterator pos, ParamSubstitution& t, const ParamPropSet& pps, set<ParamSubstitution>& result) const;
+	struct PropVarInfo
+	{
+		PropVarInfo(unsigned int propId, const ParamPropositionTable& propTable, const ParamVarInfo& varInfo);
+		const unsigned int propId;
+		vector<unsigned int> varMap;	// local var id -> global var id
+	};
+
+	void computeParamSubstitutions(vector<unique_ptr<PropVarInfo>>::const_iterator pos, ParamSubstitution& t, const ParamPropSet& pps, set<ParamSubstitution>& result) const;
 
 	void dumpParamSubst(const ParamSubstitution& s) const;
 	void dumpPropSubst(unsigned int propId, const ParamSubstitution& s) const;
 
-	vector<unsigned int> initPropVarInfo(unsigned int propId, const ParamPropositionTable& propTable) const;
-
-	vector<unsigned int> paramPids;						// an "ordered" list of "param" prop ids
-	map<unsigned int,vector<unsigned int>> varMaps;		// param propId |-> (local var id -> global var id)
-
+	vector<unique_ptr<PropVarInfo>> pidInfo;		// an "ordered" list of "param" prop ids
 	const ParamPropositionTable& propTable;
 
 	DagNode* fairDag;	//FIXME: only for test purpose
