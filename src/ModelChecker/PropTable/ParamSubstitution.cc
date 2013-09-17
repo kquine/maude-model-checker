@@ -70,5 +70,11 @@ ParamSubstitution::setSubst(const vector<unsigned int>& varMap, const ParamSubst
 		subst[varMap[j]] = src.subst[j];
 }
 
+bool
+ParamSubstitution::operator<(const ParamSubstitution& ps) const
+{
+	return std::lexicographical_compare(subst.begin(), subst.end(), ps.subst.begin(), ps.subst.end());	// NOTE: the bot (nullptr) is less than any other
+}
+
 
 } /* namespace modelChecker */

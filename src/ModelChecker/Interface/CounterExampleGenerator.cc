@@ -39,9 +39,9 @@ CounterExampleGenerator::makeCounterexample(const DagSystemGraph& dg, const list
 #ifdef TDEBUG
 	cout << "counter example: " << endl;
 	cout << "  path: ";
-	for (auto i : path) cout << i.first << "=(" << i.second << ")=> ";
+	for (auto& i : path) cout << i.first << "=(" << i.second << ")=> ";
 	cout << "\n  cycle: ";
-	for (auto j : cycle) cout << j.first << "=(" << j.second << ")=> ";
+	for (auto& j : cycle) cout << j.first << "=(" << j.second << ")=> ";
 	cout << endl;
 #endif
 

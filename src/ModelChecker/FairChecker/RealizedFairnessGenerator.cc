@@ -35,30 +35,32 @@ RealizedFairnessGenerator<Formula>::empty() const
 template <typename Formula> void
 RealizedFairnessGenerator<Formula>::generateRealizedFairness(const ParamPropSet& pps, ParamFairSet& fs, indexed_set<unsigned int>& insIds)
 {
+	cout << "---------------" << endl;
 	for (auto i : paramFairIds)
 	{
 		const ParamSubstitutionBuilder& builder = fairTable.getParamSubstBuilder(i);
-		vector<RealizedSubst> rsubsts = builder.generateRealizedSubstitutions(pps);
+		set<ParamSubstitution> rsubsts = builder.generateParamSubstitutions(pps);
 
 		for (auto& rs : rsubsts)
 		{
 			auto fi =  fairTable.insertFairnessInstance(i, rs);
-			this->setParamFairSet(fi, fs, fairTable.getFairFormula(fi), pps, rs);
+			auto tpps = builder.trueParamProps(pps,rs);
+			auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? tpps.contains(propId) : pps.isTrue(propId);};
+			this->setParamFairSet(fi, fs, fairTable.getFairFormula(fi), truth);
 			insIds.insert(fi);
 		}
 	}
+	cout << endl;
 }
+
 
 template <>
 struct RealizedFairnessGeneratorTraits<Bdd>
 {
 	using ParamFairSet = 	ParamWeakFairSet;
-	using RealizedSubst =	ParamSubstitutionBuilder::RealizedSubst;
 
-	void setParamFairSet(unsigned int fairId, ParamFairSet& fairSet, const Bdd& formula, const ParamPropSet& pps, const RealizedSubst& subst) const
+	void setParamFairSet(unsigned int fairId, ParamFairSet& fairSet, const Bdd& formula, const function<bool(int)>& truth) const
 	{
-		auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? (subst.find(propId) != subst.end()) : (pps.isTrue(propId));};
-
 		if ( !BddUtil::satisfiesFormula(formula, truth) )	fairSet.setFalsified(fairId);
 	}
 };
@@ -67,12 +69,9 @@ template <>
 struct RealizedFairnessGeneratorTraits<pair<Bdd,Bdd>>
 {
 	using ParamFairSet = 	ParamStrongFairSet;
-	using RealizedSubst =	ParamSubstitutionBuilder::RealizedSubst;
 
-	void setParamFairSet(unsigned int fairId, ParamFairSet& fairSet, const pair<Bdd,Bdd>& formula, const ParamPropSet& pps, const RealizedSubst& subst) const
+	void setParamFairSet(unsigned int fairId, ParamFairSet& fairSet, const pair<Bdd,Bdd>& formula, const function<bool(int)>& truth) const
 	{
-		auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? (subst.find(propId) != subst.end()) : (pps.isTrue(propId));};
-
 		if ( !BddUtil::satisfiesFormula(formula.first, truth) )		fairSet.setSuppFalse(fairId);
 		if ( !BddUtil::satisfiesFormula(formula.second, truth) )	fairSet.setConsFalse(fairId);
 	}

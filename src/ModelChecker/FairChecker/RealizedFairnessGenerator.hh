@@ -18,7 +18,6 @@ template <typename Formula>
 class RealizedFairnessGenerator: private RealizedFairnessGeneratorTraits<Formula>
 {
 	using ParamFairSet = 	typename RealizedFairnessGeneratorTraits<Formula>::ParamFairSet;
-	using RealizedSubst =	ParamSubstitutionBuilder::RealizedSubst;
 public:
 	RealizedFairnessGenerator(const vector<unsigned int>& paramFairIds, ParamFairnessTable<Formula>& fairTable);
 	virtual ~RealizedFairnessGenerator() {}
@@ -30,6 +29,7 @@ private:
 	const vector<unsigned int> paramFairIds;
 	ParamFairnessTable<Formula>& fairTable;
 };
+
 
 } /* namespace modelChecker */
 

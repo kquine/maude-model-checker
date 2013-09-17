@@ -49,7 +49,7 @@ ParamFairnessTable<Formula>::getParamSubstBuilder(unsigned int fairId) const
 }
 
 template <typename Formula> unsigned int
-ParamFairnessTable<Formula>::insertFairnessInstance(unsigned int paramFairId, const RealizedSubst& propSubst)
+ParamFairnessTable<Formula>::insertFairnessInstance(unsigned int paramFairId, const ParamSubstitution& propSubst)
 {
 	ParamFairness& pfi = static_cast<ParamFairness&>(*Super::fairTable[paramFairId]);
 	auto oldSize = pfi.substs.size();
@@ -90,7 +90,7 @@ ParamFairnessTable<Formula>::updateInstanceBaseMap(const ParamFairness& /* pfi *
 }
 
 template <typename Formula> bool
-ParamFairnessTable<Formula>::subsumed(const RealizedSubst& s1, const RealizedSubst& s2) const
+ParamFairnessTable<Formula>::subsumed(const vector<const ParamSubstitution*>& s1, const vector<const ParamSubstitution*>& s2) const
 {
 	//TODO:
 	return false;

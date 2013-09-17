@@ -17,7 +17,10 @@ namespace modelChecker {
 class ParamPropositionTable: public PropositionTable
 {
 public:
-	using ParamPropMatch = map<unsigned int,set<unsigned int>>;
+	struct ptr_compare
+	{
+		bool operator()(const unique_ptr<ParamSubstitution>& a, decltype(a) b) const { return *a < *b; }
+	};
 
 	explicit ParamPropositionTable(const PropInterpreter& pi);
 
@@ -27,8 +30,8 @@ public:
 	unsigned int getParamNrVars(unsigned int propId) const;
 	Term* getParamVariable(unsigned int propId, unsigned int varId) const;
 
-	const ParamSubstitution& getParamSubst(unsigned int propId, unsigned int substId) const;
-	const ParamPropMatch* getParamMatches(unsigned int propId) const;
+	const set<unique_ptr<ParamSubstitution>,ptr_compare>& getParamSubsts(unsigned int propId) const;
+	const map<unsigned int,set<const ParamSubstitution*>>* getParamMatches(unsigned int propId) const;
 
 	int insertInstanceAndUpdate(DagNode* propDag, RewritingContext& parentContext);
 
@@ -38,13 +41,13 @@ private:
 		explicit ParamInfo(Term* t): pattern(new Pattern(t,false)) {}
 
 		const unique_ptr<Pattern> pattern;
-		vector<unique_ptr<ParamSubstitution> > substitutions;
+		set<unique_ptr<ParamSubstitution>,ptr_compare> substitutions;
 	};
 
 	struct InstancePropInfo: public PropInfo
 	{
 		InstancePropInfo(const PropInfo& opi): PropInfo(opi) {}
-		ParamPropMatch matchingPropNSubstIds;
+		map<unsigned int,set<const ParamSubstitution*>> matchingPropNSubstRefs;
 	};
 
 	struct ParamPropInfo: public PropInfo
@@ -54,7 +57,7 @@ private:
 	};
 
 	void updatePropInfo(unsigned int propId) override;
-	void computeMatchingProps(DagNode* propDag, RewritingContext& parentContext, ParamPropMatch& match);
+	map<unsigned int,set<const ParamSubstitution*>> computeMatchingProps(DagNode* propDag, RewritingContext& parentContext);
 
 	const ParamPropInfo* getParamPropInfo(unsigned int propId) const;
 	const InstancePropInfo* getInstancePropInfo(unsigned int propId) const;

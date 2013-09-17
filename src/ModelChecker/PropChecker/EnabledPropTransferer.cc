@@ -27,7 +27,7 @@ EnabledPropTransferer::computeEnabledPropIDs(PropSet& truePropIds, const vector<
 {
 	for (auto i: enabledPropIds)
 	{
-		const auto propId = propositions.getEnabledEventId(i);
+		auto propId = propositions.getEnabledEventId(i);
 		for (const unique_ptr<PropSet>& j  : trueEventPropIds)
 		{
 			if (j->isTrue(propId))

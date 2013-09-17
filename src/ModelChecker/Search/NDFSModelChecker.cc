@@ -39,7 +39,7 @@ NDFSModelChecker<Automaton>::trap(const State& s) const
 	const int propertyIndex = s.second;
 	if (prod->getPropertyAutomaton().isAccepting(propertyIndex))
 	{
-		auto cm = prod->getPropertyAutomaton().getTransitions(propertyIndex);
+		auto& cm = prod->getPropertyAutomaton().getTransitions(propertyIndex);
 		if (cm.size() == 1 && cm.begin()->first == propertyIndex && cm.begin()->second == bdd_true())
 			return true;
 	}

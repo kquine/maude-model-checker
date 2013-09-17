@@ -40,11 +40,9 @@ FairStateSystemGraph::makeFairSet(unsigned int stateNr, unsigned int) const
 unique_ptr<PropSet>
 FairStateSystemGraph::updateStateLabel(DagNode* stateDag, PreState& s)
 {
-	cout << "----- " << stateDag << endl;
 	unique_ptr<PropSet> truePropIds = Super::updateStateLabel(stateDag,s);
 	static_cast<State&>(s).fs = fairC.computeAllFairness(*truePropIds);		// compute all state fairness conditions
 	s.label.intersect(formulaPropIds);										// keep only state formula props
-	cout << "----- END\n" << endl;
 	return truePropIds;
 }
 

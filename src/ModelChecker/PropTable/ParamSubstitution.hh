@@ -26,6 +26,8 @@ public:
 	void setSubst(const ParamSubstitution& src, const vector<unsigned int>& varMap);
 	void setSubst(const vector<unsigned int>& varMap, const ParamSubstitution& src);
 
+	bool operator<(const ParamSubstitution& ps) const;
+
 private:
 	vector<DagNode*> subst;
 };

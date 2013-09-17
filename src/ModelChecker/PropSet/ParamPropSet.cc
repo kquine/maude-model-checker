@@ -18,15 +18,21 @@
 
 namespace modelChecker {
 
-const set<unsigned int> ParamPropSet::emptySet;
+const set<const ParamSubstitution*> ParamPropSet::emptySet;
+
+bool
+ParamPropSet::isParamProp(unsigned int propId) const
+{
+	return propTable.isParamProp(propId);
+}
 
 void
 ParamPropSet::setTrue(unsigned int propId)
 {
 	PropSet::setTrue(propId);
-	if (const ParamMatchMap* pmm = propTable.getParamMatches(propId))
+	if (auto pmm = propTable.getParamMatches(propId))
 	{
-		for (const auto& j : *pmm)
+		for (auto& j : *pmm)
 			setTrueParamSubst(j.first, j.second);
 	}
 }
@@ -37,23 +43,22 @@ ParamPropSet::setTrue(const PropSet& ps)
 	PropSet::setTrue(ps);
 	if (const ParamPropSet* pps = dynamic_cast<const ParamPropSet*>(&ps))
 	{
-		for (const auto& j : pps->trueParamSubstIds)
+		for (const auto& j : pps->trueParamSubstRefs)
 			setTrueParamSubst(j.first, j.second);
 	}
 }
 
 void
-ParamPropSet::setTrueParamSubst(unsigned int propId, const set<unsigned int>& substIds)
+ParamPropSet::setTrueParamSubst(unsigned int propId, const set<const ParamSubstitution*>& substIds)
 {
-	for (auto i : substIds)
-		trueParamSubstIds[propId].insert(i);
+	trueParamSubstRefs[propId].insert(substIds.begin(), substIds.end());
 }
 
-const set<unsigned int>&
+const set<const ParamSubstitution*>&
 ParamPropSet::getTrueParamSubst(unsigned int propId) const
 {
-	auto it = trueParamSubstIds.find(propId);
-	return it != trueParamSubstIds.end() ? it->second : emptySet;
+	auto it = trueParamSubstRefs.find(propId);
+	return it != trueParamSubstRefs.end() ? it->second : emptySet;
 }
 
 void
@@ -61,7 +66,7 @@ ParamPropSet::dump(ostream& s)
 {
 	PropSet::dump(s);
 	s << ", ";
-	for (const auto& j : trueParamSubstIds)
+	for (const auto& j : trueParamSubstRefs)
 	{
 		s << "(" << j.first << " |->";
 		for (auto k : j.second)
