@@ -22,9 +22,9 @@ public:
 	unique_ptr<AbstractFairnessTable> interpretFairnessSet(DagNode* fairSetDag) const;
 
 private:
-	using FairCond = tuple<set<unsigned int>,bdd,bdd,DagNode*>;
+	using FairCond = tuple<vector<unsigned int>,bdd,bdd,DagNode*>;
 
-	vector<FairCond> parseFairnessSet(DagNode* fairSetDag) const;
+	deque<FairCond> parseFairnessSet(DagNode* fairSetDag) const;
 	FairCond parseFairnessDag(DagNode* fairnessDag) const;
 
 	const FormulaBuilder& fBuilder;

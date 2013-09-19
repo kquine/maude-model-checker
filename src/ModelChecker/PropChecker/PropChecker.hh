@@ -18,7 +18,7 @@ class PropChecker
 {
 public:
 	PropChecker(const vector<unsigned int>& propIds, const PropositionTable& propositions, const PropEvaluator& pe, RewritingContext& context);
-	virtual ~PropChecker() {}
+	virtual ~PropChecker() = default;
 
 	unsigned int nrProps() const;
 	virtual unique_ptr<PropSet> computeCheckResult(DagNode* target);

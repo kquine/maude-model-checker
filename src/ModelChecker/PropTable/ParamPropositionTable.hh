@@ -17,10 +17,7 @@ namespace modelChecker {
 class ParamPropositionTable: public PropositionTable
 {
 public:
-	struct ptr_compare
-	{
-		bool operator()(const unique_ptr<ParamSubstitution>& a, decltype(a) b) const { return *a < *b; }
-	};
+	using MatchingInfo = pair<unsigned int,vector<const ParamSubstitution*>>;
 
 	explicit ParamPropositionTable(const PropInterpreter& pi);
 
@@ -30,12 +27,16 @@ public:
 	unsigned int getParamNrVars(unsigned int propId) const;
 	Term* getParamVariable(unsigned int propId, unsigned int varId) const;
 
-	const set<unique_ptr<ParamSubstitution>,ptr_compare>& getParamSubsts(unsigned int propId) const;
-	const map<unsigned int,set<const ParamSubstitution*>>* getParamMatches(unsigned int propId) const;
+	const vector<MatchingInfo>* getParamMatches(unsigned int propId) const;
 
 	int insertInstanceAndUpdate(DagNode* propDag, RewritingContext& parentContext);
 
 private:
+	struct ptr_compare
+	{
+		bool operator()(const unique_ptr<ParamSubstitution>& a, decltype(a) b) const { return *a < *b; }
+	};
+
 	struct ParamInfo
 	{
 		explicit ParamInfo(Term* t): pattern(new Pattern(t,false)) {}
@@ -47,7 +48,7 @@ private:
 	struct InstancePropInfo: public PropInfo
 	{
 		InstancePropInfo(const PropInfo& opi): PropInfo(opi) {}
-		map<unsigned int,set<const ParamSubstitution*>> matchingPropNSubstRefs;
+		vector<MatchingInfo> matchingPropNSubstRefs;
 	};
 
 	struct ParamPropInfo: public PropInfo
@@ -58,6 +59,7 @@ private:
 
 	void updatePropInfo(unsigned int propId) override;
 	map<unsigned int,set<const ParamSubstitution*>> computeMatchingProps(DagNode* propDag, RewritingContext& parentContext);
+	vector<ParamPropositionTable::MatchingInfo> compact(const map<unsigned int,set<const ParamSubstitution*>>& match) const;
 
 	const ParamPropInfo* getParamPropInfo(unsigned int propId) const;
 	const InstancePropInfo* getInstancePropInfo(unsigned int propId) const;
@@ -65,6 +67,7 @@ private:
 	vector<unique_ptr<ParamInfo>> paramInfoTable;
 	map<const Symbol*,vector<unsigned int> > paramPropSymbolMap;		// top symbol |-> a set of the corresponding param prop ids
 };
+
 
 inline const ParamPropositionTable::ParamPropInfo*
 ParamPropositionTable::getParamPropInfo(unsigned int propId) const

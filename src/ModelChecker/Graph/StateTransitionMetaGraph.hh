@@ -29,7 +29,7 @@ public:
 	StateTransitionMetaGraph(const StateTransitionMetaGraph&) = delete;
 	StateTransitionMetaGraph& operator=(const StateTransitionMetaGraph&) = delete;
 
-	virtual ~StateTransitionMetaGraph() {}
+	virtual ~StateTransitionMetaGraph() = default;
 
 	int getNrStates() const;
 	int getNrTransitions(int stateNr) const;

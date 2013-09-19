@@ -19,13 +19,13 @@ class FairProductAutomaton: public ProductAutomaton<SA,PA>
 public:
 	using Transition = typename ProductAutomaton<SA,PA>::Transition;
 
-	FairProductAutomaton(unique_ptr<SA> system, unique_ptr<PA> property, unique_ptr<AbstractFairnessTable> systemFairTable);
+	FairProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property, unique_ptr<AbstractFairnessTable>&& systemFairTable);
 
 	AbstractFairnessTable& getFairnessTable() const;
 	unique_ptr<FairSet> makeFairSet(const Transition& t);
 
 private:
-	CompositeFairnessTable* makeInitFairTable(unique_ptr<AbstractFairnessTable> systemFairTable) const;
+	CompositeFairnessTable* makeInitFairTable(unique_ptr<AbstractFairnessTable>&& systemFairTable) const;
 
 	const unique_ptr<CompositeFairnessTable> fairTable;		// (system + formula) fairness table
 	const FormulaFairnessTable* formulaRef;					// a reference to the formula fairness table

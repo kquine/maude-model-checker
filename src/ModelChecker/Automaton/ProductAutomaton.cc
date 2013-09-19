@@ -27,7 +27,7 @@
 namespace modelChecker {
 
 template <typename SA, typename PA>
-ProductAutomaton<SA,PA>::ProductAutomaton(unique_ptr<SA> system, unique_ptr<PA> property):
+ProductAutomaton<SA,PA>::ProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property):
 	systemAut(move(system)), propertyAut(move(property))
 {
 	for(auto i : propertyAut->getInitialStates())

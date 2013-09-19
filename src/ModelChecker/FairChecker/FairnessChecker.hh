@@ -18,7 +18,7 @@ namespace modelChecker {
 class FairnessChecker
 {
 public:
-	virtual ~FairnessChecker() {}
+	virtual ~FairnessChecker() = default;
 
 	virtual bool empty() const = 0;
 	virtual unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) = 0;

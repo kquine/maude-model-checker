@@ -20,7 +20,6 @@ class BaseSystemGraphNoEnabled: public BaseSystemGraph<T>
 	using Transition	= typename BaseSystemGraphTraits<T>::Transition;
 public:
 	BaseSystemGraphNoEnabled(RewritingContext& initial, const ProofTermGenerator& ptg);
-	virtual ~BaseSystemGraphNoEnabled() {}
 
 private:
 	/* implements */ unsigned int insertState(DagNode* stateDag);

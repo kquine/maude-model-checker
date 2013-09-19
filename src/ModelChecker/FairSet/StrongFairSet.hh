@@ -7,16 +7,20 @@
 
 #ifndef STRONGFAIRSET_HH_
 #define STRONGFAIRSET_HH_
-
+#include "natSet.hh"
 #include "FairSet.hh"
 
 namespace modelChecker {
 
-class StrongFairSet: public modelChecker::FairSet
+class StrongFairSet: public FairSet
 {
 public:
 	struct Goal;
 	struct Bad;
+
+	StrongFairSet() = default;
+	StrongFairSet(const StrongFairSet& ) = default;
+	StrongFairSet(StrongFairSet&& other) noexcept;
 
 	void setSuppFalse(unsigned int fairId);
 	void setConsFalse(unsigned int fairId);
@@ -27,7 +31,7 @@ public:
 
 	virtual unique_ptr<FairSet> clone() const override;
 	unique_ptr<FairSet::Goal> makeFairGoal() const override;
-	unique_ptr<FairSet::Bad> makeBadGoal() const override;
+	virtual unique_ptr<FairSet::Bad> makeBadGoal() const override;
 
 	void dump(ostream& o) const override;
 
@@ -41,7 +45,6 @@ class StrongFairSet::Goal: public FairSet::Goal
 {
 public:
 	Goal(const StrongFairSet& fs);
-	virtual ~Goal() {}
 	bool empty() const override;
 	bool update(const FairSet& f) override;
 	void dump(ostream& o) const override;
@@ -53,11 +56,11 @@ struct StrongFairSet::Bad: public FairSet::Bad
 {
 public:
 	Bad(const StrongFairSet& fs);
-	virtual ~Bad() {}
-	bool isBad(const FairSet& f) const override;
+	virtual bool isBad(const FairSet& f, const AbstractFairnessTable& table) const override;
 	bool empty() const override;
 	void merge(const FairSet::Bad& b) override;
-private:
+	void dump(ostream& o) const override;
+protected:
 	NatSet badFairs;
 };
 

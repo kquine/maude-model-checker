@@ -60,13 +60,14 @@ FairnessCheckerFactory::createGroundChecker(bool stateOnly, Table& table)
 template <typename Table> unique_ptr<FairnessChecker>
 FairnessCheckerFactory::createParamChecker(bool stateOnly, Table& table)
 {
-	pair<vector<unsigned int>,vector<unsigned int>> propIds;	// (ground, param)
-	for (auto i : computeTagetIds(stateOnly,table)) (table.isParamFairness(i) ? propIds.second : propIds.first).push_back(i);
+	vector<unsigned int> targetIds = computeTagetIds(stateOnly,table);
+	vector<unsigned int> paramIds;
+	copy_if(targetIds.begin(), targetIds.end(), back_inserter(paramIds), [&] (unsigned int i) { return table.isParamFairness(i); });
 
-	if (propIds.second.empty())
-		return unique_ptr<FairnessChecker>(new typename Traits<Table>::GroundChecker(propIds.first,table));
+	if (paramIds.empty())
+		return unique_ptr<FairnessChecker>(new typename Traits<Table>::GroundChecker(targetIds,table));
 	else
-		return unique_ptr<FairnessChecker>(new typename Traits<Table>::Checker(propIds.first, propIds.second, table));
+		return unique_ptr<FairnessChecker>(new typename Traits<Table>::Checker(targetIds, paramIds, table));
 }
 
 template <typename Table> vector<unsigned int>

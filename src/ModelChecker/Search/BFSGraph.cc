@@ -19,7 +19,7 @@ BFSGraph<Automaton>::doBFS(list<Edge>& path)
 {
 	list<pair<unsigned int,int> > temp_path;
 
-	for(const State& i : initials)
+	for(auto& i : initials)
 	{
 		if (isTarget(i))	// if initial state is a target state
 			return i;
@@ -37,7 +37,7 @@ BFSGraph<Automaton>::doBFS(list<Edge>& path)
 		State s = toVisit.front();
 		toVisit.pop();
 
-		const unique_ptr<TransitionIterator> ts(graph.makeTransitionIterator(s));
+		const auto& ts = graph.makeTransitionIterator(s);
 		while (ts->hasNext())
 		{
 			Transition t = ts->pick();
@@ -50,7 +50,7 @@ BFSGraph<Automaton>::doBFS(list<Edge>& path)
 					temp_path.push_front(make_pair(s.first, t.systemIndex));
 					for(;;)
 					{
-						const Step &c = parent.get(s);		// always find such c in parent since we use queue.
+						auto& c = parent.get(s);		// always find such c in parent since we use queue.
 						if (c.systemIndex == NONE)	// if initial states
 							break;
 						temp_path.push_front(make_pair(c.parent.first, c.systemIndex));

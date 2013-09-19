@@ -30,7 +30,7 @@ WeakFairnessChecker::empty() const
 unique_ptr<FairSet>
 WeakFairnessChecker::computeAllFairness(const PropSet& trueProps)
 {
-	WeakFairSet* result = new WeakFairSet;
+	auto result = new WeakFairSet;
 	for (auto i = weakFairIds.crbegin(); i != weakFairIds.crend(); ++i)
 	{
 		if ( ! FairnessChecker::satisfiesFairFormula(trueProps, fTable.getFairFormula(*i)))

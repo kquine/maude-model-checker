@@ -20,28 +20,28 @@ CompositeFairnessTable::hasStrongFairness() const
 	return any_of(fairTables.begin(), fairTables.end(), [] (const unique_ptr<AbstractFairnessTable>& i) { return i->hasStrongFairness(); });
 }
 
-unsigned int
+CompositeFairnessTable::index_type
 CompositeFairnessTable::nrFairness() const
 {
-	unsigned int total = 0;
+	index_type total = 0;
 	for (auto& i : fairTables) total += i->nrFairness();
 	return total;
 }
 
-unsigned int
+CompositeFairnessTable::index_type
 CompositeFairnessTable::nrComponents() const
 {
 	return fairTables.size();
 }
 
 void
-CompositeFairnessTable::addComponent(unique_ptr<AbstractFairnessTable> table)
+CompositeFairnessTable::addComponent(unique_ptr<AbstractFairnessTable>&& table)
 {
 	fairTables.push_back(move(table));
 }
 
 AbstractFairnessTable&
-CompositeFairnessTable::getComponent(unsigned int i) const
+CompositeFairnessTable::getComponent(index_type i) const
 {
 	return *fairTables[i];
 }

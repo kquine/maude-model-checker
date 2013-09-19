@@ -76,5 +76,17 @@ ParamSubstitution::operator<(const ParamSubstitution& ps) const
 	return std::lexicographical_compare(subst.begin(), subst.end(), ps.subst.begin(), ps.subst.end());	// NOTE: the bot (nullptr) is less than any other
 }
 
+bool
+ParamSubstitution::operator==(const ParamSubstitution& ps) const
+{
+	return subst.size() == ps.subst.size() && equal(subst.begin(), subst.end(), ps.subst.begin());
+}
+
+bool
+ParamSubstitution::subsume(const ParamSubstitution& ps) const
+{
+	// a subsumes b iff a is bot or a == b.
+	return subst.size() == ps.subst.size() && equal(subst.begin(), subst.end(), ps.subst.begin(), [](DagNode* a, DagNode* b) { return a == nullptr || a == b; });
+}
 
 } /* namespace modelChecker */

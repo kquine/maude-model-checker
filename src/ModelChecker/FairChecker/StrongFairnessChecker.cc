@@ -31,7 +31,7 @@ StrongFairnessChecker::empty() const
 unique_ptr<FairSet>
 StrongFairnessChecker::computeAllFairness(const PropSet& trueProps)
 {
-	StrongFairSet* result = new StrongFairSet;
+	auto result = new StrongFairSet;
 	for(auto i = strongFairIds.crbegin(); i != strongFairIds.crend(); ++i)
 	{
 		const pair<Bdd,Bdd> ff = fTable.getFairFormula(*i);

@@ -14,7 +14,7 @@
 namespace modelChecker {
 
 template <typename Automaton>
-NDFSModelChecker<Automaton>::NDFSModelChecker(unique_ptr<Automaton> prod): prod(move(prod)) {}
+NDFSModelChecker<Automaton>::NDFSModelChecker(unique_ptr<Automaton>&& prod): prod(move(prod)) {}
 
 template <typename Automaton> bool
 NDFSModelChecker<Automaton>::findCounterExample()
@@ -73,7 +73,7 @@ NDFSModelChecker<Automaton>::dfs1(const State& initial)
 		if (dfs1.top()->hasNext())
 		{
 			State ns = dfs1.top()->pick().target;
-			unsigned int sysIndex = dfs1.top()->pick().systemIndex;
+			auto sysIndex = dfs1.top()->pick().systemIndex;
 			dfs1.top()->next();
 
 			if (checkVisit(ns))
@@ -95,7 +95,7 @@ NDFSModelChecker<Automaton>::dfs1(const State& initial)
 		}
 		else	// pop
 		{
-			const State& cur = dfs1.top()->getSource();
+			auto& cur = dfs1.top()->getSource();
 			if (prod->getPropertyAutomaton().isAccepting(cur.second))	// if accepting state
 			{
 				if (dfs2(cur))
@@ -131,7 +131,7 @@ NDFSModelChecker<Automaton>::dfs2(const State& initial)
 		if (dfs2.top()->hasNext())
 		{
 			State ns = dfs2.top()->pick().target;
-			unsigned int sysIndex = dfs2.top()->pick().systemIndex;
+			auto sysIndex = dfs2.top()->pick().systemIndex;
 			dfs2.top()->next();
 
 			Assert( ns.first >= 0 && (unsigned int)ns.first < intersectionStates.size(), "visited system state for the first time on dfs2");

@@ -17,7 +17,7 @@ class PropositionTable: private ProtectedDagNodeSet
 {
 public:
 	explicit PropositionTable(const PropInterpreter& pi);
-	virtual ~PropositionTable() {}
+	virtual ~PropositionTable() = default;
 
 	using ProtectedDagNodeSet::insert;
 	using ProtectedDagNodeSet::dagNode2Index;
@@ -40,7 +40,7 @@ protected:
 	struct PropInfo
 	{
 		PropInfo(bool isEvent, int enabledEvtId): isEvent{isEvent}, enabledEventId{enabledEvtId} {}
-		virtual ~PropInfo() {}
+		virtual ~PropInfo() = default;
 
 		bool isEvent;
 		int enabledEventId;

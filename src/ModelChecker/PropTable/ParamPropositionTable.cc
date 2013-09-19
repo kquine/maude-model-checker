@@ -61,16 +61,7 @@ ParamPropositionTable::getParamVariable(unsigned int propId, unsigned int varId)
 	return paramInfoTable[ppi->paramInfoId]->pattern->index2Variable(varId);
 }
 
-
-const set<unique_ptr<ParamSubstitution>,ParamPropositionTable::ptr_compare>&
-ParamPropositionTable::getParamSubsts(unsigned int propId) const
-{
-	const ParamPropInfo* ppi = getParamPropInfo(propId);
-	Assert(ppi != nullptr, "ParamPropositionTable::getParamSubst: not a param substitution");
-	return paramInfoTable[ppi->paramInfoId]->substitutions;
-}
-
-const map<unsigned int,set<const ParamSubstitution*>>*
+const vector<ParamPropositionTable::MatchingInfo>*
 ParamPropositionTable::getParamMatches(unsigned int propId) const
 {
 	if (const InstancePropInfo* ipi = getInstancePropInfo(propId))
@@ -88,14 +79,14 @@ ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContex
 		if (! getInstancePropInfo(propId))	// if the instance relation has NOT been computed
 		{
 			unique_ptr<InstancePropInfo> ipi(new InstancePropInfo(*propInfoTable[propId]));
-			ipi->matchingPropNSubstRefs =  computeMatchingProps(propDag, parentContext);
+			ipi->matchingPropNSubstRefs =  compact(computeMatchingProps(propDag, parentContext));
 			propInfoTable[propId] = std::move(ipi);
 		}
 		return getInstancePropInfo(propId)->matchingPropNSubstRefs.empty() ? NONE : propId;
 	}
 	else // if the dag has not been stored (but it could have already been computed while not stored)
 	{
-		map<unsigned int,set<const ParamSubstitution*>> temp = computeMatchingProps(propDag, parentContext);
+		const auto& temp = computeMatchingProps(propDag, parentContext);
 
 		if (! temp.empty())	// if it is an instance
 		{
@@ -104,7 +95,7 @@ ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContex
 			updatePropTable();
 
 			unique_ptr<InstancePropInfo> ipi(new InstancePropInfo(*propInfoTable[newPropId]));
-			ipi->matchingPropNSubstRefs = std::move(temp);
+			ipi->matchingPropNSubstRefs = compact(temp);
 			propInfoTable[newPropId] = std::move(ipi);
 			return newPropId;
 		}
@@ -118,7 +109,7 @@ ParamPropositionTable::computeMatchingProps(DagNode* propDag, RewritingContext& 
 {
 	map<unsigned int,set<const ParamSubstitution*>> match;
 	auto it = paramPropSymbolMap.find(propDag->symbol());
-	if (it != paramPropSymbolMap.end())	// if no corresponding param props
+	if (it != paramPropSymbolMap.end())	// for corresponding param props
 	{
 		const unique_ptr<RewritingContext> dagCxt(parentContext.makeSubcontext(propDag));
 		for (int k : it->second)
@@ -137,6 +128,15 @@ ParamPropositionTable::computeMatchingProps(DagNode* propDag, RewritingContext& 
 		}
 	}
 	return match;
+}
+
+vector<ParamPropositionTable::MatchingInfo>
+ParamPropositionTable::compact(const map<unsigned int,set<const ParamSubstitution*>>& match) const
+{
+	vector<MatchingInfo> result(match.size());
+	transform(match.begin(), match.end(), result.begin(),
+			[](const pair<unsigned int,set<const ParamSubstitution*>>& i) { return make_pair(i.first,vector<const ParamSubstitution*>(i.second.begin(),i.second.end())); });
+	return result;
 }
 
 void

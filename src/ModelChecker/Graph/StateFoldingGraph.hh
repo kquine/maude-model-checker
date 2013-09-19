@@ -32,7 +32,7 @@ public:
 	StateFoldingGraph(const StateFoldingGraph&) = delete;
 	StateFoldingGraph& operator=(const StateFoldingGraph&) = delete;
 
-	virtual ~StateFoldingGraph() {}
+	virtual ~StateFoldingGraph() = default;
 
 	int getNrStates() const;
 	int getNrTransitions(int stateNr) const;
@@ -48,7 +48,7 @@ public:
 private:
 	struct State
 	{
-		virtual ~State() {}
+		virtual ~State() = default;
 	};
 	struct MaximalState: public State
 	{

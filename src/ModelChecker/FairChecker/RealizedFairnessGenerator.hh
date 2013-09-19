@@ -8,31 +8,27 @@
 #ifndef REALIZEDFAIRNESSGENERATOR_HH_
 #define REALIZEDFAIRNESSGENERATOR_HH_
 #include "Utility/BddUtil.hh"
-#include "FairTable/ParamFairnessTable.hh"
+#include "FairTable/RealizedFairnessTable.hh"
+#include "FairSet/ParamRealizedSet.hh"
 
 namespace modelChecker {
 
-template <typename Formula> struct RealizedFairnessGeneratorTraits;
-
-template <typename Formula>
-class RealizedFairnessGenerator: private RealizedFairnessGeneratorTraits<Formula>
+class RealizedFairnessGenerator
 {
-	using ParamFairSet = 	typename RealizedFairnessGeneratorTraits<Formula>::ParamFairSet;
 public:
-	RealizedFairnessGenerator(const vector<unsigned int>& paramFairIds, ParamFairnessTable<Formula>& fairTable);
-	virtual ~RealizedFairnessGenerator() {}
+	using index_type = RealizedFairnessTable::index_type;
+
+	RealizedFairnessGenerator(const vector<index_type>& paramFairIds, RealizedFairnessTable& fairTable);
 
 	bool empty() const;
-	void generateRealizedFairness(const ParamPropSet& pps, ParamFairSet& fs, indexed_set<unsigned int>& insIds);
+	deque<pair<index_type,NatSet>> generateRealizedFairness(const ParamPropSet& pps);
 
 private:
-	const vector<unsigned int> paramFairIds;
-	ParamFairnessTable<Formula>& fairTable;
+	const vector<index_type> paramFairIds;
+	RealizedFairnessTable& fairTable;
 };
 
 
 } /* namespace modelChecker */
-
-#include "RealizedFairnessGenerator.cc"
 
 #endif /* REALIZEDFAIRNESSGENERATOR_HH_ */

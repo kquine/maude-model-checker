@@ -10,10 +10,12 @@
 #include "BFSGraph.hh"
 #include "StreettModelChecker.hh"
 
+//#define TDEBUG
+
 namespace modelChecker {
 
 template <typename Automaton>
-StreettModelChecker<Automaton>::StreettModelChecker(unique_ptr<Automaton> graph): SCCModelChecker<Automaton>(move(graph)) {}
+StreettModelChecker<Automaton>::StreettModelChecker(unique_ptr<Automaton>&& graph): SCCModelChecker<Automaton>(move(graph)) {}
 
 template <typename Automaton>
 unique_ptr<typename SCCModelChecker<Automaton>::SCC>
@@ -46,46 +48,55 @@ StreettModelChecker<Automaton>::findAcceptedSCC(queue<State>& region, FairSet::B
 					Transition t = stack.pickSucc();
 					unique_ptr<FairSet> a(Super::graph->makeFairSet(t));
 					stack.nextSucc();
-
-					/*
-					cout << t.source << " --> " << t.target << " " << flush;
-					a->dump(cout);
-					cout << endl;
-					*/
-
-					if (bad != nullptr && bad->isBad(*a))	// if bad transition
+#ifdef TDEBUG
+					cout << t.source << " --> " << t.target << " " << flush;	a->dump(cout);	cout << endl;
+#endif
+					if (bad != nullptr && bad->isBad(*a, Super::graph->getFairnessTable()))	// if bad transition
 					{
+#ifdef TDEBUG
+						cout << "    # BAD  ";	bad->dump(cout);	cout << endl;
+#endif
 						region.push(t.target);
 					}
 					else
 					{
 						if (!Super::H.contains(t.target))			// if not visited yet
 						{
+#ifdef TDEBUG
+							cout << "    # NOT VISITED" << endl;
+#endif
 							stack.dfsPush(t.target, std::move(a));
 						}
 						else if (Super::H.get(t.target) > 0)		// if on the dfs stack..
 						{
+#ifdef TDEBUG
+							cout << "    # ON DEF STACK" << endl;
+#endif
 							stack.merge(Super::H.get(t.target), std::move(a));
-
-							/*
-							cout << "merged:  ";
-							stack.topSCC()->acc_fair->dump(cout);
-							cout << endl;
-							*/
-
 							if ( stack.topSCC()->acc_fair->isSatisfied() )
+							{
+#ifdef TDEBUG
+								cout << "    #FIND";	stack.topSCC()->acc_fair->dump(cout);	cout << endl;
+#endif
 								return move(stack.topSCC());
+							}
 						}
+#ifdef TDEBUG
+						else cout << "    # SKIP" << endl;
+#endif
 					}
 				}
 				else	// SCC pop
 				{
-					if (const unique_ptr<FairSet::Bad> new_bad = makeNewBadGoal(stack.topSCC()->acc_fair,bad))  // revisit the SCC ff there is a new bad goal
+#ifdef TDEBUG
+					cout << "## POP" << endl;
+#endif
+					if (const auto& new_bad = makeNewBadGoal(stack.topSCC()->acc_fair,bad))  // revisit the SCC ff there is a new bad goal
 					{
 						queue<State> new_region;
 						new_region.push(stack.sccPop(true));	// pop the top SCC with *unvisit*
 
-						if (unique_ptr<SCC> scc = findAcceptedSCC(new_region, new_bad.get()))
+						if (auto scc = findAcceptedSCC(new_region, new_bad.get()))
 							return scc;
 					}
 					else

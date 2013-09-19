@@ -20,7 +20,7 @@ namespace modelChecker {
 
 
 void
-CompositeFairnessChecker::addComponent(unique_ptr<FairnessChecker> checker)
+CompositeFairnessChecker::addComponent(unique_ptr<FairnessChecker>&& checker)
 {
 	fairCheckers.push_back(move(checker));
 }

@@ -1,0 +1,35 @@
+/*
+ * ParamRealizedSet.hh
+ *
+ *  Created on: Sep 17, 2013
+ *      Author: kquine
+ */
+
+#ifndef PARAMREALIZEDSET_HH_
+#define PARAMREALIZEDSET_HH_
+#include "natSet.hh"
+#include "FairTable/RealizedFairnessTable.hh"
+
+namespace modelChecker {
+
+class ParamRealizedSet
+{
+public:
+	using index_type = AbstractFairnessTable::index_type;
+
+	void setRealized(index_type fairId);
+
+	void merge(const ParamRealizedSet& f);
+
+	void extend(const NatSet& other, NatSet& target, const RealizedFairnessTable& rtable) const;	// extend target with a fair in other
+	void extend(const ParamRealizedSet& other, NatSet& target, const RealizedFairnessTable& rtable) const;
+
+	void dump(ostream& o) const;
+
+private:
+	NatSet realizedFair;	// a set of realized fair ids
+};
+
+} /* namespace modelChecker */
+
+#endif /* PARAMREALIZEDSET_HH_ */

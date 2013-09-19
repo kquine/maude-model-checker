@@ -18,7 +18,7 @@ class RealizedPropGenerator
 {
 public:
 	RealizedPropGenerator(const vector<unsigned int>& paramPropIds, ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& parent);
-	virtual ~RealizedPropGenerator() {}
+	virtual ~RealizedPropGenerator() = default;
 
 	const ParamPropositionTable& getPropTable() const;
 	void generateRealizedProps(DagNode* target, ParamPropSet& result);	// return realized prop indices in the "propositions"
@@ -29,7 +29,7 @@ private:
 
 	void computeGenRules(SearchState& sc, RewritingContext& context, ParamPropSet& result);
 
-	list<unique_ptr<Rule> > genRules;
+	vector<unique_ptr<Rule> > genRules;
 
     RewritingContext& parentContext;
     const PropEvaluator& pEval;

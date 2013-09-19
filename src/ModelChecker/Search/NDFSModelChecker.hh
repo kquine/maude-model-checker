@@ -22,7 +22,7 @@ class NDFSModelChecker: public ModelChecker
 	using TransitionIterator =	typename Automaton::TransitionIterator;
 
 public:
-	explicit NDFSModelChecker(unique_ptr<Automaton> prod);
+	explicit NDFSModelChecker(unique_ptr<Automaton>&& prod);
 
 	bool findCounterExample() override;
 	const DagSystemGraph& getSystemGraph() const override	{ return prod->getSystemAutomaton(); }

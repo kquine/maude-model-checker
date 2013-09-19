@@ -14,8 +14,8 @@ namespace modelChecker {
 class PropSet
 {
 public:
-	PropSet() {}
-	virtual ~PropSet() {}
+	PropSet() = default;
+	virtual ~PropSet() = default;
 
 	PropSet(const PropSet&) = delete;	// avoid copy
 	PropSet(PropSet&& other) noexcept;

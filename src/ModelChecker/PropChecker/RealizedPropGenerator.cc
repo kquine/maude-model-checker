@@ -62,7 +62,6 @@ RealizedPropGenerator::generateRealizedProps(DagNode* target, ParamPropSet& resu
 void
 RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& context, ParamPropSet& result)
 {
-	cout << "Realized Props =[ ";
 	for(const unique_ptr<Rule>& r : genRules)
 	{
 		if (sc.findFirstSolution(r.get(), r->getExtLhsAutomaton()))
@@ -75,10 +74,7 @@ RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& contex
 					res->computeTrueSort(parentContext);
 					auto pi = propTable.insertInstanceAndUpdate(res,parentContext);
 					if (pi != NONE)
-					{
 						result.setTrue(pi);
-						cout << propTable.index2DagNode(pi) << " ";
-					}
 				}
 				else
 					throw logic_error(StringStream() << "Derived term " << QUOTE(this) << " is non-ground and realized substitutions cannot be correctly generated.");
@@ -86,7 +82,6 @@ RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& contex
 			while (sc.findNextSolution());
 		}
 	}
-	cout << "]" << endl;
 }
 
 void

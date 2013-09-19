@@ -17,7 +17,6 @@ class StrongFairnessChecker: public FairnessChecker
 {
 public:
 	StrongFairnessChecker(const vector<unsigned int>& strongFairIds, StrongFairnessTable& fTable);
-	virtual ~StrongFairnessChecker() {}
 
 	virtual bool empty() const override;
 	virtual unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;

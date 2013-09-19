@@ -14,25 +14,35 @@
 #include "core.hh"
 
 // ltlr definitions
+#include "FairSet/ParamWeakFairSet.hh"
 #include "ParamWeakFairnessChecker.hh"
 
 namespace modelChecker {
 
-ParamWeakFairnessChecker::ParamWeakFairnessChecker(const vector<unsigned int>& groundWeakFairIds, const vector<unsigned int>& paramWeakFairIds, ParamWeakFairnessTable& fTable):
-	WeakFairnessChecker(groundWeakFairIds,fTable), RealizedFairnessGenerator<Bdd>(paramWeakFairIds,fTable) {}
+ParamWeakFairnessChecker::ParamWeakFairnessChecker(const vector<unsigned int>& weakFairIds, const vector<unsigned int>& paramWeakFairIds, ParamWeakFairnessTable& fTable):
+	WeakFairnessChecker(weakFairIds,fTable), RealizedFairnessGenerator(paramWeakFairIds,fTable), fTableRef(fTable) {}
 
 bool
 ParamWeakFairnessChecker::empty() const
 {
-	return WeakFairnessChecker::empty() && RealizedFairnessGenerator<Bdd>::empty();
+	return WeakFairnessChecker::empty() && RealizedFairnessGenerator::empty();
 }
 
 unique_ptr<FairSet>
 ParamWeakFairnessChecker::computeAllFairness(const PropSet& trueProps)
 {
-	ParamWeakFairSet* fs = new ParamWeakFairSet(*WeakFairnessChecker::computeAllFairness(trueProps));
-	this->generateRealizedFairness(static_cast<const ParamPropSet&>(trueProps), *fs, instanceWeakFairIds);
-	return unique_ptr<FairSet>(fs);
+	auto pws = new ParamWeakFairSet(move(static_cast<WeakFairSet&>(*WeakFairnessChecker::computeAllFairness(trueProps))));
+	auto& pps = static_cast<const ParamPropSet&>(trueProps);
+
+	for (auto& pt : this->generateRealizedFairness(pps))
+	{
+		pws->setRealized(pt.first);
+		auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? pt.second.contains(propId) : pps.isTrue(propId);};
+		auto& formula = fTableRef.getFairFormula(pt.first);
+
+		if ( !BddUtil::satisfiesFormula(formula, truth))	pws->setFalsified(pt.first);
+	}
+	return unique_ptr<FairSet>(pws);
 }
 
 } /* namespace modelChecker */

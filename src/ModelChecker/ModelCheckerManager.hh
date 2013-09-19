@@ -27,9 +27,9 @@ class ModelCheckerManager
 {
 	using Formula =	FormulaBuilder::Formula;
 public:
-	ModelCheckerManager(Formula& formula, PropositionTable& propTable, unique_ptr<AbstractFairnessTable> fairTable,
+	ModelCheckerManager(Formula& formula, PropositionTable& propTable, unique_ptr<AbstractFairnessTable>&& fairTable,
 			const PropEvaluator& stateEval, const PropEvaluator& eventEval, const ProofTermGenerator& ptg, RewritingContext& context);
-	virtual ~ModelCheckerManager() {}
+	virtual ~ModelCheckerManager() = default;
 
 	const DagSystemGraph& getDagSystemGraph() const		{ return mc->getSystemGraph(); }
 	const list<ModelChecker::Edge>& getLeadIn() const	{ return mc->getLeadIn(); }
@@ -37,7 +37,7 @@ public:
 	bool findCounterExample()							{ return mc->findCounterExample(); }
 
 private:
-	void createSystemGraph(unique_ptr<AbstractFairnessTable> fairTable);
+	void createSystemGraph(unique_ptr<AbstractFairnessTable>&& fairTable);
 
 	template <typename Graph> struct makeGraph;
 	template <typename SA> unique_ptr<ModelChecker> makeModelChecker(unique_ptr<SA>&& sysGraph) const;

@@ -33,7 +33,7 @@ ParamPropSet::setTrue(unsigned int propId)
 	if (auto pmm = propTable.getParamMatches(propId))
 	{
 		for (auto& j : *pmm)
-			setTrueParamSubst(j.first, j.second);
+			trueParamSubstRefs[j.first].insert(j.second.begin(), j.second.end());
 	}
 }
 

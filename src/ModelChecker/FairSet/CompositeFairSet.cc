@@ -14,7 +14,7 @@
 namespace modelChecker {
 
 void
-CompositeFairSet::addComponent(unique_ptr<FairSet> f)
+CompositeFairSet::addComponent(unique_ptr<FairSet>&& f)
 {
 	fairSets.push_back(move(f));
 }
@@ -116,11 +116,11 @@ CompositeFairSet::Bad::Bad(const CompositeFairSet& f): fairBadSets(f.fairSets.si
 }
 
 bool
-CompositeFairSet::Bad::isBad(const FairSet& f) const
+CompositeFairSet::Bad::isBad(const FairSet& f, const AbstractFairnessTable& table) const
 {
 	const CompositeFairSet& cf = static_cast<const CompositeFairSet&>(f);
 	for (unsigned int i = 0; i < fairBadSets.size(); ++i)
-		if ( fairBadSets[i]->isBad(*cf.fairSets[i]) )
+		if ( fairBadSets[i]->isBad(*cf.fairSets[i], static_cast<const CompositeFairnessTable&>(table).getComponent(i)) )
 			return true;
 	return false;
 }
@@ -137,6 +137,18 @@ CompositeFairSet::Bad::merge(const FairSet::Bad& b)
 	const Bad& nb = static_cast<const Bad&>(b);
 	for (unsigned int i = 0; i < fairBadSets.size(); ++i)
 		fairBadSets[i]->merge(*nb.fairBadSets[i]);
+}
+
+void
+CompositeFairSet::Bad::dump(ostream& o) const
+{
+	o << "[composited:";
+	for (auto& i : fairBadSets)
+	{
+		o << " ";
+		i->dump(o);
+	}
+	o << "]";
 }
 
 } /* namespace modelChecker */

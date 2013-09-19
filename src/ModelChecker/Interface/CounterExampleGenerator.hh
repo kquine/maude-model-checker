@@ -7,7 +7,7 @@
 
 #ifndef COUNTEREXAMPLEGENERATOR_HH_
 #define COUNTEREXAMPLEGENERATOR_HH_
-#include <list>
+#include <deque>
 #include "Automaton/DagSystemGraph.hh"
 #include "Search/ModelChecker.hh"
 

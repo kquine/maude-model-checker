@@ -20,60 +20,66 @@
 namespace modelChecker {
 
 template <typename Formula>
-ParamFairnessTable<Formula>::ParamFairnessTable(PropositionTable& propTable):
-	FairnessTable<Formula>(propTable), paramPropTableRef(static_cast<const ParamPropositionTable&>(propTable)) {}
+ParamFairnessTable<Formula>::ParamFairnessTable(ParamPropositionTable& propTable):
+	FairnessTable<Formula>(propTable), paramPropTableRef(propTable) {}
 
 
-template <typename Formula> bool
-ParamFairnessTable<Formula>::isParamFairness(unsigned int fairId) const
+template <typename Formula> inline bool
+ParamFairnessTable<Formula>::isParamFairness(index_type fairId) const
 {
 	return dynamic_cast<ParamFairness*>(Super::fairTable[fairId].get());
 }
 
-template <typename Formula> const Formula&
-ParamFairnessTable<Formula>::getFairFormula(unsigned int fairId) const
-{
-	return Super::getFairFormula(getBaseFairId(fairId));
-}
-
-template <typename Formula> bool
-ParamFairnessTable<Formula>::isStateFairness(unsigned int fairId) const
+template <typename Formula> inline bool
+ParamFairnessTable<Formula>::isStateFairness(index_type fairId) const
 {
 	return Super::isStateFairness(getBaseFairId(fairId));
 }
 
-template <typename Formula> const ParamSubstitutionBuilder&
-ParamFairnessTable<Formula>::getParamSubstBuilder(unsigned int fairId) const
+template <typename Formula> inline const Formula&
+ParamFairnessTable<Formula>::getFairFormula(index_type fairId) const
 {
-	return static_cast<ParamFairness&>(*Super::fairTable[fairId]).builder;
-}
-
-template <typename Formula> unsigned int
-ParamFairnessTable<Formula>::insertFairnessInstance(unsigned int paramFairId, const ParamSubstitution& propSubst)
-{
-	ParamFairness& pfi = static_cast<ParamFairness&>(*Super::fairTable[paramFairId]);
-	auto oldSize = pfi.substs.size();
-	auto si = pfi.substs.insert(propSubst);
-	if (si >= oldSize)
-	{
-		pfi.instanceId.push_back(Super::fairTable.size());
-		Super::fairTable.emplace_back(new InstanceFairnessInfo(paramFairId,si));
-		updateInstanceBaseMap(pfi);
-	}
-	return pfi.instanceId[si];
+	return Super::getFairFormula(getBaseFairId(fairId));
 }
 
 template <typename Formula>
 unique_ptr<typename ParamFairnessTable<Formula>::GroundFairness>
-ParamFairnessTable<Formula>::createFormulaFairness(unsigned int formulaId, const set<unsigned int>& propIds, DagNode* fairDag) const
+ParamFairnessTable<Formula>::createFormulaFairness(const Formula& f, const vector<index_type>& propIds, DagNode* fairDag) const
 {
-	unique_ptr<GroundFairness> gfi = Super::createFormulaFairness(formulaId, propIds, fairDag);
+	unique_ptr<GroundFairness> gfi = Super::createFormulaFairness(f, propIds, fairDag);
 	return fairDag->isGround() ? move(gfi) : unique_ptr<ParamFairness>(new ParamFairness(*gfi,fairDag,propIds,paramPropTableRef));
 }
 
+template <typename Formula>
+typename ParamFairnessTable<Formula>::index_type
+ParamFairnessTable<Formula>::getNextFairIndex() const
+{
+	return Super::fairTable.size();
+}
 
-template <typename Formula> inline unsigned int
-ParamFairnessTable<Formula>::getBaseFairId(unsigned int fairId) const
+template <typename Formula>
+typename ParamFairnessTable<Formula>::ParamInfo&
+ParamFairnessTable<Formula>::getParamInfo(index_type fairId) const
+{
+	return static_cast<ParamFairness&>(*Super::fairTable[fairId]);
+}
+
+template <typename Formula>
+typename ParamFairnessTable<Formula>::InstanceInfo&
+ParamFairnessTable<Formula>::getInstanceInfo(index_type fairId) const
+{
+	return static_cast<InstanceFairnessInfo&>(*Super::fairTable[fairId]);
+}
+
+template <typename Formula> void
+ParamFairnessTable<Formula>::insertInstance(index_type pfi, const ParamSubstitution* s)
+{
+	Super::fairTable.emplace_back(new InstanceFairnessInfo(pfi, s));
+}
+
+template <typename Formula>
+inline typename ParamFairnessTable<Formula>::index_type
+ParamFairnessTable<Formula>::getBaseFairId(index_type fairId) const
 {
 	if (InstanceFairnessInfo* ifi = dynamic_cast<InstanceFairnessInfo*>(Super::fairTable[fairId].get()))
 		return ifi->paramFairId;
@@ -81,19 +87,6 @@ ParamFairnessTable<Formula>::getBaseFairId(unsigned int fairId) const
 		return fairId;
 }
 
-template <typename Formula> void
-ParamFairnessTable<Formula>::updateInstanceBaseMap(const ParamFairness& /* pfi */)
-{
-	//unsigned int last = pfi.substs.size() - 1;
 
-	//TODO:
-}
-
-template <typename Formula> bool
-ParamFairnessTable<Formula>::subsumed(const vector<const ParamSubstitution*>& s1, const vector<const ParamSubstitution*>& s2) const
-{
-	//TODO:
-	return false;
-}
 
 } /* namespace modelChecker */

@@ -15,7 +15,7 @@ namespace modelChecker {
 class ParamPropSet: public PropSet
 {
 public:
-	ParamPropSet(const ParamPropositionTable& propTable, PropSet&& base): PropSet(forward<PropSet>(base)), propTable(propTable)  {}
+	ParamPropSet(const ParamPropositionTable& propTable, PropSet&& base): PropSet(move(base)), propTable(propTable)  {}
 
 	bool isParamProp(unsigned int propId) const;
 

@@ -14,7 +14,7 @@ namespace modelChecker {
 class DagSystemGraph: public SystemGraph
 {
 public:
-	virtual ~DagSystemGraph()	{}
+	virtual ~DagSystemGraph() {}
 
 	virtual DagNode* getStateDag(unsigned int stateNr) const = 0;
 	virtual DagNode* getTransitionDag(unsigned int stateNr, unsigned int index) const = 0;

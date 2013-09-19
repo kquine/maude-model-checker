@@ -44,12 +44,12 @@ FairnessDecoder::FairnessDecoder(const FormulaBuilder& fBuilder, PropositionTabl
 unique_ptr<AbstractFairnessTable>
 FairnessDecoder::interpretFairnessSet(DagNode* fairSetDag) const
 {
-	const vector<FairCond> fairConds = parseFairnessSet(fairSetDag);
+	const deque<FairCond> fairConds = parseFairnessSet(fairSetDag);
 
 	if (! fairConds.empty())
 	{
-		vector<vector<FairCond>::const_iterator> wConds;	bool weakParam = false;
-		vector<vector<FairCond>::const_iterator> sConds;	bool strongParam = false;
+		deque<deque<FairCond>::const_iterator> wConds;	bool weakParam = false;
+		deque<deque<FairCond>::const_iterator> sConds;	bool strongParam = false;
 
 		for (auto i = fairConds.cbegin(); i != fairConds.cend(); ++i)
 		{
@@ -65,8 +65,8 @@ FairnessDecoder::interpretFairnessSet(DagNode* fairSetDag) const
 			}
 		}
 
-		unique_ptr<WeakFairnessTable>	wft(weakParam	? new ParamWeakFairnessTable(propTable)	  : new WeakFairnessTable(propTable));
-		unique_ptr<StrongFairnessTable> sft(strongParam ? new ParamStrongFairnessTable(propTable) : new StrongFairnessTable(propTable));
+		unique_ptr<WeakFairnessTable>	wft(weakParam	? new ParamWeakFairnessTable(static_cast<ParamPropositionTable&>(propTable))   : new WeakFairnessTable(propTable));
+		unique_ptr<StrongFairnessTable> sft(strongParam ? new ParamStrongFairnessTable(static_cast<ParamPropositionTable&>(propTable)) : new StrongFairnessTable(propTable));
 
 		for (auto i : wConds)	wft->insertFairnessFormula(get<2>(*i), get<0>(*i), get<3>(*i));
 		for (auto i : sConds)	sft->insertFairnessFormula(make_pair(get<1>(*i),get<2>(*i)), get<0>(*i), get<3>(*i));
@@ -87,10 +87,10 @@ FairnessDecoder::interpretFairnessSet(DagNode* fairSetDag) const
 	return nullptr;
 }
 
-vector<FairnessDecoder::FairCond>
+deque<FairnessDecoder::FairCond>
 FairnessDecoder::parseFairnessSet(DagNode* fairSetDag) const
 {
-	vector<FairCond> result;
+	deque<FairCond> result;
 	if (fairSetDag->symbol() == fairnessSymbol)
 	{
 		result.push_back(parseFairnessDag(fairSetDag));
@@ -120,7 +120,10 @@ FairnessDecoder::parseFairnessDag(DagNode* fairnessDag) const
 	bdd cons = fBuilder.translateFairnessFormula(fBuilder.build(consF, propTable.getDagNodeSet(), d->getArgument(2)), consF, propIds);
 	propTable.updatePropTable();
 
-	return d->getArgument(0)->symbol() == weakFairTypeSymbol ? make_tuple(propIds,bdd_true(),prem>>cons,fairnessDag) : make_tuple(propIds,prem,cons,fairnessDag);
+	if (d->getArgument(0)->symbol() == weakFairTypeSymbol)
+		return make_tuple(vector<unsigned int>(propIds.begin(),propIds.end()), bdd_true(), prem>>cons, fairnessDag);
+	else
+		return make_tuple(vector<unsigned int>(propIds.begin(),propIds.end()), prem,cons,fairnessDag);
 }
 
 }

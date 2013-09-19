@@ -15,7 +15,7 @@ template <typename Automaton>
 class SCCBuchiModelChecker : public SCCModelChecker<Automaton>
 {
 public:
-	explicit SCCBuchiModelChecker(unique_ptr<Automaton> graph);
+	explicit SCCBuchiModelChecker(unique_ptr<Automaton>&& graph);
 
 private:
 	using Super 		= SCCModelChecker<Automaton>;

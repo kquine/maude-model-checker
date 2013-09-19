@@ -24,8 +24,8 @@ public:
 	using const_iterator =	typename EltMap::const_iterator;
 	using size_type =		typename vector<const_iterator>::size_type;
 
-	indexed_set()			{ }
-	virtual ~indexed_set()	{ }
+	indexed_set() = default;
+	virtual ~indexed_set() = default;
 
 	indexed_set(indexed_set&&) noexcept;
 	indexed_set& operator=(indexed_set&&) noexcept;	// move
@@ -41,7 +41,7 @@ public:
 	const_iterator find(const T& element) const;
 	iterator find(T& element);
 
-	size_type insert(const T& element);
+	pair<size_type,bool> insert(const T& element);
 	void swap(indexed_set& other);
 
 	size_type size() const;
@@ -119,13 +119,13 @@ indexed_set<T>::find(T& element)
 }
 
 template<typename T>
-inline typename indexed_set<T>::size_type
+inline pair<typename indexed_set<T>::size_type,bool>
 indexed_set<T>::insert(const T& element)
 {
 	pair<typename EltMap::iterator,bool> p = eltMap.insert(typename EltMap::value_type(element,indexMap.size()));
 	if (p.second)
 		indexMap.push_back(p.first);
-	return p.first->second;
+	return make_pair(p.first->second,p.second);
 }
 
 template<typename T> inline void

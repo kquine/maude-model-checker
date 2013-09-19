@@ -32,7 +32,7 @@
 
 namespace modelChecker {
 
-ModelCheckerManager::ModelCheckerManager(Formula& formula, PropositionTable& propTable, unique_ptr<AbstractFairnessTable> fairTable,
+ModelCheckerManager::ModelCheckerManager(Formula& formula, PropositionTable& propTable, unique_ptr<AbstractFairnessTable>&& fairTable,
 		const PropEvaluator& stateEval, const PropEvaluator& eventEval, const ProofTermGenerator& ptg, RewritingContext& sysCxt):
 				formula(formula), propTable(propTable), stateEval(stateEval), eventEval(eventEval), pGenerator(ptg), sysContext(sysCxt)
 {
@@ -51,7 +51,7 @@ ModelCheckerManager::ModelCheckerManager(Formula& formula, PropositionTable& pro
 
 
 void
-ModelCheckerManager::createSystemGraph(unique_ptr<AbstractFairnessTable> fairTable)
+ModelCheckerManager::createSystemGraph(unique_ptr<AbstractFairnessTable>&& fairTable)
 {
 	if ( ! eventPropChecker )  // no event (and enabled) props
 	{
@@ -92,7 +92,7 @@ inline unique_ptr<ModelChecker>
 ModelCheckerManager::makeModelChecker(unique_ptr<SA>&& sysGraph) const
 {
 	using Prod = ProductAutomaton<SA,BuchiAutomaton2>;
-	unique_ptr<Prod> prod(new Prod(forward<unique_ptr<SA>>(sysGraph), unique_ptr<BuchiAutomaton2>(new BuchiAutomaton2(&formula.data,formula.top))));
+	unique_ptr<Prod> prod(new Prod(move(sysGraph), unique_ptr<BuchiAutomaton2>(new BuchiAutomaton2(&formula.data,formula.top))));
 	Verbose("ModelChecker: Use the NDFS algorithm with a Buchi automaton (" << prod->getPropertyAutomaton().getNrStates() << " states).");
 	return unique_ptr<ModelChecker>(new NDFSModelChecker<Prod>(move(prod)));
 }
@@ -104,7 +104,7 @@ ModelCheckerManager::makeModelChecker(unique_ptr<SA>&& sysGraph, unique_ptr<Abst
 	using Prod = FairProductAutomaton<SA,GenBuchiAutomaton>;
 	unique_ptr<GenBuchiAutomaton> property(new GenBuchiAutomaton(&formula.data,formula.top));
 	property->simplify();
-	unique_ptr<Prod> prod(new Prod(forward<unique_ptr<SA>>(sysGraph), move(property), forward<unique_ptr<AbstractFairnessTable>>(fairTable)));
+	unique_ptr<Prod> prod(new Prod(move(sysGraph), move(property), move(fairTable)));
 
 	if (prod->getFairnessTable().hasStrongFairness())
 	{

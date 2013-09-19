@@ -37,15 +37,18 @@ libModelChecker_a_SOURCES = \
 	FairTable/FormulaFairnessTable.cc \
 	FairTable/ParamSubstitutionBuilder.cc \
 	FairTable/ParamVarInfo.cc \
+	FairTable/RealizedFairnessTable.cc \
 	FairChecker/WeakFairnessChecker.cc \
-	FairChecker/ParamWeakFairnessChecker.cc \
 	FairChecker/StrongFairnessChecker.cc \
-	FairChecker/ParamStrongFairnessChecker.cc \
 	FairChecker/CompositeFairnessChecker.cc \
+	FairChecker/RealizedFairnessGenerator.cc \
+	FairChecker/ParamWeakFairnessChecker.cc \
+	FairChecker/ParamStrongFairnessChecker.cc \
 	FairChecker/FairnessCheckerFactory.cc \
 	FairSet/WeakFairSet.cc \
 	FairSet/StrongFairSet.cc \
 	FairSet/CompositeFairSet.cc \
+	FairSet/ParamRealizedSet.cc \
 	FairSet/ParamWeakFairSet.cc \
 	FairSet/ParamStrongFairSet.cc \
 	GraphImpl/RewriteTransitionState.cc \

@@ -22,7 +22,7 @@ public:
 	using Transition =			typename Automaton::Transition;
 	using TransitionIterator =	typename Automaton::TransitionIterator;
 
-	explicit SCCModelChecker(unique_ptr<Automaton> graph);
+	explicit SCCModelChecker(unique_ptr<Automaton>&& graph);
 
 	bool findCounterExample() override;
 	const DagSystemGraph& getSystemGraph() const override	{ return graph->getSystemAutomaton(); }
@@ -32,7 +32,7 @@ protected:
 
 	struct SCC	//	scc = (root index, incoming fair set, scc acceptance fair set)
 	{
-		SCC(unsigned int root, unique_ptr<FairSet> incoming): root(root), incoming_fair(std::move(incoming)) {}
+		SCC(unsigned int root, unique_ptr<FairSet>&& incoming): root(root), incoming_fair(move(incoming)) {}
 
 		const unsigned int root;
 		const unique_ptr<FairSet> incoming_fair;
@@ -52,12 +52,12 @@ protected:
 		bool hasNextSucc();
 		State sccPop(bool unvisit = false);	// pop and return a root
 
-		void dfsPush(const State& s, unique_ptr<FairSet> a);
-		void merge(unsigned int threshold, unique_ptr<FairSet> back);
+		void dfsPush(const State& s, unique_ptr<FairSet>&& a);
+		void merge(unsigned int threshold, unique_ptr<FairSet>&& back);
 
 	private:
-		stack<unique_ptr<SCC> > sccStack;
-		stack<unique_ptr<TransitionIterator> > dfsStack;
+		stack<unique_ptr<SCC>> sccStack;
+		stack<unique_ptr<TransitionIterator>> dfsStack;
 		stack<State> stateStack;
 		SCCModelChecker<Automaton>& mc;
 	};

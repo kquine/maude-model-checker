@@ -19,9 +19,8 @@
 
 namespace modelChecker {
 
-ParamSubstitutionBuilder::ParamSubstitutionBuilder(DagNode* fairnessDag, const set<unsigned int>& propIds, const ParamPropositionTable& propTable):
-		ParamVarInfo(fairnessDag), propTable(propTable),
-		fairDag(fairnessDag)	// TODO;
+ParamSubstitutionBuilder::ParamSubstitutionBuilder(DagNode* fairnessDag, const vector<unsigned int>& propIds, const ParamPropositionTable& propTable):
+		ParamVarInfo(fairnessDag), propTable(propTable)
 {
 	for (auto p : propIds)
 		if (propTable.isParamProp(p))
@@ -35,29 +34,20 @@ ParamSubstitutionBuilder::ParamSubstitutionBuilder(DagNode* fairnessDag, const s
 NatSet
 ParamSubstitutionBuilder::trueParamProps(const ParamPropSet& pps, const ParamSubstitution& subst) const
 {
-	cout << "subst = ";
-	dumpParamSubst(subst);
-	cout << "true  = ";
 	NatSet result;
 	for (auto& pi : pidInfo)
 	{
-		const unique_ptr<ParamSubstitution> propSubst(new ParamSubstitution(subst, pi->varMap));
-		if (propSubst->isTotal())
+		const ParamSubstitution propSubst(subst, pi->varMap);
+		if (propSubst.isTotal())
 		{
-			auto& psubsts = propTable.getParamSubsts(pi->propId);	// propTable maintains a "unique" pointer for a ParamSubstitution
-			auto i = psubsts.find(propSubst);
-			if (i != psubsts.end())
-			{
-				auto& tsubst = pps.getTrueParamSubst(pi->propId);	// ParamPropSet has a set of "true" ParamSubstitution refs (i.e., pointers)
-				if (tsubst.find(i->get()) != tsubst.end())			// TODO: ParamPropSet should be relatively small!
+			for (auto i : pps.getTrueParamSubst(pi->propId))	//FIXME: the size of getTrueParamSubst should be small.
+				if (propSubst == *i)
 				{
-					dumpPropSubst(pi->propId, **i);
+					//dumpPropSubst(pi->propId, propSubst);
 					result.insert(pi->propId);
 				}
-			}
 		}
 	}
-	cout << endl;
 	return result;
 }
 
@@ -66,14 +56,13 @@ ParamSubstitutionBuilder::generateParamSubstitutions(const ParamPropSet& pps) co
 {
 	set<ParamSubstitution> result;
 	ParamSubstitution t(ParamVarInfo::getNrVariables());
-	computeParamSubstitutions(pidInfo.cbegin(), t, pps, result);
+	computeParamSubstitutions(pidInfo.cbegin(), t, pps, false, result);
 
-	cout << "Generating for " << fairDag << endl;
 	return result;
 }
 
 void
-ParamSubstitutionBuilder::computeParamSubstitutions(vector<unique_ptr<PropVarInfo>>::const_iterator i, ParamSubstitution& t, const ParamPropSet& pps, set<ParamSubstitution>& result) const
+ParamSubstitutionBuilder::computeParamSubstitutions(PropInfoPos i, ParamSubstitution& t, const ParamPropSet& pps, bool ever, set<ParamSubstitution>& result) const
 {
 	if (i != pidInfo.cend())
 	{
@@ -83,17 +72,18 @@ ParamSubstitutionBuilder::computeParamSubstitutions(vector<unique_ptr<PropVarInf
 			if ( target->isConsistent(orig) )
 			{
 				t.setSubst((*i)->varMap, *target);
-				computeParamSubstitutions(i + 1, t, pps, result);
+				computeParamSubstitutions(i + 1, t, pps, true, result);
 
 				if (orig.isTotal()) break; 	// no need to compute more if old is total (i.e., no 'bot')
 			}
 		}
 		t.setSubst((*i)->varMap, orig);	// the "bottom" case
-		computeParamSubstitutions(i + 1, t, pps, result);
+		computeParamSubstitutions(i + 1, t, pps, ever, result);
 	}
 	else
 	{
-		result.insert(t);	//  collect the result (with copy)
+		if (ever)
+			result.insert(t);	//  collect the result (with copy) except for the empty case, since it's the param formula itself.
 	}
 }
 

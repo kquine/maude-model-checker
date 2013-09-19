@@ -30,7 +30,7 @@ namespace modelChecker {
 
 
 template <typename SA, typename PA>
-FairProductAutomaton<SA,PA>::FairProductAutomaton(unique_ptr<SA> system, unique_ptr<PA> property, unique_ptr<AbstractFairnessTable> systemFairTable):
+FairProductAutomaton<SA,PA>::FairProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property, unique_ptr<AbstractFairnessTable>&& systemFairTable):
 	ProductAutomaton<SA,PA>(move(system),move(property)),
 	fairTable(makeInitFairTable(move(systemFairTable))),
 	formulaRef(&static_cast<FormulaFairnessTable&>(fairTable->getComponent(fairTable->nrComponents()-1))) {}
@@ -64,7 +64,7 @@ FairProductAutomaton<SA,PA>::makeFairSet(const Transition& t)
 
 template <typename SA, typename PA>
 CompositeFairnessTable*
-FairProductAutomaton<SA,PA>::makeInitFairTable(unique_ptr<AbstractFairnessTable> systemFairTable) const
+FairProductAutomaton<SA,PA>::makeInitFairTable(unique_ptr<AbstractFairnessTable>&& systemFairTable) const
 {
 	CompositeFairnessTable* result;
 	if (dynamic_cast<CompositeFairnessTable*>(systemFairTable.get()))

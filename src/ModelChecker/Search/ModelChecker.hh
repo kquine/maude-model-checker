@@ -17,8 +17,8 @@ class ModelChecker
 public:
 	using Edge =  pair<unsigned int,int>;
 
-	ModelChecker()			{}
-	virtual ~ModelChecker()	{}
+	ModelChecker() = default;
+	virtual ~ModelChecker() = default;
 
 	ModelChecker(const ModelChecker&) = delete;
 	ModelChecker& operator=(const ModelChecker&) = delete;
@@ -26,8 +26,8 @@ public:
 	virtual bool findCounterExample() = 0;
 	virtual const DagSystemGraph& getSystemGraph() const = 0;
 
-	const list<Edge>& getLeadIn() const		{ return leadIn; }
-	const list<Edge>& getCycle() const		{ return cycle; }
+	const list<Edge>& getLeadIn() const	{ return leadIn; }
+	const list<Edge>& getCycle() const	{ return cycle; }
 
 protected:
 	list<Edge> leadIn;

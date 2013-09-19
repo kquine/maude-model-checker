@@ -16,7 +16,7 @@ class EnabledPropTransferer
 {
 public:
 	EnabledPropTransferer(const vector<unsigned int>& enabledPropIds, const PropositionTable& propositions);
-	virtual ~EnabledPropTransferer() {}
+	virtual ~EnabledPropTransferer() = default;
 
 	virtual void computeEnabledPropIDs(PropSet& truePropIds, const vector<unique_ptr<PropSet>>& trueEventPropIds) const;
 

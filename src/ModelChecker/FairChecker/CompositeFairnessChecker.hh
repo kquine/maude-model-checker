@@ -20,9 +20,7 @@ namespace modelChecker {
 class CompositeFairnessChecker: public FairnessChecker
 {
 public:
-	virtual ~CompositeFairnessChecker() {}
-
-	void addComponent(unique_ptr<FairnessChecker> checker);
+	void addComponent(unique_ptr<FairnessChecker>&& checker);
 
 	bool empty() const override;
 	unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;

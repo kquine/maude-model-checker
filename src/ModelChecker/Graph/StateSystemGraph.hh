@@ -35,7 +35,7 @@ struct BaseSystemGraphTraits<StateSystemGraph>
 	struct State
 	{
 		State(RewritingContext& parent, DagNode* stateDag): explore(new ActiveState(parent,stateDag)) {}
-		virtual ~State() {}
+		virtual ~State() = default;
 
 		NatSet label;
 		vector<unique_ptr<Transition> > transitions;
@@ -49,7 +49,7 @@ class StateSystemGraph: public BaseSystemGraphNoEnabled<StateSystemGraph>
 	friend class BaseSystemGraphNoEnabled<StateSystemGraph>;
 public:
 	StateSystemGraph(RewritingContext& initial, PropChecker& spc, const ProofTermGenerator& ptg);
-	virtual ~StateSystemGraph() {}
+	virtual ~StateSystemGraph() = default;
 
 	bool satisfiesStateFormula(Bdd formula, unsigned int stateNr) const;
 

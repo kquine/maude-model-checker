@@ -14,6 +14,11 @@
 namespace modelChecker {
 
 
+WeakFairSet::WeakFairSet(WeakFairSet&& other) noexcept
+{
+	falsifiedWeakFair.swap(other.falsifiedWeakFair);
+}
+
 void
 WeakFairSet::setFalsified(unsigned int fairId)
 {
@@ -67,7 +72,7 @@ WeakFairSet::makeBadGoal() const
 void
 WeakFairSet::dump(ostream& o) const
 {
-	o << "(weak: " << falsifiedWeakFair << ")";
+	o << "(false_weak: " << falsifiedWeakFair << ")";
 }
 
 

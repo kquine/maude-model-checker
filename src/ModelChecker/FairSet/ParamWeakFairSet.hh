@@ -8,18 +8,20 @@
 #ifndef PARAMWEAKFAIRSET_HH_
 #define PARAMWEAKFAIRSET_HH_
 #include "WeakFairSet.hh"
+#include "ParamRealizedSet.hh"
 
 namespace modelChecker {
 
-class ParamWeakFairSet: public WeakFairSet
+class ParamWeakFairSet: public WeakFairSet, public ParamRealizedSet
 {
 public:
-	ParamWeakFairSet(const FairSet& f): WeakFairSet(static_cast<const WeakFairSet&>(f)) {}
+	ParamWeakFairSet(WeakFairSet&& f);
 
 	void merge(const FairSet& f, const AbstractFairnessTable& table) override;
 
 	unique_ptr<FairSet> clone() const override;
 
+	void dump(ostream& o) const override;
 };
 
 } /* namespace modelChecker */

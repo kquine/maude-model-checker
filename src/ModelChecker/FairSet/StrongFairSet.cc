@@ -13,6 +13,12 @@
 
 namespace modelChecker {
 
+StrongFairSet::StrongFairSet(StrongFairSet&& other) noexcept
+{
+	falsifiedSupp.swap(other.falsifiedSupp);
+	falsifiedCons.swap(other.falsifiedCons);
+}
+
 void
 StrongFairSet::setSuppFalse(unsigned int fairId)
 {
@@ -67,7 +73,7 @@ StrongFairSet::makeBadGoal() const
 void
 StrongFairSet::dump(ostream& o) const
 {
-	o << "(strong: " << falsifiedSupp << " , " << falsifiedCons << ")";
+	o << "(false_strong: " << falsifiedSupp << " , " << falsifiedCons << ")";
 }
 
 StrongFairSet::Goal::Goal(const StrongFairSet& f): strongFairGoal(f.falsifiedCons)
@@ -106,7 +112,7 @@ StrongFairSet::Bad::Bad(const StrongFairSet& f): badFairs(f.falsifiedCons)
 }
 
 bool
-StrongFairSet::Bad::isBad(const FairSet& f) const
+StrongFairSet::Bad::isBad(const FairSet& f, const AbstractFairnessTable&) const
 {
 	const StrongFairSet& sf = static_cast<const StrongFairSet&>(f);
 	return ! sf.falsifiedSupp.contains(badFairs);
@@ -123,6 +129,12 @@ StrongFairSet::Bad::merge(const FairSet::Bad& b)
 {
 	const Bad& nb = static_cast<const Bad&>(b);
 	badFairs.insert(nb.badFairs);
+}
+
+void
+StrongFairSet::Bad::dump(ostream& o) const
+{
+	o << "[strong bad: " << badFairs << "]";
 }
 
 }

@@ -7,8 +7,8 @@
 
 #ifndef PARAMFAIRNESSTABLE_HH_
 #define PARAMFAIRNESSTABLE_HH_
-#include "ParamSubstitutionBuilder.hh"
 #include "FairnessTable.hh"
+#include "RealizedFairnessTable.hh"
 
 namespace modelChecker {
 
@@ -18,48 +18,44 @@ using ParamWeakFairnessTable =		ParamFairnessTable<Bdd>;
 using ParamStrongFairnessTable =	ParamFairnessTable<pair<Bdd,Bdd>>;
 
 template <typename Formula>
-class ParamFairnessTable: public FairnessTable<Formula>
+class ParamFairnessTable: public FairnessTable<Formula>, public RealizedFairnessTable
 {
-	using Super = 			FairnessTable<Formula>;
-	using Fairness =		typename Super::Fairness;
-	using GroundFairness =	typename Super::GroundFairness;
+	using Super 			= FairnessTable<Formula>;
+	using Fairness 			= typename Super::Fairness;
+	using GroundFairness 	= typename Super::GroundFairness;
 public:
-	ParamFairnessTable(PropositionTable& propTable);
+	using index_type 		= AbstractFairnessTable::index_type;
 
-	bool isParamFairness(unsigned int fairId) const override;
-	const Formula& getFairFormula(unsigned int fairId) const override;
-	bool isStateFairness(unsigned int fairId) const override;
+	ParamFairnessTable(ParamPropositionTable& propTable);
 
-	const ParamSubstitutionBuilder& getParamSubstBuilder(unsigned int fairId) const;
-	unsigned int insertFairnessInstance(unsigned int paramFairId, const ParamSubstitution& propSubst);
+	bool isParamFairness(index_type fairId) const override;
+	bool isStateFairness(index_type fairId) const override;
+
+	const Formula& getFairFormula(index_type fairId) const override;
 
 private:
-	struct ParamFairness: public GroundFairness
+	struct ParamFairness: public GroundFairness, public RealizedFairnessTable::ParamInfo
 	{
-		ParamFairness(const GroundFairness& fi, DagNode* fDag, const set<unsigned int>& propIds, const ParamPropositionTable& pTable): GroundFairness(fi), builder(fDag,propIds,pTable) {}
-		ParamSubstitutionBuilder builder;
-
-		indexed_set<ParamSubstitution> substs;		// subst id |-> a realized substitution
-		vector<unsigned int> instanceId;			// subst id |-> fair id
+		ParamFairness(const GroundFairness& fi, DagNode* fDag, const vector<index_type>& propIds, const ParamPropositionTable& pTable):
+			GroundFairness(fi), ParamInfo(fDag,propIds,pTable) {}
+	};
+	struct InstanceFairnessInfo: public Fairness, public RealizedFairnessTable::InstanceInfo
+	{
+		InstanceFairnessInfo(index_type pfi, const ParamSubstitution* s): InstanceInfo(pfi, s) {}
 	};
 
-	struct InstanceFairnessInfo: public Fairness
-	{
-		InstanceFairnessInfo(unsigned int pfi, unsigned int si): paramFairId(pfi), substId(si) {}
+	unique_ptr<GroundFairness> createFormulaFairness(const Formula& f, const vector<index_type>& propIds, DagNode* fairDag) const override;
 
-		const unsigned int paramFairId;			// the base param fair id
-		const unsigned int substId;				// the corresponding substitution id
-		set<unsigned int> directBase;			// the set of immediate instance fair ids (in fairTable)
-	};
+	index_type getNextFairIndex() const;
+	ParamInfo& getParamInfo(index_type fairId) const override;
+	InstanceInfo& getInstanceInfo(index_type fairId) const override;
+	void insertInstance(index_type pfi, const ParamSubstitution* s);
 
-	unique_ptr<GroundFairness> createFormulaFairness(unsigned int formulaId, const set<unsigned int>& propIds, DagNode* fairDag) const override;
+	//TEST
+	DagNode* getDag(index_type fi) const { return Super::dags[fi]; }
 
-	unsigned int getBaseFairId(unsigned int fairId) const;
-	void updateInstanceBaseMap(const ParamFairness& pfi);	// update the dependency map when the last realized substitution is newly added
+	index_type getBaseFairId(index_type fairId) const;
 
-	bool subsumed(const vector<const ParamSubstitution*>& s1, const vector<const ParamSubstitution*>& s2) const;
-
-	vector<unique_ptr<InstanceFairnessInfo>> instanceFairnessInfo;
 	const ParamPropositionTable& paramPropTableRef;
 };
 

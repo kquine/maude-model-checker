@@ -18,10 +18,13 @@ namespace modelChecker {
 class ParamSubstitutionBuilder: private ParamVarInfo
 {
 public:
-	ParamSubstitutionBuilder(DagNode* fairnessDag, const set<unsigned int>& propIds, const ParamPropositionTable& propTable);
+	ParamSubstitutionBuilder(DagNode* fairnessDag, const vector<unsigned int>& propIds, const ParamPropositionTable& propTable);
 
 	NatSet trueParamProps(const ParamPropSet& pps, const ParamSubstitution& subst) const;	// returns a true param props for a given param substitution
 	set<ParamSubstitution> generateParamSubstitutions(const ParamPropSet& pps) const;		// returns a set of param substitutions (NONE for bot)
+
+	void dumpParamSubst(const ParamSubstitution& s) const;
+	void dumpPropSubst(unsigned int propId, const ParamSubstitution& s) const;
 
 private:
 	struct PropVarInfo
@@ -31,15 +34,12 @@ private:
 		vector<unsigned int> varMap;	// local var id -> global var id
 	};
 
-	void computeParamSubstitutions(vector<unique_ptr<PropVarInfo>>::const_iterator pos, ParamSubstitution& t, const ParamPropSet& pps, set<ParamSubstitution>& result) const;
+	using PropInfoPos = vector<unique_ptr<PropVarInfo>>::const_iterator;
 
-	void dumpParamSubst(const ParamSubstitution& s) const;
-	void dumpPropSubst(unsigned int propId, const ParamSubstitution& s) const;
+	void computeParamSubstitutions(PropInfoPos pos, ParamSubstitution& t, const ParamPropSet& pps, bool ever, set<ParamSubstitution>& result) const;
 
 	vector<unique_ptr<PropVarInfo>> pidInfo;		// an "ordered" list of "param" prop ids
 	const ParamPropositionTable& propTable;
-
-	DagNode* fairDag;	//FIXME: only for test purpose
 };
 
 } /* namespace modelChecker */

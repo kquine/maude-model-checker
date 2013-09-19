@@ -15,7 +15,7 @@ class RewriteTransitionState: private RewriteSearchState
 {
 public:
 	RewriteTransitionState(RewritingContext& parent, DagNode* stateDag);
-	virtual ~RewriteTransitionState() {}
+	virtual ~RewriteTransitionState() = default;
 
 	RewriteTransitionState(const RewriteTransitionState&) = delete;
 	RewriteTransitionState& operator=(const RewriteTransitionState&) = delete;

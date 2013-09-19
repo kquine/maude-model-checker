@@ -19,7 +19,7 @@ public:
 	struct Goal;
 	struct Bad;
 
-	void addComponent(unique_ptr<FairSet> fs);
+	void addComponent(unique_ptr<FairSet>&& fs);
 
 	void merge(const FairSet& wf, const AbstractFairnessTable& table) override;
 	bool isSatisfied() const override;
@@ -50,9 +50,10 @@ struct CompositeFairSet::Bad: public FairSet::Bad
 {
 public:
 	Bad(const CompositeFairSet& fs);
-	bool isBad(const FairSet& f) const override;
+	bool isBad(const FairSet& f, const AbstractFairnessTable& table) const override;
 	bool empty() const override;
 	void merge(const FairSet::Bad& b) override;
+	void dump(ostream& o) const override;
 private:
 	vector<unique_ptr<FairSet::Bad>> fairBadSets;
 };

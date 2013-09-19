@@ -28,7 +28,7 @@ public:
 	using TransitionIterator =	typename Automaton::TransitionIterator;
 
 	BFSGraph(Automaton& graph, const vector<State>& initials);
-	virtual ~BFSGraph() {}
+	virtual ~BFSGraph() = default;
 
 	virtual bool inDomain(const State& s) const = 0;
 	virtual bool isTarget(const State& t) const = 0;
