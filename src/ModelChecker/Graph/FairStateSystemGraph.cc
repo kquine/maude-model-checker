@@ -28,28 +28,29 @@
 
 namespace modelChecker {
 
-FairStateSystemGraph::FairStateSystemGraph(RewritingContext& initial, PropChecker& spc, const NatSet& formulaPropIds, FairnessChecker& fc, const ProofTermGenerator& ptg):
-		Super(initial, spc, ptg), fairC(fc), formulaPropIds(formulaPropIds) {}
+template <typename PL, typename FL>
+FairStateSystemGraph<PL,FL>::FairStateSystemGraph(unique_ptr<PL>&& spl, unique_ptr<FL>&& sfl, RewritingContext& initial, const ProofTermGenerator& ptg):
+		Super(move(spl),initial,ptg), stateFairLabel(move(sfl)) {}
 
-unique_ptr<FairSet>
-FairStateSystemGraph::makeFairSet(unsigned int stateNr, unsigned int) const
+template <typename PL, typename FL> unique_ptr<FairSet>
+FairStateSystemGraph<PL,FL>::makeFairSet(unsigned int stateNr, unsigned int) const
 {
-	return static_cast<State&>(*Super::seen[stateNr]).fs->clone();
+	return stateFairLabel->makeFairSet(static_cast<State*>(this->seen[stateNr].get()), nullptr);
 }
 
-unique_ptr<PropSet>
-FairStateSystemGraph::updateStateLabel(DagNode* stateDag, PreState& s)
+template <typename PL, typename FL> unique_ptr<PropSet>
+FairStateSystemGraph<PL,FL>::updateStateLabel(DagNode* stateDag, PreState& s)
 {
 	unique_ptr<PropSet> truePropIds = Super::updateStateLabel(stateDag,s);
-	static_cast<State&>(s).fs = fairC.computeAllFairness(*truePropIds);		// compute all state fairness conditions
-	s.label.intersect(formulaPropIds);										// keep only state formula props
+	stateFairLabel->updateStateLabel(*truePropIds, static_cast<State&>(s));	// compute all state fairness conditions
 	return truePropIds;
 }
 
-unique_ptr<FairStateSystemGraph::PreState>
-FairStateSystemGraph::createState(DagNode* stateDag) const
+template <typename PL, typename FL>
+unique_ptr<typename FairStateSystemGraph<PL,FL>::PreState>
+FairStateSystemGraph<PL,FL>::createState(DagNode* stateDag) const
 {
-	return unique_ptr<PreState>(new State(Super::initial, stateDag));
+	return unique_ptr<PreState>(new State(this->initial, stateDag));
 }
 
 } /* namespace modelChecker */

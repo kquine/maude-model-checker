@@ -11,6 +11,7 @@
 #include <queue>
 #include "macros.hh"
 #include "Utility/StateMap.hh"
+#include "Automaton/Automaton.hh"
 #include "ModelChecker.hh"
 
 namespace modelChecker {
@@ -18,16 +19,16 @@ namespace modelChecker {
 //
 //	Used for short counter example generation (by breadth first search).
 //
-template <typename Automaton>
+template <typename PA>
 class BFSGraph
 {
 	using Edge	= 				ModelChecker::Edge;
 public:
-	using State =				typename Automaton::State;
-	using Transition =			typename Automaton::Transition;
-	using TransitionIterator =	typename Automaton::TransitionIterator;
+	using State =				typename Automaton<PA>::State;
+	using Transition =			typename Automaton<PA>::Transition;
+	using TransitionIterator =	typename Automaton<PA>::TransitionIterator;
 
-	BFSGraph(Automaton& graph, const vector<State>& initials);
+	BFSGraph(Automaton<PA>& graph, const vector<State>& initials);
 	virtual ~BFSGraph() = default;
 
 	virtual bool inDomain(const State& s) const = 0;
@@ -36,7 +37,7 @@ public:
 	State doBFS(list<Edge>& path);
 
 protected:
-	Automaton& graph;
+	Automaton<PA>& graph;
 
 private:
 	struct Step;		// used for counter-example generation
@@ -46,8 +47,8 @@ private:
 	const vector<State>& initials;
 };
 
-template <typename Automaton>
-struct BFSGraph<Automaton>::Step		// used for counter-example generation
+template <typename PA>
+struct BFSGraph<PA>::Step		// used for counter-example generation
 {
 	Step() : Step(make_pair(NONE,NONE), NONE) {}
 	Step(const State& p, int index) : parent(p), systemIndex(index) {}

@@ -22,27 +22,59 @@ namespace modelChecker {
 ParamWeakFairnessChecker::ParamWeakFairnessChecker(const vector<unsigned int>& weakFairIds, const vector<unsigned int>& paramWeakFairIds, ParamWeakFairnessTable& fTable):
 	WeakFairnessChecker(weakFairIds,fTable), RealizedFairnessGenerator(paramWeakFairIds,fTable), fTableRef(fTable) {}
 
-bool
-ParamWeakFairnessChecker::empty() const
+unsigned int
+ParamWeakFairnessChecker::getNrFairness() const
 {
-	return WeakFairnessChecker::empty() && RealizedFairnessGenerator::empty();
+	return WeakFairnessChecker::getNrFairness() + compactIndices.size();
 }
 
 unique_ptr<FairSet>
 ParamWeakFairnessChecker::computeAllFairness(const PropSet& trueProps)
 {
-	auto pws = new ParamWeakFairSet(move(static_cast<WeakFairSet&>(*WeakFairnessChecker::computeAllFairness(trueProps))));
 	auto& pps = static_cast<const ParamPropSet&>(trueProps);
+	auto result = new ParamWeakFairSet(move(static_cast<WeakFairSet&>(*WeakFairnessChecker::computeAllFairness(trueProps))));
 
 	for (auto& pt : this->generateRealizedFairness(pps))
 	{
-		pws->setRealized(pt.first);
 		auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? pt.second.contains(propId) : pps.isTrue(propId);};
 		auto& formula = fTableRef.getFairFormula(pt.first);
 
-		if ( !BddUtil::satisfiesFormula(formula, truth))	pws->setFalsified(pt.first);
+		result->setRealized(pt.first);
+		if ( !BddUtil::satisfiesFormula(formula, truth))	result->setFalsified(pt.first);
 	}
-	return unique_ptr<FairSet>(pws);
+	return unique_ptr<FairSet>(result);
+}
+
+unique_ptr<FairSet>
+ParamWeakFairnessChecker::computeCompactFairness(const PropSet& trueProps)
+{
+	auto& pps = static_cast<const ParamPropSet&>(trueProps);
+	auto result = new ParamWeakFairSet(move(static_cast<WeakFairSet&>(*WeakFairnessChecker::computeCompactFairness(trueProps))));
+
+	for (auto& pt : this->generateRealizedFairness(pps))
+	{
+		auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? pt.second.contains(propId) : pps.isTrue(propId);};
+		auto& formula = fTableRef.getFairFormula(pt.first);
+
+		auto compactId = compactIndices.insert(pt.first).first + WeakFairnessChecker::getNrFairness();
+		result->setRealized(compactId);
+		if ( !BddUtil::satisfiesFormula(formula, truth))	result->setFalsified(compactId);
+	}
+	return unique_ptr<FairSet>(result);
+}
+
+unique_ptr<FairSet>
+ParamWeakFairnessChecker::unzip(const FairSet& fs) const
+{
+	auto& pws = static_cast<const ParamWeakFairSet&>(fs);
+	auto result = new ParamWeakFairSet(move(static_cast<WeakFairSet&>(*WeakFairnessChecker::unzip(fs))));
+
+	for (unsigned int wn = WeakFairnessChecker::getNrFairness(), i = 0; i < compactIndices.size(); ++i)	// store an expanded version
+	{
+		if ( pws.getFalsified(wn + i) )	result->setFalsified(compactIndices[i]);
+		if ( pws.getRealized(wn + i) )	result->setRealized(compactIndices[i]);
+	}
+	return unique_ptr<FairSet>(result);
 }
 
 } /* namespace modelChecker */

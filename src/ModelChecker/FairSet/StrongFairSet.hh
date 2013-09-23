@@ -25,7 +25,12 @@ public:
 	void setSuppFalse(unsigned int fairId);
 	void setConsFalse(unsigned int fairId);
 
+	bool getSuppFalse(unsigned int fairId) const;
+	bool getConsFalse(unsigned int fairId) const;
+
+	virtual void paste(const FairSet& f) override;
 	virtual void merge(const FairSet& f, const AbstractFairnessTable& table) override;
+
 	bool isSatisfied() const override;
 	bool operator<(const FairSet& fs) const override;
 
@@ -46,7 +51,7 @@ class StrongFairSet::Goal: public FairSet::Goal
 public:
 	Goal(const StrongFairSet& fs);
 	bool empty() const override;
-	bool update(const FairSet& f) override;
+	bool update(const FairSet& f, const AbstractFairnessTable& table) override;
 	void dump(ostream& o) const override;
 protected:
 	NatSet strongFairGoal;

@@ -20,10 +20,13 @@ public:
 	struct Bad;
 
 	void addComponent(unique_ptr<FairSet>&& fs);
+	const FairSet& getComponent(unsigned int i) const;
 
-	void merge(const FairSet& wf, const AbstractFairnessTable& table) override;
+	void paste(const FairSet& f) override;
+	void merge(const FairSet& f, const AbstractFairnessTable& table) override;
+
 	bool isSatisfied() const override;
-	bool operator<(const FairSet& fs) const override;
+	bool operator<(const FairSet& f) const override;
 
 	unique_ptr<FairSet> clone() const override;
 	unique_ptr<FairSet::Goal> makeFairGoal() const override;
@@ -39,7 +42,7 @@ class CompositeFairSet::Goal: public FairSet::Goal
 public:
 	Goal(const CompositeFairSet& fs);
 	bool empty() const override;
-	bool update(const FairSet& f) override;
+	bool update(const FairSet& f, const AbstractFairnessTable& table) override;
 	void dump(ostream& o) const override;
 
 private:

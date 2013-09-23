@@ -69,6 +69,8 @@ RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& contex
 			do
 			{
 				DagNode* res = sc.rebuildDag(r->getRhsBuilder().construct(context)).first;
+				context.incrementRlCount();	// since we implicitly apply derived rules by patterns
+
 				if (TermUtil::checkGround(res))	// it should NOT be a param prop
 				{
 					res->computeTrueSort(parentContext);

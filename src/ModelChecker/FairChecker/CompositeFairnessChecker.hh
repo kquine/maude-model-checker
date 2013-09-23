@@ -22,8 +22,11 @@ class CompositeFairnessChecker: public FairnessChecker
 public:
 	void addComponent(unique_ptr<FairnessChecker>&& checker);
 
-	bool empty() const override;
+	unsigned int getNrFairness() const override;
 	unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
+
+	unique_ptr<FairSet> computeCompactFairness(const PropSet& trueProps) override;
+	unique_ptr<FairSet> unzip(const FairSet& fs) const override;
 
 private:
 	vector<unique_ptr<FairnessChecker>> fairCheckers;	// own the checkers!

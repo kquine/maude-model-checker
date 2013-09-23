@@ -24,6 +24,7 @@ public:
 	bool isTrue(unsigned int propId) const;
 
 	virtual void setTrue(unsigned int propId);
+	virtual void setTrue(const NatSet& tPids);
 	virtual void setTrue(const PropSet& ps);
 
 	virtual void dump(ostream& s);

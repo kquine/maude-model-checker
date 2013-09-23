@@ -29,31 +29,32 @@
 
 namespace modelChecker {
 
-StateSystemGraph::StateSystemGraph(RewritingContext& initial, PropChecker& spc, const ProofTermGenerator& ptg): Super(initial, ptg), statePC(spc) {}
+template <typename PL>
+StateSystemGraph<PL>::StateSystemGraph(unique_ptr<PL>&& spl, RewritingContext& initial, const ProofTermGenerator& ptg):
+		Super(initial, ptg), statePropLabel(move(spl)) {}
 
-bool
-StateSystemGraph::satisfiesStateFormula(Bdd formula, unsigned int stateNr) const
+template <typename PL> bool
+StateSystemGraph<PL>::satisfiesStateFormula(Bdd formula, unsigned int stateNr) const
 {
-	const NatSet& label = Super::seen[stateNr]->label;
-	return BddUtil::satisfiesFormula(formula, [&label] (unsigned int propId) { return label.contains(propId); });
+	auto check = [&] (unsigned int propId) { return statePropLabel->satisfiesStateProp(propId, *this->seen[stateNr]); };
+	return BddUtil::satisfiesFormula(formula, check);
 }
 
-unique_ptr<PropSet>
-StateSystemGraph::updateStateLabel(DagNode* stateDag, State& s)
+template <typename PL> unique_ptr<PropSet>
+StateSystemGraph<PL>::updateStateLabel(DagNode* stateDag, State& s)
 {
-	unique_ptr<PropSet> truePropIds(statePC.computeCheckResult(stateDag)); 	// compute all state props
-	s.label.insert(truePropIds->getTruePropIds());							// store the formula state props
-	return truePropIds;
+	return statePropLabel->updateStateLabel(stateDag, s);		// compute all state props and store the formula state props
 }
 
-unique_ptr<typename StateSystemGraph::State>
-StateSystemGraph::createState(DagNode* stateDag) const
+template <typename PL>
+unique_ptr<typename StateSystemGraph<PL>::State>
+StateSystemGraph<PL>::createState(DagNode* stateDag) const
 {
-	return unique_ptr<State>(new State(Super::initial, stateDag));
+	return unique_ptr<State>(new State(this->initial, stateDag));
 }
 
-bool
-StateSystemGraph::insertTransition(unsigned int nextState, State& n)
+template <typename PL> bool
+StateSystemGraph<PL>::insertTransition(unsigned int nextState, State& n)
 {
 	if (n.explore->nextStateSet.insert(nextState).second)	// if a new transition identified
 	{
@@ -63,8 +64,8 @@ StateSystemGraph::insertTransition(unsigned int nextState, State& n)
 	return false;
 }
 
-DagNode*
-BaseSystemGraphTraits<StateSystemGraph>::Transition::makeDag(RewritingContext&, DagNode*, const ProofTermGenerator& ptg) const
+template <typename PL> DagNode*
+BaseSystemGraphTraits<StateSystemGraph<PL>>::Transition::makeDag(RewritingContext&, DagNode*, const ProofTermGenerator& ptg) const
 {
 	return ptg.makeProofDag(nullptr,*rule, nullptr);
 }

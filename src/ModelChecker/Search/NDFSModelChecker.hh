@@ -9,23 +9,23 @@
 #define NDFSMODELCHECKER_HH_
 #include <memory>
 #include "buchiAutomaton2.hh"
+#include "Automaton/Automaton.hh"
 #include "ModelChecker.hh"
 #include "BFSGraph.hh"
 
 namespace modelChecker {
 
-template <typename Automaton>
+template <typename PA>
 class NDFSModelChecker: public ModelChecker
 {
-	using State =				typename Automaton::State;
-	using Transition =			typename Automaton::Transition;
-	using TransitionIterator =	typename Automaton::TransitionIterator;
+	using State =				typename Automaton<PA>::State;
+	using Transition =			typename Automaton<PA>::Transition;
+	using TransitionIterator =	typename Automaton<PA>::TransitionIterator;
 
 public:
-	explicit NDFSModelChecker(unique_ptr<Automaton>&& prod);
+	explicit NDFSModelChecker(unique_ptr<Automaton<PA>>&& prod);
 
 	bool findCounterExample() override;
-	const DagSystemGraph& getSystemGraph() const override	{ return prod->getSystemAutomaton(); }
 
 private:
 	struct StateSet
@@ -45,15 +45,15 @@ private:
 	State cycleState;					// intersection of cycle and prefix after nested dfs
 	vector<unique_ptr<StateSet>> intersectionStates;
 
-	const unique_ptr<Automaton> prod;
+	const unique_ptr<Automaton<PA>> prod;
 };
 
-template <typename Automaton>
-class NDFSModelChecker<Automaton>::PrefixBFSGraph : public BFSGraph<Automaton>
+template <typename PA>
+class NDFSModelChecker<PA>::PrefixBFSGraph : public BFSGraph<PA>
 {
 public:
-	PrefixBFSGraph(Automaton& prod, const vector<unique_ptr<StateSet> >& stateMap, const State& cycleState):
-		BFSGraph<Automaton>(prod, prod.getInitialStates()), cycleState(cycleState), stateMap(stateMap) {}
+	PrefixBFSGraph(Automaton<PA>& prod, const vector<unique_ptr<StateSet> >& stateMap, const State& cycleState):
+		BFSGraph<PA>(prod, prod.getInitialStates()), cycleState(cycleState), stateMap(stateMap) {}
 
 	bool isTarget(const State& s) const	{ return s == cycleState; }
 	bool isTarget(const Transition& t)	{ return isTarget(t.target); }

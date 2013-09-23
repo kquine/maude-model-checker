@@ -24,7 +24,6 @@ public:
 	ModelChecker& operator=(const ModelChecker&) = delete;
 
 	virtual bool findCounterExample() = 0;
-	virtual const DagSystemGraph& getSystemGraph() const = 0;
 
 	const list<Edge>& getLeadIn() const	{ return leadIn; }
 	const list<Edge>& getCycle() const	{ return cycle; }

@@ -23,9 +23,11 @@ public:
 	WeakFairSet(WeakFairSet&& other) noexcept;
 
 	void setFalsified(unsigned int fairId);
-
-	virtual void merge(const FairSet& f, const AbstractFairnessTable& table) override;
+	bool getFalsified(unsigned int fairId) const;
 	void swapFalsified(NatSet& falsified);
+
+	virtual void paste(const FairSet& f) override;
+	virtual void merge(const FairSet& f, const AbstractFairnessTable& table) override;
 
 	bool isSatisfied() const override;
 	bool operator<(const FairSet& fs) const override;
@@ -40,12 +42,13 @@ protected:
 	NatSet falsifiedWeakFair;
 };
 
+
 class WeakFairSet::Goal: public FairSet::Goal
 {
 public:
 	Goal(const WeakFairSet& fs);
 	bool empty() const override;
-	bool update(const FairSet& f) override;
+	virtual bool update(const FairSet& f, const AbstractFairnessTable& table) override;
 	void dump(ostream& o) const override;
 protected:
 	NatSet weakFairGoal;	// falsified entities

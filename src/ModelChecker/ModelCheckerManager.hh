@@ -17,9 +17,7 @@
 #include "FairChecker/FairnessChecker.hh"
 #include "Interface/FormulaBuilder.hh"
 #include "Interface/ProofTermGenerator.hh"
-#include "Search/NDFSModelChecker.hh"
-#include "Search/StreettModelChecker.hh"
-#include "Search/SCCBuchiModelChecker.hh"
+#include "Search/ModelChecker.hh"
 
 namespace modelChecker {
 
@@ -29,34 +27,27 @@ class ModelCheckerManager
 public:
 	ModelCheckerManager(Formula& formula, PropositionTable& propTable, unique_ptr<AbstractFairnessTable>&& fairTable,
 			const PropEvaluator& stateEval, const PropEvaluator& eventEval, const ProofTermGenerator& ptg, RewritingContext& context);
-	virtual ~ModelCheckerManager() = default;
 
-	const DagSystemGraph& getDagSystemGraph() const		{ return mc->getSystemGraph(); }
-	const list<ModelChecker::Edge>& getLeadIn() const	{ return mc->getLeadIn(); }
-	const list<ModelChecker::Edge>& getCycle() const	{ return mc->getCycle(); }
-	bool findCounterExample()							{ return mc->findCounterExample(); }
+	const DagSystemGraph& getDagSystemGraph() const		{ return *dagGraph; }
+	const list<ModelChecker::Edge>& getLeadIn() const	{ return modelChecker->getLeadIn(); }
+	const list<ModelChecker::Edge>& getCycle() const	{ return modelChecker->getCycle(); }
+	bool findCounterExample()							{ return modelChecker->findCounterExample(); }
 
 private:
-	void createSystemGraph(unique_ptr<AbstractFairnessTable>&& fairTable);
+	void initModelChecker(unique_ptr<AbstractFairnessTable>&& fairTable);
 
-	template <typename Graph> struct makeGraph;
-	template <typename SA> unique_ptr<ModelChecker> makeModelChecker(unique_ptr<SA>&& sysGraph) const;
-	template <typename SA> unique_ptr<ModelChecker> makeModelChecker(unique_ptr<SA>&& sysGraph, unique_ptr<AbstractFairnessTable>&& fairTable) const;
-	//
-	// prop checkers
-	//
-	unique_ptr<PropChecker> statePropChecker;
-	unique_ptr<PropChecker> eventPropChecker;
-	unique_ptr<EnabledPropTransferer> enalbedPropTransferer;
-	//
-	// fair checkers
-	//
-	unique_ptr<FairnessChecker> stateFairChecker;
-	unique_ptr<FairnessChecker> eventFairChecker;
-	//
-	// a model checker
-	//
-	unique_ptr<ModelChecker> mc;
+	template <typename PL>
+	void initModelChecker(unique_ptr<PL>&& pl, unique_ptr<AbstractFairnessTable>&& fairTable);
+
+	template <typename PL, typename FL>
+	void initModelChecker(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, unique_ptr<AbstractFairnessTable>&& fairTable);
+
+	template <template <typename> class Graph, typename PL, typename... Args>
+	void makeMC(unique_ptr<PL>&& pl, Args&&... args);
+
+	template <template <typename,typename> class Graph, typename PL, typename FL, typename... Args>
+	void makeMC(unique_ptr<AbstractFairnessTable>&& fairTable, unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, Args&&... args);
+
 	//
 	// formula and propositions
 	//
@@ -69,20 +60,26 @@ private:
 	const PropEvaluator& eventEval;
 	const ProofTermGenerator& pGenerator;
 	RewritingContext& sysContext;
+	//
+	// ground/param props (except instance props)
+	//
+	vector<unsigned int> stateProps;
+	vector<unsigned int> eventProps;
+	vector<unsigned int> enabledProps;
+	//
+	// prop/fair checkers
+	//
+	unique_ptr<PropChecker> statePC;
+	unique_ptr<PropChecker> eventPC;
+	unique_ptr<FairnessChecker> stateFC;
+	unique_ptr<FairnessChecker> eventFC;
+	//
+	// a model checker
+	//
+	DagSystemGraph* dagGraph = nullptr;
+	unique_ptr<ModelChecker> modelChecker;
 };
 
-
-template <typename Graph>
-struct ModelCheckerManager::makeGraph
-{
-	template <typename... Args>
-	unique_ptr<Graph> operator()(Args&&... args)
-	{
-		Graph* g = new Graph(std::forward<Args>(args)...);
-		g->init();
-		return unique_ptr<Graph>(g);
-	}
-};
 
 } /* namespace modelChecker */
 #endif /* MODELCHECKERMANAGER_HH_ */

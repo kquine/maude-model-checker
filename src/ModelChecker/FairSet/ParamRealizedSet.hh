@@ -15,10 +15,10 @@ namespace modelChecker {
 class ParamRealizedSet
 {
 public:
-	using index_type = AbstractFairnessTable::index_type;
+	void setRealized(unsigned int fairId);
+	bool getRealized(unsigned int fairId) const;
 
-	void setRealized(index_type fairId);
-
+	void paste(const ParamRealizedSet& f);
 	void merge(const ParamRealizedSet& f);
 
 	void extend(const NatSet& other, NatSet& target, const RealizedFairnessTable& rtable) const;	// extend target with a fair in other

@@ -29,6 +29,25 @@ public:
 	        }
 	    }
 	}
+
+	static pair<bool,Bdd> satisfiesPartialFormula(Bdd formula, const std::function<bool(unsigned int)>& domain, const std::function<bool(unsigned int)>& truth)
+	{
+	    for(;;)
+	    {
+	        if (formula == bdd_true())
+	        	return make_pair(true, bdd_true());
+	        else if (formula == bdd_false())
+	            return make_pair(false, bdd_false());
+	        else
+	        {
+				auto propId = bdd_var(formula);
+				if (domain(propId))
+					formula = truth(propId) ? bdd_high(formula) : bdd_low(formula);
+				else
+					return make_pair(true, formula);
+	        }
+	    }
+	}
 };
 
 } /* namespace modelChecker */

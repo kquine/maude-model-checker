@@ -15,14 +15,28 @@ namespace modelChecker {
 class ParamWeakFairSet: public WeakFairSet, public ParamRealizedSet
 {
 public:
+	struct Goal;
+
 	ParamWeakFairSet(WeakFairSet&& f);
 
+	void paste(const FairSet& f) override;
 	void merge(const FairSet& f, const AbstractFairnessTable& table) override;
 
 	unique_ptr<FairSet> clone() const override;
 
 	void dump(ostream& o) const override;
+
+	unique_ptr<FairSet::Goal> makeFairGoal() const override;
+
 };
+
+class ParamWeakFairSet::Goal: public WeakFairSet::Goal
+{
+public:
+	Goal(const ParamWeakFairSet& fs);
+	bool update(const FairSet& f, const AbstractFairnessTable& table) override;
+};
+
 
 } /* namespace modelChecker */
 #endif /* PARAMWEAKFAIRSET_HH_ */

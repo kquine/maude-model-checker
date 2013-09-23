@@ -33,7 +33,21 @@ ParamPropSet::setTrue(unsigned int propId)
 	if (auto pmm = propTable.getParamMatches(propId))
 	{
 		for (auto& j : *pmm)
-			trueParamSubstRefs[j.first].insert(j.second.begin(), j.second.end());
+			setTrueParamSubst(j.first, j.second);
+	}
+}
+
+void
+ParamPropSet::setTrue(const NatSet& tPids)
+{
+	PropSet::setTrue(tPids);
+	for (auto p : tPids)
+	{
+		if (auto pmm = propTable.getParamMatches(p))
+		{
+			for (auto& j : *pmm)
+				setTrueParamSubst(j.first, j.second);
+		}
 	}
 }
 
@@ -48,8 +62,8 @@ ParamPropSet::setTrue(const PropSet& ps)
 	}
 }
 
-void
-ParamPropSet::setTrueParamSubst(unsigned int propId, const set<const ParamSubstitution*>& substIds)
+template <typename T> void
+ParamPropSet::setTrueParamSubst(unsigned int propId, const T& substIds)
 {
 	trueParamSubstRefs[propId].insert(substIds.begin(), substIds.end());
 }

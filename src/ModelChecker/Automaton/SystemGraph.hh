@@ -13,7 +13,7 @@ namespace modelChecker {
 class SystemGraph
 {
 public:
-	virtual ~SystemGraph() {}
+	virtual ~SystemGraph() = default;
 
     virtual unsigned int getNrStates() const = 0;
     virtual unsigned int getNrTransitions(unsigned int stateNr) const = 0;
@@ -25,7 +25,7 @@ public:
 inline unsigned int
 SystemGraph::getTotalTransitions() const
 {
-	unsigned int nrStates = getNrStates();
+	const auto nrStates = getNrStates();
 	unsigned int total = 0;
 	for (unsigned int i = 0; i < nrStates; ++i)
 		total += getNrTransitions(i);

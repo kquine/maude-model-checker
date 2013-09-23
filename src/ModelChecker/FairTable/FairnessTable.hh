@@ -25,27 +25,24 @@ template <typename Formula>
 class FairnessTable: public AbstractFairnessTable
 {
 public:
-	using index_type = AbstractFairnessTable::index_type;
-
 	FairnessTable(PropositionTable& propTable);
-	virtual ~FairnessTable() {}
 
 	bool hasStrongFairness() const override;
-	virtual bool isParamFairness(index_type) const		{ return false; }
+	virtual bool isParamFairness(unsigned int) const	{ return false; }
 
-	index_type nrFairness() const override				{ return fairTable.size();}
+	unsigned int nrFairness() const override			{ return fairTable.size();}
 	const NatSet& getOrigFairnessIds() const			{ return origFairIds; }
 
-	virtual const Formula& getFairFormula(index_type fairId) const;
-	virtual bool isStateFairness(index_type fairId) const;
-	bool isStateEventFairness(index_type fairId) const;
+	virtual const Formula& getFairFormula(unsigned int fairId) const;
+	virtual bool isStateFairness(unsigned int fairId) const;
+	bool isStateEventFairness(unsigned int fairId) const;
 
-	index_type insertFairnessFormula(const Formula& f, const vector<index_type>& propIds, DagNode* fairDag);
+	unsigned int insertFairnessFormula(const Formula& f, const vector<unsigned int>& propIds, DagNode* fairDag);
 
 protected:
 	struct Fairness    // empty base class
 	{
-		virtual ~Fairness() {}
+		virtual ~Fairness() = default;
 	};
 
 	struct GroundFairness: public Fairness
@@ -56,13 +53,13 @@ protected:
 		const bool noEvent;
 	};
 
-	virtual unique_ptr<GroundFairness> createFormulaFairness(const Formula& f, const vector<index_type>& propIds, DagNode* fairDag) const;
+	virtual unique_ptr<GroundFairness> createFormulaFairness(const Formula& f, const vector<unsigned int>& propIds, DagNode* fairDag) const;
 
 	vector<unique_ptr<Fairness>> fairTable;		// fairId |-> fairnessInfo
 
 private:
 	NatSet origFairIds;							// a set of original (ground or param) fair ids
-	map<Formula,index_type> fairFormulas;		// fair formula |-> fair id
+	map<Formula,unsigned int> fairFormulas;		// fair formula |-> fair id
 
 	PropositionTable& propTable;
 };

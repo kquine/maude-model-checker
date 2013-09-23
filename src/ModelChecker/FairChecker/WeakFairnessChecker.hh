@@ -18,8 +18,11 @@ class WeakFairnessChecker: public FairnessChecker
 public:
 	WeakFairnessChecker(const vector<unsigned int>& weakFairIds, WeakFairnessTable& fTable);
 
-	virtual bool empty() const override;
+	virtual unsigned int getNrFairness() const override;
 	virtual unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
+
+	virtual unique_ptr<FairSet> computeCompactFairness(const PropSet& trueProps) override;
+	virtual unique_ptr<FairSet> unzip(const FairSet& fs) const;
 
 private:
 	const vector<unsigned int> weakFairIds;

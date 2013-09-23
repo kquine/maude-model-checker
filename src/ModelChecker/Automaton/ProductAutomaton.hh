@@ -7,31 +7,32 @@
 
 #ifndef PRODUCTAUTOMATON_HH_
 #define PRODUCTAUTOMATON_HH_
-#include "AutomatonTraits.hh"
+#include "Automaton.hh"
 
 namespace modelChecker {
 
 template <typename SystemAutomaton> struct ProductTransitionIteratorTraits;
 
 template <typename SA, typename PA>
-class ProductAutomaton
+class ProductAutomaton: public Automaton<PA>
 {
 public:
-	using State = 		typename AutomatonTraits<PA>::State;
-	using Transition = 	typename AutomatonTraits<PA>::Transition;
-	struct TransitionIterator;
+	using State = 				typename Automaton<PA>::State;
+	using Transition = 			typename Automaton<PA>::Transition;
+	using TransitionIterator =	typename Automaton<PA>::TransitionIterator;
+	struct ProdTransitionIterator;
 
 	ProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property);
 	virtual ~ProductAutomaton() = default;
 
-	const SA& getSystemAutomaton() const				{ return *systemAut; }
-	const PA& getPropertyAutomaton() const				{ return *propertyAut; }
-	const vector<State>& getInitialStates() const		{ return initialStates; }
+	const SA& getSystemAutomaton() const					{ return *systemAut; }
+	const PA& getPropertyAutomaton() const override			{ return *propertyAut; }
+	const vector<State>& getInitialStates() const override	{ return initialStates; }
 
-	unique_ptr<TransitionIterator> makeTransitionIterator(const State& state);
+	unique_ptr<TransitionIterator> makeTransitionIterator(const State& state) override;
 
 private:
-	friend class TransitionIterator;
+	friend class ProdTransitionIterator;
 
 	const unique_ptr<SA> systemAut;
 	const unique_ptr<PA> propertyAut;
@@ -39,31 +40,23 @@ private:
 };
 
 template <typename SA, typename PA>
-struct ProductAutomaton<SA,PA>::TransitionIterator: private ProductTransitionIteratorTraits<SA>
+struct ProductAutomaton<SA,PA>::ProdTransitionIterator: public TransitionIterator, private ProductTransitionIteratorTraits<SA>
 {
 public:
-	TransitionIterator(SA& sys, const PA& prop, const State& state): sysGraph(sys), ts(prop.getTransitions(state.second)) { tr.source = state; }
-
-	bool hasNext() const					{ return tr.systemIndex != NONE; }
-	const Transition& pick() const			{ return tr; }
-	const State& getSource() const			{ return tr.source; }
-
-	void init()								{ computeNextTransition(true); }
-	void next()								{ computeNextTransition(false); }
+	ProdTransitionIterator(SA& sys, const PA& prop, const State& state): TransitionIterator(state), sysGraph(sys), ts(prop.getTransitions(state.second)) {}
 
 protected:
-	void computeNextTransition(bool first)	{ ProductTransitionIteratorTraits<SA>::template computeNextTransition<PA>(first,tr,ts,sysGraph); }
+	void computeNextTransition(bool first) override	{ ProductTransitionIteratorTraits<SA>::template computeNextTransition<PA>(first,this->tr,ts,sysGraph); }
 
 	SA& sysGraph;
-	const typename AutomatonTraits<PA>::PropertyTransitionSet& ts;
-	typename AutomatonTraits<PA>::Transition tr;
+	const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts;
 };
 
 template <typename SA>
 struct ProductTransitionIteratorTraits
 {
 	template <typename PA>
-	void computeNextTransition(bool first, typename AutomatonTraits<PA>::Transition& tr, const typename AutomatonTraits<PA>::PropertyTransitionSet& ts, SA& ks);
+	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr, const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks);
 };
 
 }

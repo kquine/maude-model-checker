@@ -22,6 +22,13 @@ namespace modelChecker {
 ParamWeakFairSet::ParamWeakFairSet(WeakFairSet&& f): WeakFairSet(move(f)) {}
 
 void
+ParamWeakFairSet::paste(const FairSet& f)
+{
+	WeakFairSet::paste(f);
+	ParamRealizedSet::paste(static_cast<const ParamWeakFairSet&>(f));
+}
+
+void
 ParamWeakFairSet::merge(const FairSet& f, const AbstractFairnessTable& table)
 {
 	auto& wtable = static_cast<const ParamWeakFairnessTable&>(table);
@@ -46,6 +53,33 @@ ParamWeakFairSet::dump(ostream& o) const
 {
 	WeakFairSet::dump(o);
 	ParamRealizedSet::dump(o);
+}
+
+unique_ptr<FairSet::Goal>
+ParamWeakFairSet::makeFairGoal() const
+{
+	return unique_ptr<FairSet::Goal>(new Goal(*this));
+}
+
+
+ParamWeakFairSet::Goal::Goal(const ParamWeakFairSet& f): WeakFairSet::Goal(f) {}
+
+bool
+ParamWeakFairSet::Goal::update(const FairSet& f, const AbstractFairnessTable& table)
+{
+	auto& wtable = static_cast<const ParamWeakFairnessTable&>(table);
+	auto& pwf = static_cast<const ParamWeakFairSet&>(f);
+
+	NatSet falsifiedWeakFair = pwf.falsifiedWeakFair;
+	pwf.extend(weakFairGoal, falsifiedWeakFair, wtable);
+
+	if (falsifiedWeakFair.contains(weakFairGoal))	// all still falsified
+		return false;
+	else
+	{
+		weakFairGoal.intersect(falsifiedWeakFair);	// goal = still falsified
+		return true;
+	}
 }
 
 } /* namespace modelChecker */

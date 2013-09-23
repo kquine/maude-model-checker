@@ -21,15 +21,15 @@
 namespace modelChecker {
 
 ParamEnabledPropTransferer::ParamEnabledPropTransferer(
-		const vector<unsigned int>& groundEPropIds, const vector<unsigned int>& paramEPropIds, const ParamPropositionTable& propTable):
-				EnabledPropTransferer(groundEPropIds, propTable), paramEnabledPropIds(paramEPropIds) {}
+		const NatSet& formulaEnbPropIds, const vector<unsigned int>& groundFairEnbPropIds, const vector<unsigned int>& paramFairEnbPropIds, const ParamPropositionTable& propTable):
+				EnabledPropTransferer(formulaEnbPropIds, groundFairEnbPropIds, propTable), paramFairEnabledPropIds(paramFairEnbPropIds) {}
 
 void
-ParamEnabledPropTransferer::computeEnabledPropIDs(PropSet& truePropIds, const vector<unique_ptr<PropSet> >& trueEventPropIds) const
+ParamEnabledPropTransferer::transferEnabledPropIDs(PropSet& truePropIds, const vector<unique_ptr<PropSet> >& trueEventPropIds) const
 {
-	EnabledPropTransferer::computeEnabledPropIDs(truePropIds, trueEventPropIds);
+	EnabledPropTransferer::transferEnabledPropIDs(truePropIds, trueEventPropIds);
 
-	for (auto i: paramEnabledPropIds)
+	for (auto i: paramFairEnabledPropIds)
 	{
 		auto evtId = propositions.getEnabledEventId(i);
 		for (const unique_ptr<PropSet>& j  : trueEventPropIds)

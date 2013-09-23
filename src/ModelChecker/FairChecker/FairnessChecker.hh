@@ -20,8 +20,11 @@ class FairnessChecker
 public:
 	virtual ~FairnessChecker() = default;
 
-	virtual bool empty() const = 0;
+	virtual unsigned int getNrFairness() const = 0;
 	virtual unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) = 0;
+
+	virtual unique_ptr<FairSet> computeCompactFairness(const PropSet& trueProps) = 0;
+	virtual unique_ptr<FairSet> unzip(const FairSet& fs) const = 0;
 
 protected:
 	bool satisfiesFairFormula(const PropSet& trueProps, Bdd formula) const;

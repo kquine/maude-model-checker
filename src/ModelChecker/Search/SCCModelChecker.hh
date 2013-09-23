@@ -8,24 +8,24 @@
 #ifndef SCCMODELCHECKER_HH_
 #define SCCMODELCHECKER_HH_
 #include "Utility/StateMap.hh"
+#include "Automaton/FairAutomaton.hh"
 #include "ModelChecker.hh"
 #include "BFSGraph.hh"
 
 
 namespace modelChecker {
 
-template <typename Automaton>
+template <typename PA>
 class SCCModelChecker: public ModelChecker
 {
 public:
-	using State =				typename Automaton::State;
-	using Transition =			typename Automaton::Transition;
-	using TransitionIterator =	typename Automaton::TransitionIterator;
+	using State =				typename FairAutomaton<PA>::State;
+	using Transition =			typename FairAutomaton<PA>::Transition;
+	using TransitionIterator =	typename FairAutomaton<PA>::TransitionIterator;
 
-	explicit SCCModelChecker(unique_ptr<Automaton>&& graph);
+	explicit SCCModelChecker(unique_ptr<FairAutomaton<PA>>&& graph);
 
 	bool findCounterExample() override;
-	const DagSystemGraph& getSystemGraph() const override	{ return graph->getSystemAutomaton(); }
 
 protected:
 	using IndexMap = StateMap<unsigned int>;
@@ -42,7 +42,7 @@ protected:
 	class SCCStack
 	{
 	public:
-		SCCStack(SCCModelChecker<Automaton>& mc): mc(mc) {}
+		SCCStack(SCCModelChecker<PA>& mc): mc(mc) {}
 
 		bool empty() const					{ return sccStack.empty(); }
 		unique_ptr<SCC>& topSCC()			{ return sccStack.top(); }
@@ -59,14 +59,14 @@ protected:
 		stack<unique_ptr<SCC>> sccStack;
 		stack<unique_ptr<TransitionIterator>> dfsStack;
 		stack<State> stateStack;
-		SCCModelChecker<Automaton>& mc;
+		SCCModelChecker<PA>& mc;
 	};
 
 	virtual unique_ptr<SCC> findAcceptedSCC(const vector<State>& initials) = 0;
 
 	unsigned int max = 0;				// dfs index
 	IndexMap H;
-	const unique_ptr<Automaton> graph;
+	const unique_ptr<FairAutomaton<PA>> graph;
 
 private:
 	class SCCBFSGraph;
@@ -78,38 +78,38 @@ private:
 //
 //	to generate counter example..
 //
-template <typename Automaton>
-class SCCModelChecker<Automaton>::SCCBFSGraph: public BFSGraph<Automaton>
+template <typename PA>
+class SCCModelChecker<PA>::SCCBFSGraph: public BFSGraph<PA>
 {
 public:
-	SCCBFSGraph(SCCModelChecker<Automaton>& mc, const IndexMap& H, unsigned int root, const vector<State>& initials):
-		BFSGraph<Automaton>(*mc.graph, initials), root(root), map(H), mc(mc) {}
+	SCCBFSGraph(SCCModelChecker<PA>& mc, const IndexMap& H, unsigned int root, const vector<State>& initials):
+		BFSGraph<PA>(*mc.graph, initials), root(root), map(H), mc(mc) {}
 
 protected:
 	const unsigned int root;
 	const IndexMap& map;
-	SCCModelChecker<Automaton>& mc;
+	SCCModelChecker<PA>& mc;
 };
 
-template <typename Automaton>
-struct SCCModelChecker<Automaton>::PrefixBFSGraph: public SCCBFSGraph
+template <typename PA>
+struct SCCModelChecker<PA>::PrefixBFSGraph: public SCCBFSGraph
 {
-	PrefixBFSGraph(SCCModelChecker<Automaton>& mc, const IndexMap& H, unsigned int root):
+	PrefixBFSGraph(SCCModelChecker<PA>& mc, const IndexMap& H, unsigned int root):
 		SCCBFSGraph(mc,H,root,mc.graph->getInitialStates()) {}
 
-	bool inDomain(const State& s) const	{ return SCCBFSGraph::map.contains(s); }
-	bool isTarget(const State& s) const	{ return inDomain(s) && SCCBFSGraph::map.get(s) >= SCCBFSGraph::root; }
+	bool inDomain(const State& s) const	{ return this->map.contains(s); }
+	bool isTarget(const State& s) const	{ return inDomain(s) && this->map.get(s) >= this->root; }
 	bool isTarget(const Transition& t)	{ return isTarget(t.target); }
 };
 
-template <typename Automaton>
-class SCCModelChecker<Automaton>::CycleCompBFSGraph: public SCCBFSGraph
+template <typename PA>
+class SCCModelChecker<PA>::CycleCompBFSGraph: public SCCBFSGraph
 {
 public:
-	CycleCompBFSGraph(SCCModelChecker<Automaton>& mc, const IndexMap& H, unsigned int root, const State& start, const State& des):
+	CycleCompBFSGraph(SCCModelChecker<PA>& mc, const IndexMap& H, unsigned int root, const State& start, const State& des):
 		SCCBFSGraph(mc,H,root,initial), des(des), initial{start} {}
 
-	bool inDomain(const State& s) const	{ return SCCBFSGraph::map.contains(s) && SCCBFSGraph::map.get(s) >= SCCBFSGraph::root; }
+	bool inDomain(const State& s) const	{ return this->map.contains(s) && this->map.get(s) >= this->root; }
 	bool isTarget(const State& s) const	{ return s == des; }
 	bool isTarget(const Transition& t)	{ return isTarget(t.target); }
 
@@ -118,16 +118,16 @@ private:
 	const vector<State> initial;
 };
 
-template <typename Automaton>
-class SCCModelChecker<Automaton>::CycleBFSGraph: public SCCBFSGraph
+template <typename PA>
+class SCCModelChecker<PA>::CycleBFSGraph: public SCCBFSGraph
 {
 public:
-	CycleBFSGraph(SCCModelChecker<Automaton>& mc, const IndexMap& H, unsigned int root, const State& start, FairSet::Goal& goal):
+	CycleBFSGraph(SCCModelChecker<PA>& mc, const IndexMap& H, unsigned int root, const State& start, FairSet::Goal& goal):
 		SCCBFSGraph(mc,H,root,initial), goal(goal), initial{start} {}
 
-	bool inDomain(const State& s) const	{ return SCCBFSGraph::map.contains(s) && SCCBFSGraph::map.get(s) >= SCCBFSGraph::root; }
+	bool inDomain(const State& s) const	{ return this->map.contains(s) && this->map.get(s) >= this->root; }
 	bool isTarget(const State& ) const	{ return false; }
-	bool isTarget(const Transition& t)	{ return goal.empty() ? true : goal.update(*SCCBFSGraph::mc.graph->makeFairSet(t)); }
+	bool isTarget(const Transition& t)	{ return goal.empty() ? true : goal.update(*this->mc.graph->makeFairSet(t), this->mc.graph->getFairnessTable()); }
 
 private:
 	FairSet::Goal& goal;

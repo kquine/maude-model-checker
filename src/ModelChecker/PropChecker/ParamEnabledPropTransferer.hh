@@ -15,12 +15,13 @@ namespace modelChecker {
 class ParamEnabledPropTransferer: public EnabledPropTransferer
 {
 public:
-	ParamEnabledPropTransferer(const vector<unsigned int>& groundEnabledPropIds, const vector<unsigned int>& paramEnabledPropIds, const ParamPropositionTable& propTable);
+	ParamEnabledPropTransferer(const NatSet& formulaEnbPropIds,
+			const vector<unsigned int>& groundFairEnbPropIds, const vector<unsigned int>& paramFairEnbPropIds, const ParamPropositionTable& propTable);
 
-	void computeEnabledPropIDs(PropSet& truePropIds, const vector<unique_ptr<PropSet> >& trueEventPropIds) const;
+	void transferEnabledPropIDs(PropSet& truePropIds, const vector<unique_ptr<PropSet> >& trueEventPropIds) const;
 
 private:
-	const vector<unsigned int> paramEnabledPropIds;
+	const vector<unsigned int> paramFairEnabledPropIds;
 };
 
 } /* namespace modelChecker */

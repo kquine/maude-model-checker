@@ -21,9 +21,21 @@ namespace modelChecker
 {
 
 void
-ParamRealizedSet::setRealized(index_type fairId)
+ParamRealizedSet::setRealized(unsigned int fairId)
 {
 	realizedFair.insert(fairId);
+}
+
+bool
+ParamRealizedSet::getRealized(unsigned int fairId) const
+{
+	return realizedFair.contains(fairId);
+}
+
+void
+ParamRealizedSet::paste(const ParamRealizedSet& f)
+{
+	realizedFair.insert(f.realizedFair);		// union
 }
 
 void

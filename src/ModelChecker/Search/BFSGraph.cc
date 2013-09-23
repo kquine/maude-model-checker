@@ -10,12 +10,12 @@
 
 namespace modelChecker {
 
-template <typename Automaton>
-BFSGraph<Automaton>::BFSGraph(Automaton& graph, const vector<State>& initials): graph(graph), initials(initials) {}
+template <typename PA>
+BFSGraph<PA>::BFSGraph(Automaton<PA>& graph, const vector<State>& initials): graph(graph), initials(initials) {}
 
-template <typename Automaton>
-typename BFSGraph<Automaton>::State
-BFSGraph<Automaton>::doBFS(list<Edge>& path)
+template <typename PA>
+typename BFSGraph<PA>::State
+BFSGraph<PA>::doBFS(list<Edge>& path)
 {
 	list<pair<unsigned int,int> > temp_path;
 

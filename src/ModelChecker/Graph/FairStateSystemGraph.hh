@@ -12,31 +12,31 @@
 
 namespace modelChecker {
 
-class FairStateSystemGraph: public StateSystemGraph
+template <typename PL, typename FL>
+class FairStateSystemGraph: public StateSystemGraph<PL>
 {
 public:
-	FairStateSystemGraph(RewritingContext& initial, PropChecker& spc, const NatSet& formulaPropIds, FairnessChecker& fc, const ProofTermGenerator& ptg);
+	FairStateSystemGraph(unique_ptr<PL>&& spl, unique_ptr<FL>&& sfl, RewritingContext& initial, const ProofTermGenerator& ptg);
 
 	unique_ptr<FairSet> makeFairSet(unsigned int stateNr, unsigned int transitionNr) const;
 
 private:
-	using Super =		StateSystemGraph;
+	using Super =		StateSystemGraph<PL>;
 	using PreState =	typename Super::State;
 
-	struct State: public PreState
+	struct State: public PreState, public FL::StateLabel
 	{
 		State(RewritingContext& parent, DagNode* stateDag): PreState(parent, stateDag) {}
-
-		unique_ptr<FairSet> fs;
 	};
 
 	unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, PreState& s) override;
 	unique_ptr<PreState> createState(DagNode* stateDag) const override;
 
-	FairnessChecker& fairC;
-	const NatSet& formulaPropIds;
+	const unique_ptr<FL> stateFairLabel;
 };
 
 } /* namespace modelChecker */
+
+#include "FairStateSystemGraph.cc"	// to separate the implementation for the template
 
 #endif /* FAIRSTATESYSTEMGRAPH_HH_ */

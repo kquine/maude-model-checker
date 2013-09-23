@@ -21,10 +21,10 @@ namespace modelChecker {
 PropChecker::PropChecker(const vector<unsigned int>& propIds, const PropositionTable& propositions, const PropEvaluator& pe, RewritingContext& context):
 		propIds(propIds), propositions(propositions), pEvaluator(pe), context(context)  {}
 
-unsigned int
-PropChecker::nrProps() const
+const vector<unsigned int>&
+PropChecker::getGroundPropIds() const
 {
-	return propIds.size();
+	return propIds;
 }
 
 unique_ptr<PropSet>

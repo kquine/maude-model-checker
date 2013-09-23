@@ -7,6 +7,7 @@
 
 #ifndef FAIRPRODUCTAUTOMATON_HH_
 #define FAIRPRODUCTAUTOMATON_HH_
+#include "FairAutomaton.hh"
 #include "ProductAutomaton.hh"
 #include "FairTable/CompositeFairnessTable.hh"
 #include "FairTable/FormulaFairnessTable.hh"
@@ -14,15 +15,24 @@
 namespace modelChecker {
 
 template <typename SA, typename PA>
-class FairProductAutomaton: public ProductAutomaton<SA,PA>
+class FairProductAutomaton: public FairAutomaton<PA>, private ProductAutomaton<SA,PA>
 {
 public:
-	using Transition = typename ProductAutomaton<SA,PA>::Transition;
+	using State = 					typename Automaton<PA>::State;
+	using Transition = 				typename Automaton<PA>::Transition;
+	using PreTransitionIterator =	typename Automaton<PA>::TransitionIterator;
+
 
 	FairProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property, unique_ptr<AbstractFairnessTable>&& systemFairTable);
 
-	AbstractFairnessTable& getFairnessTable() const;
-	unique_ptr<FairSet> makeFairSet(const Transition& t);
+	unique_ptr<FairSet> makeFairSet(const Transition& t) override;
+	AbstractFairnessTable& getFairnessTable() const override	{ return *fairTable; }
+
+	const PA& getPropertyAutomaton() const  override			{ return ProductAutomaton<SA,PA>::getPropertyAutomaton(); }
+	const vector<State>& getInitialStates() const override		{ return ProductAutomaton<SA,PA>::getInitialStates(); }
+
+	unique_ptr<PreTransitionIterator>
+	makeTransitionIterator(const State& state) override			{ return ProductAutomaton<SA,PA>::makeTransitionIterator(state); }
 
 private:
 	CompositeFairnessTable* makeInitFairTable(unique_ptr<AbstractFairnessTable>&& systemFairTable) const;

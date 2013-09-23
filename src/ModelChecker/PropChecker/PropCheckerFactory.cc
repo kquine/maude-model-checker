@@ -21,42 +21,52 @@
 namespace modelChecker {
 
 unique_ptr<PropChecker>
-PropCheckerFactory::createChecker(const function<bool(unsigned int)>& filter, PropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context)
+PropCheckerFactory::createChecker(const vector<unsigned int>& targetIds, PropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context)
 {
-	pair<vector<unsigned int>,vector<unsigned int>> target = doFilter(filter, propTable);
-
-	if (target.first.empty() && target.second.empty())
+	if (targetIds.empty())
 		return nullptr;
-	else if (target.second.empty())
-		return unique_ptr<PropChecker>(new PropChecker(target.first, propTable, pe, context));	// no param
 	else
-		return unique_ptr<PropChecker>(new ParamPropChecker(target.first, target.second, static_cast<ParamPropositionTable&>(propTable), pe, context));
+	{
+		vector<unsigned int> groundIds, paramIds;
+		for (auto k : targetIds)
+			(propTable.isParamProp(k) ? paramIds : groundIds).push_back(k);
+
+		if (paramIds.empty())
+			return unique_ptr<PropChecker>(new PropChecker(groundIds, propTable, pe, context));	// no param
+		else
+			return unique_ptr<PropChecker>(new ParamPropChecker(groundIds, paramIds, static_cast<ParamPropositionTable&>(propTable), pe, context));
+	}
+
 }
 
 unique_ptr<EnabledPropTransferer>
-PropCheckerFactory::createTransferer(const function<bool(unsigned int)>& filter, const PropositionTable& propTable)
+PropCheckerFactory::createTransferer(const vector<unsigned int>& enabledIds, const NatSet& formulaIds, const PropositionTable& propTable)
 {
-	pair<vector<unsigned int>,vector<unsigned int>> target = doFilter(filter, propTable);
+	NatSet formulaEnbIds;
+	vector<unsigned int> fairEnbIds;
 
-	if (target.first.empty() && target.second.empty())
+	for (auto k : enabledIds)
+	{
+		if ( ! formulaIds.contains(k) )
+			fairEnbIds.push_back(k);
+		else
+			formulaEnbIds.insert(k);
+	}
+
+	if (formulaEnbIds.empty() && fairEnbIds.empty())
 		return nullptr;
-	else if (target.second.empty())
-		return unique_ptr<EnabledPropTransferer>(new EnabledPropTransferer(target.first, propTable));	// no param
 	else
-		return unique_ptr<EnabledPropTransferer>(new ParamEnabledPropTransferer(target.first, target.second, static_cast<const ParamPropositionTable&>(propTable)));
+	{
+		vector<unsigned int> groundIds, paramIds;
+		for (auto k : fairEnbIds)
+			(propTable.isParamProp(k) ? paramIds : groundIds).push_back(k);
 
+		if (paramIds.empty())
+			return unique_ptr<EnabledPropTransferer>(new EnabledPropTransferer(formulaEnbIds, groundIds, propTable));	// no param
+		else
+			return unique_ptr<EnabledPropTransferer>(new ParamEnabledPropTransferer(formulaEnbIds, groundIds, paramIds, static_cast<const ParamPropositionTable&>(propTable)));
+	}
 }
-
-pair<vector<unsigned int>,vector<unsigned int>>
-PropCheckerFactory::doFilter(const function<bool(unsigned int)>& filter, const PropositionTable& propTable)
-{
-	pair<vector<unsigned int>,vector<unsigned int>> result;
-	for (auto k = 0; k < propTable.cardinality(); ++k)
-		if (filter(k))
-			(propTable.isParamProp(k) ? result.second : result.first).push_back(k);
-	return result;
-}
-
 
 
 } /* namespace modelChecker */

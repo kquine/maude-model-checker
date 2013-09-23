@@ -22,6 +22,8 @@
 
 //	automaton definitions
 #include "Graph/FairStateSystemGraph.hh"
+#include "Graph/FairStateEventSystemGraph.hh"
+#include "Graph/FairStateEventEnabledSystemGraph.hh"
 #include "FairTable/FormulaFairnessTable.hh"
 #include "FairSet/CompositeFairSet.hh"
 #include "FairProductAutomaton.hh"
@@ -35,12 +37,6 @@ FairProductAutomaton<SA,PA>::FairProductAutomaton(unique_ptr<SA>&& system, uniqu
 	fairTable(makeInitFairTable(move(systemFairTable))),
 	formulaRef(&static_cast<FormulaFairnessTable&>(fairTable->getComponent(fairTable->nrComponents()-1))) {}
 
-template <typename SA, typename PA>
-AbstractFairnessTable&
-FairProductAutomaton<SA,PA>::getFairnessTable() const
-{
-	return *fairTable;
-}
 
 template <typename SA, typename PA>
 unique_ptr<FairSet>
@@ -84,8 +80,32 @@ FairProductAutomaton<SA,PA>::makeInitFairTable(unique_ptr<AbstractFairnessTable>
 //
 // transition iterator specializations
 //
-template <>
-struct ProductTransitionIteratorTraits<FairStateSystemGraph>: StateOnlyProductTransitionIteratorTraits<FairStateSystemGraph> {};
+template <typename PL,typename FL>
+struct ProductTransitionIteratorTraits<FairStateSystemGraph<PL,FL>>:
+	public StateOnlyProductTransitionIteratorTraits<FairStateSystemGraph<PL,FL>> {};
 
+template <typename FL>
+struct ProductTransitionIteratorTraits<FairStateEventSystemGraph<StatePropLabel,FL>>:
+	public StateOnlyProductTransitionIteratorTraits<FairStateEventSystemGraph<StatePropLabel,FL>> {};
+
+template <typename FL>
+struct ProductTransitionIteratorTraits<FairStateEventSystemGraph<EventPropLabel,FL>>:
+	public EventOnlyProductTransitionIteratorTraits<FairStateEventSystemGraph<EventPropLabel,FL>> {};
+
+template <typename FL>
+struct ProductTransitionIteratorTraits<FairStateEventSystemGraph<StateEventPropLabel,FL>>:
+	public StateEventProductTransitionIteratorTraits<FairStateEventSystemGraph<StateEventPropLabel,FL>> {};
+
+template <typename FL>
+struct ProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<StatePropLabel,FL>>:
+	public StateOnlyProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<StatePropLabel,FL>> {};
+
+template <typename FL>
+struct ProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<EventPropLabel,FL>>:
+	public EventOnlyProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<EventPropLabel,FL>> {};
+
+template <typename FL>
+struct ProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<StateEventPropLabel,FL>>:
+	public StateEventProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<StateEventPropLabel,FL>> {};
 
 } /* namespace modelChecker */

@@ -20,11 +20,12 @@ public:
 	PropChecker(const vector<unsigned int>& propIds, const PropositionTable& propositions, const PropEvaluator& pe, RewritingContext& context);
 	virtual ~PropChecker() = default;
 
-	unsigned int nrProps() const;
+	const vector<unsigned int>& getGroundPropIds() const;
+
 	virtual unique_ptr<PropSet> computeCheckResult(DagNode* target);
 
 private:
-	const vector<unsigned int> propIds;					// either state props or event props
+	const vector<unsigned int> propIds;					// either state props or event props (all ground)
 	const PropositionTable& propositions;
 	const PropEvaluator& pEvaluator;
 	RewritingContext& context;

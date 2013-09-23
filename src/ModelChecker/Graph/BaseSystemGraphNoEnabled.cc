@@ -17,12 +17,12 @@ template <typename T> unsigned int
 BaseSystemGraphNoEnabled<T>::insertState(DagNode* stateDag)
 {
 	auto nextState = StateDagContainer::insertDag(stateDag);
-	if (nextState == Super::getNrStates())	// if a new state identified
+	if (nextState == this->getNrStates())	// if a new state identified
 	{
-		DagNode* cannStateDag = Super::getStateDag(nextState);
+		DagNode* cannStateDag = this->getStateDag(nextState);
 		unique_ptr<State> s = static_cast<T*>(this)->createState(stateDag);
 		static_cast<T*>(this)->updateStateLabel(cannStateDag, *s);
-		Super::seen.push_back(std::move(s));
+		this->seen.push_back(std::move(s));
 	}
 	return nextState;
 }
@@ -30,8 +30,8 @@ BaseSystemGraphNoEnabled<T>::insertState(DagNode* stateDag)
 template <typename T> int
 BaseSystemGraphNoEnabled<T>::computeNextState(unsigned int stateNr, unsigned int index)
 {
-	State& n = *Super::seen[stateNr];	//NOTE: the pointer address itself can be "moved" when the vector is reallocated
-	auto nrTransitions = Super::getNrTransitions(stateNr);
+	State& n = *this->seen[stateNr];	//NOTE: the pointer address itself can be "moved" when the vector is reallocated
+	auto nrTransitions = this->getNrTransitions(stateNr);
 
 	if (index < nrTransitions)
 		return n.transitions[index]->nextState;
@@ -41,7 +41,7 @@ BaseSystemGraphNoEnabled<T>::computeNextState(unsigned int stateNr, unsigned int
 	while (nrTransitions <= index)
 	{
 		T* self = static_cast<T*>(this);
-		if (DagNode* ns = n.explore->getNextStateDag(Super::initial))		// if there is a next state
+		if (DagNode* ns = n.explore->getNextStateDag(this->initial))		// if there is a next state
 		{
 			auto nextState = self->insertState(ns);
 			if (self->insertTransition(nextState, n))	// if a new transition identified

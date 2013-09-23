@@ -51,10 +51,10 @@ libModelChecker_a_SOURCES = \
 	FairSet/ParamRealizedSet.cc \
 	FairSet/ParamWeakFairSet.cc \
 	FairSet/ParamStrongFairSet.cc \
-	GraphImpl/RewriteTransitionState.cc \
-	GraphImpl/StateDagContainer.cc \
-	Graph/StateSystemGraph.cc \
-	Graph/FairStateSystemGraph.cc \
+	Graph/RewriteTransitionState.cc \
+	Graph/StateDagContainer.cc \
+	GraphLabel/StateEventPropLabel.cc \
+	GraphLabel/StateEventFairLabel.cc \
     Interface/PropInterpreter.cc \
     Interface/PropEvaluator.cc \
     Interface/FairnessDecoder.cc \

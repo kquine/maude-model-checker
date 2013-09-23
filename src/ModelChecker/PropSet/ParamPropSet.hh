@@ -20,9 +20,12 @@ public:
 	bool isParamProp(unsigned int propId) const;
 
 	void setTrue(unsigned int propId) override;
+	void setTrue(const NatSet& tPids);
 	void setTrue(const PropSet& ps) override;
 
-	void setTrueParamSubst(unsigned int propId, const set<const ParamSubstitution*>& substs);
+	template <typename T>
+	void setTrueParamSubst(unsigned int propId, const T& substs);
+
 	const set<const ParamSubstitution*>& getTrueParamSubst(unsigned int propId) const;
 
 	void dump(ostream& s) override;

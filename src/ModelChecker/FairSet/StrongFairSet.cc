@@ -31,6 +31,26 @@ StrongFairSet::setConsFalse(unsigned int fairId)
 	falsifiedCons.insert(fairId);
 }
 
+bool
+StrongFairSet::getSuppFalse(unsigned int fairId) const
+{
+	return falsifiedSupp.contains(fairId);
+}
+
+bool
+StrongFairSet::getConsFalse(unsigned int fairId) const
+{
+	return falsifiedCons.contains(fairId);
+}
+
+void
+StrongFairSet::paste(const FairSet& f)
+{
+	const StrongFairSet& sf = static_cast<const StrongFairSet&>(f);
+	falsifiedSupp.insert(sf.falsifiedSupp);
+	falsifiedCons.insert(sf.falsifiedCons);
+}
+
 void
 StrongFairSet::merge(const FairSet& f, const AbstractFairnessTable&)
 {
@@ -88,7 +108,7 @@ StrongFairSet::Goal::empty() const
 }
 
 bool
-StrongFairSet::Goal::update(const FairSet& f)
+StrongFairSet::Goal::update(const FairSet& f, const AbstractFairnessTable&)
 {
 	const StrongFairSet& sf = static_cast<const StrongFairSet&>(f);
 	if (sf.falsifiedCons.contains(strongFairGoal))	// all still falsified

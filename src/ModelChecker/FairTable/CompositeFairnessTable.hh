@@ -15,14 +15,12 @@ namespace modelChecker {
 class CompositeFairnessTable: public AbstractFairnessTable
 {
 public:
-	using index_type = AbstractFairnessTable::index_type;
-
 	bool hasStrongFairness() const override;
-	index_type nrFairness() const override;
+	unsigned int nrFairness() const override;
 
-	index_type nrComponents() const;
+	unsigned int nrComponents() const;
 	void addComponent(unique_ptr<AbstractFairnessTable>&& table);
-	AbstractFairnessTable& getComponent(index_type i) const;
+	AbstractFairnessTable& getComponent(unsigned int i) const;
 
 private:
 	vector<unique_ptr<AbstractFairnessTable>> fairTables;	// own the tables!

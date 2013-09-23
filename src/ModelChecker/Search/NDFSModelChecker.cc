@@ -9,18 +9,20 @@
 #include "BFSGraph.hh"
 #include "NDFSModelChecker.hh"
 
+//#define TDEBUG
 //#define NO_PREFIX_OPT
 
 namespace modelChecker {
 
-template <typename Automaton>
-NDFSModelChecker<Automaton>::NDFSModelChecker(unique_ptr<Automaton>&& prod): prod(move(prod)) {}
+template <typename PA>
+NDFSModelChecker<PA>::NDFSModelChecker(unique_ptr<Automaton<PA>>&& prod): prod(move(prod)) {}
 
-template <typename Automaton> bool
-NDFSModelChecker<Automaton>::findCounterExample()
+template <typename PA> bool
+NDFSModelChecker<PA>::findCounterExample()
 {
 	intersectionStates.emplace_back(new StateSet);
-	bool result = any_of(prod->getInitialStates().begin(), prod->getInitialStates().end(), [&](const State& i) {return this->dfs1(i);});
+	auto& is = prod->getInitialStates();
+	bool result = any_of(is.begin(), is.end(), [&](const State& i) {return this->dfs1(i);});
 
 #ifndef NO_PREFIX_OPT
 	if (result)	// Shorten prefix of a counterexample using BFS if it's found
@@ -33,8 +35,8 @@ NDFSModelChecker<Automaton>::findCounterExample()
 }
 
 
-template <typename Automaton> bool
-NDFSModelChecker<Automaton>::trap(const State& s) const
+template <typename PA> bool
+NDFSModelChecker<PA>::trap(const State& s) const
 {
 	const int propertyIndex = s.second;
 	if (prod->getPropertyAutomaton().isAccepting(propertyIndex))
@@ -46,8 +48,8 @@ NDFSModelChecker<Automaton>::trap(const State& s) const
 	return false;
 }
 
-template <typename Automaton> bool
-NDFSModelChecker<Automaton>::checkVisit(const State& ns)
+template <typename PA> bool
+NDFSModelChecker<PA>::checkVisit(const State& ns)
 {
 	if ( (unsigned int)ns.first <  intersectionStates.size() )				// return true if ns.first = NONE
 		return intersectionStates[ns.first]->dfs1Seen.contains(ns.second);
@@ -59,8 +61,8 @@ NDFSModelChecker<Automaton>::checkVisit(const State& ns)
 	return false;
 }
 
-template <typename Automaton> bool
-NDFSModelChecker<Automaton>::dfs1(const State& initial)
+template <typename PA> bool
+NDFSModelChecker<PA>::dfs1(const State& initial)
 {
 	stack<unique_ptr<TransitionIterator> > dfs1;
 	intersectionStates[initial.first]->dfs1Seen.insert(initial.second);
@@ -74,6 +76,9 @@ NDFSModelChecker<Automaton>::dfs1(const State& initial)
 		{
 			State ns = dfs1.top()->pick().target;
 			auto sysIndex = dfs1.top()->pick().systemIndex;
+#ifdef TDEBUG
+			cout << "DFS1: " << dfs1.top()->pick().source << " -(" << sysIndex << ")-> " << ns << " " << endl;
+#endif
 			dfs1.top()->next();
 
 			if (checkVisit(ns))
@@ -118,8 +123,8 @@ NDFSModelChecker<Automaton>::dfs1(const State& initial)
 	return false;
 }
 
-template <typename Automaton> bool
-NDFSModelChecker<Automaton>::dfs2(const State& initial)
+template <typename PA> bool
+NDFSModelChecker<PA>::dfs2(const State& initial)
 {
 	stack<unique_ptr<TransitionIterator> > dfs2;
 	intersectionStates[initial.first]->dfs2Seen.insert(initial.second);
@@ -132,6 +137,9 @@ NDFSModelChecker<Automaton>::dfs2(const State& initial)
 		{
 			State ns = dfs2.top()->pick().target;
 			auto sysIndex = dfs2.top()->pick().systemIndex;
+#ifdef TDEBUG
+			cout << "DFS2: " << dfs2.top()->pick().source << " -(" << sysIndex << ")-> " << ns << " " << endl;
+#endif
 			dfs2.top()->next();
 
 			Assert( ns.first >= 0 && (unsigned int)ns.first < intersectionStates.size(), "visited system state for the first time on dfs2");

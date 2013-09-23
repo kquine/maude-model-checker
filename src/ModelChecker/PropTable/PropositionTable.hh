@@ -26,15 +26,15 @@ public:
 
 	void updatePropTable();
 
-	virtual bool hasParamProp() const							{ return false; }
-	virtual bool isParamProp(unsigned int) const				{ return false; }
+	virtual bool hasParamProp() const					{ return false; }
+	virtual bool isParamProp(unsigned int) const		{ return false; }
 
-	bool isStateProp(unsigned int propId) const					{ return !isEventProp(propId) && !isEnabledProp(propId); }
-	bool isEventProp(unsigned int propId) const					{ return propInfoTable[propId]->isEvent; }
-	bool isEnabledProp(unsigned int propId) const				{ return propInfoTable[propId]->enabledEventId != NONE; }
+	bool isStateProp(unsigned int propId) const			{ return !isEventProp(propId) && !isEnabledProp(propId); }
+	bool isEventProp(unsigned int propId) const			{ return propInfoTable[propId]->isEvent; }
+	bool isEnabledProp(unsigned int propId) const		{ return propInfoTable[propId]->enabledEventId != NONE; }
 
-	unsigned int getEnabledEventId(unsigned int propId) const	{ return propInfoTable[propId]->enabledEventId; }
-	DagNodeSet& getDagNodeSet()									{ return *this; }
+	int getEnabledEventId(unsigned int propId) const	{ return propInfoTable[propId]->enabledEventId; }
+	DagNodeSet& getDagNodeSet()							{ return *this; }
 
 protected:
 	struct PropInfo

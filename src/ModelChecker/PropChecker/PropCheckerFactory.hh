@@ -16,12 +16,8 @@ namespace modelChecker {
 class PropCheckerFactory
 {
 public:
-	static unique_ptr<PropChecker> createChecker(const function<bool(unsigned int)>& filter, PropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context);
-
-	static unique_ptr<EnabledPropTransferer> createTransferer(const function<bool(unsigned int)>& filter, const PropositionTable& propTable);
-
-private:
-	static pair<vector<unsigned int>,vector<unsigned int>> doFilter(const function<bool(unsigned int)>& filter, const PropositionTable& propTable);	// return (ground,param)
+	static unique_ptr<PropChecker> createChecker(const vector<unsigned int>& targets, PropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context);
+	static unique_ptr<EnabledPropTransferer> createTransferer(const vector<unsigned int>& enabledIds, const NatSet& formulaIds, const PropositionTable& propTable);
 };
 
 } /* namespace modelChecker */

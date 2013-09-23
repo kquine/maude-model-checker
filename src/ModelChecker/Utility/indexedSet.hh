@@ -25,7 +25,7 @@ public:
 	using size_type =		typename vector<const_iterator>::size_type;
 
 	indexed_set() = default;
-	virtual ~indexed_set() = default;
+	~indexed_set() = default;
 
 	indexed_set(indexed_set&&) noexcept;
 	indexed_set& operator=(indexed_set&&) noexcept;	// move

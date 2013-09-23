@@ -20,19 +20,13 @@
 
 namespace modelChecker {
 
-RealizedFairnessGenerator::RealizedFairnessGenerator(const vector<index_type>& paramFairIds, RealizedFairnessTable& fairTable):
+RealizedFairnessGenerator::RealizedFairnessGenerator(const vector<unsigned int>& paramFairIds, RealizedFairnessTable& fairTable):
 	paramFairIds(paramFairIds), fairTable(fairTable) {}
 
-bool
-RealizedFairnessGenerator::empty() const
-{
-	return paramFairIds.empty();
-}
-
-deque<pair<RealizedFairnessGenerator::index_type,NatSet>>
+deque<pair<unsigned int,NatSet>>
 RealizedFairnessGenerator::generateRealizedFairness(const ParamPropSet& pps)
 {
-	deque<pair<index_type,NatSet>> result;
+	deque<pair<unsigned int,NatSet>> result;
 	for (auto i : paramFairIds)
 	{
 		const ParamSubstitutionBuilder& builder = fairTable.getSubstBuilder(i);

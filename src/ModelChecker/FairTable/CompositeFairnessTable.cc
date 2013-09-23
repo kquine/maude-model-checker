@@ -20,15 +20,15 @@ CompositeFairnessTable::hasStrongFairness() const
 	return any_of(fairTables.begin(), fairTables.end(), [] (const unique_ptr<AbstractFairnessTable>& i) { return i->hasStrongFairness(); });
 }
 
-CompositeFairnessTable::index_type
+unsigned int
 CompositeFairnessTable::nrFairness() const
 {
-	index_type total = 0;
+	unsigned int total = 0;
 	for (auto& i : fairTables) total += i->nrFairness();
 	return total;
 }
 
-CompositeFairnessTable::index_type
+unsigned int
 CompositeFairnessTable::nrComponents() const
 {
 	return fairTables.size();
@@ -41,7 +41,7 @@ CompositeFairnessTable::addComponent(unique_ptr<AbstractFairnessTable>&& table)
 }
 
 AbstractFairnessTable&
-CompositeFairnessTable::getComponent(index_type i) const
+CompositeFairnessTable::getComponent(unsigned int i) const
 {
 	return *fairTables[i];
 }

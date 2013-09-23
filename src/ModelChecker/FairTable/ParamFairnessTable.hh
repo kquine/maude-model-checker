@@ -24,37 +24,32 @@ class ParamFairnessTable: public FairnessTable<Formula>, public RealizedFairness
 	using Fairness 			= typename Super::Fairness;
 	using GroundFairness 	= typename Super::GroundFairness;
 public:
-	using index_type 		= AbstractFairnessTable::index_type;
-
 	ParamFairnessTable(ParamPropositionTable& propTable);
 
-	bool isParamFairness(index_type fairId) const override;
-	bool isStateFairness(index_type fairId) const override;
+	bool isParamFairness(unsigned int fairId) const override;
+	bool isStateFairness(unsigned int fairId) const override;
 
-	const Formula& getFairFormula(index_type fairId) const override;
+	const Formula& getFairFormula(unsigned int fairId) const override;
 
 private:
 	struct ParamFairness: public GroundFairness, public RealizedFairnessTable::ParamInfo
 	{
-		ParamFairness(const GroundFairness& fi, DagNode* fDag, const vector<index_type>& propIds, const ParamPropositionTable& pTable):
+		ParamFairness(const GroundFairness& fi, DagNode* fDag, const vector<unsigned int>& propIds, const ParamPropositionTable& pTable):
 			GroundFairness(fi), ParamInfo(fDag,propIds,pTable) {}
 	};
 	struct InstanceFairnessInfo: public Fairness, public RealizedFairnessTable::InstanceInfo
 	{
-		InstanceFairnessInfo(index_type pfi, const ParamSubstitution* s): InstanceInfo(pfi, s) {}
+		InstanceFairnessInfo(unsigned int pfi, const ParamSubstitution* s): InstanceInfo(pfi, s) {}
 	};
 
-	unique_ptr<GroundFairness> createFormulaFairness(const Formula& f, const vector<index_type>& propIds, DagNode* fairDag) const override;
+	unique_ptr<GroundFairness> createFormulaFairness(const Formula& f, const vector<unsigned int>& propIds, DagNode* fairDag) const override;
 
-	index_type getNextFairIndex() const;
-	ParamInfo& getParamInfo(index_type fairId) const override;
-	InstanceInfo& getInstanceInfo(index_type fairId) const override;
-	void insertInstance(index_type pfi, const ParamSubstitution* s);
+	unsigned int getNextFairIndex() const;
+	ParamInfo& getParamInfo(unsigned int fairId) const override;
+	InstanceInfo& getInstanceInfo(unsigned int fairId) const override;
+	void insertInstance(unsigned int pfi, const ParamSubstitution* s) override;
 
-	//TEST
-	DagNode* getDag(index_type fi) const { return Super::dags[fi]; }
-
-	index_type getBaseFairId(index_type fairId) const;
+	unsigned int getBaseFairId(unsigned int fairId) const;
 
 	const ParamPropositionTable& paramPropTableRef;
 };

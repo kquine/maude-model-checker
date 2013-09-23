@@ -16,15 +16,12 @@ namespace modelChecker {
 class RealizedFairnessGenerator
 {
 public:
-	using index_type = RealizedFairnessTable::index_type;
+	RealizedFairnessGenerator(const vector<unsigned int>& paramFairIds, RealizedFairnessTable& fairTable);
 
-	RealizedFairnessGenerator(const vector<index_type>& paramFairIds, RealizedFairnessTable& fairTable);
-
-	bool empty() const;
-	deque<pair<index_type,NatSet>> generateRealizedFairness(const ParamPropSet& pps);
+	deque<pair<unsigned int,NatSet>> generateRealizedFairness(const ParamPropSet& pps);
 
 private:
-	const vector<index_type> paramFairIds;
+	const vector<unsigned int> paramFairIds;
 	RealizedFairnessTable& fairTable;
 };
 

@@ -21,20 +21,20 @@
 namespace modelChecker {
 
 const ParamSubstitutionBuilder&
-RealizedFairnessTable::getSubstBuilder(index_type fairId) const
+RealizedFairnessTable::getSubstBuilder(unsigned int fairId) const
 {
 	return getParamInfo(fairId).builder;
 }
 
-RealizedFairnessTable::index_type
-RealizedFairnessTable::getRealizedFairId(index_type fairId, const NatSet& realizedFair) const
+unsigned int
+RealizedFairnessTable::getRealizedFairId(unsigned int fairId, const NatSet& realizedFair) const
 {
-	queue<index_type> bfs;
+	queue<unsigned int> bfs;
 	bfs.push(fairId);
 
 	while ( !bfs.empty() )	// find the most specific ancestor of fairId in realizedFair
 	{
-		index_type cur = bfs.front();
+		const auto cur = bfs.front();
 		bfs.pop();
 		if ( realizedFair.contains(cur) )
 			return cur;
@@ -44,8 +44,8 @@ RealizedFairnessTable::getRealizedFairId(index_type fairId, const NatSet& realiz
 	return getInstanceInfo(fairId).paramFairId;	// the base id (all bots), otherwise
 }
 
-RealizedFairnessTable::index_type
-RealizedFairnessTable::insertFairnessInstance(index_type paramFairId, const ParamSubstitution& subst)
+unsigned int
+RealizedFairnessTable::insertFairnessInstance(unsigned int paramFairId, const ParamSubstitution& subst)
 {
 	auto& substMap = getParamInfo(paramFairId).substMap;
 	auto si = substMap.insert(make_pair(subst,getNextFairIndex()));
@@ -78,7 +78,7 @@ RealizedFairnessTable::updateInstanceBaseMap(const InstanceSubstMap& substMap, c
 		if (f->first.subsume(j->first))
 		{
 			auto& jBase = getInstanceInfo(j->second).directBase;
-			if (none_of(jBase.begin(), jBase.end(), [&fDes] (index_type l) { return fDes[l]; }))	// if any direct base of j has not been marked as a descendant of f.
+			if (none_of(jBase.begin(), jBase.end(), [&fDes] (unsigned int l) { return fDes[l]; }))	// if any direct base of j has not been marked as a descendant of f.
 			{
 				for (auto k = jBase.begin(); k != jBase.end(); )
 					fBase.find(*k) != fBase.end() ? jBase.erase(k++) : ++k;	// any direct base of j is removed if it's also one of f

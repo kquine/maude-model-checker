@@ -18,7 +18,6 @@ class RealizedPropGenerator
 {
 public:
 	RealizedPropGenerator(const vector<unsigned int>& paramPropIds, ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& parent);
-	virtual ~RealizedPropGenerator() = default;
 
 	const ParamPropositionTable& getPropTable() const;
 	void generateRealizedProps(DagNode* target, ParamPropSet& result);	// return realized prop indices in the "propositions"

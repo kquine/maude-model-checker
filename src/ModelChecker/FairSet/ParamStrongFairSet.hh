@@ -15,10 +15,12 @@ namespace modelChecker {
 class ParamStrongFairSet: public StrongFairSet, public ParamRealizedSet
 {
 public:
+	struct Goal;
 	struct Bad;
 
 	ParamStrongFairSet(StrongFairSet&& f);
 
+	void paste(const FairSet& f) override;
 	void merge(const FairSet& f, const AbstractFairnessTable& table) override;
 
 	unique_ptr<FairSet> clone() const override;
@@ -26,6 +28,13 @@ public:
 	virtual unique_ptr<FairSet::Bad> makeBadGoal() const override;
 
 	void dump(ostream& o) const override;
+};
+
+class ParamStrongFairSet::Goal: public StrongFairSet::Goal
+{
+public:
+	Goal(const ParamStrongFairSet& fs);
+	bool update(const FairSet& f, const AbstractFairnessTable& table) override;
 };
 
 struct ParamStrongFairSet::Bad: public StrongFairSet::Bad

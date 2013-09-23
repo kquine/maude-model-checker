@@ -36,9 +36,15 @@ PropSet::setTrue(unsigned int propId)
 }
 
 void
+PropSet::setTrue(const NatSet& tPids)
+{
+	truePropIds.insert(tPids);
+}
+
+void
 PropSet::setTrue(const PropSet& ps)
 {
-	truePropIds.insert(ps.truePropIds);
+	setTrue(ps.truePropIds);
 }
 
 void

@@ -22,6 +22,13 @@ namespace modelChecker {
 ParamStrongFairSet::ParamStrongFairSet(StrongFairSet&& f): StrongFairSet(move(f)) {}
 
 void
+ParamStrongFairSet::paste(const FairSet& f)
+{
+	StrongFairSet::paste(f);
+	ParamRealizedSet::paste(static_cast<const ParamStrongFairSet&>(f));
+}
+
+void
 ParamStrongFairSet::merge(const FairSet& f, const AbstractFairnessTable& table)
 {
 	auto& stable = static_cast<const ParamStrongFairnessTable&>(table);
@@ -58,6 +65,29 @@ ParamStrongFairSet::dump(ostream& o) const
 	StrongFairSet::dump(o);
 	ParamRealizedSet::dump(o);
 }
+
+ParamStrongFairSet::Goal::Goal(const ParamStrongFairSet& f): StrongFairSet::Goal(f) {}
+
+
+bool
+ParamStrongFairSet::Goal::update(const FairSet& f, const AbstractFairnessTable& table)
+{
+	auto& stable = static_cast<const ParamStrongFairnessTable&>(table);
+	auto& psf = static_cast<const ParamStrongFairSet&>(f);
+
+	NatSet falsifiedCons = psf.falsifiedCons;
+	psf.extend(strongFairGoal, falsifiedCons, stable);
+
+	if (falsifiedCons.contains(strongFairGoal))	// all still falsified
+		return false;
+	else
+	{
+		strongFairGoal.intersect(falsifiedCons);	// goal = still falsified
+		return true;
+	}
+}
+
+
 
 ParamStrongFairSet::Bad::Bad(const ParamStrongFairSet& fs): StrongFairSet::Bad(fs) {}
 

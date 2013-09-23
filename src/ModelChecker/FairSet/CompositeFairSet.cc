@@ -19,6 +19,20 @@ CompositeFairSet::addComponent(unique_ptr<FairSet>&& f)
 	fairSets.push_back(move(f));
 }
 
+const FairSet&
+CompositeFairSet::getComponent(unsigned int i) const
+{
+	return *fairSets[i];
+}
+
+void
+CompositeFairSet::paste(const FairSet& f)
+{
+	const CompositeFairSet& cf = static_cast<const CompositeFairSet&>(f);
+	for (unsigned int i = 0; i < fairSets.size(); ++i)
+		fairSets[i]->paste(*cf.fairSets[i]);
+}
+
 void
 CompositeFairSet::merge(const FairSet& f, const AbstractFairnessTable& table)
 {
@@ -90,11 +104,11 @@ CompositeFairSet::Goal::empty() const
 }
 
 bool
-CompositeFairSet::Goal::update(const FairSet& f)
+CompositeFairSet::Goal::update(const FairSet& f, const AbstractFairnessTable& table)
 {
 	bool result = false;
 	for (unsigned int i = 0; i < fairGoals.size(); ++i)
-		result |= fairGoals[i]->update(*static_cast<const CompositeFairSet&>(f).fairSets[i]);
+		result |= fairGoals[i]->update(*static_cast<const CompositeFairSet&>(f).fairSets[i], table);
 	return result;
 }
 

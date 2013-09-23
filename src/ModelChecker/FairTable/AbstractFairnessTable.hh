@@ -13,9 +13,7 @@ namespace modelChecker {
 class AbstractFairnessTable
 {
 public:
-	using index_type = unsigned int;
-
-	virtual ~AbstractFairnessTable() {}
+	virtual ~AbstractFairnessTable() = default;
 
 	virtual bool hasStrongFairness() const = 0;
 	virtual unsigned int nrFairness() const = 0;

@@ -73,14 +73,14 @@ ParamPropositionTable::getParamMatches(unsigned int propId) const
 int
 ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContext& parentContext)
 {
-	const int propId = PropositionTable::dagNode2Index(propDag);
+	const int propId = this->dagNode2Index(propDag);
 	if (propId != NONE)	// if the dag has stored
 	{
 		if (! getInstancePropInfo(propId))	// if the instance relation has NOT been computed
 		{
 			unique_ptr<InstancePropInfo> ipi(new InstancePropInfo(*propInfoTable[propId]));
 			ipi->matchingPropNSubstRefs =  compact(computeMatchingProps(propDag, parentContext));
-			propInfoTable[propId] = std::move(ipi);
+			propInfoTable[propId] = move(ipi);
 		}
 		return getInstancePropInfo(propId)->matchingPropNSubstRefs.empty() ? NONE : propId;
 	}
@@ -96,7 +96,7 @@ ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContex
 
 			unique_ptr<InstancePropInfo> ipi(new InstancePropInfo(*propInfoTable[newPropId]));
 			ipi->matchingPropNSubstRefs = compact(temp);
-			propInfoTable[newPropId] = std::move(ipi);
+			propInfoTable[newPropId] = move(ipi);
 			return newPropId;
 		}
 		return NONE;
@@ -144,11 +144,11 @@ ParamPropositionTable::updatePropInfo(unsigned int propId)
 {
 	PropositionTable::updatePropInfo(propId);	// first fill the basic info
 
-	DagNode* propDag = PropositionTable::index2DagNode(propId);
+	DagNode* propDag = this->index2DagNode(propId);
 	if (! propDag->isGround())	// check if ground (variable info must be filled before)
 	{
 		unsigned int pInfoId;
-		if (PropositionTable::isEnabledProp(propId))
+		if (this->isEnabledProp(propId))
 		{
 			pInfoId = getParamPropInfo(getEnabledEventId(propId))->paramInfoId;
 		}

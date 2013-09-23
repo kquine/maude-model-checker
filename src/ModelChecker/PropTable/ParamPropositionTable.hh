@@ -17,7 +17,7 @@ namespace modelChecker {
 class ParamPropositionTable: public PropositionTable
 {
 public:
-	using MatchingInfo = pair<unsigned int,vector<const ParamSubstitution*>>;
+	using MatchingInfo 	= pair<unsigned int,vector<const ParamSubstitution*>>;
 
 	explicit ParamPropositionTable(const PropInterpreter& pi);
 

@@ -1,12 +1,12 @@
 /*
- * AutomatonTraits.hh
+ * Automaton.hh
  *
- *  Created on: Sep 13, 2013
+ *  Created on: Sep 22, 2013
  *      Author: kquine
  */
 
-#ifndef AUTOMATONTRAITS_HH_
-#define AUTOMATONTRAITS_HH_
+#ifndef AUTOMATON_HH_
+#define AUTOMATON_HH_
 #include <memory>
 #include "buchiAutomaton2.hh"
 #include "genBuchiAutomaton.hh"
@@ -16,8 +16,9 @@ namespace modelChecker {
 template <typename PropertyAutomaton> struct PropertyTransitionTraits;
 
 template <typename PA>
-struct AutomatonTraits: public PropertyTransitionTraits<PA>
+class Automaton
 {
+public:
 	using State			= pair<int,int>;
 	using PropertyIndex	= typename PropertyTransitionTraits<PA>::PropertyTransitionSet::const_iterator;
 
@@ -27,6 +28,26 @@ struct AutomatonTraits: public PropertyTransitionTraits<PA>
 		int systemIndex;
 		PropertyIndex propertyIndex;
 	};
+
+	struct TransitionIterator
+	{
+		TransitionIterator(const State& state)	{ tr.source = state; }
+		bool hasNext() const					{ return tr.systemIndex != NONE; }
+		const Transition& pick() const			{ return tr; }
+		const State& getSource() const			{ return tr.source; }
+		void init()								{ computeNextTransition(true); }
+		void next()								{ computeNextTransition(false); }
+
+	protected:
+		virtual void computeNextTransition(bool first) = 0;
+
+		typename Automaton<PA>::Transition tr;
+	};
+
+	virtual const PA& getPropertyAutomaton() const = 0;
+	virtual const vector<State>& getInitialStates() const = 0;
+	virtual unique_ptr<TransitionIterator> makeTransitionIterator(const State& state) = 0;
+
 };
 
 template <typename T1, typename T2>
@@ -58,4 +79,4 @@ struct PropertyTransitionTraits<GenBuchiAutomaton>
 };
 
 } /* namespace modelChecker */
-#endif /* AUTOMATONTRAITS_HH_ */
+#endif /* AUTOMATON_HH_ */

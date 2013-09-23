@@ -13,11 +13,11 @@
 
 namespace modelChecker {
 
-template <typename Automaton>
-SCCModelChecker<Automaton>::SCCModelChecker(unique_ptr<Automaton>&& graph): graph(move(graph)) {}
+template <typename PA>
+SCCModelChecker<PA>::SCCModelChecker(unique_ptr<FairAutomaton<PA>>&& graph): graph(move(graph)) {}
 
-template <typename Automaton> bool
-SCCModelChecker<Automaton>::findCounterExample()
+template <typename PA> bool
+SCCModelChecker<PA>::findCounterExample()
 {
 	if (const auto& res = findAcceptedSCC(graph->getInitialStates()))
 	{
@@ -37,8 +37,8 @@ SCCModelChecker<Automaton>::findCounterExample()
 	return false;
 }
 
-template <typename Automaton> bool
-SCCModelChecker<Automaton>::SCCStack::hasNextSucc()
+template <typename PA> bool
+SCCModelChecker<PA>::SCCStack::hasNextSucc()
 {
 	while ( !dfsStack.empty() && sccStack.top()->root <= mc.H.get(dfsStack.top()->getSource()) && !dfsStack.top()->hasNext())	// pop SCCs with no successors
 	{
@@ -49,17 +49,17 @@ SCCModelChecker<Automaton>::SCCStack::hasNextSucc()
 	return  !dfsStack.empty() && sccStack.top()->root <= mc.H.get(dfsStack.top()->getSource());
 }
 
-template <typename Automaton> void
-SCCModelChecker<Automaton>::SCCStack::dfsPush(const State& s, unique_ptr<FairSet>&& a)
+template <typename PA> void
+SCCModelChecker<PA>::SCCStack::dfsPush(const State& s, unique_ptr<FairSet>&& a)
 {
 	mc.H.set(s, ++mc.max);
 	sccStack.emplace(new SCC(mc.max, move(a)));
 	dfsStack.emplace(mc.graph->makeTransitionIterator(s));
 }
 
-template <typename Automaton>
-typename SCCModelChecker<Automaton>::State
-SCCModelChecker<Automaton>::SCCStack::sccPop(bool unvisit)
+template <typename PA>
+typename SCCModelChecker<PA>::State
+SCCModelChecker<PA>::SCCStack::sccPop(bool unvisit)
 {
 	Assert(mc.H.get(stateStack.top()) == sccStack.top()->root, "SCC Error (root index)");
 
@@ -86,8 +86,8 @@ SCCModelChecker<Automaton>::SCCStack::sccPop(bool unvisit)
 	return root;
 }
 
-template <typename Automaton> void
-SCCModelChecker<Automaton>::SCCStack::merge(unsigned int threshold, unique_ptr<FairSet>&& back)
+template <typename PA> void
+SCCModelChecker<PA>::SCCStack::merge(unsigned int threshold, unique_ptr<FairSet>&& back)
 {
 #ifdef TDEBUG
 	cout << "\nMERGE:  ";	back->dump(cout);	cout << endl;

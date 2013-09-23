@@ -23,7 +23,7 @@ unique_ptr<FairnessChecker>
 FairnessCheckerFactory::createChecker(bool stateOnly, AbstractFairnessTable* fairTable)
 {
 	unique_ptr<FairnessChecker> fc = createCheckerAux(stateOnly, fairTable);
-	return fc && !fc->empty() ? move(fc) : nullptr;
+	return fc && fc->getNrFairness() > 0 ? move(fc) : nullptr;
 }
 
 unique_ptr<FairnessChecker>

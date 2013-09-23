@@ -23,6 +23,7 @@ class BaseSystemGraph: public DagSystemGraph, protected StateDagContainer
 	using Transition =	typename BaseSystemGraphTraits<T>::Transition;
 public:
 	BaseSystemGraph(RewritingContext& initial, const ProofTermGenerator& ptg);
+	virtual ~BaseSystemGraph() = default;
 
 	BaseSystemGraph(const BaseSystemGraph&) = delete;
 	BaseSystemGraph& operator=(const BaseSystemGraph&) = delete;

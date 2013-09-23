@@ -11,14 +11,14 @@
 
 namespace modelChecker {
 
-template <typename Automaton>
-class SCCBuchiModelChecker : public SCCModelChecker<Automaton>
+template <typename PA>
+class SCCBuchiModelChecker : public SCCModelChecker<PA>
 {
 public:
-	explicit SCCBuchiModelChecker(unique_ptr<Automaton>&& graph);
+	explicit SCCBuchiModelChecker(unique_ptr<FairAutomaton<PA>>&& graph);
 
 private:
-	using Super 		= SCCModelChecker<Automaton>;
+	using Super 		= SCCModelChecker<PA>;
 	using State 		= typename Super::State;
 	using Transition	= typename Super::Transition;
 	using SCC 			= typename Super::SCC;

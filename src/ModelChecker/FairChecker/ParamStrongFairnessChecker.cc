@@ -22,29 +22,62 @@ namespace modelChecker {
 ParamStrongFairnessChecker::ParamStrongFairnessChecker(const vector<unsigned int>& strongFairIds, const vector<unsigned int>& prStrongFairIds, ParamStrongFairnessTable& fTable):
 	StrongFairnessChecker(strongFairIds, fTable), RealizedFairnessGenerator(prStrongFairIds, fTable), fTableRef(fTable) {}
 
-bool
-ParamStrongFairnessChecker::empty() const
+unsigned int
+ParamStrongFairnessChecker::getNrFairness() const
 {
-	return StrongFairnessChecker::empty() && RealizedFairnessGenerator::empty();
+	return StrongFairnessChecker::getNrFairness() + compactIndices.size();
 }
 
 unique_ptr<FairSet>
 ParamStrongFairnessChecker::computeAllFairness(const PropSet& trueProps)
 {
-	auto pss = new ParamStrongFairSet(move(static_cast<StrongFairSet&>(*StrongFairnessChecker::computeAllFairness(trueProps))));
 	auto& pps = static_cast<const ParamPropSet&>(trueProps);
+	auto result = new ParamStrongFairSet(move(static_cast<StrongFairSet&>(*StrongFairnessChecker::computeAllFairness(trueProps))));
 
 	for (auto& pt : this->generateRealizedFairness(pps))
 	{
-		pss->setRealized(pt.first);
 		auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? pt.second.contains(propId) : pps.isTrue(propId);};
 		auto& formula = fTableRef.getFairFormula(pt.first);
 
-		if ( !BddUtil::satisfiesFormula(formula.first, truth))	pss->setSuppFalse(pt.first);
-		if ( !BddUtil::satisfiesFormula(formula.second, truth))	pss->setConsFalse(pt.first);
-
+		result->setRealized(pt.first);
+		if ( !BddUtil::satisfiesFormula(formula.first, truth))	result->setSuppFalse(pt.first);
+		if ( !BddUtil::satisfiesFormula(formula.second, truth))	result->setConsFalse(pt.first);
 	}
-	return unique_ptr<FairSet>(pss);
+	return unique_ptr<FairSet>(result);
+}
+
+unique_ptr<FairSet>
+ParamStrongFairnessChecker::computeCompactFairness(const PropSet& trueProps)
+{
+	auto& pps = static_cast<const ParamPropSet&>(trueProps);
+	auto result = new ParamStrongFairSet(move(static_cast<StrongFairSet&>(*StrongFairnessChecker::computeCompactFairness(trueProps))));
+
+	for (auto& pt : this->generateRealizedFairness(pps))
+	{
+		auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? pt.second.contains(propId) : pps.isTrue(propId);};
+		auto& formula = fTableRef.getFairFormula(pt.first);
+
+		auto compactId = compactIndices.insert(pt.first).first + StrongFairnessChecker::getNrFairness();
+		result->setRealized(compactId);
+		if ( !BddUtil::satisfiesFormula(formula.first, truth))	result->setSuppFalse(compactId);
+		if ( !BddUtil::satisfiesFormula(formula.second, truth))	result->setConsFalse(compactId);
+	}
+	return unique_ptr<FairSet>(result);
+}
+
+unique_ptr<FairSet>
+ParamStrongFairnessChecker::unzip(const FairSet& fs) const
+{
+	auto& pss = static_cast<const ParamStrongFairSet&>(fs);
+	auto result = new ParamStrongFairSet(move(static_cast<StrongFairSet&>(*StrongFairnessChecker::unzip(fs))));
+
+	for (unsigned int sn = StrongFairnessChecker::getNrFairness(), i = 0; i < compactIndices.size(); ++i)	// store an expanded version
+	{
+		if ( pss.getSuppFalse(sn + i) )	result->setSuppFalse(compactIndices[i]);
+		if ( pss.getConsFalse(sn + i) )	result->setConsFalse(compactIndices[i]);
+		if ( pss.getRealized(sn + i) )	result->setRealized(compactIndices[i]);
+	}
+	return unique_ptr<FairSet>(result);
 }
 
 } /* namespace modelChecker */

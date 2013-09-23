@@ -17,8 +17,6 @@ class StateDagContainer
 public:
 	using size_type = vector<int>::size_type;
 
-	virtual ~StateDagContainer() = default;
-
 	unsigned int getNrStates() const;
 	DagNode* getStateDag(size_type index) const;	// return the dag for the index
 	unsigned int insertDag(DagNode* dag);			// return the state index

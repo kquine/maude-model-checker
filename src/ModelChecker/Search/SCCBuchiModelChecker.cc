@@ -11,18 +11,18 @@
 
 namespace modelChecker {
 
-template <typename Automaton>
-SCCBuchiModelChecker<Automaton>::SCCBuchiModelChecker(unique_ptr<Automaton>&& graph): SCCModelChecker<Automaton>(move(graph)) {}
+template <typename PA>
+SCCBuchiModelChecker<PA>::SCCBuchiModelChecker(unique_ptr<FairAutomaton<PA>>&& graph): SCCModelChecker<PA>(move(graph)) {}
 
-template <typename Automaton>
-unique_ptr<typename SCCModelChecker<Automaton>::SCC>
-SCCBuchiModelChecker<Automaton>::findAcceptedSCC(const vector<State>& initials)
+template <typename PA>
+unique_ptr<typename SCCModelChecker<PA>::SCC>
+SCCBuchiModelChecker<PA>::findAcceptedSCC(const vector<State>& initials)
 {
 	SCCStack stack(*this);
 
 	for(const State& i : initials)
 	{
-		if (!Super::H.contains(i))	// if the initial state has not visited yet..
+		if (!this->H.contains(i))	// if the initial state has not visited yet..
 		{
 			stack.dfsPush(i,nullptr);
 			while (! stack.empty() )	// main loop
@@ -30,14 +30,14 @@ SCCBuchiModelChecker<Automaton>::findAcceptedSCC(const vector<State>& initials)
 				if (stack.hasNextSucc())
 				{
 					Transition t = stack.pickSucc();
-					auto a = Super::graph->makeFairSet(t);
+					auto a = this->graph->makeFairSet(t);
 					stack.nextSucc();
 
-					if (!Super::H.contains(t.target))			// if the next state not visited yet..
+					if (!this->H.contains(t.target))			// if the next state not visited yet..
 						stack.dfsPush(t.target, move(a));
-					else if (Super::H.get(t.target) > 0)		// if on the dfs stack..
+					else if (this->H.get(t.target) > 0)		// if on the dfs stack..
 					{
-						stack.merge(Super::H.get(t.target), move(a));
+						stack.merge(this->H.get(t.target), move(a));
 						if ( stack.topSCC()->acc_fair->isSatisfied() )
 							return move(stack.topSCC());
 					}

@@ -25,16 +25,30 @@ WeakFairSet::setFalsified(unsigned int fairId)
 	falsifiedWeakFair.insert(fairId);
 }
 
-void
-WeakFairSet::merge(const FairSet& f, const AbstractFairnessTable&)
+bool
+WeakFairSet::getFalsified(unsigned int fairId) const
 {
-	falsifiedWeakFair.intersect(static_cast<const WeakFairSet&>(f).falsifiedWeakFair);
+	return falsifiedWeakFair.contains(fairId);
 }
+
 
 void
 WeakFairSet::swapFalsified(NatSet& falsified)
 {
 	falsifiedWeakFair.swap(falsified);
+}
+
+
+void
+WeakFairSet::paste(const FairSet& f)
+{
+	falsifiedWeakFair.insert(static_cast<const WeakFairSet&>(f).falsifiedWeakFair);
+}
+
+void
+WeakFairSet::merge(const FairSet& f, const AbstractFairnessTable&)
+{
+	falsifiedWeakFair.intersect(static_cast<const WeakFairSet&>(f).falsifiedWeakFair);
 }
 
 bool
@@ -85,7 +99,7 @@ WeakFairSet::Goal::empty() const
 }
 
 bool
-WeakFairSet::Goal::update(const FairSet& f)
+WeakFairSet::Goal::update(const FairSet& f, const AbstractFairnessTable&)
 {
 	const WeakFairSet& wf = static_cast<const WeakFairSet&>(f);
 	if (wf.falsifiedWeakFair.contains(weakFairGoal))	// all still falsified
