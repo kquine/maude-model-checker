@@ -37,7 +37,7 @@ StateEventPropLabel::StateEventPropLabel(const NatSet& formulaProps, PropChecker
 	}
 
 	localPropIds.resize(max_id + 1, make_pair(NEITHER,0));
-	for (unsigned int i = 0; i < statePropIds.size(); ++i)	localPropIds[eventPropIds[i]] = make_pair(STATE_PROP,i);
+	for (unsigned int i = 0; i < statePropIds.size(); ++i)	localPropIds[statePropIds[i]] = make_pair(STATE_PROP,i);
 	for (unsigned int i = 0; i < eventPropIds.size(); ++i)	localPropIds[eventPropIds[i]] = make_pair(EVENT_PROP,i);
 }
 
