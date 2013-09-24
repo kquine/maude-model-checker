@@ -45,7 +45,7 @@ protected:
 	//	client table interface
 	//
 	virtual ParamInfo& getParamInfo(unsigned int fairId) const = 0;
-	virtual InstanceInfo& getInstanceInfo(unsigned int fairId) const = 0;
+	virtual InstanceInfo* getInstanceInfo(unsigned int fairId) const = 0;
 	virtual unsigned int getNextFairIndex() const = 0;
 	virtual void insertInstance(unsigned int pfi, const ParamSubstitution* s) = 0;
 

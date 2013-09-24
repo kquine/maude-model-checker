@@ -30,7 +30,6 @@ public:
 
 	bool satisfiesProp(unsigned int propId, const Label& l) const	{ return l.label.contains(propId); }
 	unique_ptr<PropSet> updateLabel(DagNode* dag, Label& l) const;
-	void transferLabel(const Label& l, PropSet& t) const			{ t.setTrue(l.label); }
 
 private:
 	NatSet targetPropIds;

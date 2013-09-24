@@ -249,8 +249,10 @@ LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context
     //
     if (globalVerboseFlag)
     {
-		auto totalStates = mcm.getDagSystemGraph().getNrStates();
-		auto totalTransitions = mcm.getDagSystemGraph().getTotalTransitions();
+    	auto& graph = mcm.getDagSystemGraph();
+		auto totalStates = graph.getNrVisitedStates();
+		unsigned int totalTransitions = 0;
+		for (unsigned int i = 0; i < graph.getNrStates(); ++i) totalTransitions += graph.getNrVisitedTransitions(i);
 		cout << "ModelChecker: Examined " << totalStates << " system state" << pluralize(totalStates)
 			 << " and " << totalTransitions << " transition" << pluralize(totalTransitions) << '.' << endl;
     }

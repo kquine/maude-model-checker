@@ -36,7 +36,7 @@ StateDagContainer::getNrStates() const
 inline DagNode*
 StateDagContainer::getStateDag(size_type index) const
 {
-	Assert(index < state2hashConsIndex.size(), "Invalid state lookup (state dag)");
+	Assert(index < state2hashConsIndex.size(), "StateDagContainer::getStateDag: invalid state lookup (state dag)");
 	return hashConsSet.getCanonical(state2hashConsIndex[index]);
 }
 

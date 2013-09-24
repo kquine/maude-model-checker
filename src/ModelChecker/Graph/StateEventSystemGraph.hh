@@ -7,20 +7,19 @@
 
 #ifndef STATEEVENTSYSTEMGRAPH_HH_
 #define STATEEVENTSYSTEMGRAPH_HH_
-#include "BaseSystemGraphNoEnabled.hh"
+#include "BaseSystemGraphIter.hh"
 #include "PropSet/PropSet.hh"
 
 namespace modelChecker {
 
 /*
- * an ordinary state/event-based RW system graph.
- * every state proposition should be defined by equations (no special treatment for enabled props here)
+ * an ordinary state/event-based RW system graph; every state proposition should be defined by equations.
  */
 template <typename PL>
-class StateEventSystemGraph: public BaseSystemGraphNoEnabled<StateEventSystemGraph<PL> >
+class StateEventSystemGraph: public BaseSystemGraphIter<StateEventSystemGraph<PL> >
 {
-	friend class BaseSystemGraph<StateEventSystemGraph<PL> >;
-	friend class BaseSystemGraphNoEnabled<StateEventSystemGraph<PL> >;
+	friend class BaseSystemGraph<StateEventSystemGraph<PL>>;
+	friend class BaseSystemGraphIter<StateEventSystemGraph<PL>>;
 
 public:
 	StateEventSystemGraph(unique_ptr<PL>&& sepl, RewritingContext& initial, const ProofTermGenerator& ptg);
@@ -30,7 +29,7 @@ public:
 	bool satisfiesStateEventFormula(Bdd formula, unsigned int stateNr, unsigned int transitionNr) const;
 
 protected:
-	using Super = 		BaseSystemGraphNoEnabled<StateEventSystemGraph<PL> >	;
+	using Super = 		BaseSystemGraphIter<StateEventSystemGraph<PL> >	;
 	using State = 		typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::State;
 	using ActiveState =	typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::ActiveState;
 	using Transition =	typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::Transition;
@@ -41,11 +40,10 @@ protected:
 	virtual unique_ptr<PropSet> updateTransitionLabel(RewriteTransitionState& rts, Transition& t, State& s);
 	virtual unique_ptr<Transition> createTransition(unsigned int nextState, unsigned int transitionIndex) const;
 
-	const unique_ptr<PL> stateEventPropLabel;
+	const unique_ptr<PL> propLabel;
 
 private:
 	/* implements */ bool insertTransition(unsigned int nextState, State& n);
-	/* implements */ void closeTransition(State& n);
 };
 
 template <typename PL>

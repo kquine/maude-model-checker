@@ -7,15 +7,19 @@
 
 #ifndef STATEEVENTENABLEDSYSTEMGRAPH_HH_
 #define STATEEVENTENABLEDSYSTEMGRAPH_HH_
-#include "BaseSystemGraph.hh"
+#include "BaseSystemGraphOnce.hh"
 #include "PropChecker/EnabledPropTransferer.hh"
 
 namespace modelChecker {
 
+/*
+ * a state/event-based RW system graph with "operational" enabled propositions.
+ */
 template <typename PL>
-class StateEventEnabledSystemGraph: public BaseSystemGraph<StateEventEnabledSystemGraph<PL> >
+class StateEventEnabledSystemGraph: public BaseSystemGraphOnce<StateEventEnabledSystemGraph<PL>>
 {
-	friend class BaseSystemGraph<StateEventEnabledSystemGraph<PL> >;
+	friend class BaseSystemGraph<StateEventEnabledSystemGraph<PL>>;
+	friend class BaseSystemGraphOnce<StateEventEnabledSystemGraph<PL>>;
 
 public:
 	StateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<EnabledPropTransferer>&& enpc, RewritingContext& initial, const ProofTermGenerator& ptg);
@@ -25,7 +29,7 @@ public:
 	bool satisfiesStateEventFormula(Bdd formula, unsigned int stateNr, unsigned int transitionNr) const;
 
 protected:
-	using Super =		BaseSystemGraph<StateEventEnabledSystemGraph<PL>>;
+	using Super =		BaseSystemGraphOnce<StateEventEnabledSystemGraph<PL>>;
 	using State =		typename BaseSystemGraphTraits<StateEventEnabledSystemGraph<PL> >::State;
 	using ActiveState =	typename BaseSystemGraphTraits<StateEventEnabledSystemGraph<PL> >::ActiveState;
 	using Transition =	typename BaseSystemGraphTraits<StateEventEnabledSystemGraph<PL> >::Transition;
@@ -35,18 +39,15 @@ protected:
 	virtual unique_ptr<State> createState() const;
 	virtual unique_ptr<Transition> createTransition(unsigned int nextState, unsigned int transitionIndex) const;
 
-	const unique_ptr<EnabledPropTransferer> enabledPropHandler;
-private:
-	/* implements */ int computeNextState(unsigned int stateNr, unsigned int index);
-	/* implements */ unsigned int insertState(DagNode* stateDag);
+	const unique_ptr<EnabledPropTransferer> enabledHandler;
 
-	const unique_ptr<PL> stateEventPropLabel;
+private:
+	const unique_ptr<PL> propLabel;
 };
 
 template <typename PL>
 struct BaseSystemGraphTraits<StateEventEnabledSystemGraph<PL>>: public BaseSystemGraphTraits<StateEventSystemGraph<PL>>
 {
-
 	using ActiveState =			typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::ActiveState;
 	using Transition =			typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::Transition;
 	using trans_ptr_compare =	typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::trans_ptr_compare;

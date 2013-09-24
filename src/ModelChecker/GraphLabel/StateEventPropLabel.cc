@@ -82,18 +82,4 @@ StateEventPropLabel::updateEventLabel(DagNode* eventDag, EventLabel& l) const
 	return truePropIds;
 }
 
-void
-StateEventPropLabel::transferStateLabel(const StateLabel& l, PropSet& t) const
-{
-	for (auto i : l.label)
-		t.setTrue(statePropIds[i]);
-}
-
-void
-StateEventPropLabel::closeStateLabel(StateLabel& l) const
-{
-	for (unsigned int i = nrFormulaStateProps; i < statePropIds.size(); ++i)
-		l.label.subtract(i);
-}
-
 } /* namespace modelChecker */

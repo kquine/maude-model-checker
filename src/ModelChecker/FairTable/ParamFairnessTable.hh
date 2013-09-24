@@ -46,7 +46,7 @@ private:
 
 	unsigned int getNextFairIndex() const;
 	ParamInfo& getParamInfo(unsigned int fairId) const override;
-	InstanceInfo& getInstanceInfo(unsigned int fairId) const override;
+	InstanceInfo* getInstanceInfo(unsigned int fairId) const override;
 	void insertInstance(unsigned int pfi, const ParamSubstitution* s) override;
 
 	unsigned int getBaseFairId(unsigned int fairId) const;

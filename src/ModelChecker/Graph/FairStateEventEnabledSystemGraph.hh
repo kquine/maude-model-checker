@@ -38,7 +38,7 @@ private:
 	unique_ptr<PreState> createState() const override;
 	unique_ptr<PreTransition> createTransition(unsigned int nextState, unsigned int transitionIndex) const override;
 
-	const unique_ptr<FL> stateEventFairLabel;
+	const unique_ptr<FL> fairLabel;
 };
 
 } /* namespace modelChecker */

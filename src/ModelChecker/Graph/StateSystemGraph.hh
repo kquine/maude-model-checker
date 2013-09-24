@@ -7,25 +7,28 @@
 
 #ifndef STATESYSTEMGRAPH_HH_
 #define STATESYSTEMGRAPH_HH_
-#include "BaseSystemGraphNoEnabled.hh"
+#include "BaseSystemGraphIter.hh"
 #include "PropSet/PropSet.hh"
 
 namespace modelChecker {
 
+//
+// Only state propositions
+//
 template <typename PL>
-class StateSystemGraph: public BaseSystemGraphNoEnabled<StateSystemGraph<PL>>
+class StateSystemGraph: public BaseSystemGraphIter<StateSystemGraph<PL>>
 {
 	friend class BaseSystemGraph<StateSystemGraph<PL>>;
-	friend class BaseSystemGraphNoEnabled<StateSystemGraph<PL>>;
+	friend class BaseSystemGraphIter<StateSystemGraph<PL>>;
 
 public:
-	StateSystemGraph(unique_ptr<PL>&& statePropLabel, RewritingContext& initial, const ProofTermGenerator& ptg);
+	StateSystemGraph(unique_ptr<PL>&& spl, RewritingContext& initial, const ProofTermGenerator& ptg);
 	virtual ~StateSystemGraph() = default;
 
 	bool satisfiesStateFormula(Bdd formula, unsigned int stateNr) const;
 
 protected:
-	using Super = 		BaseSystemGraphNoEnabled<StateSystemGraph>;
+	using Super = 		BaseSystemGraphIter<StateSystemGraph>;
 	using State = 		typename BaseSystemGraphTraits<StateSystemGraph>::State;
 	using ActiveState =	typename BaseSystemGraphTraits<StateSystemGraph>::ActiveState;
 	using Transition =	typename BaseSystemGraphTraits<StateSystemGraph>::Transition;
@@ -35,9 +38,8 @@ protected:
 
 private:
 	/* implements */ bool insertTransition(unsigned int nextState, State& n);
-	/* implements */ void closeTransition(State& ) {}
 
-	const unique_ptr<PL> statePropLabel;
+	const unique_ptr<PL> propLabel;
 };
 
 template <typename PL>

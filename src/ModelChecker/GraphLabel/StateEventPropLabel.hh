@@ -30,9 +30,6 @@ public:
 	unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, StateLabel& l) const;
 	unique_ptr<PropSet> updateEventLabel(DagNode* eventDag, EventLabel& l) const;
 
-	void transferStateLabel(const StateLabel& l, PropSet& t) const;
-	void closeStateLabel(StateLabel& l) const;
-
 private:
 	enum PROP_TYPE { STATE_PROP, EVENT_PROP, NEITHER };
 

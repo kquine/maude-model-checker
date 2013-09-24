@@ -32,7 +32,7 @@ private:
 	unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, PreState& s) override;
 	unique_ptr<PreState> createState(DagNode* stateDag) const override;
 
-	const unique_ptr<FL> stateFairLabel;
+	const unique_ptr<FL> fairLabel;
 };
 
 } /* namespace modelChecker */

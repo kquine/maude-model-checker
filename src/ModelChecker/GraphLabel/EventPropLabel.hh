@@ -29,9 +29,6 @@ public:
 
 	unique_ptr<PropSet> updateStateLabel(DagNode*, StateLabel&) const		{ return nullptr; }
 	unique_ptr<PropSet> updateEventLabel(DagNode* dag, EventLabel& l) const	{ return BasePropLabel::updateLabel(dag,l); }
-
-	void transferStateLabel(const StateLabel&, PropSet&) const				{}
-	void closeStateLabel(StateLabel& ) const								{}
 };
 
 

@@ -60,14 +60,14 @@ template <typename Formula>
 typename ParamFairnessTable<Formula>::ParamInfo&
 ParamFairnessTable<Formula>::getParamInfo(unsigned int fairId) const
 {
-	return static_cast<ParamFairness&>(*this->fairTable[fairId]);
+	return *safeCast(ParamFairness*,this->fairTable[fairId].get());
 }
 
 template <typename Formula>
-typename ParamFairnessTable<Formula>::InstanceInfo&
+typename ParamFairnessTable<Formula>::InstanceInfo*
 ParamFairnessTable<Formula>::getInstanceInfo(unsigned int fairId) const
 {
-	return static_cast<InstanceFairnessInfo&>(*this->fairTable[fairId]);
+	return dynamic_cast<InstanceFairnessInfo*>(this->fairTable[fairId].get());
 }
 
 template <typename Formula> void

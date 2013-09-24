@@ -38,8 +38,27 @@ BaseSystemGraph<T>::getNrStates() const
 template <class T> inline unsigned int
 BaseSystemGraph<T>::getNrTransitions(unsigned int stateNr) const
 {
-	Assert(seen[stateNr], "BaseSystemGraph::getNrTransitions: Invalid state lookup");
-	return seen[stateNr]->transitions.size();
+	Assert(stateNr < seen.size(), "BaseSystemGraph::getNrTransitions: invalid state lookup");
+	return seen[stateNr] ? seen[stateNr]->transitions.size() : 0;
+}
+
+template <class T> inline unsigned int
+BaseSystemGraph<T>::getNrVisitedStates() const	// count only visited states
+{
+	return count_if(seen.begin(), seen.end(), [] (const unique_ptr<State>& s) { return bool(s); });
+}
+
+template <class T> inline unsigned int
+BaseSystemGraph<T>::getNrVisitedTransitions(unsigned int stateNr) const
+{
+	Assert(stateNr < seen.size(), "BaseSystemGraph::getNrVisitedStates: invalid state lookup");
+	if (seen[stateNr])
+	{
+		auto& ts = seen[stateNr]->transitions;
+		return count_if(ts.begin(), ts.end(), [&] (const unique_ptr<Transition>& t) { return t->nextState < seen.size() && seen[t->nextState]; });  // may count MORE self loops
+	}
+	else
+		return 0;
 }
 
 template <class T> inline DagNode*
@@ -51,7 +70,7 @@ BaseSystemGraph<T>::getStateDag(unsigned int stateNr) const
 template <class T> inline DagNode*
 BaseSystemGraph<T>::getTransitionDag(unsigned int stateNr, unsigned int index) const
 {
-	Assert(seen[stateNr], "BaseSystemGraph::getTransitionDag: Invalid state lookup");
+	Assert(stateNr < seen.size() && seen[stateNr], "BaseSystemGraph::getTransitionDag: invalid state lookup");
 	DagNode* const pd = seen[stateNr]->transitions[index]->makeDag(initial, getStateDag(stateNr), ptGenerator);
 	pd->reduce(initial);
 	return pd;

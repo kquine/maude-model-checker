@@ -29,9 +29,6 @@ public:
 
 	unique_ptr<PropSet> updateStateLabel(DagNode* dag, StateLabel& l) const	{ return BasePropLabel::updateLabel(dag,l); }
 	unique_ptr<PropSet> updateEventLabel(DagNode*, EventLabel&) const		{ return nullptr; }
-
-	void transferStateLabel(const StateLabel& l, PropSet& t) const			{ BasePropLabel::transferLabel(l,t); }
-	void closeStateLabel(StateLabel&) const									{}		// TODO: state only formula prop + state/eveit fairness, so that ...
 };
 
 

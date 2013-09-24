@@ -31,19 +31,18 @@ namespace modelChecker {
 
 template <typename PL>
 StateSystemGraph<PL>::StateSystemGraph(unique_ptr<PL>&& spl, RewritingContext& initial, const ProofTermGenerator& ptg):
-		Super(initial, ptg), statePropLabel(move(spl)) {}
+		Super(initial, ptg), propLabel(move(spl)) {}
 
 template <typename PL> bool
 StateSystemGraph<PL>::satisfiesStateFormula(Bdd formula, unsigned int stateNr) const
 {
-	auto check = [&] (unsigned int propId) { return statePropLabel->satisfiesStateProp(propId, *this->seen[stateNr]); };
-	return BddUtil::satisfiesFormula(formula, check);
+	return BddUtil::satisfiesFormula(formula, [&] (unsigned int propId) { return propLabel->satisfiesStateProp(propId, *this->seen[stateNr]); });
 }
 
 template <typename PL> unique_ptr<PropSet>
 StateSystemGraph<PL>::updateStateLabel(DagNode* stateDag, State& s)
 {
-	return statePropLabel->updateStateLabel(stateDag, s);		// compute all state props and store the formula state props
+	return propLabel->updateStateLabel(stateDag, s);		// compute all state props and store the formula state props
 }
 
 template <typename PL>

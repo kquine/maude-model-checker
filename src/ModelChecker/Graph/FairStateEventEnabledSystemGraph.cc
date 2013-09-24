@@ -33,12 +33,12 @@ namespace modelChecker {
 template <typename PL, typename FL>
 FairStateEventEnabledSystemGraph<PL,FL>::FairStateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<FL>&& sefl, unique_ptr<EnabledPropTransferer>&& enpc,
 		RewritingContext& initial, const ProofTermGenerator& ptg):
-	Super(move(sepl),move(enpc),initial,ptg), stateEventFairLabel(move(sefl)) {}
+	Super(move(sepl),move(enpc),initial,ptg), fairLabel(move(sefl)) {}
 
 template <typename PL, typename FL> unique_ptr<FairSet>
 FairStateEventEnabledSystemGraph<PL,FL>::makeFairSet(unsigned int stateNr, unsigned int transitionNr) const
 {
-	return stateEventFairLabel->makeFairSet(static_cast<State*>(this->seen[stateNr].get()), static_cast<Transition*>(this->seen[stateNr]->transitions[transitionNr].get()));
+	return fairLabel->makeFairSet(static_cast<State*>(this->seen[stateNr].get()), static_cast<Transition*>(this->seen[stateNr]->transitions[transitionNr].get()));
 }
 
 template <typename PL, typename FL> bool
@@ -67,14 +67,13 @@ FairStateEventEnabledSystemGraph<PL,FL>::updateAllLabels(DagNode* stateDag, cons
 {
 	LabelSet trueProps = Super::updateAllLabels(stateDag, proofDags, s, trs);
 
-	this->enabledPropHandler->transferEnabledPropIDs(*trueProps.first, trueProps.second); 	// compute all enabled props for (state and/or event) fairness conditions
-
-	stateEventFairLabel->updateStateLabel(*trueProps.first,static_cast<State&>(s));		// compute all state fairness conditions
+	this->enabledHandler->transferEnabledPropIDs(*trueProps.first, trueProps.second); 	// compute all enabled props for (state and/or event) fairness conditions
+	fairLabel->updateStateLabel(*trueProps.first,static_cast<State&>(s));				// compute all state fairness conditions
 
 	for (unsigned int i = 0; i < trs.size(); ++i)
 	{
-		trueProps.second[i]->setTrue(*trueProps.first); 												// transfer truth
-		stateEventFairLabel->updateEventLabel(*trueProps.second[i],static_cast<Transition&>(*trs[i])); 	// compute and store all SE fairness conditions
+		trueProps.second[i]->setTrue(*trueProps.first); 										// transfer truth
+		fairLabel->updateEventLabel(*trueProps.second[i],static_cast<Transition&>(*trs[i])); 	// compute and store all SE fairness conditions
 	}
 	return trueProps;
 }

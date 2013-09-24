@@ -17,20 +17,12 @@ public:
 
     virtual unsigned int getNrStates() const = 0;
     virtual unsigned int getNrTransitions(unsigned int stateNr) const = 0;
+
+    virtual unsigned int getNrVisitedStates() const = 0;
+    virtual unsigned int getNrVisitedTransitions(unsigned int stateNr) const = 0;
+
     virtual int getNextState(unsigned int stateNr, unsigned int index) = 0;		// return -1 if no more transitions
-
-    unsigned int getTotalTransitions() const;
 };
-
-inline unsigned int
-SystemGraph::getTotalTransitions() const
-{
-	const auto nrStates = getNrStates();
-	unsigned int total = 0;
-	for (unsigned int i = 0; i < nrStates; ++i)
-		total += getNrTransitions(i);
-	return total;
-}
 
 
 } /* namespace modelChecker */

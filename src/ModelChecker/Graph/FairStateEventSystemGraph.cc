@@ -31,51 +31,64 @@ namespace modelChecker {
 
 template <typename PL, typename FL>
 FairStateEventSystemGraph<PL,FL>::FairStateEventSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<FL>&& sefl, RewritingContext& initial, const ProofTermGenerator& ptg):
-	Super(move(sepl),initial,ptg), stateEventFairLabel(move(sefl)) {}
+	Super(initial,ptg), propLabel(move(sepl)), fairLabel(move(sefl)) {}
 
 template <typename PL, typename FL> unique_ptr<FairSet>
 FairStateEventSystemGraph<PL,FL>::makeFairSet(unsigned int stateNr, unsigned int transitionNr) const
 {
-	return stateEventFairLabel->makeFairSet(static_cast<State*>(this->seen[stateNr].get()), static_cast<Transition*>(this->seen[stateNr]->transitions[transitionNr].get()));
+	return fairLabel->makeFairSet(static_cast<State*>(this->seen[stateNr].get()), this->seen[stateNr]->transitions[transitionNr].get());
 }
 
 template <typename PL, typename FL> bool
-FairStateEventSystemGraph<PL,FL>::Transition::operator<(const PreTransition& t) const
+FairStateEventSystemGraph<PL,FL>::satisfiesStateFormula(Bdd formula, unsigned int stateNr) const
 {
-	return PreTransition::operator<(t) || FL::EventLabel::operator<(static_cast<const Transition&>(t));
+	return BddUtil::satisfiesFormula(formula, [&] (unsigned int propId) { return propLabel->satisfiesStateProp(propId, *this->seen[stateNr]); });
+}
+
+template <typename PL, typename FL> pair<bool,Bdd>
+FairStateEventSystemGraph<PL,FL>::satisfiesPartialStateFormula(Bdd formula, unsigned int stateNr) const
+{
+	auto domain = [&] (unsigned int propId) { return ! propLabel->isEvent(propId); };
+	auto check = [&] (unsigned int propId) { return propLabel->satisfiesStateProp(propId, *this->seen[stateNr]); };
+	return BddUtil::satisfiesPartialFormula(formula, domain, check);
+}
+
+template <typename PL, typename FL> bool
+FairStateEventSystemGraph<PL,FL>::satisfiesStateEventFormula(Bdd formula, unsigned int stateNr, unsigned int transitionNr) const
+{
+	auto check = [&] (unsigned int propId) { return propLabel->isEvent(propId) ?
+			  propLabel->satisfiesEventProp(propId,*this->seen[stateNr]->transitions[transitionNr])
+			: propLabel->satisfiesStateProp(propId,*this->seen[stateNr]); };
+	return BddUtil::satisfiesFormula(formula, check);
+}
+
+template <typename PL, typename FL> void
+FairStateEventSystemGraph<PL,FL>::updateAllLabels(DagNode* stateDag, const vector<DagNode*>& proofDags, State& s, vector<unique_ptr<Transition> >& trs)
+{
+	unique_ptr<PropSet> trueStateProps = propLabel->updateStateLabel(stateDag,s);	// compute and store all state props (for s)
+	fairLabel->updateStateLabel(*trueStateProps,static_cast<State&>(s));			// compute all state fairness conditions
+
+	vector<unique_ptr<PropSet>> trueEventProps(trs.size());
+	for (unsigned int i = 0; i < trs.size(); ++i)
+	{
+		trueEventProps[i] = propLabel->updateEventLabel(proofDags[i],*trs[i]);				// compute and store all event prop (for transitions)
+		trueEventProps[i]->setTrue(*trueStateProps); 										// transfer truth
+		fairLabel->updateEventLabel(*trueEventProps[i],static_cast<Transition&>(*trs[i])); 	// compute and store all SE fairness conditions
+	}
 }
 
 template <typename PL, typename FL>
-unique_ptr<PropSet>
-FairStateEventSystemGraph<PL,FL>::updateStateLabel(DagNode* stateDag, PreState& s)
+unique_ptr<typename FairStateEventSystemGraph<PL,FL>::State>
+FairStateEventSystemGraph<PL,FL>::createState() const
 {
-	unique_ptr<PropSet> truePropIds = Super::updateStateLabel(stateDag, s);
-	stateEventFairLabel->updateStateLabel(*truePropIds, static_cast<State&>(s));	// compute and store all state fairness conditions
-	return truePropIds;
+	return unique_ptr<State>(new State);
 }
 
 template <typename PL, typename FL>
-unique_ptr<typename FairStateEventSystemGraph<PL,FL>::PreState>
-FairStateEventSystemGraph<PL,FL>::createState(DagNode* stateDag) const
-{
-	return unique_ptr<PreState>(new State(Super::initial, stateDag));
-}
-
-template <typename PL, typename FL>
-unique_ptr<PropSet>
-FairStateEventSystemGraph<PL,FL>::updateTransitionLabel(RewriteTransitionState& r, PreTransition& t, PreState& s)
-{
-	unique_ptr<PropSet> truePropIds = Super::updateTransitionLabel(r, t, s);
-	this->stateEventPropLabel->transferStateLabel(s, *truePropIds);								// transfer the cached state props
-	stateEventFairLabel->updateEventLabel(*truePropIds, static_cast<Transition&>(t));	// compute and store all SE fairness conditions
-	return truePropIds;
-}
-
-template <typename PL, typename FL>
-unique_ptr<typename FairStateEventSystemGraph<PL,FL>::PreTransition>
+unique_ptr<typename FairStateEventSystemGraph<PL,FL>::Transition>
 FairStateEventSystemGraph<PL,FL>::createTransition(unsigned int nextState, unsigned int transitionIndex) const
 {
-	return unique_ptr<PreTransition>(new Transition(nextState, transitionIndex));
+	return unique_ptr<Transition>(new Transition(nextState, transitionIndex));
 }
 
 

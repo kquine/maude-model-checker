@@ -29,19 +29,23 @@ RealizedFairnessTable::getSubstBuilder(unsigned int fairId) const
 unsigned int
 RealizedFairnessTable::getRealizedFairId(unsigned int fairId, const NatSet& realizedFair) const
 {
-	queue<unsigned int> bfs;
-	bfs.push(fairId);
-
-	while ( !bfs.empty() )	// find the most specific ancestor of fairId in realizedFair
+	if (auto iInfo = getInstanceInfo(fairId))
 	{
-		const auto cur = bfs.front();
-		bfs.pop();
-		if ( realizedFair.contains(cur) )
-			return cur;
-		for (auto k : getInstanceInfo(cur).directBase)
-			bfs.push(k);
+		queue<unsigned int> bfs;
+		bfs.push(fairId);
+
+		while ( !bfs.empty() )	// find the most specific ancestor of fairId in realizedFair
+		{
+			const auto cur = bfs.front();
+			bfs.pop();
+			if ( realizedFair.contains(cur) )
+				return cur;
+			for (auto k : getInstanceInfo(cur)->directBase)
+				bfs.push(k);
+		}
+		return iInfo->paramFairId;	// the base id (all bots), otherwise
 	}
-	return getInstanceInfo(fairId).paramFairId;	// the base id (all bots), otherwise
+	return fairId;	// if fairID is NOT an instance fairid.
 }
 
 unsigned int
@@ -63,11 +67,11 @@ RealizedFairnessTable::updateInstanceBaseMap(const InstanceSubstMap& substMap, c
 {
 	//NOTE: the keys in InstanceSubstMap are ordered!
 	//
-	auto& fBase = getInstanceInfo(f->second).directBase;
+	auto& fBase = getInstanceInfo(f->second)->directBase;
 	for (auto i = substMap.cbegin(); i != f; ++i)		// iterating over more general substs than f
 		if (i->first.subsume(f->first))
 		{
-			const auto& iBase = getInstanceInfo(i->second).directBase;
+			const auto& iBase = getInstanceInfo(i->second)->directBase;
 			for (auto k = fBase.begin(); k != fBase.end(); )
 				iBase.find(*k) != iBase.end() ? fBase.erase(k++) : ++k;		// any direct base of f is removed if it's also one of j.
 			fBase.insert(i->second);
@@ -77,7 +81,7 @@ RealizedFairnessTable::updateInstanceBaseMap(const InstanceSubstMap& substMap, c
 	for (auto j = next(f); j != substMap.cend(); ++j)	// iterating over more specific substs than f
 		if (f->first.subsume(j->first))
 		{
-			auto& jBase = getInstanceInfo(j->second).directBase;
+			auto& jBase = getInstanceInfo(j->second)->directBase;
 			if (none_of(jBase.begin(), jBase.end(), [&fDes] (unsigned int l) { return fDes[l]; }))	// if any direct base of j has not been marked as a descendant of f.
 			{
 				for (auto k = jBase.begin(); k != jBase.end(); )
