@@ -22,7 +22,6 @@ public:
 	using Transition = 				typename Automaton<PA>::Transition;
 	using PreTransitionIterator =	typename Automaton<PA>::TransitionIterator;
 
-
 	FairProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property, unique_ptr<AbstractFairnessTable>&& systemFairTable);
 
 	unique_ptr<FairSet> makeFairSet(const Transition& t) override;

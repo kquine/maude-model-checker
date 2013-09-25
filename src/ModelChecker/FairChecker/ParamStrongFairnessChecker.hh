@@ -22,7 +22,7 @@ public:
 	unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
 
 	unique_ptr<FairSet> computeCompactFairness(const PropSet& trueProps) override;
-	unique_ptr<FairSet> unzip(const FairSet& fs) const;
+	unique_ptr<FairSet> unzip(const FairSet& fs) const override;
 
 private:
 	indexed_set<unsigned int> compactIndices;

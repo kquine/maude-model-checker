@@ -62,7 +62,6 @@ struct BaseSystemGraphTraits<FairStateEventSystemGraph<PL,FL>>: public BaseSyste
 
 	struct State: public PL::StateLabel, public FL::StateLabel
 	{
-		virtual ~State() = default;
 		vector<unique_ptr<Transition> > transitions;
 		unsigned int nrVisited = 0;
 	};

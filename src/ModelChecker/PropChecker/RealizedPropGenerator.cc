@@ -47,7 +47,7 @@ RealizedPropGenerator::getPropTable() const
 }
 
 void
-RealizedPropGenerator::generateRealizedProps(DagNode* target, ParamPropSet& result)
+RealizedPropGenerator::generateRealizedProps(DagNode* target, PropSet& result)
 {
 	const unique_ptr<RewritingContext> context(parentContext.makeSubcontext(pEval.getRealizedDag(target)));
 	SearchState sc(context.get(), 0, 0, 0);	// only for the top with extension (not respect frozen).
@@ -60,7 +60,7 @@ RealizedPropGenerator::generateRealizedProps(DagNode* target, ParamPropSet& resu
 //TODO: in this version, many redundant props are generated when considering spatial action patterns due to AC matching..
 // Using unifications is in general not allowed here, but we may consider it for simple spatial action patterns..
 void
-RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& context, ParamPropSet& result)
+RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& context, PropSet& result)
 {
 	for(const unique_ptr<Rule>& r : genRules)
 	{
@@ -76,7 +76,7 @@ RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& contex
 					res->reduce(parentContext);
 					auto pi = propTable.insertInstanceAndUpdate(res,parentContext);
 					if (pi != NONE)
-						result.setTrue(pi);
+						result.setInstance(pi, propTable);
 				}
 				else
 					throw logic_error(StringStream() << "Derived term " << QUOTE(this) << " is non-ground and realized substitutions cannot be correctly generated.");

@@ -21,7 +21,6 @@ public:
 	struct ProdTransitionIterator;
 
 	ProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property);
-	virtual ~ProductAutomaton() = default;
 
 	const SA& getSystemAutomaton() const					{ return *systemAut; }
 	const PA& getPropertyAutomaton() const override			{ return *propertyAut; }

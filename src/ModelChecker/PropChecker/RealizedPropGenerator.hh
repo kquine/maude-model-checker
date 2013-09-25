@@ -9,7 +9,7 @@
 #define REALIZEDPROPGENERATOR_HH_
 #include "rule.hh"
 #include "searchState.hh"
-#include "PropSet/ParamPropSet.hh"
+#include "PropSet/PropSet.hh"
 #include "Interface/PropEvaluator.hh"
 
 namespace modelChecker {
@@ -20,13 +20,13 @@ public:
 	RealizedPropGenerator(const vector<unsigned int>& paramPropIds, ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& parent);
 
 	const ParamPropositionTable& getPropTable() const;
-	void generateRealizedProps(DagNode* target, ParamPropSet& result);	// return realized prop indices in the "propositions"
+	void generateRealizedProps(DagNode* target, PropSet& result);	// return realized prop indices in the "propositions"
 
 private:
 	void constructRules();
 	unique_ptr<Rule> makeRule(Term* left, Term* right, const Vector<ConditionFragment*>& condition) const;
 
-	void computeGenRules(SearchState& sc, RewritingContext& context, ParamPropSet& result);
+	void computeGenRules(SearchState& sc, RewritingContext& context, PropSet& result);
 
 	vector<unique_ptr<Rule> > genRules;
 

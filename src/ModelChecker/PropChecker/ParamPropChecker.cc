@@ -25,10 +25,9 @@ ParamPropChecker::ParamPropChecker(const vector<unsigned int>& groundPropIds, co
 unique_ptr<PropSet>
 ParamPropChecker::computeCheckResult(DagNode* target)
 {
-	unique_ptr<PropSet> ors = PropChecker::computeCheckResult(target);
-	ParamPropSet* pres = new ParamPropSet(RealizedPropGenerator::getPropTable(), std::move(*ors));
-	RealizedPropGenerator::generateRealizedProps(target, *pres);
-	return unique_ptr<PropSet>(pres);
+	unique_ptr<PropSet> res = PropChecker::computeCheckResult(target);
+	RealizedPropGenerator::generateRealizedProps(target, *res);
+	return res;
 }
 
 

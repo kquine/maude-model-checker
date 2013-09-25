@@ -25,7 +25,6 @@
 #include "rewritingContext.hh"
 
 // ltlr definitions
-#include "PropSet/PropSetUtil.hh"
 #include "FairStateEventEnabledSystemGraph.hh"
 
 namespace modelChecker {
@@ -67,16 +66,14 @@ typename FairStateEventEnabledSystemGraph<PL,FL>::LabelSet
 FairStateEventEnabledSystemGraph<PL,FL>::updateAllLabels(DagNode* stateDag, const vector<DagNode*>& proofDags, PreState& s, vector<unique_ptr<PreTransition> >& trs)
 {
 	LabelSet trueProps = Super::updateAllLabels(stateDag, proofDags, s, trs);
-
-	// compute all enabled props for (state and/or event) fairness conditions
-	PropSetUtil::merge(trueProps.first, this->enabledHandler->computeEnabledProps(trueProps.second));
+	PropSet::merge(trueProps.first, this->enabledHandler->computeEnabledProps(trueProps.second));	// compute all enabled props for (state and/or event) fairness conditions
 
 	if (trueProps.first)
 		fairLabel->updateStateLabel(*trueProps.first,static_cast<State&>(s));	// compute all state fairness conditions
 
 	for (unsigned int i = 0; i < trs.size(); ++i)
 	{
-		PropSetUtil::merge(trueProps.second[i], trueProps.first);				// transfer truth
+		PropSet::merge(trueProps.second[i], trueProps.first);					// transfer truth
 		if (trueProps.second[i])
 			fairLabel->updateEventLabel(*trueProps.second[i],static_cast<Transition&>(*trs[i])); 	// compute and store all SE fairness conditions
 	}

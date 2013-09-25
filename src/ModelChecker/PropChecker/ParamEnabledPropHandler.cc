@@ -15,7 +15,7 @@
 #include "core.hh"
 
 // ltlr definitions
-#include "PropSet/ParamPropSet.hh"
+#include "PropSet/PropSet.hh"
 #include "ParamEnabledPropHandler.hh"
 
 namespace modelChecker {
@@ -27,15 +27,14 @@ ParamEnabledPropHandler::ParamEnabledPropHandler(const vector<unsigned int>& grF
 unique_ptr<PropSet>
 ParamEnabledPropHandler::computeEnabledProps(const vector<unique_ptr<PropSet>>& trueEventPropIds) const
 {
-	unique_ptr<PropSet> ors = EnabledPropHandler::computeEnabledProps(trueEventPropIds);
-	ParamPropSet* pres = new ParamPropSet(paramPropTableRef, std::move(*ors));
+	unique_ptr<PropSet> res = EnabledPropHandler::computeEnabledProps(trueEventPropIds);
 	for (auto i: paramFairEnabledPropIds)
 	{
 		auto evtId = propositions.getEnabledEventId(i);
-		for (const unique_ptr<PropSet>& j  : trueEventPropIds)
-			pres->setTrueParamSubst(i, safeCast(const ParamPropSet*,j.get())->getTrueParamSubst(evtId));
+		for (auto& j  : trueEventPropIds)
+			res->setTrueParamSubst(i, j->getTrueParamSubst(evtId));
 	}
-	return unique_ptr<PropSet>(pres);
+	return res;
 }
 
 } /* namespace modelChecker */

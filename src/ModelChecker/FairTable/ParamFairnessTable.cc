@@ -42,6 +42,12 @@ ParamFairnessTable<Formula>::getFairFormula(unsigned int fairId) const
 	return Super::getFairFormula(getBaseFairId(fairId));
 }
 
+template <typename Formula> const ParamPropositionTable&
+ParamFairnessTable<Formula>::getPropTable() const
+{
+	return paramPropTableRef;
+}
+
 template <typename Formula>
 unique_ptr<typename ParamFairnessTable<Formula>::GroundFairness>
 ParamFairnessTable<Formula>::createFormulaFairness(const Formula& f, const vector<unsigned int>& propIds, DagNode* fairDag) const

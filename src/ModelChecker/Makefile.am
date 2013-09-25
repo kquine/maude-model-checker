@@ -23,8 +23,6 @@ libModelChecker_a_CPPFLAGS = \
 libModelChecker_a_SOURCES = \
 	Utility/TermUtil.cc \
 	PropSet/PropSet.cc \
-	PropSet/ParamPropSet.cc \
-	PropSet/PropSetUtil.cc \
 	PropTable/PropositionTable.cc \
 	PropTable/ParamPropositionTable.cc \
 	PropTable/ParamSubstitution.cc \

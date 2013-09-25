@@ -32,7 +32,7 @@ ParamSubstitutionBuilder::ParamSubstitutionBuilder(DagNode* fairnessDag, const v
 
 
 NatSet
-ParamSubstitutionBuilder::trueParamProps(const ParamPropSet& pps, const ParamSubstitution& subst) const
+ParamSubstitutionBuilder::trueParamProps(const PropSet& ps, const ParamSubstitution& subst) const
 {
 	NatSet result;
 	for (auto& pi : pidInfo)
@@ -40,7 +40,7 @@ ParamSubstitutionBuilder::trueParamProps(const ParamPropSet& pps, const ParamSub
 		const ParamSubstitution propSubst(subst, pi->varMap);
 		if (propSubst.isTotal())
 		{
-			for (auto i : pps.getTrueParamSubst(pi->propId))	//FIXME: the size of getTrueParamSubst should be small.
+			for (auto i : ps.getTrueParamSubst(pi->propId))	//FIXME: the size of getTrueParamSubst should be small.
 				if (propSubst == *i)
 				{
 					//dumpPropSubst(pi->propId, propSubst);
@@ -52,33 +52,33 @@ ParamSubstitutionBuilder::trueParamProps(const ParamPropSet& pps, const ParamSub
 }
 
 set<ParamSubstitution>
-ParamSubstitutionBuilder::generateParamSubstitutions(const ParamPropSet& pps) const
+ParamSubstitutionBuilder::generateParamSubstitutions(const PropSet& ps) const
 {
 	set<ParamSubstitution> result;
 	ParamSubstitution t(ParamVarInfo::getNrVariables());
-	computeParamSubstitutions(pidInfo.cbegin(), t, pps, false, result);
+	computeParamSubstitutions(pidInfo.cbegin(), t, ps, false, result);
 
 	return result;
 }
 
 void
-ParamSubstitutionBuilder::computeParamSubstitutions(PropInfoPos i, ParamSubstitution& t, const ParamPropSet& pps, bool ever, set<ParamSubstitution>& result) const
+ParamSubstitutionBuilder::computeParamSubstitutions(PropInfoPos i, ParamSubstitution& t, const PropSet& ps, bool ever, set<ParamSubstitution>& result) const
 {
 	if (i != pidInfo.cend())
 	{
 		const ParamSubstitution orig(t, (*i)->varMap);
-		for (auto target : pps.getTrueParamSubst((*i)->propId))
+		for (auto target : ps.getTrueParamSubst((*i)->propId))
 		{
 			if ( target->isConsistent(orig) )
 			{
 				t.setSubst((*i)->varMap, *target);
-				computeParamSubstitutions(i + 1, t, pps, true, result);
+				computeParamSubstitutions(i + 1, t, ps, true, result);
 
 				if (orig.isTotal()) break; 	// no need to compute more if old is total (i.e., no 'bot')
 			}
 		}
 		t.setSubst((*i)->varMap, orig);	// the "bottom" case
-		computeParamSubstitutions(i + 1, t, pps, ever, result);
+		computeParamSubstitutions(i + 1, t, ps, ever, result);
 	}
 	else
 	{

@@ -24,18 +24,18 @@ RealizedFairnessGenerator::RealizedFairnessGenerator(const vector<unsigned int>&
 	paramFairIds(paramFairIds), fairTable(fairTable) {}
 
 deque<pair<unsigned int,NatSet>>
-RealizedFairnessGenerator::generateRealizedFairness(const ParamPropSet& pps)
+RealizedFairnessGenerator::generateRealizedFairness(const PropSet& ps)
 {
 	deque<pair<unsigned int,NatSet>> result;
 	for (auto i : paramFairIds)
 	{
 		const ParamSubstitutionBuilder& builder = fairTable.getSubstBuilder(i);
-		set<ParamSubstitution> rsubsts = builder.generateParamSubstitutions(pps);
+		set<ParamSubstitution> rsubsts = builder.generateParamSubstitutions(ps);
 
 		for (auto& rs : rsubsts)
 		{
 			auto fi =  fairTable.insertFairnessInstance(i, rs);
-			result.push_back(make_pair(fi,builder.trueParamProps(pps,rs)));
+			result.push_back(make_pair(fi,builder.trueParamProps(ps,rs)));
 		}
 	}
 	return result;

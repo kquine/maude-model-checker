@@ -5,8 +5,15 @@
  *      Author: kquine
  */
 
+// utility stuff
 #include "macros.hh"
 #include "vector.hh"
+
+// forward declarations
+#include "interface.hh"
+#include "core.hh"
+
+// ltlr definitions
 #include "StateEventFairLabel.hh"
 
 namespace modelChecker {

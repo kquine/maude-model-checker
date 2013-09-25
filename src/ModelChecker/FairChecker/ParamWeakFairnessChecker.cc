@@ -31,12 +31,11 @@ ParamWeakFairnessChecker::getNrFairness() const
 unique_ptr<FairSet>
 ParamWeakFairnessChecker::computeAllFairness(const PropSet& trueProps)
 {
-	auto& pps = static_cast<const ParamPropSet&>(trueProps);
 	auto result = new ParamWeakFairSet(move(static_cast<WeakFairSet&>(*WeakFairnessChecker::computeAllFairness(trueProps))));
 
-	for (auto& pt : this->generateRealizedFairness(pps))
+	for (auto& pt : this->generateRealizedFairness(trueProps))
 	{
-		auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? pt.second.contains(propId) : pps.isTrue(propId);};
+		auto truth = [&] (unsigned int propId) { return fTableRef.getPropTable().isParamProp(propId) ? pt.second.contains(propId) : trueProps.isTrue(propId);};
 		auto& formula = fTableRef.getFairFormula(pt.first);
 
 		result->setRealized(pt.first);
@@ -48,12 +47,11 @@ ParamWeakFairnessChecker::computeAllFairness(const PropSet& trueProps)
 unique_ptr<FairSet>
 ParamWeakFairnessChecker::computeCompactFairness(const PropSet& trueProps)
 {
-	auto& pps = static_cast<const ParamPropSet&>(trueProps);
 	auto result = new ParamWeakFairSet(move(static_cast<WeakFairSet&>(*WeakFairnessChecker::computeCompactFairness(trueProps))));
 
-	for (auto& pt : this->generateRealizedFairness(pps))
+	for (auto& pt : this->generateRealizedFairness(trueProps))
 	{
-		auto truth = [&] (unsigned int propId) { return pps.isParamProp(propId) ? pt.second.contains(propId) : pps.isTrue(propId);};
+		auto truth = [&] (unsigned int propId) { return fTableRef.getPropTable().isParamProp(propId) ? pt.second.contains(propId) : trueProps.isTrue(propId);};
 		auto& formula = fTableRef.getFairFormula(pt.first);
 
 		auto compactId = compactIndices.insert(pt.first).first + WeakFairnessChecker::getNrFairness();

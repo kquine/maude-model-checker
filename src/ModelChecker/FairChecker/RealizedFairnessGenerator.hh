@@ -18,7 +18,7 @@ class RealizedFairnessGenerator
 public:
 	RealizedFairnessGenerator(const vector<unsigned int>& paramFairIds, RealizedFairnessTable& fairTable);
 
-	deque<pair<unsigned int,NatSet>> generateRealizedFairness(const ParamPropSet& pps);
+	deque<pair<unsigned int,NatSet>> generateRealizedFairness(const PropSet& ps);
 
 private:
 	const vector<unsigned int> paramFairIds;

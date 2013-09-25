@@ -8,33 +8,34 @@
 #ifndef PROPSET_HH_
 #define PROPSET_HH_
 #include "natSet.hh"
+#include "PropTable/ParamPropositionTable.hh"
 
 namespace modelChecker {
 
-class PropSetUtil;
-
 class PropSet
 {
-	friend class PropSetUtil;
 public:
-	PropSet() = default;
-	virtual ~PropSet() = default;
+	bool isTrue(unsigned int propId) const		{ return truePropIds.contains(propId); }
+	const NatSet& getTruePropIds() const		{ return truePropIds; }
+	void setTrue(unsigned int propId)			{ truePropIds.insert(propId); }
 
-	PropSet(const PropSet&) = default;
-	PropSet(PropSet&& other) noexcept;
+	void setInstance(unsigned int propId, const ParamPropositionTable& propTable);
 
-	bool isTrue(unsigned int propId) const;
-	const NatSet& getTruePropIds() const;
+	template <typename T> void setTrueParamSubst(unsigned int propId, const T& substs);
+	const set<const ParamSubstitution*>& getTrueParamSubst(unsigned int propId) const;
 
-	virtual void setTrue(unsigned int propId);
+	static void merge(unique_ptr<PropSet>& ps1, unique_ptr<PropSet>&& ps2);
+	static void merge(unique_ptr<PropSet>& ps1, const unique_ptr<PropSet>& ps2);
 
-	virtual void dump(ostream& s);
-
-protected:
-	virtual void setTrue(const PropSet& ps);	// can be a null ptr
+	void dump(ostream& s);
 
 private:
+	void merge(const PropSet& ps);
+
 	NatSet truePropIds;
+	map<unsigned int,set<const ParamSubstitution*>> trueParamSubstRefs;	// paramId |-> a set of its realized substitutions
+
+	static const set<const ParamSubstitution*> emptySet;
 };
 
 } /* namespace modelChecker */

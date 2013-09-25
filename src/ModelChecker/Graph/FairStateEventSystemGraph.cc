@@ -25,7 +25,6 @@
 #include "rewritingContext.hh"
 
 // ltlr definitions
-#include "PropSet/PropSetUtil.hh"
 #include "FairStateEventSystemGraph.hh"
 
 namespace modelChecker {
@@ -66,8 +65,8 @@ FairStateEventSystemGraph<PL,FL>::updateAllLabels(DagNode* stateDag, const vecto
 	vector<unique_ptr<PropSet>> trueEventProps(trs.size());
 	for (unsigned int i = 0; i < trs.size(); ++i)
 	{
-		trueEventProps[i] = propLabel->updateEventLabel(proofDags[i],*trs[i]);		// compute and store all event prop (for transitions)
-		PropSetUtil::merge(trueEventProps[i],trueStateProps);						// transfer truth
+		trueEventProps[i] = propLabel->updateEventLabel(proofDags[i],*trs[i]);	// compute and store all event prop (for transitions)
+		PropSet::merge(trueEventProps[i],trueStateProps);						// transfer truth
 		if (trueEventProps[i])
 			fairLabel->updateEventLabel(*trueEventProps[i],static_cast<Transition&>(*trs[i]));	// compute and store all SE fairness conditions
 	}

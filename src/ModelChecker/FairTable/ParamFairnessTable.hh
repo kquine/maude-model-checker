@@ -29,6 +29,7 @@ public:
 	bool isParamFairness(unsigned int fairId) const override;
 	bool isStateFairness(unsigned int fairId) const override;
 
+	const ParamPropositionTable& getPropTable() const;
 	const Formula& getFairFormula(unsigned int fairId) const override;
 
 private:

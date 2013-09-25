@@ -25,7 +25,7 @@ public:
 
 	unique_ptr<FairSet> clone() const override;
 
-	virtual unique_ptr<FairSet::Bad> makeBadGoal() const override;
+	unique_ptr<FairSet::Bad> makeBadGoal() const override;
 
 	void dump(ostream& o) const override;
 };
