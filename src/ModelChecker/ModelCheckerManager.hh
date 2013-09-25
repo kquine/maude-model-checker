@@ -12,7 +12,7 @@
 #include "Automaton/DagSystemGraph.hh"
 #include "PropTable/PropositionTable.hh"
 #include "PropChecker/PropChecker.hh"
-#include "PropChecker/EnabledPropTransferer.hh"
+#include "PropChecker/EnabledPropHandler.hh"
 #include "FairTable/FairnessTable.hh"
 #include "FairChecker/FairnessChecker.hh"
 #include "Interface/FormulaBuilder.hh"
@@ -34,13 +34,8 @@ public:
 	bool findCounterExample()							{ return modelChecker->findCounterExample(); }
 
 private:
-	void initModelChecker(unique_ptr<AbstractFairnessTable>&& fairTable);
-
 	template <typename PL>
 	void initModelChecker(unique_ptr<PL>&& pl, unique_ptr<AbstractFairnessTable>&& fairTable);
-
-	template <typename PL, typename FL>
-	void initModelChecker(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, unique_ptr<AbstractFairnessTable>&& fairTable);
 
 	template <template <typename> class Graph, typename PL, typename... Args>
 	void makeMC(unique_ptr<PL>&& pl, Args&&... args);
@@ -56,23 +51,17 @@ private:
 	//
 	// Maude interfaces
 	//
-	const PropEvaluator& stateEval;
-	const PropEvaluator& eventEval;
 	const ProofTermGenerator& pGenerator;
 	RewritingContext& sysContext;
 	//
-	// ground/param props (except instance props)
+	// categorized propositions
 	//
-	vector<unsigned int> stateProps;
-	vector<unsigned int> eventProps;
-	vector<unsigned int> enabledProps;
+	vector<unsigned int> stateProps, eventProps, enabledProps;
 	//
 	// prop/fair checkers
 	//
-	unique_ptr<PropChecker> statePC;
-	unique_ptr<PropChecker> eventPC;
-	unique_ptr<FairnessChecker> stateFC;
-	unique_ptr<FairnessChecker> eventFC;
+	unique_ptr<PropChecker> spc, epc;
+	unique_ptr<FairnessChecker> sfc, efc;
 	//
 	// a model checker
 	//

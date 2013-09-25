@@ -24,7 +24,10 @@ class BaseSystemGraphOnce: public BaseSystemGraph<T>
 	using Transition	= typename BaseSystemGraphTraits<T>::Transition;
 	using ActiveState	= typename BaseSystemGraphTraits<T>::ActiveState;
 public:
-	BaseSystemGraphOnce(RewritingContext& initial, const ProofTermGenerator& ptg);
+	BaseSystemGraphOnce(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
+
+	unsigned int getNrVisitedStates() const final;
+	unsigned int getNrVisitedTransitions(unsigned int stateNr) const final;
 
 private:
 	struct DagNodeCache: private ProtectedDagNodeSet

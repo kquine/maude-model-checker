@@ -10,7 +10,19 @@
 namespace modelChecker {
 
 template <typename T>
-BaseSystemGraphIter<T>::BaseSystemGraphIter(RewritingContext& initial, const ProofTermGenerator& ptg): Super(initial, ptg) {}
+BaseSystemGraphIter<T>::BaseSystemGraphIter(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable): Super(initial,ptg,propTable) {}
+
+template <class T> inline unsigned int
+BaseSystemGraphIter<T>::getNrVisitedStates() const	// count only visited states
+{
+	return this->getNrStates();
+}
+
+template <class T> inline unsigned int
+BaseSystemGraphIter<T>::getNrVisitedTransitions(unsigned int stateNr) const
+{
+	return this->getNrTransitions(stateNr);
+}
 
 template <typename T> unsigned int
 BaseSystemGraphIter<T>::insertState(DagNode* stateDag)
@@ -31,7 +43,7 @@ BaseSystemGraphIter<T>::computeNextState(unsigned int stateNr, unsigned int inde
 {
 	Assert(stateNr < this->seen.size() && this->seen[stateNr], "BaseSystemGraphIter::computeNextState: invalid state lookup");
 
-	State& n = *this->seen[stateNr];	//NOTE: the pointer address itself can be "moved" when the vector is reallocated
+	State& n = *this->seen[stateNr];
 	auto nrTransitions = this->getNrTransitions(stateNr);
 
 	if (index < nrTransitions)

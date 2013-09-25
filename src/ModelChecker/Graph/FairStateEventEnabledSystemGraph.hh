@@ -15,8 +15,8 @@ template <typename PL, typename FL>
 class FairStateEventEnabledSystemGraph: public StateEventEnabledSystemGraph<PL>
 {
 public:
-	FairStateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<FL>&& sefl, unique_ptr<EnabledPropTransferer>&& enpc,
-			RewritingContext& initial, const ProofTermGenerator& ptg);
+	FairStateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<FL>&& sefl, unique_ptr<EnabledPropHandler>&& enpc,
+			RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
 	unique_ptr<FairSet> makeFairSet(unsigned int stateNr, unsigned int transitionNr) const;
 

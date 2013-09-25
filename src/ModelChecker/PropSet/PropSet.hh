@@ -11,23 +11,27 @@
 
 namespace modelChecker {
 
+class PropSetUtil;
+
 class PropSet
 {
+	friend class PropSetUtil;
 public:
 	PropSet() = default;
 	virtual ~PropSet() = default;
 
-	PropSet(const PropSet&) = delete;	// avoid copy
+	PropSet(const PropSet&) = default;
 	PropSet(PropSet&& other) noexcept;
 
-	const NatSet& getTruePropIds() const;
 	bool isTrue(unsigned int propId) const;
+	const NatSet& getTruePropIds() const;
 
 	virtual void setTrue(unsigned int propId);
-	virtual void setTrue(const NatSet& tPids);
-	virtual void setTrue(const PropSet& ps);
 
 	virtual void dump(ostream& s);
+
+protected:
+	virtual void setTrue(const PropSet& ps);	// can be a null ptr
 
 private:
 	NatSet truePropIds;

@@ -38,8 +38,9 @@ FormulaBuilder::interpretFormula(DagNode* formulaDag, PropositionTable& propTabl
 			throw invalid_argument(StringStream() << "negated LTL formul " << QUOTE(formulaDag) << "a did not reduce to a valid negative normal form.");
 		else
 		{
-			for (auto i = propTable.cardinality() - 1; i >= 0; --i)  formula->formulaPropIds.insert(i);
-			propTable.updatePropTable();
+			formula->nrRealFormulaPropIds = propTable.cardinality();
+			propTable.updatePropTable();	// update of the prop table will add event props from the existing enabled props.
+			formula->nrFormulaPropIds = propTable.cardinality();
 			return formula;
 		}
 	}

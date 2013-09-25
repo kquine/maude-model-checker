@@ -9,7 +9,7 @@
 #define PROPCHECKERFACTORY_HH_
 #include "PropTable/PropositionTable.hh"
 #include "PropChecker.hh"
-#include "EnabledPropTransferer.hh"
+#include "EnabledPropHandler.hh"
 
 namespace modelChecker {
 
@@ -17,7 +17,7 @@ class PropCheckerFactory
 {
 public:
 	static unique_ptr<PropChecker> createChecker(const vector<unsigned int>& targets, PropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context);
-	static unique_ptr<EnabledPropTransferer> createTransferer(const vector<unsigned int>& enabledIds, const NatSet& formulaIds, const PropositionTable& propTable);
+	static unique_ptr<EnabledPropHandler> createHandler(const vector<unsigned int>& enabledProps, unsigned int nrFormulaPropIds, const PropositionTable& propTable);
 };
 
 } /* namespace modelChecker */

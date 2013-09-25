@@ -22,28 +22,26 @@ class StateEventSystemGraph: public BaseSystemGraphIter<StateEventSystemGraph<PL
 	friend class BaseSystemGraphIter<StateEventSystemGraph<PL>>;
 
 public:
-	StateEventSystemGraph(unique_ptr<PL>&& sepl, RewritingContext& initial, const ProofTermGenerator& ptg);
+	StateEventSystemGraph(unique_ptr<PL>&& sepl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
-	bool satisfiesStateFormula(Bdd formula, unsigned int stateNr) const;
-	pair<bool,Bdd> satisfiesPartialStateFormula(Bdd formula, unsigned int stateNr) const;
-	bool satisfiesStateEventFormula(Bdd formula, unsigned int stateNr, unsigned int transitionNr) const;
+	bool satisfiesStateProp(unsigned int propId, unsigned int stateNr) const;
+	bool satisfiesEventProp(unsigned int propId, unsigned int stateNr, unsigned int transitionNr) const;
 
-protected:
+private:
 	using Super = 		BaseSystemGraphIter<StateEventSystemGraph<PL> >	;
 	using State = 		typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::State;
 	using ActiveState =	typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::ActiveState;
 	using Transition =	typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::Transition;
 
-	/* implements */ virtual unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, State& s);
-	/* implements */ virtual unique_ptr<State> createState(DagNode* stateDag) const;
+	void updateStateLabel(DagNode* stateDag, State& s);		 /* implements */
+	void updateTransitionLabel(RewriteTransitionState& rts, Transition& t, State& s);
 
-	virtual unique_ptr<PropSet> updateTransitionLabel(RewriteTransitionState& rts, Transition& t, State& s);
-	virtual unique_ptr<Transition> createTransition(unsigned int nextState, unsigned int transitionIndex) const;
+	unique_ptr<State> createState(DagNode* stateDag) const;	 /* implements */
+	unique_ptr<Transition> createTransition(unsigned int nextState, unsigned int transitionIndex) const;
+
+	bool insertTransition(unsigned int nextState, State& n); /* implements */
 
 	const unique_ptr<PL> propLabel;
-
-private:
-	/* implements */ bool insertTransition(unsigned int nextState, State& n);
 };
 
 template <typename PL>

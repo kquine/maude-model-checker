@@ -16,7 +16,7 @@ template <typename PL, typename FL>
 class FairStateSystemGraph: public StateSystemGraph<PL>
 {
 public:
-	FairStateSystemGraph(unique_ptr<PL>&& spl, unique_ptr<FL>&& sfl, RewritingContext& initial, const ProofTermGenerator& ptg);
+	FairStateSystemGraph(unique_ptr<PL>&& spl, unique_ptr<FL>&& sfl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
 	unique_ptr<FairSet> makeFairSet(unsigned int stateNr, unsigned int transitionNr) const;
 

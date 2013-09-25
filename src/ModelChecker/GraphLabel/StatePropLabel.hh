@@ -21,14 +21,14 @@ public:
 	using StateLabel = BasePropLabel::Label;
 	using EventLabel = EmptyPropLabel::Label;
 
-	StatePropLabel(const NatSet& formulaProps, PropChecker& spc): BasePropLabel(formulaProps,spc)	{}
+	StatePropLabel(const NatSet& props, PropChecker& spc, PropChecker* epc): BasePropLabel(props,spc), EmptyPropLabel(epc) {}
 
-	bool isEvent(unsigned int) const										{ return false; }
-	bool satisfiesStateProp(unsigned int propId, const StateLabel& l) const	{ return BasePropLabel::satisfiesProp(propId,l);}
-	bool satisfiesEventProp(unsigned int, const EventLabel&) const			{ return false;}
+	void setExtraFlag(bool flag) 											{ BasePropLabel::setExtraFlag(flag); }
+	bool satisfiesStateProp(unsigned int propId, const StateLabel& l) const	{ return BasePropLabel::satisfiesProp(propId,l); }
+	bool satisfiesEventProp(unsigned int propId, const EventLabel& l) const	{ return EmptyPropLabel::satisfiesProp(propId,l); }
 
 	unique_ptr<PropSet> updateStateLabel(DagNode* dag, StateLabel& l) const	{ return BasePropLabel::updateLabel(dag,l); }
-	unique_ptr<PropSet> updateEventLabel(DagNode*, EventLabel&) const		{ return nullptr; }
+	unique_ptr<PropSet> updateEventLabel(DagNode* dag, EventLabel& l) const	{ return EmptyPropLabel::updateLabel(dag,l); }
 };
 
 

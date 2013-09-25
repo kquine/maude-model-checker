@@ -21,9 +21,9 @@ public:
 	using StateLabel = BasePropLabel::Label;
 	using EventLabel = BasePropLabel::Label;
 
-	StateEventPropLabel(const NatSet& formulaProps, PropChecker& spc, PropChecker& epc, bool flag);
+	StateEventPropLabel(const NatSet& stateProps, const NatSet& eventProps, PropChecker& spc, PropChecker& epc);
 
-	bool isEvent(unsigned int propId) const;
+	void setExtraFlag(bool) {}
 	bool satisfiesStateProp(unsigned int propId, const StateLabel& l) const;
 	bool satisfiesEventProp(unsigned int propId, const EventLabel& l) const;
 
@@ -33,14 +33,15 @@ public:
 private:
 	enum PROP_TYPE { STATE_PROP, EVENT_PROP, NEITHER };
 
+	template <typename Label>
+	unique_ptr<PropSet> updateLabel(DagNode* dag, Label& l, const vector<unsigned int>& propIds, PropChecker& pc) const;
+
 	vector<unsigned int> statePropIds;
 	vector<unsigned int> eventPropIds;
 	vector<pair<PROP_TYPE,unsigned int>> localPropIds;	//  global prop id |-> local prop id
-	unsigned int nrFormulaStateProps;
 
 	PropChecker& statePC;
 	PropChecker& eventPC;
-	bool extra_flag;					// if true, then state props in fairness formulas are also stored, and cleared later by "closeStateLabel"
 };
 
 

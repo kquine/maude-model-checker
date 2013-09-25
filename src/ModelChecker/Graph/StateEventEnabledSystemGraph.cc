@@ -30,32 +30,24 @@
 namespace modelChecker {
 
 template <typename PL>
-StateEventEnabledSystemGraph<PL>::StateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<EnabledPropTransferer>&& enpc,
-		RewritingContext& initial, const ProofTermGenerator& ptg):
-	Super(initial,ptg), enabledHandler(move(enpc)), propLabel(move(sepl)) {}
+StateEventEnabledSystemGraph<PL>::StateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<EnabledPropHandler>&& enph,
+		RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
+	Super(initial,ptg,propTable), enabledHandler(move(enph)), propLabel(move(sepl)) {}
 
-template <typename PL> bool
-StateEventEnabledSystemGraph<PL>::satisfiesStateFormula(Bdd formula, unsigned int stateNr) const
+template <typename PL> inline bool
+StateEventEnabledSystemGraph<PL>::satisfiesStateProp(unsigned int propId, unsigned int stateNr) const
 {
-	auto check = [&] (unsigned int propId) { return enabledHandler->satisfiesStateProp(propId, *this->seen[stateNr], this->seen[stateNr]->transitions, *propLabel); };
-	return BddUtil::satisfiesFormula(formula, check);
+	Assert(this->propTable.isStateProp(propId) || this->propTable.isEnabledProp(propId), "StateEventEnabledSystemGraph::satisfiesStateFormula: not a state/enabled prop");
+	return this->propTable.isEnabledProp(propId) ?
+			  enabledHandler->satisfiesEnabledProp(propId, this->seen[stateNr]->transitions, *propLabel)
+			: propLabel->satisfiesStateProp(propId, *this->seen[stateNr]);
 }
 
-template <typename PL> pair<bool,Bdd>
-StateEventEnabledSystemGraph<PL>::satisfiesPartialStateFormula(Bdd formula, unsigned int stateNr) const
+template <typename PL> inline bool
+StateEventEnabledSystemGraph<PL>::satisfiesEventProp(unsigned int propId, unsigned int stateNr, unsigned int transitionNr) const
 {
-	auto domain = [&] (unsigned int propId) { return !propLabel->isEvent(propId); };
-	auto check = [&] (unsigned int propId) { return enabledHandler->satisfiesStateProp(propId, *this->seen[stateNr], this->seen[stateNr]->transitions, *propLabel); };
-	return BddUtil::satisfiesPartialFormula(formula, domain, check);
-}
-
-template <typename PL> bool
-StateEventEnabledSystemGraph<PL>::satisfiesStateEventFormula(Bdd formula, unsigned int stateNr, unsigned int transitionNr) const
-{
-	auto check = [&] (unsigned int propId) { return propLabel->isEvent(propId) ?
-			  propLabel->satisfiesEventProp(propId,*this->seen[stateNr]->transitions[transitionNr])
-			: enabledHandler->satisfiesStateProp(propId, *this->seen[stateNr], this->seen[stateNr]->transitions, *propLabel); };
-	return BddUtil::satisfiesFormula(formula, check);
+	Assert(this->propTable.isEventProp(propId), "StateEventEnabledSystemGraph::satisfiesEventFormula: not an event prop");
+	return propLabel->satisfiesEventProp(propId,*this->seen[stateNr]->transitions[transitionNr]);
 }
 
 template <typename PL>

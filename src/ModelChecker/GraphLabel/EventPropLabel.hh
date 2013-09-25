@@ -21,16 +21,15 @@ public:
 	using StateLabel = EmptyPropLabel::Label;
 	using EventLabel = BasePropLabel::Label;
 
-	EventPropLabel(const NatSet& formulaProps, PropChecker& epc): BasePropLabel(formulaProps,epc) {}
+	EventPropLabel(const NatSet& props, PropChecker* spc, PropChecker& epc): EmptyPropLabel(spc), BasePropLabel(props,epc) {}
 
-	bool isEvent(unsigned int) const										{ return true; }
-	bool satisfiesStateProp(unsigned int, const StateLabel&) const			{ return false;}
+	void setExtraFlag(bool flag) 											{ BasePropLabel::setExtraFlag(flag); }
+	bool satisfiesStateProp(unsigned int propId, const StateLabel& l) const	{ return EmptyPropLabel::satisfiesProp(propId,l); }
 	bool satisfiesEventProp(unsigned int propId, const EventLabel& l) const	{ return BasePropLabel::satisfiesProp(propId,l);}
 
-	unique_ptr<PropSet> updateStateLabel(DagNode*, StateLabel&) const		{ return nullptr; }
+	unique_ptr<PropSet> updateStateLabel(DagNode* dag, StateLabel& l) const	{ return EmptyPropLabel::updateLabel(dag,l); }
 	unique_ptr<PropSet> updateEventLabel(DagNode* dag, EventLabel& l) const	{ return BasePropLabel::updateLabel(dag,l); }
 };
-
 
 } /* namespace modelChecker */
 #endif /* EVENTPROPLABEL_HH_ */

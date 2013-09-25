@@ -23,7 +23,10 @@ class BaseSystemGraphIter: public BaseSystemGraph<T>
 	using Transition	= typename BaseSystemGraphTraits<T>::Transition;
 	using ActiveState	= typename BaseSystemGraphTraits<T>::ActiveState;
 public:
-	BaseSystemGraphIter(RewritingContext& initial, const ProofTermGenerator& ptg);
+	BaseSystemGraphIter(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
+
+	unsigned int getNrVisitedStates() const final;
+	unsigned int getNrVisitedTransitions(unsigned int stateNr) const final;
 
 private:
 	/* implements */ unsigned int insertState(DagNode* stateDag);

@@ -22,10 +22,10 @@ class StateSystemGraph: public BaseSystemGraphIter<StateSystemGraph<PL>>
 	friend class BaseSystemGraphIter<StateSystemGraph<PL>>;
 
 public:
-	StateSystemGraph(unique_ptr<PL>&& spl, RewritingContext& initial, const ProofTermGenerator& ptg);
+	StateSystemGraph(unique_ptr<PL>&& spl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 	virtual ~StateSystemGraph() = default;
 
-	bool satisfiesStateFormula(Bdd formula, unsigned int stateNr) const;
+	bool satisfiesStateProp(unsigned int propId, unsigned int stateNr) const;
 
 protected:
 	using Super = 		BaseSystemGraphIter<StateSystemGraph>;

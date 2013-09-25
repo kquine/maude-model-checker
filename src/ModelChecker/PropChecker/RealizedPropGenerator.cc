@@ -73,7 +73,7 @@ RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& contex
 
 				if (TermUtil::checkGround(res))	// it should NOT be a param prop
 				{
-					res->computeTrueSort(parentContext);
+					res->reduce(parentContext);
 					auto pi = propTable.insertInstanceAndUpdate(res,parentContext);
 					if (pi != NONE)
 						result.setTrue(pi);

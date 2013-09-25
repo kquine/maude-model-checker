@@ -10,7 +10,20 @@
 namespace modelChecker {
 
 template <typename T>
-BaseSystemGraphOnce<T>::BaseSystemGraphOnce(RewritingContext& initial, const ProofTermGenerator& ptg): Super(initial, ptg) {}
+BaseSystemGraphOnce<T>::BaseSystemGraphOnce(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable): Super(initial,ptg,propTable) {}
+
+template <class T> inline unsigned int
+BaseSystemGraphOnce<T>::getNrVisitedStates() const	// count only visited states
+{
+	return count_if(this->seen.begin(), this->seen.end(), [] (const unique_ptr<State>& s) { return bool(s); });
+}
+
+template <class T> inline unsigned int
+BaseSystemGraphOnce<T>::getNrVisitedTransitions(unsigned int stateNr) const
+{
+	Assert(stateNr < this->seen.size(), "BaseSystemGraph::getNrVisitedStates: invalid state lookup");
+	return this->seen[stateNr]? this->seen[stateNr]->nrVisited : 0;	// nrVisited keeps track of a precise number of visited transitions
+}
 
 template <typename T> unsigned int
 BaseSystemGraphOnce<T>::insertState(DagNode* stateDag)
@@ -22,7 +35,13 @@ template <typename T> int
 BaseSystemGraphOnce<T>::computeNextState(unsigned int stateNr, unsigned int index)
 {
 	Assert(stateNr < this->seen.size(), "BaseSystemGraphOnce::computeNextState: Invalid state lookup");
-	return index < this->getNrTransitions(stateNr) ? enableState(this->seen[stateNr]->transitions[index]->nextState) : NONE;
+	if (index >= this->getNrTransitions(stateNr))
+		return NONE;
+	else
+	{
+		if ( index >= this->seen[stateNr]->nrVisited ) this->seen[stateNr]->nrVisited = index + 1;
+		return enableState(this->seen[stateNr]->transitions[index]->nextState);
+	}
 }
 
 template <typename T> int
@@ -47,7 +66,10 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 		{
 			auto nextState = StateDagContainer::insertDag(ns);
 			trs.push_back(self->createTransition(nextState, ++ as.transitionCount));
-			proofDags.push_back(tdags.cache(this->ptGenerator.makeProofDag(as.getPosition(),*as.getRule(),as.getSubstitution())));
+
+			DagNode* td = this->ptGenerator.makeProofDag(as.getPosition(),*as.getRule(),as.getSubstitution());
+			td->reduce(this->initial);
+			proofDags.push_back(tdags.cache(td));
 			MemoryCell::okToCollectGarbage();
 		}
 		self->updateAllLabels(cannStateDag, proofDags, *s, trs);

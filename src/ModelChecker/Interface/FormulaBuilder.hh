@@ -18,7 +18,13 @@ namespace modelChecker {
 struct FormulaBuilder : private BddUser
 {
 public:
-	struct Formula { LogicFormula data;  int top;  NatSet formulaPropIds; };
+	struct Formula
+	{
+		LogicFormula data;
+		int top;
+		unsigned int nrRealFormulaPropIds;	// the number of props in the formula.
+		unsigned int nrFormulaPropIds;		// the number including derived event props from enabled props in the formula.
+	};
 
 	unique_ptr<Formula> interpretFormula(DagNode* formulaDag, PropositionTable& propTable) const;
 

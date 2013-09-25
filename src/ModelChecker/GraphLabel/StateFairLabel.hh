@@ -7,22 +7,33 @@
 
 #ifndef STATEFAIRLABEL_HH_
 #define STATEFAIRLABEL_HH_
-#include "BaseFairLabel.hh"
-#include "EmptyFairLabel.hh"
+#include <memory>
+#include "FairSet/FairSet.hh"
+#include "FairChecker/FairnessChecker.hh"
 
 namespace modelChecker {
 
-class StateFairLabel: private BaseFairLabel
+class StateFairLabel
 {
 public:
-	using StateLabel = BaseFairLabel::Label;
-	using EventLabel = EmptyFairLabel::Label;
+	struct StateLabel
+	{
+		unique_ptr<FairSet> fs;
+		bool operator<(const StateLabel& l) const	{ return *fs < *l.fs; }
+	};
+	struct EventLabel
+	{
+		bool operator<(const EventLabel&) const		{ return false; }
+	};
 
-	StateFairLabel(FairnessChecker& efc): BaseFairLabel(efc)			{}
+	StateFairLabel(FairnessChecker& sfc): stateFC(sfc)	{}
 
-	void updateStateLabel(const PropSet& tps, StateLabel& l) const		{ BaseFairLabel::updateLabel(tps,l); }
+	void updateStateLabel(const PropSet& tps, StateLabel& l) const		{ l.fs = stateFC.computeAllFairness(tps); }
 	void updateEventLabel(const PropSet&, EventLabel&) const			{}
-	unique_ptr<FairSet> makeFairSet(StateLabel* sl, EventLabel*) const	{ return BaseFairLabel::makeFairSet(sl); }
+	unique_ptr<FairSet> makeFairSet(StateLabel* l, EventLabel*) const	{ return l->fs->clone(); }
+
+private:
+	FairnessChecker& stateFC;
 };
 
 } /* namespace modelChecker */

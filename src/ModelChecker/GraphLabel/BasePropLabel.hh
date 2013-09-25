@@ -26,31 +26,24 @@ public:
 		bool operator<(const Label& l) const						{ return label < l.label; }
 	};
 
-	BasePropLabel(const NatSet& formulaProps, PropChecker& pc);
+	BasePropLabel(const NatSet& props, PropChecker& pc): props(props), pc(pc) {}
 
+	void setExtraFlag(bool flag) 									{ extra = flag; }
 	bool satisfiesProp(unsigned int propId, const Label& l) const	{ return l.label.contains(propId); }
 	unique_ptr<PropSet> updateLabel(DagNode* dag, Label& l) const;
 
 private:
-	NatSet targetPropIds;
+	bool extra = true;
+	const NatSet props;
 	PropChecker& pc;
 };
-
-inline
-BasePropLabel::BasePropLabel(const NatSet& formulaProps, PropChecker& pc): pc(pc)
-{
-	const vector<unsigned int>& targets = pc.getGroundPropIds();
-	for (auto i = targets.rbegin(); i != targets.rend(); ++i)
-		if (formulaProps.contains(*i))
-			targetPropIds.insert(*i);
-}
 
 inline unique_ptr<PropSet>
 BasePropLabel::updateLabel(DagNode* dag, Label& l) const
 {
 	unique_ptr<PropSet> truePropIds = pc.computeCheckResult(dag);
 	l.label.insert(truePropIds->getTruePropIds());
-	l.label.intersect(targetPropIds);
+	if (extra) { l.label.intersect(props); }	// there is an extra prop, so that it should be removed.
 	return truePropIds;
 }
 

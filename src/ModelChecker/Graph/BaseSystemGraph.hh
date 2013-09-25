@@ -11,6 +11,7 @@
 #include "StateDagContainer.hh"
 #include "Automaton/DagSystemGraph.hh"
 #include "Interface/ProofTermGenerator.hh"
+#include "PropTable/PropositionTable.hh"
 
 namespace modelChecker {
 
@@ -22,7 +23,7 @@ class BaseSystemGraph: public DagSystemGraph, protected StateDagContainer
 	using State = 		typename BaseSystemGraphTraits<T>::State;
 	using Transition =	typename BaseSystemGraphTraits<T>::Transition;
 public:
-	BaseSystemGraph(RewritingContext& initial, const ProofTermGenerator& ptg);
+	BaseSystemGraph(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 	virtual ~BaseSystemGraph() = default;
 
 	BaseSystemGraph(const BaseSystemGraph&) = delete;
@@ -33,20 +34,19 @@ public:
 	unsigned int getNrStates() const final;
 	unsigned int getNrTransitions(unsigned int stateNr) const final;
 
-	unsigned int getNrVisitedStates() const final;
-	unsigned int getNrVisitedTransitions(unsigned int stateNr) const final;
-
 	DagNode* getStateDag(unsigned int stateNr) const final;
 	DagNode* getTransitionDag(unsigned int stateNr, unsigned int index) const final;
 	int getNextState(unsigned int stateNr, unsigned int index) final;	// return -1 if no more transitions
 
-protected:
-	/* virtual */ unsigned int insertState(DagNode* stateDag) /* = 0 */;
-	/* virtual */ unsigned int computeNextState(unsigned int stateNr, unsigned int index) /* = 0 */;
+	bool satisfiesStateFormula(Bdd formula, unsigned int stateNr) const;
+	pair<bool,Bdd> satisfiesPartialStateFormula(Bdd formula, unsigned int stateNr) const;
+	bool satisfiesStateEventFormula(Bdd formula, unsigned int stateNr, unsigned int transitionNr) const;
 
+protected:
 	vector<unique_ptr<State>> seen;			// state information
 	RewritingContext& initial;
 	const ProofTermGenerator& ptGenerator;
+	const PropositionTable& propTable;
 };
 
 

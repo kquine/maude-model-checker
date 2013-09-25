@@ -7,8 +7,9 @@
 
 #ifndef STATEEVENTFAIRLABEL_HH_
 #define STATEEVENTFAIRLABEL_HH_
+#include <memory>
+#include "FairSet/FairSet.hh"
 #include "FairChecker/FairnessChecker.hh"
-#include "BaseFairLabel.hh"
 
 namespace modelChecker {
 
@@ -18,8 +19,8 @@ namespace modelChecker {
 class StateEventFairLabel
 {
 public:
-	using StateLabel = BaseFairLabel::Label;
-	using EventLabel = BaseFairLabel::Label;
+	struct StateLabel;
+	struct EventLabel;
 
 	StateEventFairLabel(FairnessChecker& sfc, FairnessChecker& efc);
 
@@ -32,6 +33,18 @@ private:
 	FairnessChecker& stateFC;
 	FairnessChecker& eventFC;
 };
+
+struct StateEventFairLabel::StateLabel
+{
+	unique_ptr<FairSet> fs;
+	bool operator<(const StateLabel& l) const	{ return *fs < *l.fs; }
+};
+struct StateEventFairLabel::EventLabel
+{
+	unique_ptr<FairSet> fs;
+	bool operator<(const EventLabel& l) const	{ return *fs < *l.fs; }
+};
+
 
 } /* namespace modelChecker */
 #endif /* STATEEVENTFAIRLABEL_HH_ */

@@ -15,7 +15,7 @@
 
 // ltlr definitions
 #include "ParamPropChecker.hh"
-#include "ParamEnabledPropTransferer.hh"
+#include "ParamEnabledPropHandler.hh"
 #include "PropCheckerFactory.hh"
 
 namespace modelChecker {
@@ -39,32 +39,23 @@ PropCheckerFactory::createChecker(const vector<unsigned int>& targetIds, Proposi
 
 }
 
-unique_ptr<EnabledPropTransferer>
-PropCheckerFactory::createTransferer(const vector<unsigned int>& enabledIds, const NatSet& formulaIds, const PropositionTable& propTable)
+unique_ptr<EnabledPropHandler>
+PropCheckerFactory::createHandler(const vector<unsigned int>& enabledProps, unsigned int nrFormulaPropIds, const PropositionTable& propTable)
 {
-	NatSet formulaEnbIds;
-	vector<unsigned int> fairEnbIds;
-
-	for (auto k : enabledIds)
-	{
-		if ( ! formulaIds.contains(k) )
-			fairEnbIds.push_back(k);
-		else
-			formulaEnbIds.insert(k);
-	}
-
-	if (formulaEnbIds.empty() && fairEnbIds.empty())
+	if ( enabledProps.empty() )
 		return nullptr;
 	else
 	{
+		vector<unsigned int> fairEnbIds;
+		for (auto k : enabledProps) { if ( k >= nrFormulaPropIds ) fairEnbIds.push_back(k); }
+
 		vector<unsigned int> groundIds, paramIds;
-		for (auto k : fairEnbIds)
-			(propTable.isParamProp(k) ? paramIds : groundIds).push_back(k);
+		for (auto k : fairEnbIds) { (propTable.isParamProp(k) ? paramIds : groundIds).push_back(k); }
 
 		if (paramIds.empty())
-			return unique_ptr<EnabledPropTransferer>(new EnabledPropTransferer(formulaEnbIds, groundIds, propTable));	// no param
+			return unique_ptr<EnabledPropHandler>(new EnabledPropHandler(groundIds, propTable));	// no param
 		else
-			return unique_ptr<EnabledPropTransferer>(new ParamEnabledPropTransferer(formulaEnbIds, groundIds, paramIds, static_cast<const ParamPropositionTable&>(propTable)));
+			return unique_ptr<EnabledPropHandler>(new ParamEnabledPropHandler(groundIds, paramIds, static_cast<const ParamPropositionTable&>(propTable)));
 	}
 }
 

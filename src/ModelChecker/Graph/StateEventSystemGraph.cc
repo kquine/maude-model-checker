@@ -31,38 +31,28 @@ namespace modelChecker {
 
 
 template <typename PL>
-StateEventSystemGraph<PL>::StateEventSystemGraph(unique_ptr<PL>&& sepl, RewritingContext& initial, const ProofTermGenerator& ptg):
-	Super(initial,ptg), propLabel(move(sepl)) {}
+StateEventSystemGraph<PL>::StateEventSystemGraph(unique_ptr<PL>&& sepl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
+	Super(initial,ptg,propTable), propLabel(move(sepl)) {}
 
-template <typename PL> bool
-StateEventSystemGraph<PL>::satisfiesStateFormula(Bdd formula, unsigned int stateNr) const
+
+template <typename PL> inline bool
+StateEventSystemGraph<PL>::satisfiesStateProp(unsigned int propId, unsigned int stateNr) const
 {
-	return BddUtil::satisfiesFormula(formula, [&] (unsigned int propId) { return propLabel->satisfiesStateProp(propId, *this->seen[stateNr]); });
+	Assert(this->propTable.isStateProp(propId), "StateEventSystemGraph::satisfiesStateFormula: not a state prop");
+	return propLabel->satisfiesStateProp(propId, *this->seen[stateNr]);
 }
 
-template <typename PL> pair<bool,Bdd>
-StateEventSystemGraph<PL>::satisfiesPartialStateFormula(Bdd formula, unsigned int stateNr) const
+template <typename PL> inline bool
+StateEventSystemGraph<PL>::satisfiesEventProp(unsigned int propId, unsigned int stateNr, unsigned int transitionNr) const
 {
-	auto domain = [&] (unsigned int propId) { return ! propLabel->isEvent(propId); };
-	auto check = [&] (unsigned int propId) { return propLabel->satisfiesStateProp(propId, *this->seen[stateNr]); };
-	return BddUtil::satisfiesPartialFormula(formula, domain, check);
+	Assert(this->propTable.isEventProp(propId), "StateEventSystemGraph::satisfiesEventFormula: not an event prop");
+	return propLabel->satisfiesEventProp(propId,*this->seen[stateNr]->transitions[transitionNr]);
 }
 
-template <typename PL> bool
-StateEventSystemGraph<PL>::satisfiesStateEventFormula(Bdd formula, unsigned int stateNr, unsigned int transitionNr) const
-{
-	auto check = [&] (unsigned int propId) { return propLabel->isEvent(propId) ?
-			  propLabel->satisfiesEventProp(propId,*this->seen[stateNr]->transitions[transitionNr])
-			: propLabel->satisfiesStateProp(propId,*this->seen[stateNr]); };
-	return BddUtil::satisfiesFormula(formula, check);
-}
-
-
-template <typename PL>
-unique_ptr<PropSet>
+template <typename PL> void
 StateEventSystemGraph<PL>::updateStateLabel(DagNode* stateDag, State& s)
 {
-	return propLabel->updateStateLabel(stateDag, s);	// compute all state props and store the formula state props (+ extra for SE fairness)
+	propLabel->updateStateLabel(stateDag, s);	// compute all state props and store the formula state props (+ extra for SE fairness)
 }
 
 template <typename PL>
@@ -72,12 +62,12 @@ StateEventSystemGraph<PL>::createState(DagNode* stateDag) const
 	return unique_ptr<State>(new State(this->initial, stateDag));
 }
 
-template <typename PL>
-unique_ptr<PropSet>
+template <typename PL> void
 StateEventSystemGraph<PL>::updateTransitionLabel(RewriteTransitionState& r, Transition& t, State&)
 {
 	DagNode* eventDag = this->ptGenerator.makeProofDag(r.getPosition(), *r.getRule(), r.getSubstitution());
-	return propLabel->updateEventLabel(eventDag, t);	// compute all event props and store the formula event props
+	eventDag->reduce(this->initial);
+	propLabel->updateEventLabel(eventDag, t);	// compute all event props and store the formula event props
 }
 
 template <typename PL>
@@ -114,7 +104,9 @@ BaseSystemGraphTraits<StateEventSystemGraph<PL> >::Transition::makeDag(Rewriting
 	unique_ptr<RewriteTransitionState>  tr(new RewriteTransitionState(parent, stateDag));
 	for (unsigned int i = 0; i < transitionIndex; ++i)
 		tr->getNextStateDag(parent);
-	return ptg.makeProofDag(tr->getPosition(), *tr->getRule(), tr->getSubstitution());
+	DagNode* td = ptg.makeProofDag(tr->getPosition(), *tr->getRule(), tr->getSubstitution());
+	td->reduce(parent);
+	return td;
 }
 
 template <typename PL> bool

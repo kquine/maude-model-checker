@@ -14,13 +14,14 @@
 #include "core.hh"
 
 // ltlr definitions
+#include "Utility/BddUtil.hh"
 #include "BaseSystemGraph.hh"
 
 namespace modelChecker {
 
 template <class T>
-BaseSystemGraph<T>::BaseSystemGraph(RewritingContext& initial, const ProofTermGenerator& ptg):
-	initial(initial), ptGenerator(ptg) {}
+BaseSystemGraph<T>::BaseSystemGraph(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
+	initial(initial), ptGenerator(ptg), propTable(propTable) {}
 
 template <class T> inline void
 BaseSystemGraph<T>::init()
@@ -42,25 +43,6 @@ BaseSystemGraph<T>::getNrTransitions(unsigned int stateNr) const
 	return seen[stateNr] ? seen[stateNr]->transitions.size() : 0;
 }
 
-template <class T> inline unsigned int
-BaseSystemGraph<T>::getNrVisitedStates() const	// count only visited states
-{
-	return count_if(seen.begin(), seen.end(), [] (const unique_ptr<State>& s) { return bool(s); });
-}
-
-template <class T> inline unsigned int
-BaseSystemGraph<T>::getNrVisitedTransitions(unsigned int stateNr) const
-{
-	Assert(stateNr < seen.size(), "BaseSystemGraph::getNrVisitedStates: invalid state lookup");
-	if (seen[stateNr])
-	{
-		auto& ts = seen[stateNr]->transitions;
-		return count_if(ts.begin(), ts.end(), [&] (const unique_ptr<Transition>& t) { return t->nextState < seen.size() && seen[t->nextState]; });  // may count MORE self loops
-	}
-	else
-		return 0;
-}
-
 template <class T> inline DagNode*
 BaseSystemGraph<T>::getStateDag(unsigned int stateNr) const
 {
@@ -80,6 +62,32 @@ template <class T> inline int
 BaseSystemGraph<T>::getNextState(unsigned int stateNr, unsigned int index)
 {
 	return static_cast<T*>(this)->computeNextState(stateNr, index);
+}
+
+template <class T> inline bool
+BaseSystemGraph<T>::satisfiesStateFormula(Bdd formula, unsigned int stateNr) const
+{
+	return BddUtil::satisfiesFormula(formula, [this,stateNr] (unsigned int propId) { return static_cast<const T*>(this)->satisfiesStateProp(propId,stateNr); });
+}
+
+template <class T> inline pair<bool,Bdd>
+BaseSystemGraph<T>::satisfiesPartialStateFormula(Bdd formula, unsigned int stateNr) const
+{
+	return BddUtil::satisfiesPartialFormula(formula,
+			[this] (unsigned int propId) { return !propTable.isEventProp(propId); },
+			[this,stateNr] (unsigned int propId) { return static_cast<const T*>(this)->satisfiesStateProp(propId, stateNr); });
+}
+
+template <class T> inline bool
+BaseSystemGraph<T>::satisfiesStateEventFormula(Bdd formula, unsigned int stateNr, unsigned int transitionNr) const
+{
+	auto check = [this,stateNr,transitionNr] (unsigned int propId)
+	{
+		return propTable.isEventProp(propId) ?
+				  static_cast<const T*>(this)->satisfiesEventProp(propId, stateNr, transitionNr)
+				: static_cast<const T*>(this)->satisfiesStateProp(propId, stateNr);
+	};
+	return BddUtil::satisfiesFormula(formula, check);
 }
 
 

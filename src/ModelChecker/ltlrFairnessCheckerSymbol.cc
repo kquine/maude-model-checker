@@ -218,7 +218,7 @@ LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context
     unique_ptr<Formula> formula;
     unique_ptr<AbstractFairnessTable> fairTable;
     try {
-    	formula = interpretFormula(formulaCxt->root(), *propTable);
+    	formula = interpretFormula(formulaCxt->root(), *propTable);		// NOTE: the formula must be interpreted BEFORE fairness formulas.
     	fairTable = fDecoder.interpretFairnessSet(fairnessCxt->root());
     } catch (const invalid_argument& e)
     {

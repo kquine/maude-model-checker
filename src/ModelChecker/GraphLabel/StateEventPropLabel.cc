@@ -18,33 +18,16 @@
 
 namespace modelChecker {
 
-StateEventPropLabel::StateEventPropLabel(const NatSet& formulaProps, PropChecker& spc, PropChecker& epc, bool flag): statePC(spc), eventPC(epc), extra_flag(flag)
+StateEventPropLabel::StateEventPropLabel(const NatSet& stateProps, const NatSet& eventProps, PropChecker& spc, PropChecker& epc): statePC(spc), eventPC(epc)
 {
-	unsigned int max_id = 0;
+	unsigned int max_id = max(stateProps.max(), eventProps.max());
 
-	for (auto i : spc.getGroundPropIds())
-		if (formulaProps.contains(i))	{ statePropIds.push_back(i); max_id = max(max_id,i); }
-
-	for (auto i : epc.getGroundPropIds())
-		if (formulaProps.contains(i))	{ eventPropIds.push_back(i); max_id = max(max_id,i); }
-
-	nrFormulaStateProps = statePropIds.size();
-
-	if (extra_flag)  // if extra_flag is set, state props in fairness formulas are also stored in labels
-	{
-		for (auto i : spc.getGroundPropIds())
-			if (! formulaProps.contains(i))	{ statePropIds.push_back(i); max_id = max(max_id,i); }
-	}
+	for (auto i : stateProps)	statePropIds.push_back(i);
+	for (auto i : eventProps)	eventPropIds.push_back(i);
 
 	localPropIds.resize(max_id + 1, make_pair(NEITHER,0));
 	for (unsigned int i = 0; i < statePropIds.size(); ++i)	localPropIds[statePropIds[i]] = make_pair(STATE_PROP,i);
 	for (unsigned int i = 0; i < eventPropIds.size(); ++i)	localPropIds[eventPropIds[i]] = make_pair(EVENT_PROP,i);
-}
-
-bool
-StateEventPropLabel::isEvent(unsigned int propId) const
-{
-	return localPropIds[propId].first == EVENT_PROP;
 }
 
 bool
@@ -65,18 +48,20 @@ StateEventPropLabel::satisfiesEventProp(unsigned int propId, const EventLabel& l
 unique_ptr<PropSet>
 StateEventPropLabel::updateStateLabel(DagNode* stateDag, StateLabel& l) const
 {
-	unique_ptr<PropSet> truePropIds = statePC.computeCheckResult(stateDag);
-	for (auto i = statePropIds.rbegin(); i != statePropIds.rend(); ++i)
-		if (truePropIds->isTrue(*i))
-			l.label.insert(localPropIds[*i].second);
-	return truePropIds;
+	return updateLabel(stateDag, l, statePropIds, statePC);
 }
 
 unique_ptr<PropSet>
 StateEventPropLabel::updateEventLabel(DagNode* eventDag, EventLabel& l) const
 {
-	unique_ptr<PropSet> truePropIds = eventPC.computeCheckResult(eventDag);
-	for (auto i = eventPropIds.rbegin(); i != eventPropIds.rend(); ++i)
+	return updateLabel(eventDag, l, eventPropIds, eventPC);
+}
+
+template <typename Label> unique_ptr<PropSet>
+StateEventPropLabel::updateLabel(DagNode* dag, Label& l, const vector<unsigned int>& propIds, PropChecker& pc) const
+{
+	unique_ptr<PropSet> truePropIds = pc.computeCheckResult(dag);
+	for (auto i = propIds.rbegin(); i != propIds.rend(); ++i)
 		if (truePropIds->isTrue(*i))
 			l.label.insert(localPropIds[*i].second);
 	return truePropIds;

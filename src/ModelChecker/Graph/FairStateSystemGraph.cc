@@ -29,8 +29,9 @@
 namespace modelChecker {
 
 template <typename PL, typename FL>
-FairStateSystemGraph<PL,FL>::FairStateSystemGraph(unique_ptr<PL>&& spl, unique_ptr<FL>&& sfl, RewritingContext& initial, const ProofTermGenerator& ptg):
-		Super(move(spl),initial,ptg), fairLabel(move(sfl)) {}
+FairStateSystemGraph<PL,FL>::FairStateSystemGraph(unique_ptr<PL>&& spl, unique_ptr<FL>&& sfl,
+		RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
+		Super(move(spl),initial,ptg,propTable), fairLabel(move(sfl)) {}
 
 template <typename PL, typename FL> unique_ptr<FairSet>
 FairStateSystemGraph<PL,FL>::makeFairSet(unsigned int stateNr, unsigned int) const
@@ -42,7 +43,8 @@ template <typename PL, typename FL> unique_ptr<PropSet>
 FairStateSystemGraph<PL,FL>::updateStateLabel(DagNode* stateDag, PreState& s)
 {
 	unique_ptr<PropSet> truePropIds = Super::updateStateLabel(stateDag,s);
-	fairLabel->updateStateLabel(*truePropIds, static_cast<State&>(s));	// compute all state fairness conditions
+	if (truePropIds)
+		fairLabel->updateStateLabel(*truePropIds, static_cast<State&>(s));		// compute all state fairness conditions
 	return truePropIds;
 }
 

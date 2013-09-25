@@ -25,15 +25,16 @@
 #include "rewritingContext.hh"
 
 // ltlr definitions
+#include "PropSet/PropSetUtil.hh"
 #include "FairStateEventEnabledSystemGraph.hh"
 
 namespace modelChecker {
 
 
 template <typename PL, typename FL>
-FairStateEventEnabledSystemGraph<PL,FL>::FairStateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<FL>&& sefl, unique_ptr<EnabledPropTransferer>&& enpc,
-		RewritingContext& initial, const ProofTermGenerator& ptg):
-	Super(move(sepl),move(enpc),initial,ptg), fairLabel(move(sefl)) {}
+FairStateEventEnabledSystemGraph<PL,FL>::FairStateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<FL>&& sefl, unique_ptr<EnabledPropHandler>&& enpc,
+		RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
+	Super(move(sepl),move(enpc),initial,ptg,propTable), fairLabel(move(sefl)) {}
 
 template <typename PL, typename FL> unique_ptr<FairSet>
 FairStateEventEnabledSystemGraph<PL,FL>::makeFairSet(unsigned int stateNr, unsigned int transitionNr) const
@@ -67,13 +68,17 @@ FairStateEventEnabledSystemGraph<PL,FL>::updateAllLabels(DagNode* stateDag, cons
 {
 	LabelSet trueProps = Super::updateAllLabels(stateDag, proofDags, s, trs);
 
-	this->enabledHandler->transferEnabledPropIDs(*trueProps.first, trueProps.second); 	// compute all enabled props for (state and/or event) fairness conditions
-	fairLabel->updateStateLabel(*trueProps.first,static_cast<State&>(s));				// compute all state fairness conditions
+	// compute all enabled props for (state and/or event) fairness conditions
+	PropSetUtil::merge(trueProps.first, this->enabledHandler->computeEnabledProps(trueProps.second));
+
+	if (trueProps.first)
+		fairLabel->updateStateLabel(*trueProps.first,static_cast<State&>(s));	// compute all state fairness conditions
 
 	for (unsigned int i = 0; i < trs.size(); ++i)
 	{
-		trueProps.second[i]->setTrue(*trueProps.first); 										// transfer truth
-		fairLabel->updateEventLabel(*trueProps.second[i],static_cast<Transition&>(*trs[i])); 	// compute and store all SE fairness conditions
+		PropSetUtil::merge(trueProps.second[i], trueProps.first);				// transfer truth
+		if (trueProps.second[i])
+			fairLabel->updateEventLabel(*trueProps.second[i],static_cast<Transition&>(*trs[i])); 	// compute and store all SE fairness conditions
 	}
 	return trueProps;
 }

@@ -23,11 +23,10 @@ class FairStateEventSystemGraph: public BaseSystemGraphOnce<FairStateEventSystem
 	friend class BaseSystemGraphOnce<FairStateEventSystemGraph<PL,FL>>;
 
 public:
-	FairStateEventSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<FL>&& sefl, RewritingContext& initial, const ProofTermGenerator& ptg);
+	FairStateEventSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<FL>&& sefl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
-	bool satisfiesStateFormula(Bdd formula, unsigned int stateNr) const;
-	pair<bool,Bdd> satisfiesPartialStateFormula(Bdd formula, unsigned int stateNr) const;
-	bool satisfiesStateEventFormula(Bdd formula, unsigned int stateNr, unsigned int transitionNr) const;
+	bool satisfiesStateProp(unsigned int propId, unsigned int stateNr) const;
+	bool satisfiesEventProp(unsigned int propId, unsigned int stateNr, unsigned int transitionNr) const;
 
 	unique_ptr<FairSet> makeFairSet(unsigned int stateNr, unsigned int transitionNr) const;
 
@@ -65,6 +64,7 @@ struct BaseSystemGraphTraits<FairStateEventSystemGraph<PL,FL>>: public BaseSyste
 	{
 		virtual ~State() = default;
 		vector<unique_ptr<Transition> > transitions;
+		unsigned int nrVisited = 0;
 	};
 };
 

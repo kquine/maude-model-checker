@@ -8,7 +8,7 @@
 #ifndef STATEEVENTENABLEDSYSTEMGRAPH_HH_
 #define STATEEVENTENABLEDSYSTEMGRAPH_HH_
 #include "BaseSystemGraphOnce.hh"
-#include "PropChecker/EnabledPropTransferer.hh"
+#include "PropChecker/EnabledPropHandler.hh"
 
 namespace modelChecker {
 
@@ -22,11 +22,11 @@ class StateEventEnabledSystemGraph: public BaseSystemGraphOnce<StateEventEnabled
 	friend class BaseSystemGraphOnce<StateEventEnabledSystemGraph<PL>>;
 
 public:
-	StateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<EnabledPropTransferer>&& enpc, RewritingContext& initial, const ProofTermGenerator& ptg);
+	StateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<EnabledPropHandler>&& enph,
+			RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
-	bool satisfiesStateFormula(Bdd formula, unsigned int stateNr) const;
-	pair<bool,Bdd> satisfiesPartialStateFormula(Bdd formula, unsigned int stateNr) const;
-	bool satisfiesStateEventFormula(Bdd formula, unsigned int stateNr, unsigned int transitionNr) const;
+	bool satisfiesStateProp(unsigned int propId, unsigned int stateNr) const;
+	bool satisfiesEventProp(unsigned int propId, unsigned int stateNr, unsigned int transitionNr) const;
 
 protected:
 	using Super =		BaseSystemGraphOnce<StateEventEnabledSystemGraph<PL>>;
@@ -39,7 +39,7 @@ protected:
 	virtual unique_ptr<State> createState() const;
 	virtual unique_ptr<Transition> createTransition(unsigned int nextState, unsigned int transitionIndex) const;
 
-	const unique_ptr<EnabledPropTransferer> enabledHandler;
+	unique_ptr<EnabledPropHandler> enabledHandler;
 
 private:
 	const unique_ptr<PL> propLabel;
@@ -56,6 +56,7 @@ struct BaseSystemGraphTraits<StateEventEnabledSystemGraph<PL>>: public BaseSyste
 	{
 		virtual ~State() = default;
 		vector<unique_ptr<Transition> > transitions;
+		unsigned int nrVisited = 0;
 	};
 };
 

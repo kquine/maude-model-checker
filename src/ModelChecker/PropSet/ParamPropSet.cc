@@ -38,20 +38,6 @@ ParamPropSet::setTrue(unsigned int propId)
 }
 
 void
-ParamPropSet::setTrue(const NatSet& tPids)
-{
-	PropSet::setTrue(tPids);
-	for (auto p : tPids)
-	{
-		if (auto pmm = propTable.getParamMatches(p))
-		{
-			for (auto& j : *pmm)
-				setTrueParamSubst(j.first, j.second);
-		}
-	}
-}
-
-void
 ParamPropSet::setTrue(const PropSet& ps)
 {
 	PropSet::setTrue(ps);

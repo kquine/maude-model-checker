@@ -24,19 +24,19 @@
 #include "rewritingContext.hh"
 
 // ltlr definitions
-#include "Utility/BddUtil.hh"
 #include "StateSystemGraph.hh"
 
 namespace modelChecker {
 
 template <typename PL>
-StateSystemGraph<PL>::StateSystemGraph(unique_ptr<PL>&& spl, RewritingContext& initial, const ProofTermGenerator& ptg):
-		Super(initial, ptg), propLabel(move(spl)) {}
+StateSystemGraph<PL>::StateSystemGraph(unique_ptr<PL>&& spl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
+		Super(initial,ptg,propTable), propLabel(move(spl)) {}
 
-template <typename PL> bool
-StateSystemGraph<PL>::satisfiesStateFormula(Bdd formula, unsigned int stateNr) const
+template <typename PL> inline bool
+StateSystemGraph<PL>::satisfiesStateProp(unsigned int propId, unsigned int stateNr) const
 {
-	return BddUtil::satisfiesFormula(formula, [&] (unsigned int propId) { return propLabel->satisfiesStateProp(propId, *this->seen[stateNr]); });
+	Assert(this->propTable.isStateProp(propId), "StateSystemGraph::satisfiesStateFormula: not a state prop");
+	return propLabel->satisfiesStateProp(propId, *this->seen[stateNr]);
 }
 
 template <typename PL> unique_ptr<PropSet>
@@ -64,9 +64,11 @@ StateSystemGraph<PL>::insertTransition(unsigned int nextState, State& n)
 }
 
 template <typename PL> DagNode*
-BaseSystemGraphTraits<StateSystemGraph<PL>>::Transition::makeDag(RewritingContext&, DagNode*, const ProofTermGenerator& ptg) const
+BaseSystemGraphTraits<StateSystemGraph<PL>>::Transition::makeDag(RewritingContext& context, DagNode*, const ProofTermGenerator& ptg) const
 {
-	return ptg.makeProofDag(nullptr,*rule, nullptr);
+	DagNode* d = ptg.makeProofDag(nullptr,*rule, nullptr);
+	d->reduce(context);
+	return d;
 }
 
 } /* namespace modelChecker */
