@@ -39,6 +39,12 @@ StateSystemGraph<PL>::satisfiesStateProp(unsigned int propId, unsigned int state
 	return propLabel->satisfiesStateProp(propId, *this->seen[stateNr]);
 }
 
+template <typename PL> bool
+StateSystemGraph<PL>::satisfiesEventProp(unsigned int, unsigned int, unsigned int) const
+{
+	throw logic_error("StateSystemGraph::satisfiesEventProp.");
+}
+
 template <typename PL> unique_ptr<PropSet>
 StateSystemGraph<PL>::updateStateLabel(DagNode* stateDag, State& s)
 {

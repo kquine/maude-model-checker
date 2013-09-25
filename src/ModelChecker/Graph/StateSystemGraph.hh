@@ -26,6 +26,7 @@ public:
 	virtual ~StateSystemGraph() = default;
 
 	bool satisfiesStateProp(unsigned int propId, unsigned int stateNr) const;
+	bool satisfiesEventProp(unsigned int propId, unsigned int stateNr, unsigned int transitionNr) const;
 
 protected:
 	using Super = 		BaseSystemGraphIter<StateSystemGraph>;

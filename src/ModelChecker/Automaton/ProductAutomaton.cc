@@ -22,26 +22,21 @@
 
 //	automaton definitions
 #include "Graph/StateSystemGraph.hh"
-#include "Graph/StateEventSystemGraph.hh"
-#include "Graph/StateEventEnabledSystemGraph.hh"
-#include "GraphLabel/StatePropLabel.hh"
-#include "GraphLabel/EventPropLabel.hh"
-#include "GraphLabel/StateEventPropLabel.hh"
 #include "ProductAutomaton.hh"
 
 namespace modelChecker {
 
-template <typename SA, typename PA>
-ProductAutomaton<SA,PA>::ProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property):
+template <bool hasState, bool hasEvent, typename SA, typename PA>
+ProductAutomaton<hasState,hasEvent,SA,PA>::ProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property):
 	systemAut(move(system)), propertyAut(move(property))
 {
 	for(auto i : propertyAut->getInitialStates())
 		initialStates.emplace_back(0,i);
 }
 
-template <typename SA, typename PA>
-inline unique_ptr<typename ProductAutomaton<SA,PA>::TransitionIterator>
-ProductAutomaton<SA,PA>::makeTransitionIterator(const State& state)
+template <bool hasState, bool hasEvent, typename SA, typename PA>
+inline unique_ptr<typename ProductAutomaton<hasState,hasEvent,SA,PA>::TransitionIterator>
+ProductAutomaton<hasState,hasEvent,SA,PA>::makeTransitionIterator(const State& state)
 {
 	ProdTransitionIterator* ti = new ProdTransitionIterator(*systemAut, *propertyAut, state);
 	ti->init();
@@ -49,12 +44,12 @@ ProductAutomaton<SA,PA>::makeTransitionIterator(const State& state)
 }
 
 //
-// an iterator for state-only graphs (formula, not fairness)
+// an iterator for state-only graphs
 //
-template <typename SA>
-struct StateOnlyProductTransitionIteratorTraits
+template <>
+struct ProductTransitionIteratorTraits<true,false>
 {
-	template <typename PA>
+	template <typename SA, typename PA>
 	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr, const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
 	{
 		switch(first)
@@ -85,10 +80,10 @@ struct StateOnlyProductTransitionIteratorTraits
 //
 // an iterator for event-only graphs (formula, not fairness)
 //
-template <typename SA>
-struct EventOnlyProductTransitionIteratorTraits
+template <>
+struct ProductTransitionIteratorTraits<false,true>
 {
-	template <typename PA>
+	template <typename SA, typename PA>
 	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr, const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
 	{
 		switch(first)
@@ -121,12 +116,12 @@ struct EventOnlyProductTransitionIteratorTraits
 //
 // an iterator for state/event graphs (formula, not fairness)
 //
-template <typename SA>
-struct StateEventProductTransitionIteratorTraits
+template <>
+struct ProductTransitionIteratorTraits<true,true>
 {
 	Bdd label;	// temporary label
 
-	template <typename PA>
+	template <typename SA, typename PA>
 	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr, const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
 	{
 		pair<bool,Bdd> test;
@@ -162,38 +157,6 @@ struct StateEventProductTransitionIteratorTraits
 		tr.target = make_pair(NONE,NONE);
 	}
 };
-
-
-//
-// transition iterator specializations
-//
-template <typename PL>
-struct ProductTransitionIteratorTraits<StateSystemGraph<PL>>:
-	public StateOnlyProductTransitionIteratorTraits<StateSystemGraph<PL>> {};
-
-template <>
-struct ProductTransitionIteratorTraits<StateEventSystemGraph<StatePropLabel>>:
-	public StateOnlyProductTransitionIteratorTraits<StateEventSystemGraph<StatePropLabel>> {};
-
-template <>
-struct ProductTransitionIteratorTraits<StateEventSystemGraph<EventPropLabel>>:
-	public EventOnlyProductTransitionIteratorTraits<StateEventSystemGraph<EventPropLabel>> {};
-
-template <>
-struct ProductTransitionIteratorTraits<StateEventSystemGraph<StateEventPropLabel>>:
-	public StateEventProductTransitionIteratorTraits<StateEventSystemGraph<StateEventPropLabel>> {};
-
-template <>
-struct ProductTransitionIteratorTraits<StateEventEnabledSystemGraph<StatePropLabel>>:
-	public StateOnlyProductTransitionIteratorTraits<StateEventEnabledSystemGraph<StatePropLabel>> {};
-
-template <>
-struct ProductTransitionIteratorTraits<StateEventEnabledSystemGraph<EventPropLabel>>:
-	public EventOnlyProductTransitionIteratorTraits<StateEventEnabledSystemGraph<EventPropLabel>> {};
-
-template <>
-struct ProductTransitionIteratorTraits<StateEventEnabledSystemGraph<StateEventPropLabel>>:
-	public StateEventProductTransitionIteratorTraits<StateEventEnabledSystemGraph<StateEventPropLabel>> {};
 
 
 }

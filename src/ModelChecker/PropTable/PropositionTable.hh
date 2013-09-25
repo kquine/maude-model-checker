@@ -26,6 +26,7 @@ public:
 
 	void updatePropTable();
 
+	unsigned int cardinality()							{ return ProtectedDagNodeSet::cardinality(); }		// int -> unsigned int casting
 	virtual bool hasParamProp() const					{ return false; }
 	virtual bool isParamProp(unsigned int) const		{ return false; }
 

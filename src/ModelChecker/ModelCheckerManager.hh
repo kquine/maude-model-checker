@@ -34,14 +34,30 @@ public:
 	bool findCounterExample()							{ return modelChecker->findCounterExample(); }
 
 private:
-	template <typename PL>
-	void initModelChecker(unique_ptr<PL>&& pl, unique_ptr<AbstractFairnessTable>&& fairTable);
+	void initPropFairCheckers(const PropEvaluator& sev, const PropEvaluator& eev, AbstractFairnessTable* fairTable);
+
+	void initModelChecker(unique_ptr<AbstractFairnessTable>&& fairTable);
+
+	template <template <typename...> class Graph, typename... Args>
+	void initFairLabel(Args&&... args);
+
+	template <template <typename...> class Graph, typename... Args>
+	void initPropLabel(Args&&... args);
 
 	template <template <typename> class Graph, typename PL, typename... Args>
-	void makeMC(unique_ptr<PL>&& pl, Args&&... args);
+	void makeGraph(unique_ptr<PL>&& pl, Args&&... args);
 
 	template <template <typename,typename> class Graph, typename PL, typename FL, typename... Args>
-	void makeMC(unique_ptr<AbstractFairnessTable>&& fairTable, unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, Args&&... args);
+	void makeGraph(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, unique_ptr<AbstractFairnessTable>&& fairTable, Args&&... args);
+
+	template <typename SA, typename PA, typename... Args>
+	void makeProd(unique_ptr<SA>&& sysGraph, unique_ptr<PA>&& propGraph, Args&&... args);
+
+	template <bool hasState, bool hasEvent, typename SA>
+	void makeModelChecker(unique_ptr<SA>&& sysGraph, unique_ptr<BuchiAutomaton2>&& propGraph);
+
+	template <bool hasState, bool hasEvent, typename SA>
+	void makeModelChecker(unique_ptr<SA>&& sysGraph, unique_ptr<GenBuchiAutomaton>&& propGraph, unique_ptr<AbstractFairnessTable>&& fairTable);
 
 	//
 	// formula and propositions
@@ -57,6 +73,8 @@ private:
 	// categorized propositions
 	//
 	vector<unsigned int> stateProps, eventProps, enabledProps;
+	NatSet fStateProps, fEventProps;
+	bool hasStateProp = false, hasEventProp = false;
 	//
 	// prop/fair checkers
 	//

@@ -21,9 +21,6 @@
 #include "genBuchiAutomaton.hh"
 
 //	automaton definitions
-#include "Graph/FairStateSystemGraph.hh"
-#include "Graph/FairStateEventSystemGraph.hh"
-#include "Graph/FairStateEventEnabledSystemGraph.hh"
 #include "FairTable/FormulaFairnessTable.hh"
 #include "FairSet/CompositeFairSet.hh"
 #include "FairProductAutomaton.hh"
@@ -31,16 +28,16 @@
 namespace modelChecker {
 
 
-template <typename SA, typename PA>
-FairProductAutomaton<SA,PA>::FairProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property, unique_ptr<AbstractFairnessTable>&& systemFairTable):
-	ProductAutomaton<SA,PA>(move(system),move(property)),
+template <bool hasState, bool hasEvent, typename SA, typename PA>
+FairProductAutomaton<hasState,hasEvent,SA,PA>::FairProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property, unique_ptr<AbstractFairnessTable>&& systemFairTable):
+	ProductAutomaton<hasState,hasEvent,SA,PA>(move(system),move(property)),
 	fairTable(makeInitFairTable(move(systemFairTable))),
 	formulaRef(&static_cast<FormulaFairnessTable&>(fairTable->getComponent(fairTable->nrComponents()-1))) {}
 
 
-template <typename SA, typename PA>
+template <bool hasState, bool hasEvent, typename SA, typename PA>
 unique_ptr<FairSet>
-FairProductAutomaton<SA,PA>::makeFairSet(const Transition& t)
+FairProductAutomaton<hasState,hasEvent,SA,PA>::makeFairSet(const Transition& t)
 {
 	unique_ptr<FairSet> sysf = this->getSystemAutomaton().makeFairSet(t.source.first, t.systemIndex);
 	unique_ptr<FairSet> forf = formulaRef->makeFairSet(t.propertyIndex);
@@ -58,9 +55,9 @@ FairProductAutomaton<SA,PA>::makeFairSet(const Transition& t)
 	}
 }
 
-template <typename SA, typename PA>
+template <bool hasState, bool hasEvent, typename SA, typename PA>
 CompositeFairnessTable*
-FairProductAutomaton<SA,PA>::makeInitFairTable(unique_ptr<AbstractFairnessTable>&& systemFairTable) const
+FairProductAutomaton<hasState,hasEvent,SA,PA>::makeInitFairTable(unique_ptr<AbstractFairnessTable>&& systemFairTable) const
 {
 	CompositeFairnessTable* result;
 	if (dynamic_cast<CompositeFairnessTable*>(systemFairTable.get()))
@@ -76,36 +73,5 @@ FairProductAutomaton<SA,PA>::makeInitFairTable(unique_ptr<AbstractFairnessTable>
 	return result;
 }
 
-
-//
-// transition iterator specializations
-//
-template <typename PL,typename FL>
-struct ProductTransitionIteratorTraits<FairStateSystemGraph<PL,FL>>:
-	public StateOnlyProductTransitionIteratorTraits<FairStateSystemGraph<PL,FL>> {};
-
-template <typename FL>
-struct ProductTransitionIteratorTraits<FairStateEventSystemGraph<StatePropLabel,FL>>:
-	public StateOnlyProductTransitionIteratorTraits<FairStateEventSystemGraph<StatePropLabel,FL>> {};
-
-template <typename FL>
-struct ProductTransitionIteratorTraits<FairStateEventSystemGraph<EventPropLabel,FL>>:
-	public EventOnlyProductTransitionIteratorTraits<FairStateEventSystemGraph<EventPropLabel,FL>> {};
-
-template <typename FL>
-struct ProductTransitionIteratorTraits<FairStateEventSystemGraph<StateEventPropLabel,FL>>:
-	public StateEventProductTransitionIteratorTraits<FairStateEventSystemGraph<StateEventPropLabel,FL>> {};
-
-template <typename FL>
-struct ProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<StatePropLabel,FL>>:
-	public StateOnlyProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<StatePropLabel,FL>> {};
-
-template <typename FL>
-struct ProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<EventPropLabel,FL>>:
-	public EventOnlyProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<EventPropLabel,FL>> {};
-
-template <typename FL>
-struct ProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<StateEventPropLabel,FL>>:
-	public StateEventProductTransitionIteratorTraits<FairStateEventEnabledSystemGraph<StateEventPropLabel,FL>> {};
 
 } /* namespace modelChecker */

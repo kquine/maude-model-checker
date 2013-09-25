@@ -11,9 +11,7 @@
 
 namespace modelChecker {
 
-template <typename SystemAutomaton> struct ProductTransitionIteratorTraits;
-
-template <typename SA, typename PA>
+template <bool hasState, bool hasEvent, typename SA, typename PA>
 class ProductAutomaton: public Automaton<PA>
 {
 public:
@@ -39,24 +37,28 @@ private:
 	vector<State> initialStates;
 };
 
-template <typename SA, typename PA>
-struct ProductAutomaton<SA,PA>::ProdTransitionIterator: public TransitionIterator, private ProductTransitionIteratorTraits<SA>
+template <bool hasState, bool hasEvent>
+struct ProductTransitionIteratorTraits
+{
+	template <typename SA, typename PA>
+	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr, const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks);
+};
+
+
+template <bool hasState, bool hasEvent, typename SA, typename PA>
+struct ProductAutomaton<hasState,hasEvent,SA,PA>::ProdTransitionIterator: public TransitionIterator, private ProductTransitionIteratorTraits<hasState,hasEvent>
 {
 public:
 	ProdTransitionIterator(SA& sys, const PA& prop, const State& state): TransitionIterator(state), sysGraph(sys), ts(prop.getTransitions(state.second)) {}
 
 protected:
-	void computeNextTransition(bool first) override	{ ProductTransitionIteratorTraits<SA>::template computeNextTransition<PA>(first,this->tr,ts,sysGraph); }
+	void computeNextTransition(bool first) override
+	{
+		ProductTransitionIteratorTraits<hasState,hasEvent>::template computeNextTransition<SA,PA>(first,this->tr,ts,sysGraph);
+	}
 
 	SA& sysGraph;
 	const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts;
-};
-
-template <typename SA>
-struct ProductTransitionIteratorTraits
-{
-	template <typename PA>
-	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr, const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks);
 };
 
 }
