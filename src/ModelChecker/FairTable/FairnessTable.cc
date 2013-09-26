@@ -41,7 +41,7 @@ unsigned int
 FairnessTable<Formula>::insertFairnessFormula(const Formula& f, const vector<unsigned int>& propIds, DagNode* fairDag)
 {
 	auto newIndex = fairTable.size();
-	auto fi = fairFormulas.insert(make_pair(f,newIndex));
+	auto fi = fairFormulas.emplace(f,newIndex);
 	if (fi.second)	// when new fairness formula identified
 	{
 		fairTable.push_back( createFormulaFairness(fi.first->first, propIds, fairDag) );

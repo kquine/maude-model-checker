@@ -30,13 +30,7 @@ RealizedFairnessGenerator::generateRealizedFairness(const PropSet& ps)
 	for (auto i : paramFairIds)
 	{
 		const ParamSubstitutionBuilder& builder = fairTable.getSubstBuilder(i);
-		set<ParamSubstitution> rsubsts = builder.generateParamSubstitutions(ps);
-
-		for (auto& rs : rsubsts)
-		{
-			auto fi =  fairTable.insertFairnessInstance(i, rs);
-			result.push_back(make_pair(fi,builder.trueParamProps(ps,rs)));
-		}
+		builder.buildRealizedFairness(ps, i, fairTable, result);
 	}
 	return result;
 }

@@ -26,6 +26,12 @@ RealizedFairnessTable::getSubstBuilder(unsigned int fairId) const
 	return getParamInfo(fairId).builder;
 }
 
+const ParamSubstitution&
+RealizedFairnessTable::getRealizedFairSubst(unsigned int fairId) const
+{
+	return *getInstanceInfo(fairId)->substRef;
+}
+
 unsigned int
 RealizedFairnessTable::getRealizedFairId(unsigned int fairId, const NatSet& realizedFair) const
 {
@@ -52,7 +58,7 @@ unsigned int
 RealizedFairnessTable::insertFairnessInstance(unsigned int paramFairId, const ParamSubstitution& subst)
 {
 	auto& substMap = getParamInfo(paramFairId).substMap;
-	auto si = substMap.insert(make_pair(subst,getNextFairIndex()));
+	auto si = substMap.emplace(subst,getNextFairIndex());	// need to copy here
 	if (si.second)	// if newly identified
 	{
 		insertInstance(paramFairId, &si.first->first);

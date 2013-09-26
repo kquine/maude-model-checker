@@ -38,7 +38,6 @@ PropSet::getTrueParamSubst(unsigned int propId) const
 	return it != trueParamSubstRefs.end() ? it->second : emptySet;
 }
 
-
 void
 PropSet::merge(const PropSet& ps)
 {

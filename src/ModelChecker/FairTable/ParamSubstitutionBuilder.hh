@@ -15,13 +15,15 @@
 
 namespace modelChecker {
 
+class RealizedFairnessTable;	// forward declaration
+
 class ParamSubstitutionBuilder: private ParamVarInfo
 {
 public:
 	ParamSubstitutionBuilder(DagNode* fairnessDag, const vector<unsigned int>& propIds, const ParamPropositionTable& propTable);
 
-	NatSet trueParamProps(const PropSet& ps, const ParamSubstitution& subst) const;	// returns a true param props for a given param substitution
-	set<ParamSubstitution> generateParamSubstitutions(const PropSet& ps) const;		// returns a set of param substitutions (NONE for bot)
+	// returns a set of realized fairness ids and their truth values
+	void buildRealizedFairness(const PropSet& ps, unsigned int paramPropId, RealizedFairnessTable& rftable, deque<pair<unsigned int,NatSet>>& result) const;
 
 	void dumpParamSubst(const ParamSubstitution& s) const;
 	void dumpPropSubst(unsigned int propId, const ParamSubstitution& s) const;
@@ -36,7 +38,10 @@ private:
 
 	using PropInfoPos = vector<unique_ptr<PropVarInfo>>::const_iterator;
 
-	void computeParamSubstitutions(PropInfoPos pos, ParamSubstitution& t, const PropSet& ps, bool ever, set<ParamSubstitution>& result) const;
+	void computeParamSubstitutions(const PropInfoPos i, ParamSubstitution& t, const PropSet& ps, bool ever,
+			unsigned int paramPropId, RealizedFairnessTable& rftable, set<unsigned int>& result) const;
+
+	NatSet trueParamProps(const PropSet& ps, const ParamSubstitution& subst) const;		// returns a true param props for a given param substitution
 
 	vector<unique_ptr<PropVarInfo>> pidInfo;		// an "ordered" list of "param" prop ids
 	const ParamPropositionTable& propTable;

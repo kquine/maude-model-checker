@@ -15,6 +15,7 @@
 #include "core.hh"
 
 // ltlr definitions
+#include "FairTable/RealizedFairnessTable.hh"
 #include "ParamSubstitutionBuilder.hh"
 
 namespace modelChecker {
@@ -30,6 +31,49 @@ ParamSubstitutionBuilder::ParamSubstitutionBuilder(DagNode* fairnessDag, const v
 			[](const unique_ptr<PropVarInfo>& a, decltype(a) b) { return a->varMap.size() > b->varMap.size(); });	// sorted by a number of vars
 }
 
+void
+ParamSubstitutionBuilder::buildRealizedFairness(const PropSet& ps, unsigned int paramPropId, RealizedFairnessTable& rftable, deque<pair<unsigned int,NatSet>>& result) const
+{
+	set<unsigned int> fids;
+	ParamSubstitution t(ParamVarInfo::getNrVariables());
+	computeParamSubstitutions(pidInfo.cbegin(), t, ps, false, paramPropId, rftable, fids);
+
+	for (auto& fi : fids)
+		result.emplace_back(fi, trueParamProps(ps, rftable.getRealizedFairSubst(fi)));
+}
+
+void
+ParamSubstitutionBuilder::computeParamSubstitutions(const PropInfoPos i, ParamSubstitution& t, const PropSet& ps, bool ever,
+		unsigned int paramPropId, RealizedFairnessTable& rftable, set<unsigned int>& result) const
+{
+	if (i != pidInfo.cend())
+	{
+		const ParamSubstitution orig(t, (*i)->varMap);
+		const bool total = orig.isTotal();
+
+		for (auto target : ps.getTrueParamSubst((*i)->propId))
+		{
+			if ( target->isConsistent(orig) )
+			{
+				t.setSubst((*i)->varMap, *target);
+				computeParamSubstitutions(i + 1, t, ps, true, paramPropId, rftable, result);
+
+				if (total) break; 	// no need to compute more if old is total (i.e., no 'bot')
+			}
+		}
+		t.setSubst((*i)->varMap, orig);	// the "bottom" case; backtrack always happens with the initial value
+		computeParamSubstitutions(i + 1, t, ps, ever, paramPropId, rftable, result);
+	}
+	else
+	{
+		if (ever)
+		{
+			//  add the realized fairness into the table except for the empty case; directly add it to the table to avoid a redundant comparison "<"
+			auto fi = rftable.insertFairnessInstance(paramPropId,t);
+			result.insert(fi);
+		}
+	}
+}
 
 NatSet
 ParamSubstitutionBuilder::trueParamProps(const PropSet& ps, const ParamSubstitution& subst) const
@@ -49,42 +93,6 @@ ParamSubstitutionBuilder::trueParamProps(const PropSet& ps, const ParamSubstitut
 		}
 	}
 	return result;
-}
-
-set<ParamSubstitution>
-ParamSubstitutionBuilder::generateParamSubstitutions(const PropSet& ps) const
-{
-	set<ParamSubstitution> result;
-	ParamSubstitution t(ParamVarInfo::getNrVariables());
-	computeParamSubstitutions(pidInfo.cbegin(), t, ps, false, result);
-
-	return result;
-}
-
-void
-ParamSubstitutionBuilder::computeParamSubstitutions(PropInfoPos i, ParamSubstitution& t, const PropSet& ps, bool ever, set<ParamSubstitution>& result) const
-{
-	if (i != pidInfo.cend())
-	{
-		const ParamSubstitution orig(t, (*i)->varMap);
-		for (auto target : ps.getTrueParamSubst((*i)->propId))
-		{
-			if ( target->isConsistent(orig) )
-			{
-				t.setSubst((*i)->varMap, *target);
-				computeParamSubstitutions(i + 1, t, ps, true, result);
-
-				if (orig.isTotal()) break; 	// no need to compute more if old is total (i.e., no 'bot')
-			}
-		}
-		t.setSubst((*i)->varMap, orig);	// the "bottom" case
-		computeParamSubstitutions(i + 1, t, ps, ever, result);
-	}
-	else
-	{
-		if (ever)
-			result.insert(t);	//  collect the result (with copy) except for the empty case, since it's the param formula itself.
-	}
 }
 
 void

@@ -121,7 +121,7 @@ ParamPropositionTable::computeMatchingProps(DagNode* propDag, RewritingContext& 
 
 				while (mss.findNextMatch())
 				{
-					auto res = pi.substitutions.insert(unique_ptr<ParamSubstitution>(new ParamSubstitution(*pi.pattern, *mss.getContext())));
+					auto res = pi.substitutions.emplace(new ParamSubstitution(*pi.pattern, *mss.getContext()));
 					match[k].insert(res.first->get());
 				}
 			}

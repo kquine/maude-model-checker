@@ -82,25 +82,29 @@ TermUtil::constructTerm(DagNode* dag)
 bool
 TermUtil::checkGround(DagNode* dag)
 {
-	auto s = dag->symbol();
-
-	if (dynamic_cast<VariableSymbol*>(s))
-	{
-		return false;
-	}
-	else if (dynamic_cast<NA_Symbol*>(s))
-	{
-		dag->setGround();
+	if (dag->isGround())
 		return true;
-	}
 	else
 	{
-		bool ground = true;
-		for (DagArgumentIterator i(*dag); i.valid(); i.next())
-			ground &= checkGround(i.argument());
+		auto s = dag->symbol();
+		if (dynamic_cast<VariableSymbol*>(s))
+		{
+			return false;
+		}
+		else if (dynamic_cast<NA_Symbol*>(s))
+		{
+			dag->setGround();
+			return true;
+		}
+		else
+		{
+			bool ground = true;
+			for (DagArgumentIterator i(*dag); i.valid(); i.next())
+				ground &= checkGround(i.argument());
 
-		if (ground) dag->setGround();
-		return ground;
+			if (ground) dag->setGround();
+			return ground;
+		}
 	}
 }
 

@@ -20,6 +20,7 @@ public:
 
 	const ParamSubstitutionBuilder& getSubstBuilder(unsigned int fairId) const;
 
+	const ParamSubstitution& getRealizedFairSubst(unsigned int fairId) const;
 	unsigned int getRealizedFairId(unsigned int fairId, const NatSet& realizedFair) const;	// find the realized fair id in realizedFair (i.e.,parameter abstraction)
 	unsigned int insertFairnessInstance(unsigned int paramFairId, const ParamSubstitution& propSubst);
 
