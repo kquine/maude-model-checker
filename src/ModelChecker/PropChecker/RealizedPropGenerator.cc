@@ -69,11 +69,11 @@ RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& contex
 			do
 			{
 				DagNode* res = sc.rebuildDag(r->getRhsBuilder().construct(context)).first;
+				res->reduce(parentContext);
 				context.incrementRlCount();	// since we implicitly apply derived rules by patterns
 
 				if (TermUtil::checkGround(res))	// it should NOT be a param prop
 				{
-					res->reduce(parentContext);
 					auto pi = propTable.insertInstanceAndUpdate(res,parentContext);
 					if (pi != NONE)
 						result.setInstance(pi, propTable);

@@ -31,12 +31,6 @@ PropSet::setInstance(unsigned int propId, const ParamPropositionTable& propTable
 			setTrueParamSubst(j.first, j.second);
 }
 
-template <typename T> void
-PropSet::setTrueParamSubst(unsigned int propId, const T& substIds)
-{
-	trueParamSubstRefs[propId].insert(substIds.begin(), substIds.end());
-}
-
 const set<const ParamSubstitution*>&
 PropSet::getTrueParamSubst(unsigned int propId) const
 {

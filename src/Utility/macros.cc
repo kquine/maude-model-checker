@@ -178,7 +178,7 @@ looksLikeFloat(const char* s)
 const char*
 doubleToString(double d)
 {
-  if (!finite(d))
+  if (!isfinite(d)) //NOTE: finite -> isfinite
     {
       if (isnan(d))
 	return "NaN";

@@ -270,7 +270,7 @@ FloatOpSymbol::eqRewrite(DagNode* subject, RewritingContext& context)
 	      break;
 	    case CODE('r', 'a'):
 	      {
-		if (!(finite(a1)))
+		if (!(isfinite(a1)))	//NOTE: finite -> isfinite
 		  goto fail;
 		mpq_class t;
 		mpq_set_d(t.get_mpq_t(), a1);
@@ -330,7 +330,7 @@ FloatOpSymbol::eqRewrite(DagNode* subject, RewritingContext& context)
 	      }
 	    case CODE('a', 't'):
 	      {
-		if (!finite(a1) && !finite(a2))
+		if (!isfinite(a1) && !isfinite(a2))		//NOTE: finite -> isfinite
 		  {
 		    //
 		    //	Double infinity case: make args finite
@@ -445,7 +445,7 @@ FloatOpSymbol::safePow(double a1, double a2, bool& defined)
       defined = false;
       return a2;
     }
-  if (!finite(a1))
+  if (!isfinite(a1))	//NOTE: finite -> isfinite
     {
       if (a2 == 0.0)
 	return 1.0;
@@ -461,7 +461,7 @@ FloatOpSymbol::safePow(double a1, double a2, bool& defined)
 	}
       return odd ? a1 : -a1;
     }
-  if (!finite(a2))
+  if (!isfinite(a2))	//NOTE: finite -> isfinite
     {
       if (a1 > 1.0)
 	return a2 > 0 ? a2 : 0;

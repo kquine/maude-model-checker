@@ -38,5 +38,11 @@ private:
 	static const set<const ParamSubstitution*> emptySet;
 };
 
+template <typename T> inline void
+PropSet::setTrueParamSubst(unsigned int propId, const T& substIds)
+{
+	trueParamSubstRefs[propId].insert(substIds.begin(), substIds.end());
+}
+
 } /* namespace modelChecker */
 #endif /* PROPSET_HH_ */

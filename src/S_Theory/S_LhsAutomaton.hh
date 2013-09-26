@@ -59,7 +59,7 @@ private:
     GROUND_ALIEN,
     VARIABLE,
     NON_GROUND_ALIEN,
-    ABSTRACTED_NON_GROUND_ALIEN,
+    ABSTRACTED_NON_GROUND_ALIEN
   };
 
   bool matchEq(DagNode* arg,
