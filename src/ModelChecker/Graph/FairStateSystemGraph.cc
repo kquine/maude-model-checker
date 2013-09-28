@@ -29,30 +29,22 @@
 namespace modelChecker {
 
 template <typename PL, typename FL>
-FairStateSystemGraph<PL,FL>::FairStateSystemGraph(unique_ptr<PL>&& spl, unique_ptr<FL>&& sfl,
-		RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-		Super(move(spl),initial,ptg,propTable), fairLabel(move(sfl)) {}
+FairStateSystemGraph<PL,FL>::FairStateSystemGraph(
+		unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
+			Super(initial,ptg,propTable), propLabel(move(pl)), fairLabel(move(fl)) {}
 
 template <typename PL, typename FL> unique_ptr<FairSet>
 FairStateSystemGraph<PL,FL>::makeFairSet(unsigned int stateNr, unsigned int) const
 {
-	return fairLabel->makeFairSet(static_cast<State*>(this->seen[stateNr].get()), nullptr);
+	return fairLabel->makeFairSet(this->seen[stateNr].get(), nullptr);
 }
 
-template <typename PL, typename FL> unique_ptr<PropSet>
-FairStateSystemGraph<PL,FL>::updateStateLabel(DagNode* stateDag, PreState& s)
+template <typename PL, typename FL> void
+SystemGraphTraits<FairStateSystemGraph<PL,FL>>::updateStateLabel(DagNode* stateDag, State& s) const
 {
-	unique_ptr<PropSet> truePropIds = Super::updateStateLabel(stateDag,s);
-	if (truePropIds)
-		fairLabel->updateStateLabel(*truePropIds, static_cast<State&>(s));		// compute all state fairness conditions
-	return truePropIds;
-}
-
-template <typename PL, typename FL>
-unique_ptr<typename FairStateSystemGraph<PL,FL>::PreState>
-FairStateSystemGraph<PL,FL>::createState(DagNode* stateDag) const
-{
-	return unique_ptr<PreState>(new State(this->initial, stateDag));
+	auto self = static_cast<const FairStateSystemGraph<PL,FL>*>(this);
+	if (unique_ptr<PropSet> truePropIds = self->propLabel->updateStateLabel(stateDag, s))
+		self->fairLabel->updateStateLabel(*truePropIds, s);	// compute all state fairness conditions
 }
 
 } /* namespace modelChecker */

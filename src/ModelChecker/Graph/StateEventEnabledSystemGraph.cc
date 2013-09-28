@@ -30,52 +30,49 @@
 namespace modelChecker {
 
 template <typename PL>
-StateEventEnabledSystemGraph<PL>::StateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<EnabledPropHandler>&& enph,
+StateEventEnabledSystemGraph<PL>::StateEventEnabledSystemGraph(unique_ptr<PL>&& pl, unique_ptr<EnabledPropHandler>&& enph,
 		RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-	Super(initial,ptg,propTable), enabledHandler(move(enph)), propLabel(move(sepl)) {}
+			Super(initial,ptg,propTable), propLabel(move(pl)), enabledHandler(move(enph)) {}
 
-template <typename PL> inline bool
-StateEventEnabledSystemGraph<PL>::satisfiesStateProp(unsigned int propId, unsigned int stateNr) const
+template <typename PL> bool
+SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::satisfiesStateProp(unsigned int propId, const State& s) const
 {
-	Assert(this->propTable.isStateProp(propId) || this->propTable.isEnabledProp(propId), "StateEventEnabledSystemGraph::satisfiesStateFormula: not a state/enabled prop");
-	return this->propTable.isEnabledProp(propId) ?
-			  enabledHandler->satisfiesEnabledProp(propId, this->seen[stateNr]->transitions, *propLabel)
-			: propLabel->satisfiesStateProp(propId, *this->seen[stateNr]);
+	const auto self = static_cast<const StateEventEnabledSystemGraph<PL>*>(this);
+
+	if (self->propTable.isEnabledProp(propId))
+	{
+		auto evtId = self->propTable.getEnabledEventId(propId);
+		for (auto& j : s.transitions)
+			if (self->propLabel->satisfiesEventProp(evtId, static_cast<Transition&>(*j))) return true;
+		return false;
+	}
+	return self->propLabel->satisfiesStateProp(propId, s);
 }
 
-template <typename PL> inline bool
-StateEventEnabledSystemGraph<PL>::satisfiesEventProp(unsigned int propId, unsigned int stateNr, unsigned int transitionNr) const
+template <typename PL> bool
+SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::satisfiesEventProp(unsigned int propId, const Transition& t) const
 {
-	Assert(this->propTable.isEventProp(propId), "StateEventEnabledSystemGraph::satisfiesEventFormula: not an event prop");
-	return propLabel->satisfiesEventProp(propId,*this->seen[stateNr]->transitions[transitionNr]);
+	return static_cast<const StateEventEnabledSystemGraph<PL>*>(this)->propLabel->satisfiesEventProp(propId, t);
 }
 
-template <typename PL>
-typename StateEventEnabledSystemGraph<PL>::LabelSet
-StateEventEnabledSystemGraph<PL>::updateAllLabels(DagNode* stateDag, const vector<DagNode*>& proofDags, State& s, vector<unique_ptr<Transition> >& trs)
+template <typename PL> void
+SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::updateAllLabels(DagNode* sd, const vector<DagNode*>& proofDags, State& s, vector<unique_ptr<Transition>>& trs) const
 {
-	LabelSet trueProps;
-	trueProps.second.resize(trs.size());
+	const auto self = static_cast<const StateEventEnabledSystemGraph<PL>*>(this);
 
-	trueProps.first = propLabel->updateStateLabel(stateDag,s);	// compute and store all state props (for s)
+	unique_ptr<PropSet> trueStateProps = self->propLabel->updateStateLabel(sd,s);		// compute and store all state props (for s)
 
+	vector<unique_ptr<PropSet>> trueEventProps(trs.size());
 	for (unsigned int i = 0; i < trs.size(); ++i)
-		trueProps.second[i] = propLabel->updateEventLabel(proofDags[i],*trs[i]);	// compute and store all event prop (for transitions)
-	return trueProps;
+		trueEventProps[i] = self->propLabel->updateEventLabel(proofDags[i],*trs[i]);	// compute and store all event prop (for transitions)
 }
 
-template <typename PL>
-unique_ptr<typename StateEventEnabledSystemGraph<PL>::State>
-StateEventEnabledSystemGraph<PL>::createState() const
+template <typename PL> bool
+SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::Transition::operator<(const Transition& t) const
 {
-	return unique_ptr<State>(new State);
+	return PreTransition::operator<(t) || PL::EventLabel::operator<(t);
 }
 
-template <typename PL>
-unique_ptr<typename StateEventEnabledSystemGraph<PL>::Transition>
-StateEventEnabledSystemGraph<PL>::createTransition(unsigned int nextState, unsigned int transitionIndex) const
-{
-	return unique_ptr<Transition>(new Transition(nextState,transitionIndex));
-}
+
 
 } /* namespace modelChecker */

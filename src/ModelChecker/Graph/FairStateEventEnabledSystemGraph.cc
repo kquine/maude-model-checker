@@ -31,54 +31,64 @@ namespace modelChecker {
 
 
 template <typename PL, typename FL>
-FairStateEventEnabledSystemGraph<PL,FL>::FairStateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<FL>&& sefl, unique_ptr<EnabledPropHandler>&& enpc,
+FairStateEventEnabledSystemGraph<PL,FL>::FairStateEventEnabledSystemGraph(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, unique_ptr<EnabledPropHandler>&& enpc,
 		RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-	Super(move(sepl),move(enpc),initial,ptg,propTable), fairLabel(move(sefl)) {}
+			Super(initial,ptg,propTable), propLabel(move(pl)), fairLabel(move(fl)), enabledHandler(move(enpc)) {}
 
 template <typename PL, typename FL> unique_ptr<FairSet>
 FairStateEventEnabledSystemGraph<PL,FL>::makeFairSet(unsigned int stateNr, unsigned int transitionNr) const
 {
-	return fairLabel->makeFairSet(static_cast<State*>(this->seen[stateNr].get()), static_cast<Transition*>(this->seen[stateNr]->transitions[transitionNr].get()));
+	return this->fairLabel->makeFairSet(static_cast<State*>(this->seen[stateNr].get()), static_cast<Transition*>(this->seen[stateNr]->transitions[transitionNr].get()));
 }
 
 template <typename PL, typename FL> bool
-FairStateEventEnabledSystemGraph<PL,FL>::Transition::operator<(const PreTransition& t) const
+SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::satisfiesStateProp(unsigned int propId, const State& s) const
 {
-	return PreTransition::operator<(t) || FL::EventLabel::operator<(static_cast<const Transition&>(t));
+	const auto self = static_cast<const FairStateEventEnabledSystemGraph<PL,FL>*>(this);
+	if (self->propTable.isEnabledProp(propId))
+	{
+		auto evtId = self->propTable.getEnabledEventId(propId);
+		for (auto& j : s.transitions)
+			if (self->propLabel->satisfiesEventProp(evtId, static_cast<Transition&>(*j))) return true;
+		return false;
+	}
+	return self->propLabel->satisfiesStateProp(propId, s);
 }
 
-template <typename PL, typename FL>
-unique_ptr<typename FairStateEventEnabledSystemGraph<PL,FL>::PreState>
-FairStateEventEnabledSystemGraph<PL,FL>::createState() const
+template <typename PL, typename FL> bool
+SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::satisfiesEventProp(unsigned int propId, const Transition& t) const
 {
-	return unique_ptr<PreState>(new State);
+	return static_cast<const FairStateEventEnabledSystemGraph<PL,FL>*>(this)->propLabel->satisfiesEventProp(propId, t);
 }
 
-template <typename PL, typename FL>
-unique_ptr<typename FairStateEventEnabledSystemGraph<PL,FL>::PreTransition>
-FairStateEventEnabledSystemGraph<PL,FL>::createTransition(unsigned int nextState, unsigned int transitionIndex) const
+template <typename PL, typename FL> void
+SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::updateAllLabels(DagNode* stateDag, const vector<DagNode*>& proofDags, State& s, vector<unique_ptr<Transition>>& trs)
 {
-	return unique_ptr<PreTransition>(new Transition(nextState, transitionIndex));
-}
+	const auto self = static_cast<const FairStateEventEnabledSystemGraph<PL,FL>*>(this);
 
-template <typename PL, typename FL>
-typename FairStateEventEnabledSystemGraph<PL,FL>::LabelSet
-FairStateEventEnabledSystemGraph<PL,FL>::updateAllLabels(DagNode* stateDag, const vector<DagNode*>& proofDags, PreState& s, vector<unique_ptr<PreTransition> >& trs)
-{
-	LabelSet trueProps = Super::updateAllLabels(stateDag, proofDags, s, trs);
-	PropSet::merge(trueProps.first, this->enabledHandler->computeEnabledProps(trueProps.second));	// compute all enabled props for (state and/or event) fairness conditions
+	unique_ptr<PropSet> trueStateProps = self->propLabel->updateStateLabel(stateDag,s);		// compute and store all state props (for s)
+	vector<unique_ptr<PropSet>> trueEventProps(trs.size());
+	for (unsigned int i = 0; i < trs.size(); ++i)
+		trueEventProps[i] = self->propLabel->updateEventLabel(proofDags[i],*trs[i]);	// compute and store all event prop (for transitions)
 
-	if (trueProps.first)
-		fairLabel->updateStateLabel(*trueProps.first,static_cast<State&>(s));	// compute all state fairness conditions
+	PropSet::merge(trueStateProps, self->enabledHandler->computeEnabledProps(trueEventProps));	// compute all enabled props for (state and/or event) fairness conditions
+
+	if (trueStateProps)
+		self->fairLabel->updateStateLabel(*trueStateProps,s);	// compute all state fairness conditions
 
 	for (unsigned int i = 0; i < trs.size(); ++i)
 	{
-		PropSet::merge(trueProps.second[i], trueProps.first);					// transfer truth
-		if (trueProps.second[i])
-			fairLabel->updateEventLabel(*trueProps.second[i],static_cast<Transition&>(*trs[i])); 	// compute and store all SE fairness conditions
+		PropSet::merge(trueEventProps[i], trueStateProps);					// transfer truth
+		if (trueEventProps[i])
+			self->fairLabel->updateEventLabel(*trueEventProps[i],*trs[i]); 	// compute and store all SE fairness conditions
 	}
-	return trueProps;
 }
 
+
+template <typename PL, typename FL> bool
+SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::Transition::operator<(const Transition& t) const
+{
+	return PreTransition::operator<(t) || FL::EventLabel::operator<(t);
+}
 
 } /* namespace modelChecker */

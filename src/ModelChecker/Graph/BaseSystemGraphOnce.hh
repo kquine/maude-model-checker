@@ -20,9 +20,8 @@ class BaseSystemGraphOnce: public BaseSystemGraph<T>
 {
 	friend class BaseSystemGraph<T>;
 	using Super			= BaseSystemGraph<T>;
-	using State			= typename BaseSystemGraphTraits<T>::State;
-	using Transition	= typename BaseSystemGraphTraits<T>::Transition;
-	using ActiveState	= typename BaseSystemGraphTraits<T>::ActiveState;
+	using State			= typename SystemGraphTraits<T>::State;
+	using Transition	= typename SystemGraphTraits<T>::Transition;
 public:
 	BaseSystemGraphOnce(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
@@ -32,13 +31,22 @@ public:
 private:
 	struct DagNodeCache: private ProtectedDagNodeSet
 	{
+		using ProtectedDagNodeSet::cardinality;
 		DagNode* cache(DagNode* d);
 	};
 
-	/* implements */ unsigned int insertState(DagNode* stateDag);
-	/* implements */ int computeNextState(unsigned int stateNr, unsigned int index);
+	unsigned int insertState(DagNode* stateDag);					/* implements */
+	int computeNextState(unsigned int stateNr, unsigned int index);	/* implements */
 
 	int enableState(unsigned int stateNr);
+};
+
+struct BaseSystemGraphOnceTraits: public BaseSystemGraphTraits
+{
+	struct State: public BaseSystemGraphTraits::State
+	{
+		unsigned int nrVisited = 0;
+	};
 };
 
 } /* namespace modelChecker */

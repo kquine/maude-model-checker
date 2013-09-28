@@ -31,7 +31,8 @@ BaseSystemGraphIter<T>::insertState(DagNode* stateDag)
 	if (nextState == this->seen.size())	// if a new state identified
 	{
 		DagNode* cannStateDag = this->getStateDag(nextState);
-		unique_ptr<State> s = static_cast<T*>(this)->createState(stateDag);
+		unique_ptr<State> s(new State);
+		s->explore.reset(new ActiveState(this->initial,stateDag));
 		static_cast<T*>(this)->updateStateLabel(cannStateDag, *s);
 		this->seen.push_back(std::move(s));
 	}
@@ -53,11 +54,10 @@ BaseSystemGraphIter<T>::computeNextState(unsigned int stateNr, unsigned int inde
 
 	while (nrTransitions <= index)
 	{
-		T* self = static_cast<T*>(this);
 		if (DagNode* ns = n.explore->getNextStateDag(this->initial))		// if there is a next state
 		{
 			auto nextState = this->insertState(ns);
-			if (self->insertTransition(nextState, n))	// if a new transition identified
+			if (static_cast<T*>(this)->insertTransition(nextState, n))	// if a new transition identified
 				++ nrTransitions;
 			MemoryCell::okToCollectGarbage();
 		}

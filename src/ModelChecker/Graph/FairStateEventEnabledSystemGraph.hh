@@ -12,34 +12,55 @@
 namespace modelChecker {
 
 template <typename PL, typename FL>
-class FairStateEventEnabledSystemGraph: public StateEventEnabledSystemGraph<PL>
+class FairStateEventEnabledSystemGraph: public BaseSystemGraphOnce<FairStateEventEnabledSystemGraph<PL,FL>>, private SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>
 {
+	friend class BaseSystemGraph<FairStateEventEnabledSystemGraph<PL,FL>>;
+	friend class BaseSystemGraphOnce<FairStateEventEnabledSystemGraph<PL,FL>>;
+	friend class SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>;
+	using Super = BaseSystemGraphOnce<FairStateEventEnabledSystemGraph<PL,FL>>;
+
 public:
+	using typename SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::State;
+	using typename SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::Transition;
+
 	FairStateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<FL>&& sefl, unique_ptr<EnabledPropHandler>&& enpc,
 			RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
 	unique_ptr<FairSet> makeFairSet(unsigned int stateNr, unsigned int transitionNr) const;
 
 private:
-	using Super =			StateEventEnabledSystemGraph<PL>;
-	using PreState =		typename Super::State;
-	using PreTransition =	typename Super::Transition			;
-	using LabelSet =		typename Super::LabelSet;
-
-	struct State: public PreState, public FL::StateLabel {};
-
-	struct Transition: public PreTransition, public FL::EventLabel
-	{
-		Transition(unsigned int nextState, unsigned int transitionIndex): PreTransition(nextState, transitionIndex) {}
-		bool operator<(const PreTransition& t) const override;
-	};
-
-	LabelSet updateAllLabels(DagNode* stateDag, const vector<DagNode*>& proofDags, PreState& s, vector<unique_ptr<PreTransition> >& trs) override;
-	unique_ptr<PreState> createState() const override;
-	unique_ptr<PreTransition> createTransition(unsigned int nextState, unsigned int transitionIndex) const override;
-
+	const unique_ptr<PL> propLabel;
 	const unique_ptr<FL> fairLabel;
+	const unique_ptr<EnabledPropHandler> enabledHandler;
 };
+
+template <typename PL, typename FL>
+class SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>: public SystemGraphTraits<StateEventEnabledSystemGraph<PL>>
+{
+public:
+	struct State;
+	struct Transition;
+
+	bool satisfiesStateProp(unsigned int propId, const State& s) const;
+	bool satisfiesEventProp(unsigned int propId, const Transition& t) const;
+	void updateAllLabels(DagNode* stateDag, const vector<DagNode*>& proofDags, State& s, vector<unique_ptr<Transition>>& trs);
+
+private:
+	using PreState = 		typename SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::State;
+	using PreTransition =	typename SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::Transition;
+};
+
+template <typename PL, typename FL>
+struct SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::State: public PreState, public FL::StateLabel {};
+
+template <typename PL, typename FL>
+struct SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::Transition: public PreTransition, public FL::EventLabel
+{
+	Transition(unsigned int nextState, unsigned int transitionIndex): PreTransition(nextState, transitionIndex) {}
+	bool operator<(const Transition& t) const;
+};
+
+
 
 } /* namespace modelChecker */
 

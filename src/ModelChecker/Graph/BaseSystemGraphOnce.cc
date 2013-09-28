@@ -22,7 +22,7 @@ template <class T> inline unsigned int
 BaseSystemGraphOnce<T>::getNrVisitedTransitions(unsigned int stateNr) const
 {
 	Assert(stateNr < this->seen.size(), "BaseSystemGraph::getNrVisitedStates: invalid state lookup");
-	return this->seen[stateNr]? this->seen[stateNr]->nrVisited : 0;	// nrVisited keeps track of a precise number of visited transitions
+	return this->seen[stateNr]? this->seen[stateNr]->nrVisited : 0;
 }
 
 template <typename T> unsigned int
@@ -39,7 +39,8 @@ BaseSystemGraphOnce<T>::computeNextState(unsigned int stateNr, unsigned int inde
 		return NONE;
 	else
 	{
-		if ( index >= this->seen[stateNr]->nrVisited ) this->seen[stateNr]->nrVisited = index + 1;
+		if ( index >= this->seen[stateNr]->nrVisited )
+			this->seen[stateNr]->nrVisited = index + 1;
 		return enableState(this->seen[stateNr]->transitions[index]->nextState);
 	}
 }
@@ -52,31 +53,31 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 
 	if ( !this->seen[stateNr] )
 	{
-		T* self = static_cast<T*>(this);
-		unique_ptr<State> s = self->createState();
-
 		DagNode* cannStateDag = this->getStateDag(stateNr);
-		ActiveState as(this->initial, cannStateDag);
+		RewriteTransitionState rts(this->initial, cannStateDag);
+		unique_ptr<State> s(new State);
 
+		unsigned int transitionCount = 0;
 		vector<unique_ptr<Transition>> trs;
 		vector<DagNode*> proofDags;
+		ptr_set<Transition> transitionPtrSet;	// to distinguish equivalent transitions
 		DagNodeCache tdags;		// to protect proofDags from the garbage collection.
 
-		while (DagNode* ns =  as.getNextStateDag(this->initial))	// compute all transitions
+		while (DagNode* ns =  rts.getNextStateDag(this->initial))	// compute all transitions
 		{
 			auto nextState = StateDagContainer::insertDag(ns);
-			trs.push_back(self->createTransition(nextState, ++ as.transitionCount));
+			trs.emplace_back(new Transition(nextState, ++ transitionCount));
 
-			DagNode* td = this->ptGenerator.makeProofDag(as.getPosition(),*as.getRule(),as.getSubstitution());
+			DagNode* td = this->ptGenerator.makeProofDag(rts.getPosition(),*rts.getRule(),rts.getSubstitution());
 			td->reduce(this->initial);
 			proofDags.push_back(tdags.cache(td));
-			MemoryCell::okToCollectGarbage();
+			MemoryCell::okToCollectGarbage();	//FIXME: move this out and remove DagNodeCache??
 		}
-		self->updateAllLabels(cannStateDag, proofDags, *s, trs);
+		static_cast<T*>(this)->updateAllLabels(cannStateDag, proofDags, *s, trs);	//FIXME: need to compute labels only once for the same proof terms here...
 
 		for (auto& tr : trs)
 		{
-			if (as.transitionPtrSet.insert(tr.get()).second)	// if a new transition identified
+			if (transitionPtrSet.insert(tr.get()).second)	// if a new transition identified
 				s->transitions.push_back(move(tr));				// NOTE: transfer ownership..
 		}
 		this->seen[stateNr] = move(s);

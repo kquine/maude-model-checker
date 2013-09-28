@@ -21,13 +21,28 @@ namespace modelChecker {
 
 template <class T>
 BaseSystemGraph<T>::BaseSystemGraph(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-	initial(initial), ptGenerator(ptg), propTable(propTable) {}
+	initial(initial), ptGenerator(ptg), propTable(propTable)
+{
+	initial.reduce();
+}
 
 template <class T> inline void
 BaseSystemGraph<T>::init()
 {
-	initial.reduce();
 	static_cast<T*>(this)->insertState(initial.root());
+}
+
+template <class T> inline DagNode*
+BaseSystemGraph<T>::getStateDag(unsigned int stateNr) const
+{
+	return StateDagContainer::getStateDag(stateNr);
+}
+
+template <class T> inline DagNode*
+BaseSystemGraph<T>::getTransitionDag(unsigned int stateNr, unsigned int index) const
+{
+	Assert(stateNr < seen.size() && seen[stateNr], "BaseSystemGraph::getTransitionDag: invalid state lookup");
+	return static_cast<Transition&>(*seen[stateNr]->transitions[index]).makeDag(getStateDag(stateNr), initial, ptGenerator);
 }
 
 template <class T> inline unsigned int
@@ -43,21 +58,6 @@ BaseSystemGraph<T>::getNrTransitions(unsigned int stateNr) const
 	return seen[stateNr] ? seen[stateNr]->transitions.size() : 0;
 }
 
-template <class T> inline DagNode*
-BaseSystemGraph<T>::getStateDag(unsigned int stateNr) const
-{
-	return StateDagContainer::getStateDag(stateNr);
-}
-
-template <class T> inline DagNode*
-BaseSystemGraph<T>::getTransitionDag(unsigned int stateNr, unsigned int index) const
-{
-	Assert(stateNr < seen.size() && seen[stateNr], "BaseSystemGraph::getTransitionDag: invalid state lookup");
-	DagNode* const pd = seen[stateNr]->transitions[index]->makeDag(initial, getStateDag(stateNr), ptGenerator);
-	pd->reduce(initial);
-	return pd;
-}
-
 template <class T> inline int
 BaseSystemGraph<T>::getNextState(unsigned int stateNr, unsigned int index)
 {
@@ -67,15 +67,10 @@ BaseSystemGraph<T>::getNextState(unsigned int stateNr, unsigned int index)
 template <class T> inline bool
 BaseSystemGraph<T>::satisfiesStateFormula(Bdd formula, unsigned int stateNr) const
 {
-	return BddUtil::satisfiesFormula(formula, [this,stateNr] (unsigned int propId) { return static_cast<const T*>(this)->satisfiesStateProp(propId,stateNr); });
-}
-
-template <class T> inline pair<bool,Bdd>
-BaseSystemGraph<T>::satisfiesPartialStateFormula(Bdd formula, unsigned int stateNr) const
-{
-	return BddUtil::satisfiesPartialFormula(formula,
-			[this] (unsigned int propId) { return !propTable.isEventProp(propId); },
-			[this,stateNr] (unsigned int propId) { return static_cast<const T*>(this)->satisfiesStateProp(propId, stateNr); });
+	return BddUtil::satisfiesFormula(formula, [this,stateNr] (unsigned int propId)
+	{
+		return static_cast<const T*>(this)->satisfiesStateProp(propId, static_cast<State&>(*seen[stateNr]));
+	});
 }
 
 template <class T> inline bool
@@ -84,10 +79,19 @@ BaseSystemGraph<T>::satisfiesStateEventFormula(Bdd formula, unsigned int stateNr
 	auto check = [this,stateNr,transitionNr] (unsigned int propId)
 	{
 		return propTable.isEventProp(propId) ?
-				  static_cast<const T*>(this)->satisfiesEventProp(propId, stateNr, transitionNr)
-				: static_cast<const T*>(this)->satisfiesStateProp(propId, stateNr);
+				  static_cast<const T*>(this)->satisfiesEventProp(propId, static_cast<Transition&>(*seen[stateNr]->transitions[transitionNr]))
+				: static_cast<const T*>(this)->satisfiesStateProp(propId, static_cast<State&>(*seen[stateNr]));
 	};
 	return BddUtil::satisfiesFormula(formula, check);
+}
+
+
+template <class T> inline pair<bool,Bdd>
+BaseSystemGraph<T>::satisfiesPartialStateFormula(Bdd formula, unsigned int stateNr) const
+{
+	return BddUtil::satisfiesPartialFormula(formula,
+			[this] (unsigned int propId) { return ! propTable.isEventProp(propId); },
+			[this,stateNr] (unsigned int propId) { return static_cast<const T*>(this)->satisfiesStateProp(propId, static_cast<State&>(*seen[stateNr])); });
 }
 
 

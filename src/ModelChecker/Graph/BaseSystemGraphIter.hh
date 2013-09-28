@@ -19,9 +19,10 @@ class BaseSystemGraphIter: public BaseSystemGraph<T>
 {
 	friend class BaseSystemGraph<T>;
 	using Super			= BaseSystemGraph<T>;
-	using State			= typename BaseSystemGraphTraits<T>::State;
-	using Transition	= typename BaseSystemGraphTraits<T>::Transition;
-	using ActiveState	= typename BaseSystemGraphTraits<T>::ActiveState;
+	using State			= typename SystemGraphTraits<T>::State;
+	using Transition	= typename SystemGraphTraits<T>::Transition;
+	using ActiveState	= typename SystemGraphTraits<T>::ActiveState;
+
 public:
 	BaseSystemGraphIter(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
@@ -29,8 +30,21 @@ public:
 	unsigned int getNrVisitedTransitions(unsigned int stateNr) const final;
 
 private:
-	/* implements */ unsigned int insertState(DagNode* stateDag);
-	/* implements */ int computeNextState(unsigned int stateNr, unsigned int index);
+	unsigned int insertState(DagNode* stateDag);					/* implements */
+	int computeNextState(unsigned int stateNr, unsigned int index);	/* implements */
+};
+
+struct BaseSystemGraphIterTraits: public BaseSystemGraphTraits
+{
+	struct ActiveState: public RewriteTransitionState
+	{
+		ActiveState(RewritingContext& parent, DagNode* stateDag): RewriteTransitionState(parent,stateDag) {}
+	};
+
+	struct State: public BaseSystemGraphTraits::State
+	{
+		unique_ptr<ActiveState> explore;
+	};
 };
 
 } /* namespace modelChecker */

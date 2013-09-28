@@ -8,7 +8,7 @@
 #ifndef STATEEVENTSYSTEMGRAPH_HH_
 #define STATEEVENTSYSTEMGRAPH_HH_
 #include "BaseSystemGraphIter.hh"
-#include "PropSet/PropSet.hh"
+#include "PropChecker/PropSet.hh"
 
 namespace modelChecker {
 
@@ -16,70 +16,59 @@ namespace modelChecker {
  * an ordinary state/event-based RW system graph; every state proposition should be defined by equations.
  */
 template <typename PL>
-class StateEventSystemGraph: public BaseSystemGraphIter<StateEventSystemGraph<PL> >
+class StateEventSystemGraph: public BaseSystemGraphIter<StateEventSystemGraph<PL>>, private SystemGraphTraits<StateEventSystemGraph<PL>>
 {
-	friend class BaseSystemGraph<StateEventSystemGraph<PL>>;
-	friend class BaseSystemGraphIter<StateEventSystemGraph<PL>>;
+	friend class BaseSystemGraph<StateEventSystemGraph>;
+	friend class BaseSystemGraphIter<StateEventSystemGraph>;
+	friend class SystemGraphTraits<StateEventSystemGraph<PL>>;
+	using Super = BaseSystemGraphIter<StateEventSystemGraph<PL>>;
 
 public:
+	using typename SystemGraphTraits<StateEventSystemGraph<PL>>::State;
+	using typename SystemGraphTraits<StateEventSystemGraph<PL>>::Transition;
+	using typename SystemGraphTraits<StateEventSystemGraph<PL>>::ActiveState;
+
 	StateEventSystemGraph(unique_ptr<PL>&& sepl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
-	bool satisfiesStateProp(unsigned int propId, unsigned int stateNr) const;
-	bool satisfiesEventProp(unsigned int propId, unsigned int stateNr, unsigned int transitionNr) const;
-
 private:
-	using Super = 		BaseSystemGraphIter<StateEventSystemGraph<PL> >	;
-	using State = 		typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::State;
-	using ActiveState =	typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::ActiveState;
-	using Transition =	typename BaseSystemGraphTraits<StateEventSystemGraph<PL>>::Transition;
-
-	void updateStateLabel(DagNode* stateDag, State& s);		 /* implements */
-	void updateTransitionLabel(RewriteTransitionState& rts, Transition& t, State& s);
-
-	unique_ptr<State> createState(DagNode* stateDag) const;	 /* implements */
-	unique_ptr<Transition> createTransition(unsigned int nextState, unsigned int transitionIndex) const;
-
-	bool insertTransition(unsigned int nextState, State& n); /* implements */
-
 	const unique_ptr<PL> propLabel;
 };
 
 template <typename PL>
-struct BaseSystemGraphTraits<StateEventSystemGraph<PL> >
+class SystemGraphTraits<StateEventSystemGraph<PL>>
 {
-	struct Transition: public PL::EventLabel
-	{
-		Transition(unsigned int nextState, unsigned int transitionIndex): nextState(nextState), transitionIndex(transitionIndex) {}
-		virtual ~Transition() = default;
+public:
+	using State = typename SystemGraphTraits<StateSystemGraph<PL>>::State;
+	struct Transition;
+	struct ActiveState;
 
-		virtual bool operator<(const Transition& t) const;
-		DagNode* makeDag(RewritingContext& parent, DagNode* stateDag, const ProofTermGenerator& ptg) const;
+	bool insertTransition(unsigned int nextState, State& n);
+	bool satisfiesStateProp(unsigned int propId, const State& s) const;
+	bool satisfiesEventProp(unsigned int propId, const Transition& t) const;
+	unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, State& s) const;
 
-		const unsigned int nextState;
-		const unsigned int transitionIndex;	// to construct a proofterm
-	};
-
-	struct trans_ptr_compare
-	{
-		bool operator() (const Transition* a, const Transition* b) const;
-	};
-
-	struct ActiveState: public RewriteTransitionState
-	{
-		ActiveState(RewritingContext& parent, DagNode* stateDag): RewriteTransitionState(parent,stateDag) {}
-		set<Transition*, trans_ptr_compare> transitionPtrSet;	// to distinguish equivalent transitions
-		unsigned int transitionCount = 0;						// to recover the corresponding proofterm
-	};
-
-	struct State: public PL::StateLabel
-	{
-		State(RewritingContext& parent, DagNode* stateDag): explore(new ActiveState(parent,stateDag)) {}
-		virtual ~State() = default;
-
-		vector<unique_ptr<Transition> > transitions;
-		unique_ptr<ActiveState> explore;
-	};
+private:
+	using PreTransition = 	BaseSystemGraphIterTraits::Transition;
+	using PreActiveState =	BaseSystemGraphIterTraits::ActiveState;
 };
+
+template <typename PL>
+struct SystemGraphTraits<StateEventSystemGraph<PL>>::Transition: public PreTransition, public ProofDagGenerator, public PL::EventLabel
+{
+	Transition(unsigned int nextState, unsigned int transitionIndex): PreTransition{nextState}, ProofDagGenerator(transitionIndex) {}
+	bool operator<(const Transition& t) const;
+};
+
+template <typename PL>
+struct SystemGraphTraits<StateEventSystemGraph<PL>>::ActiveState: public PreActiveState
+{
+	ActiveState(RewritingContext& parent, DagNode* stateDag): PreActiveState(parent,stateDag) {}
+
+	ptr_set<Transition> transitionPtrSet;	// to distinguish equivalent transitions
+	unsigned int transitionCount = 0;		// to recover the corresponding proofterm
+};
+
+
 
 } /* namespace modelChecker */
 

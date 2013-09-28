@@ -31,60 +31,40 @@ namespace modelChecker {
 
 
 template <typename PL>
-StateEventSystemGraph<PL>::StateEventSystemGraph(unique_ptr<PL>&& sepl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-	Super(initial,ptg,propTable), propLabel(move(sepl)) {}
+StateEventSystemGraph<PL>::StateEventSystemGraph(unique_ptr<PL>&& pl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
+	Super(initial,ptg,propTable), propLabel(move(pl)) {}
 
-
-template <typename PL> inline bool
-StateEventSystemGraph<PL>::satisfiesStateProp(unsigned int propId, unsigned int stateNr) const
+template <typename PL> bool
+SystemGraphTraits<StateEventSystemGraph<PL>>::satisfiesStateProp(unsigned int propId, const State& s) const
 {
-	Assert(this->propTable.isStateProp(propId), "StateEventSystemGraph::satisfiesStateFormula: not a state prop");
-	return propLabel->satisfiesStateProp(propId, *this->seen[stateNr]);
+	return static_cast<const StateEventSystemGraph<PL>*>(this)->propLabel->satisfiesStateProp(propId, s);
 }
 
-template <typename PL> inline bool
-StateEventSystemGraph<PL>::satisfiesEventProp(unsigned int propId, unsigned int stateNr, unsigned int transitionNr) const
+template <typename PL> bool
+SystemGraphTraits<StateEventSystemGraph<PL>>::satisfiesEventProp(unsigned int propId, const Transition& t) const
 {
-	Assert(this->propTable.isEventProp(propId), "StateEventSystemGraph::satisfiesEventFormula: not an event prop");
-	return propLabel->satisfiesEventProp(propId,*this->seen[stateNr]->transitions[transitionNr]);
+	return static_cast<const StateEventSystemGraph<PL>*>(this)->propLabel->satisfiesEventProp(propId, t);
 }
 
-template <typename PL> void
-StateEventSystemGraph<PL>::updateStateLabel(DagNode* stateDag, State& s)
+template <typename PL> unique_ptr<PropSet>
+SystemGraphTraits<StateEventSystemGraph<PL>>::updateStateLabel(DagNode* stateDag, State& s) const
 {
-	propLabel->updateStateLabel(stateDag, s);	// compute all state props and store the formula state props (+ extra for SE fairness)
+	return static_cast<const StateEventSystemGraph<PL>*>(this)->propLabel->updateStateLabel(stateDag, s);
 }
 
-template <typename PL>
-unique_ptr<typename StateEventSystemGraph<PL>::State>
-StateEventSystemGraph<PL>::createState(DagNode* stateDag) const
+template <typename PL> bool
+SystemGraphTraits<StateEventSystemGraph<PL>>::insertTransition(unsigned int nextState, State& n)
 {
-	return unique_ptr<State>(new State(this->initial, stateDag));
-}
+	auto& as = static_cast<ActiveState&>(*n.explore);
+	unique_ptr<Transition> t(new Transition(nextState, ++ as.transitionCount));
 
-template <typename PL> void
-StateEventSystemGraph<PL>::updateTransitionLabel(RewriteTransitionState& r, Transition& t, State&)
-{
-	DagNode* eventDag = this->ptGenerator.makeProofDag(r.getPosition(), *r.getRule(), r.getSubstitution());
-	eventDag->reduce(this->initial);
-	propLabel->updateEventLabel(eventDag, t);	// compute all event props and store the formula event props
-}
+	const auto self = static_cast<StateEventSystemGraph<PL>*>(this);
+	DagNode* eventDag = self->ptGenerator.makeProofDag(as.getPosition(), *as.getRule(), as.getSubstitution());	// create a proof term
+	eventDag->reduce(self->initial);
 
-template <typename PL>
-unique_ptr<typename StateEventSystemGraph<PL>::Transition>
-StateEventSystemGraph<PL>::createTransition(unsigned int nextState, unsigned int transitionIndex) const
-{
-	return unique_ptr<Transition>(new Transition(nextState, transitionIndex));
-}
+	self->propLabel->updateEventLabel(eventDag, *t);	// compute all event props and store the formula event props
 
-template <typename PL> inline bool
-StateEventSystemGraph<PL>::insertTransition(unsigned int nextState, State& n)
-{
-	ActiveState& as = *n.explore;
-	unique_ptr<Transition> t(createTransition(nextState, ++ as.transitionCount));
-	updateTransitionLabel(as, *t, n);
-
-	if (as.transitionPtrSet.insert(t.get()).second)	// if a new transition identified
+	if (as.transitionPtrSet.insert(t.get()).second)		// if a new transition identified
 	{
 		n.transitions.push_back(std::move(t));
 		return true;
@@ -93,27 +73,9 @@ StateEventSystemGraph<PL>::insertTransition(unsigned int nextState, State& n)
 }
 
 template <typename PL> bool
-BaseSystemGraphTraits<StateEventSystemGraph<PL> >::Transition::operator<(const Transition& t) const
+SystemGraphTraits<StateEventSystemGraph<PL>>::Transition::operator<(const Transition& t) const
 {
-	return nextState < t.nextState;
+	return PreTransition::operator<(t) || PL::EventLabel::operator<(t);
 }
-
-template <typename PL> DagNode*
-BaseSystemGraphTraits<StateEventSystemGraph<PL> >::Transition::makeDag(RewritingContext& parent, DagNode* stateDag, const ProofTermGenerator& ptg) const
-{
-	unique_ptr<RewriteTransitionState>  tr(new RewriteTransitionState(parent, stateDag));
-	for (unsigned int i = 0; i < transitionIndex; ++i)
-		tr->getNextStateDag(parent);
-	DagNode* td = ptg.makeProofDag(tr->getPosition(), *tr->getRule(), tr->getSubstitution());
-	td->reduce(parent);
-	return td;
-}
-
-template <typename PL> bool
-BaseSystemGraphTraits<StateEventSystemGraph<PL> >::trans_ptr_compare::operator()(const Transition* a, const Transition* b) const
-{
-	return (*a) < (*b);
-}
-
 
 } /* namespace modelChecker */
