@@ -31,20 +31,19 @@ namespace modelChecker {
 template <typename PL, typename FL>
 FairStateSystemGraph<PL,FL>::FairStateSystemGraph(
 		unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-			Super(initial,ptg,propTable), propLabel(move(pl)), fairLabel(move(fl)) {}
+			Super(initial,ptg,propTable), SystemGraphTraits<FairStateSystemGraph<PL,FL>>(move(pl),move(fl)) {}
 
 template <typename PL, typename FL> unique_ptr<FairSet>
 FairStateSystemGraph<PL,FL>::makeFairSet(unsigned int stateNr, unsigned int) const
 {
-	return fairLabel->makeFairSet(this->seen[stateNr].get(), nullptr);
+	return this->fairLabel->makeFairSet(this->seen[stateNr].get(), nullptr);
 }
 
 template <typename PL, typename FL> void
 SystemGraphTraits<FairStateSystemGraph<PL,FL>>::updateStateLabel(DagNode* stateDag, State& s) const
 {
-	auto self = static_cast<const FairStateSystemGraph<PL,FL>*>(this);
-	if (unique_ptr<PropSet> truePropIds = self->propLabel->updateStateLabel(stateDag, s))
-		self->fairLabel->updateStateLabel(*truePropIds, s);	// compute all state fairness conditions
+	if (unique_ptr<PropSet> truePropIds = this->propLabel->updateStateLabel(stateDag, s))
+		fairLabel->updateStateLabel(*truePropIds, s);	// compute all state fairness conditions
 }
 
 } /* namespace modelChecker */

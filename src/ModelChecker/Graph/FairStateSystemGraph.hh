@@ -27,10 +27,6 @@ public:
 	FairStateSystemGraph(unique_ptr<PL>&& spl, unique_ptr<FL>&& sfl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
 	unique_ptr<FairSet> makeFairSet(unsigned int stateNr, unsigned int transitionNr) const;
-
-private:
-	const unique_ptr<PL> propLabel;
-	const unique_ptr<FL> fairLabel;
 };
 
 
@@ -42,7 +38,12 @@ public:
 	using typename SystemGraphTraits<StateSystemGraph<PL>>::Transition;
 	using typename SystemGraphTraits<StateSystemGraph<PL>>::ActiveState;
 
+	SystemGraphTraits(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl): SystemGraphTraits<StateSystemGraph<PL>>(move(pl)), fairLabel(move(fl)) {}
+
 	void updateStateLabel(DagNode* stateDag, State& s) const;
+
+protected:
+	const unique_ptr<FL> fairLabel;
 
 private:
 	using PreState = typename SystemGraphTraits<StateSystemGraph<PL>>::State;

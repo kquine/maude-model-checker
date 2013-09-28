@@ -27,11 +27,6 @@ public:
 			RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
 	unique_ptr<FairSet> makeFairSet(unsigned int stateNr, unsigned int transitionNr) const;
-
-private:
-	const unique_ptr<PL> propLabel;
-	const unique_ptr<FL> fairLabel;
-	const unique_ptr<EnabledPropHandler> enabledHandler;
 };
 
 template <typename PL, typename FL>
@@ -41,9 +36,13 @@ public:
 	struct State;
 	struct Transition;
 
-	bool satisfiesStateProp(unsigned int propId, const State& s) const;
-	bool satisfiesEventProp(unsigned int propId, const Transition& t) const;
+	SystemGraphTraits(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, unique_ptr<EnabledPropHandler>&& enpc):
+		SystemGraphTraits<StateEventEnabledSystemGraph<PL>>(move(pl),move(enpc)), fairLabel(move(fl)) {}
+
 	void updateAllLabels(DagNode* stateDag, const vector<DagNode*>& proofDags, State& s, vector<unique_ptr<Transition>>& trs);
+
+protected:
+	const unique_ptr<FL> fairLabel;
 
 private:
 	using PreState = 		typename SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::State;

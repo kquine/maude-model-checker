@@ -31,10 +31,6 @@ public:
 
 	StateEventEnabledSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<EnabledPropHandler>&& enph,
 			RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
-
-private:
-	const unique_ptr<PL> propLabel;
-	const unique_ptr<EnabledPropHandler> enabledHandler;
 };
 
 
@@ -45,9 +41,15 @@ public:
 	struct State;
 	struct Transition;
 
+	SystemGraphTraits(unique_ptr<PL>&& pl, unique_ptr<EnabledPropHandler>&& enph): propLabel(move(pl)), enabledHandler(move(enph)) {}
+
 	bool satisfiesStateProp(unsigned int propId, const State& s) const;
 	bool satisfiesEventProp(unsigned int propId, const Transition& t) const;
 	void updateAllLabels(DagNode* stateDag, const vector<DagNode*>& proofDags, State& s, vector<unique_ptr<Transition>>& trs) const;
+
+protected:
+	const unique_ptr<PL> propLabel;
+	const unique_ptr<EnabledPropHandler> enabledHandler;
 
 private:
 	using PreState = 		BaseSystemGraphOnceTraits::State;

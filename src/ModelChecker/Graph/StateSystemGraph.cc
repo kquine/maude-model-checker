@@ -30,12 +30,12 @@ namespace modelChecker {
 
 template <typename PL>
 StateSystemGraph<PL>::StateSystemGraph(unique_ptr<PL>&& pl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-	Super(initial,ptg,propTable), propLabel(move(pl)) {}
+	Super(initial,ptg,propTable), SystemGraphTraits<StateSystemGraph<PL>>(move(pl)) {}
 
 template <typename PL> bool
 SystemGraphTraits<StateSystemGraph<PL>>::satisfiesStateProp(unsigned int propId, const State& s) const
 {
-	return static_cast<const StateSystemGraph<PL>*>(this)->propLabel->satisfiesStateProp(propId, s);
+	return propLabel->satisfiesStateProp(propId, s);
 }
 
 template <typename PL> bool
@@ -47,7 +47,7 @@ SystemGraphTraits<StateSystemGraph<PL>>::satisfiesEventProp(unsigned int, const 
 template <typename PL> unique_ptr<PropSet>
 SystemGraphTraits<StateSystemGraph<PL>>::updateStateLabel(DagNode* stateDag, State& s) const
 {
-	return static_cast<const StateSystemGraph<PL>*>(this)->propLabel->updateStateLabel(stateDag, s);
+	return propLabel->updateStateLabel(stateDag, s);
 }
 
 template <typename PL> bool

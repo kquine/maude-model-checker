@@ -32,24 +32,24 @@ namespace modelChecker {
 
 template <typename PL>
 StateEventSystemGraph<PL>::StateEventSystemGraph(unique_ptr<PL>&& pl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-	Super(initial,ptg,propTable), propLabel(move(pl)) {}
+	Super(initial,ptg,propTable), SystemGraphTraits<StateEventSystemGraph<PL>>(move(pl)) {}
 
 template <typename PL> bool
 SystemGraphTraits<StateEventSystemGraph<PL>>::satisfiesStateProp(unsigned int propId, const State& s) const
 {
-	return static_cast<const StateEventSystemGraph<PL>*>(this)->propLabel->satisfiesStateProp(propId, s);
+	return propLabel->satisfiesStateProp(propId, s);
 }
 
 template <typename PL> bool
 SystemGraphTraits<StateEventSystemGraph<PL>>::satisfiesEventProp(unsigned int propId, const Transition& t) const
 {
-	return static_cast<const StateEventSystemGraph<PL>*>(this)->propLabel->satisfiesEventProp(propId, t);
+	return propLabel->satisfiesEventProp(propId, t);
 }
 
 template <typename PL> unique_ptr<PropSet>
 SystemGraphTraits<StateEventSystemGraph<PL>>::updateStateLabel(DagNode* stateDag, State& s) const
 {
-	return static_cast<const StateEventSystemGraph<PL>*>(this)->propLabel->updateStateLabel(stateDag, s);
+	return propLabel->updateStateLabel(stateDag, s);
 }
 
 template <typename PL> bool
@@ -62,7 +62,7 @@ SystemGraphTraits<StateEventSystemGraph<PL>>::insertTransition(unsigned int next
 	DagNode* eventDag = self->ptGenerator.makeProofDag(as.getPosition(), *as.getRule(), as.getSubstitution());	// create a proof term
 	eventDag->reduce(self->initial);
 
-	self->propLabel->updateEventLabel(eventDag, *t);	// compute all event props and store the formula event props
+	propLabel->updateEventLabel(eventDag, *t);	// compute all event props and store the formula event props
 
 	if (as.transitionPtrSet.insert(t.get()).second)		// if a new transition identified
 	{

@@ -28,9 +28,6 @@ public:
 	using typename SystemGraphTraits<StateSystemGraph<PL>>::Transition;
 
 	StateSystemGraph(unique_ptr<PL>&& spl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
-
-private:
-	const unique_ptr<PL> propLabel;
 };
 
 template <typename PL>
@@ -41,10 +38,15 @@ public:
 	struct Transition;
 	struct ActiveState;
 
+	SystemGraphTraits(unique_ptr<PL>&& pl): propLabel(move(pl)) {}
+
 	bool insertTransition(unsigned int nextState, State& n) const;
 	bool satisfiesStateProp(unsigned int propId, const State& s) const;
 	bool satisfiesEventProp(unsigned int propId, const Transition& t) const;
 	unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, State& s) const;
+
+protected:
+	const unique_ptr<PL> propLabel;
 
 private:
 	using PreState = 		BaseSystemGraphIterTraits::State;
