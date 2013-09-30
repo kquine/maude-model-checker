@@ -71,8 +71,6 @@ FairnessDecoder::interpretFairnessSet(DagNode* fairSetDag) const
 		for (auto i : wConds)	wft->insertFairnessFormula(get<2>(*i), get<0>(*i), get<3>(*i));
 		for (auto i : sConds)	sft->insertFairnessFormula(make_pair(get<1>(*i),get<2>(*i)), get<0>(*i), get<3>(*i));
 
-		cout << "weak : " << wft->nrFairness() << ", strong : " << sft->nrFairness() << endl;
-
 		if (wft->nrFairness() > 0 && sft->nrFairness() > 0)
 		{
 			CompositeFairnessTable* cft = new CompositeFairnessTable;

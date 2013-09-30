@@ -7,8 +7,8 @@
 
 #ifndef EVENTPROPLABEL_HH_
 #define EVENTPROPLABEL_HH_
-#include "natSet.hh"
-#include "PropSet/PropSet.hh"
+#include "EmptyPropLabel.hh"
+#include "BasePropLabel.hh"
 
 namespace modelChecker {
 

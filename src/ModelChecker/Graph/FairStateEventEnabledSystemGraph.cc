@@ -67,7 +67,7 @@ SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::updateAllLabels(DagN
 template <typename PL, typename FL> bool
 SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::Transition::operator<(const Transition& t) const
 {
-	return PreTransition::operator<(t) || FL::EventLabel::operator<(t);
+	return BaseSystemGraphOnceTraits::Transition::operator<(t) || PL::EventLabel::operator<(t) || FL::EventLabel::operator<(t);
 }
 
 } /* namespace modelChecker */

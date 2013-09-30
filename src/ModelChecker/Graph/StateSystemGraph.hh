@@ -40,34 +40,35 @@ public:
 
 	SystemGraphTraits(unique_ptr<PL>&& pl): propLabel(move(pl)) {}
 
-	bool insertTransition(unsigned int nextState, State& n) const;
-	bool satisfiesStateProp(unsigned int propId, const State& s) const;
-	bool satisfiesEventProp(unsigned int propId, const Transition& t) const;
+	template <typename STATE>
+	bool insertTransition(unsigned int nextState, STATE& n) const;
+
+	template <typename STATE>
+	bool satisfiesStateProp(unsigned int propId, const STATE& s) const;
+
+	template <typename TRANSITION>
+	bool satisfiesEventProp(unsigned int propId, const TRANSITION& t) const;
+
 	unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, State& s) const;
 
 protected:
 	const unique_ptr<PL> propLabel;
-
-private:
-	using PreState = 		BaseSystemGraphIterTraits::State;
-	using PreTransition = 	BaseSystemGraphIterTraits::Transition;
-	using PreActiveState =	BaseSystemGraphIterTraits::ActiveState;
 };
 
 
 template <typename PL>
-struct SystemGraphTraits<StateSystemGraph<PL>>::State: public PreState, public PL::StateLabel {};
+struct SystemGraphTraits<StateSystemGraph<PL>>::State: public BaseSystemGraphIterTraits::State<ActiveState,Transition>, public PL::StateLabel {};
 
 template <typename PL>
-struct SystemGraphTraits<StateSystemGraph<PL>>::Transition: public PreTransition, public RuleDagGenerator
+struct SystemGraphTraits<StateSystemGraph<PL>>::Transition: public BaseSystemGraphIterTraits::Transition, public RuleDagGenerator
 {
-	Transition(unsigned int nextState, const Rule* rule): PreTransition{nextState}, RuleDagGenerator(rule) {}
+	Transition(unsigned int nextState, const Rule* rule): BaseSystemGraphIterTraits::Transition{nextState}, RuleDagGenerator(rule) {}
 };
 
 template <typename PL>
-struct SystemGraphTraits<StateSystemGraph<PL>>::ActiveState: public PreActiveState
+struct SystemGraphTraits<StateSystemGraph<PL>>::ActiveState: public BaseSystemGraphIterTraits::ActiveState
 {
-	ActiveState(RewritingContext& parent, DagNode* stateDag): PreActiveState(parent,stateDag) {}
+	ActiveState(RewritingContext& parent, DagNode* stateDag): BaseSystemGraphIterTraits::ActiveState(parent,stateDag) {}
 	set<unsigned int> nextStateSet;
 };
 

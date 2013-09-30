@@ -34,21 +34,23 @@ StateEventEnabledSystemGraph<PL>::StateEventEnabledSystemGraph(unique_ptr<PL>&& 
 		RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
 			Super(initial,ptg,propTable), SystemGraphTraits<StateEventEnabledSystemGraph<PL>>(move(pl),move(enph)) {}
 
-template <typename PL> bool
-SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::satisfiesStateProp(unsigned int propId, const State& s) const
+template <typename PL>
+template <typename STATE> bool
+SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::satisfiesStateProp(unsigned int propId, const STATE& s) const
 {
 	if (enabledHandler->getPropTable().isEnabledProp(propId))
 	{
 		auto evtId = enabledHandler->getPropTable().getEnabledEventId(propId);
 		for (auto& j : s.transitions)
-			if (propLabel->satisfiesEventProp(evtId, static_cast<Transition&>(*j))) return true;
+			if (propLabel->satisfiesEventProp(evtId, *j)) return true;
 		return false;
 	}
 	return propLabel->satisfiesStateProp(propId, s);
 }
 
-template <typename PL> bool
-SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::satisfiesEventProp(unsigned int propId, const Transition& t) const
+template <typename PL>
+template <typename TRANSITION> bool
+SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::satisfiesEventProp(unsigned int propId, const TRANSITION& t) const
 {
 	return propLabel->satisfiesEventProp(propId, t);
 }
@@ -66,7 +68,7 @@ SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::updateAllLabels(DagNode* sd
 template <typename PL> bool
 SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::Transition::operator<(const Transition& t) const
 {
-	return PreTransition::operator<(t) || PL::EventLabel::operator<(t);
+	return BaseSystemGraphOnceTraits::Transition::operator<(t) || PL::EventLabel::operator<(t);
 }
 
 

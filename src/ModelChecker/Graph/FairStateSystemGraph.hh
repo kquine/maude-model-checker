@@ -46,11 +46,11 @@ protected:
 	const unique_ptr<FL> fairLabel;
 
 private:
-	using PreState = typename SystemGraphTraits<StateSystemGraph<PL>>::State;
+	using PreState = BaseSystemGraphIterTraits::State<ActiveState,Transition>;
 };
 
 template <typename PL, typename FL>
-struct SystemGraphTraits<FairStateSystemGraph<PL,FL>>::State: public PreState, public FL::StateLabel {};
+struct SystemGraphTraits<FairStateSystemGraph<PL,FL>>::State: public PreState, public PL::StateLabel, public FL::StateLabel {};
 
 } /* namespace modelChecker */
 

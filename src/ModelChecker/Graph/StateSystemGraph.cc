@@ -32,14 +32,16 @@ template <typename PL>
 StateSystemGraph<PL>::StateSystemGraph(unique_ptr<PL>&& pl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
 	Super(initial,ptg,propTable), SystemGraphTraits<StateSystemGraph<PL>>(move(pl)) {}
 
-template <typename PL> bool
-SystemGraphTraits<StateSystemGraph<PL>>::satisfiesStateProp(unsigned int propId, const State& s) const
+template <typename PL>
+template <typename STATE> bool
+SystemGraphTraits<StateSystemGraph<PL>>::satisfiesStateProp(unsigned int propId, const STATE& s) const
 {
 	return propLabel->satisfiesStateProp(propId, s);
 }
 
-template <typename PL> bool
-SystemGraphTraits<StateSystemGraph<PL>>::satisfiesEventProp(unsigned int, const Transition&) const
+template <typename PL>
+template <typename TRANSITION> bool
+SystemGraphTraits<StateSystemGraph<PL>>::satisfiesEventProp(unsigned int, const TRANSITION&) const
 {
 	throw logic_error("StateSystemGraph::satisfiesEventProp.");
 }
@@ -50,10 +52,11 @@ SystemGraphTraits<StateSystemGraph<PL>>::updateStateLabel(DagNode* stateDag, Sta
 	return propLabel->updateStateLabel(stateDag, s);
 }
 
-template <typename PL> bool
-SystemGraphTraits<StateSystemGraph<PL>>::insertTransition(unsigned int nextState, State& n) const
+template <typename PL>
+template <typename STATE> bool
+SystemGraphTraits<StateSystemGraph<PL>>::insertTransition(unsigned int nextState, STATE& n) const
 {
-	if (static_cast<ActiveState&>(*n.explore).nextStateSet.insert(nextState).second)	// if a new transition identified
+	if (n.explore->nextStateSet.insert(nextState).second)	// if a new transition identified
 	{
 		n.transitions.emplace_back(new Transition(nextState, n.explore->getRule()));
 		return true;

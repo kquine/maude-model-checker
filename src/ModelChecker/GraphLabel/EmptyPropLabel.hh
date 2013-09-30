@@ -7,7 +7,7 @@
 
 #ifndef EMPTYPROPLABEL_HH_
 #define EMPTYPROPLABEL_HH_
-#include "PropSet/PropSet.hh"
+#include "PropChecker/PropSet.hh"
 
 namespace modelChecker {
 

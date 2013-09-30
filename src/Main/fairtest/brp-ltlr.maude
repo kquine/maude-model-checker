@@ -7,7 +7,7 @@
 
 
 --- load LTLR model checker
-load ltlr-checker2
+load ltlr-checker
 
 --- Data description
 --- Each 

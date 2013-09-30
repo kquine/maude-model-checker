@@ -18,12 +18,12 @@ template <class T>
 class BaseSystemGraphIter: public BaseSystemGraph<T>
 {
 	friend class BaseSystemGraph<T>;
-	using Super			= BaseSystemGraph<T>;
-	using State			= typename SystemGraphTraits<T>::State;
-	using Transition	= typename SystemGraphTraits<T>::Transition;
-	using ActiveState	= typename SystemGraphTraits<T>::ActiveState;
+	using ActiveState = typename SystemGraphTraits<T>::ActiveState;
 
 public:
+	using typename BaseSystemGraph<T>::State;
+	using typename BaseSystemGraph<T>::Transition;
+
 	BaseSystemGraphIter(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
 	unsigned int getNrVisitedStates() const final;
@@ -41,9 +41,10 @@ struct BaseSystemGraphIterTraits: public BaseSystemGraphTraits
 		ActiveState(RewritingContext& parent, DagNode* stateDag): RewriteTransitionState(parent,stateDag) {}
 	};
 
-	struct State: public BaseSystemGraphTraits::State
+	template <typename ACTIVESTATE, typename TRANSITION>
+	struct State: public BaseSystemGraphTraits::State<TRANSITION>
 	{
-		unique_ptr<ActiveState> explore;
+		unique_ptr<ACTIVESTATE> explore;
 	};
 };
 

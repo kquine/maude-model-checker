@@ -19,10 +19,10 @@ template <class T>
 class BaseSystemGraphOnce: public BaseSystemGraph<T>
 {
 	friend class BaseSystemGraph<T>;
-	using Super			= BaseSystemGraph<T>;
-	using State			= typename SystemGraphTraits<T>::State;
-	using Transition	= typename SystemGraphTraits<T>::Transition;
 public:
+	using typename BaseSystemGraph<T>::State;
+	using typename BaseSystemGraph<T>::Transition;
+
 	BaseSystemGraphOnce(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
 	unsigned int getNrVisitedStates() const final;
@@ -43,7 +43,8 @@ private:
 
 struct BaseSystemGraphOnceTraits: public BaseSystemGraphTraits
 {
-	struct State: public BaseSystemGraphTraits::State
+	template <typename TRANSITION>
+	struct State: public BaseSystemGraphTraits::State<TRANSITION>
 	{
 		unsigned int nrVisited = 0;
 	};

@@ -10,7 +10,7 @@
 #include <memory>
 #include "Interface/PropEvaluator.hh"
 #include "PropTable/PropositionTable.hh"
-#include "PropSet/PropSet.hh"
+#include "PropSet.hh"
 
 namespace modelChecker {
 

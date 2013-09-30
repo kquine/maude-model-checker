@@ -55,13 +55,10 @@ SystemGraphTraits<StateEventSystemGraph<PL>>::updateStateLabel(DagNode* stateDag
 template <typename PL> bool
 SystemGraphTraits<StateEventSystemGraph<PL>>::insertTransition(unsigned int nextState, State& n)
 {
-	auto& as = static_cast<ActiveState&>(*n.explore);
+	auto& as = *n.explore;
 	unique_ptr<Transition> t(new Transition(nextState, ++ as.transitionCount));
 
-	const auto self = static_cast<StateEventSystemGraph<PL>*>(this);
-	DagNode* eventDag = self->ptGenerator.makeProofDag(as.getPosition(), *as.getRule(), as.getSubstitution());	// create a proof term
-	eventDag->reduce(self->initial);
-
+	DagNode* eventDag = static_cast<StateEventSystemGraph<PL>*>(this)->getProofTerm(as.getPosition(), *as.getRule(), as.getSubstitution());	// create a proof term
 	propLabel->updateEventLabel(eventDag, *t);	// compute all event props and store the formula event props
 
 	if (as.transitionPtrSet.insert(t.get()).second)		// if a new transition identified
@@ -75,7 +72,7 @@ SystemGraphTraits<StateEventSystemGraph<PL>>::insertTransition(unsigned int next
 template <typename PL> bool
 SystemGraphTraits<StateEventSystemGraph<PL>>::Transition::operator<(const Transition& t) const
 {
-	return PreTransition::operator<(t) || PL::EventLabel::operator<(t);
+	return BaseSystemGraphIterTraits::Transition::operator<(t) || PL::EventLabel::operator<(t);
 }
 
 } /* namespace modelChecker */

@@ -15,7 +15,6 @@
 #include "core.hh"
 
 // ltlr definitions
-#include "PropSet/PropSet.hh"
 #include "ParamEnabledPropHandler.hh"
 
 namespace modelChecker {

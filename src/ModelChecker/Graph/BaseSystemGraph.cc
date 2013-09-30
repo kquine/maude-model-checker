@@ -64,12 +64,40 @@ BaseSystemGraph<T>::getNextState(unsigned int stateNr, unsigned int index)
 	return static_cast<T*>(this)->computeNextState(stateNr, index);
 }
 
+
+template <class T> inline RewritingContext&
+BaseSystemGraph<T>::getContext() const
+{
+	return initial;
+}
+
+template <class T> inline DagNode*
+BaseSystemGraph<T>::getProofTerm(const PositionState* ps, const Rule& rule, const Substitution* subst) const
+{
+	DagNode* pd = ptGenerator.makeProofDag(ps,rule,subst);
+	pd->reduce(initial);
+	return pd;
+}
+
+template <class T> inline typename BaseSystemGraph<T>::State&
+BaseSystemGraph<T>::getState(unsigned int stateNr) const
+{
+	return static_cast<State&>(*seen[stateNr]);
+}
+
+template <class T> inline typename BaseSystemGraph<T>::Transition&
+BaseSystemGraph<T>::getTransition(unsigned int stateNr, unsigned int transitionNr) const
+{
+	return static_cast<Transition&>(*seen[stateNr]->transitions[transitionNr]);
+}
+
+
 template <class T> inline bool
 BaseSystemGraph<T>::satisfiesStateFormula(Bdd formula, unsigned int stateNr) const
 {
 	return BddUtil::satisfiesFormula(formula, [this,stateNr] (unsigned int propId)
 	{
-		return static_cast<const T*>(this)->satisfiesStateProp(propId, static_cast<State&>(*seen[stateNr]));
+		return static_cast<const T*>(this)->satisfiesStateProp(propId, getState(stateNr));
 	});
 }
 
@@ -79,8 +107,8 @@ BaseSystemGraph<T>::satisfiesStateEventFormula(Bdd formula, unsigned int stateNr
 	auto check = [this,stateNr,transitionNr] (unsigned int propId)
 	{
 		return propTable.isEventProp(propId) ?
-				  static_cast<const T*>(this)->satisfiesEventProp(propId, static_cast<Transition&>(*seen[stateNr]->transitions[transitionNr]))
-				: static_cast<const T*>(this)->satisfiesStateProp(propId, static_cast<State&>(*seen[stateNr]));
+				  static_cast<const T*>(this)->satisfiesEventProp(propId, getTransition(stateNr,transitionNr))
+				: static_cast<const T*>(this)->satisfiesStateProp(propId, getState(stateNr));
 	};
 	return BddUtil::satisfiesFormula(formula, check);
 }
@@ -91,8 +119,13 @@ BaseSystemGraph<T>::satisfiesPartialStateFormula(Bdd formula, unsigned int state
 {
 	return BddUtil::satisfiesPartialFormula(formula,
 			[this] (unsigned int propId) { return ! propTable.isEventProp(propId); },
-			[this,stateNr] (unsigned int propId) { return static_cast<const T*>(this)->satisfiesStateProp(propId, static_cast<State&>(*seen[stateNr])); });
+			[this,stateNr] (unsigned int propId) { return static_cast<const T*>(this)->satisfiesStateProp(propId, getState(stateNr)); });
 }
 
+inline bool
+BaseSystemGraphTraits::Transition::operator<(const Transition& t) const
+{
+	return nextState < t.nextState;
+}
 
 } /* namespace modelChecker */

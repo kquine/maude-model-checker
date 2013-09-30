@@ -138,7 +138,7 @@ ModelCheckerManager::makeGraph(unique_ptr<PL>&& pl, Args&&... args)
 	pl->setExtraFlag(false);	// notify that there are no fairness props.
 	unique_ptr<Graph<PL>> sysGraph(new Graph<PL>(move(pl),forward<Args>(args)..., sysContext, pGenerator, propTable));
 	sysGraph->init();
-	dagGraph = sysGraph.get();
+	dagGraphRef = sysGraph.get();
 
 	unique_ptr<BuchiAutomaton2> propGraph(new BuchiAutomaton2(&formula.data,formula.top));
 	makeProd(move(sysGraph), move(propGraph));
@@ -150,7 +150,7 @@ ModelCheckerManager::makeGraph(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, unique_
 	pl->setExtraFlag(true);		// notify that there exist fairness props.
 	unique_ptr<Graph<PL,FL>> sysGraph(new Graph<PL,FL>(move(pl), move(fl),forward<Args>(args)..., sysContext, pGenerator, propTable));
 	sysGraph->init();
-	dagGraph = sysGraph.get();
+	dagGraphRef = sysGraph.get();
 
 	unique_ptr<GenBuchiAutomaton> propGraph(new GenBuchiAutomaton(&formula.data,formula.top));
 	propGraph->simplify();

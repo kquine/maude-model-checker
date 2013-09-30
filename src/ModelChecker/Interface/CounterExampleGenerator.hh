@@ -8,7 +8,7 @@
 #ifndef COUNTEREXAMPLEGENERATOR_HH_
 #define COUNTEREXAMPLEGENERATOR_HH_
 #include <deque>
-#include "Automaton/DagSystemGraph.hh"
+#include "Graph/DagSystemGraph.hh"
 #include "Search/ModelChecker.hh"
 
 namespace modelChecker {

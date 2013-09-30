@@ -43,23 +43,17 @@ public:
 
 protected:
 	const unique_ptr<FL> fairLabel;
-
-private:
-	using PreState = 		typename SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::State;
-	using PreTransition =	typename SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::Transition;
 };
 
 template <typename PL, typename FL>
-struct SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::State: public PreState, public FL::StateLabel {};
+struct SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::State: public BaseSystemGraphOnceTraits::State<Transition>, public PL::StateLabel, public FL::StateLabel {};
 
 template <typename PL, typename FL>
-struct SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::Transition: public PreTransition, public FL::EventLabel
+struct SystemGraphTraits<FairStateEventEnabledSystemGraph<PL,FL>>::Transition: public BaseSystemGraphOnceTraits::Transition, public ProofDagGenerator, public PL::EventLabel, public FL::EventLabel
 {
-	Transition(unsigned int nextState, unsigned int transitionIndex): PreTransition(nextState, transitionIndex) {}
+	Transition(unsigned int nextState, unsigned int transitionIndex): BaseSystemGraphOnceTraits::Transition{nextState}, ProofDagGenerator(transitionIndex) {}
 	bool operator<(const Transition& t) const;
 };
-
-
 
 } /* namespace modelChecker */
 

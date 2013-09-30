@@ -24,6 +24,8 @@ public:
 	struct Transition;
 	struct TransitionIterator;
 
+	virtual ~Automaton() = default;
+
 	virtual const PA& getPropertyAutomaton() const = 0;
 	virtual const vector<State>& getInitialStates() const = 0;
 	virtual unique_ptr<TransitionIterator> makeTransitionIterator(const State& state) = 0;
@@ -41,6 +43,8 @@ template <typename PA>
 struct Automaton<PA>::TransitionIterator
 {
 	TransitionIterator(const State& state)	{ tr.source = state; }
+	virtual ~TransitionIterator() = default;
+
 	bool hasNext() const					{ return tr.systemIndex != NONE; }
 	const Transition& pick() const			{ return tr; }
 	const State& getSource() const			{ return tr.source; }

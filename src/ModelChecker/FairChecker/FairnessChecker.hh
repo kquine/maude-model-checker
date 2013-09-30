@@ -10,7 +10,7 @@
 #include "bdd.hh"
 #include "natSet.hh"
 #include "FairSet/FairSet.hh"
-#include "PropSet/PropSet.hh"
+#include "PropChecker/PropSet.hh"
 #include "Utility/BddUtil.hh"
 
 namespace modelChecker {

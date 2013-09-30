@@ -20,10 +20,10 @@ template <class T>
 class BaseSystemGraph: public DagSystemGraph, protected StateDagContainer
 {
 	friend class SystemGraphTraits<T>;
+public:
 	using State = 		typename SystemGraphTraits<T>::State;
 	using Transition =	typename SystemGraphTraits<T>::Transition;
 
-public:
 	BaseSystemGraph(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
 
 	BaseSystemGraph(const BaseSystemGraph&) = delete;
@@ -43,23 +43,32 @@ public:
 	pair<bool,Bdd> satisfiesPartialStateFormula(Bdd formula, unsigned int stateNr) const;
 
 protected:
+	RewritingContext& getContext() const;
+	DagNode* getProofTerm(const PositionState* ps, const Rule& rule, const Substitution* subst) const;
+
+	State& getState(unsigned int stateNr) const;
+	Transition& getTransition(unsigned int stateNr, unsigned int transitionNr) const;
+
+	vector<unique_ptr<State>> seen;
+
+private:
 	RewritingContext& initial;
 	const ProofTermGenerator& ptGenerator;
 	const PropositionTable& propTable;
-	vector<unique_ptr<State>> seen;
 };
 
 struct BaseSystemGraphTraits
 {
 	struct Transition
 	{
-		bool operator<(const Transition& t) const	{ return nextState < t.nextState; }
+		bool operator<(const Transition& t) const;
 		const unsigned int nextState;
 	};
 
+	template <typename TRANSITION>
 	struct State
 	{
-		vector<unique_ptr<Transition>> transitions;
+		vector<unique_ptr<TRANSITION>> transitions;
 	};
 };
 

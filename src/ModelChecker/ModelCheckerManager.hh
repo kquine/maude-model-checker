@@ -9,7 +9,7 @@
 #define MODELCHECKERMANAGER_HH_
 #include "logicFormula.hh"
 #include "Automaton/FairProductAutomaton.hh"
-#include "Automaton/DagSystemGraph.hh"
+#include "Graph/DagSystemGraph.hh"
 #include "PropTable/PropositionTable.hh"
 #include "PropChecker/PropChecker.hh"
 #include "PropChecker/EnabledPropHandler.hh"
@@ -28,7 +28,7 @@ public:
 	ModelCheckerManager(Formula& formula, PropositionTable& propTable, unique_ptr<AbstractFairnessTable>&& fairTable,
 			const PropEvaluator& stateEval, const PropEvaluator& eventEval, const ProofTermGenerator& ptg, RewritingContext& context);
 
-	const DagSystemGraph& getDagSystemGraph() const		{ return *dagGraph; }
+	const DagSystemGraph& getDagSystemGraph() const		{ return *dagGraphRef; }
 	const list<ModelChecker::Edge>& getLeadIn() const	{ return modelChecker->getLeadIn(); }
 	const list<ModelChecker::Edge>& getCycle() const	{ return modelChecker->getCycle(); }
 	bool findCounterExample()							{ return modelChecker->findCounterExample(); }
@@ -83,7 +83,7 @@ private:
 	//
 	// a model checker
 	//
-	DagSystemGraph* dagGraph = nullptr;
+	DagSystemGraph* dagGraphRef = nullptr;
 	unique_ptr<ModelChecker> modelChecker;
 };
 

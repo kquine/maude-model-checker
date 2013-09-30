@@ -22,10 +22,10 @@ libModelChecker_a_CPPFLAGS = \
 
 libModelChecker_a_SOURCES = \
 	Utility/TermUtil.cc \
-	PropSet/PropSet.cc \
 	PropTable/PropositionTable.cc \
 	PropTable/ParamPropositionTable.cc \
 	PropTable/ParamSubstitution.cc \
+	PropChecker/PropSet.cc \
 	PropChecker/PropChecker.cc \
 	PropChecker/EnabledPropHandler.cc \
 	PropChecker/RealizedPropGenerator.cc \
@@ -52,6 +52,7 @@ libModelChecker_a_SOURCES = \
 	FairSet/ParamStrongFairSet.cc \
 	Graph/RewriteTransitionState.cc \
 	Graph/StateDagContainer.cc \
+	Graph/SystemGraphTraits.cc \
 	GraphLabel/StateEventPropLabel.cc \
 	GraphLabel/StateEventFairLabel.cc \
     Interface/PropInterpreter.cc \

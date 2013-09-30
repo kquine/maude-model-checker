@@ -26,6 +26,8 @@ public:
 		unsigned int nrFormulaPropIds;		// the number including derived event props from enabled props in the formula.
 	};
 
+	virtual ~FormulaBuilder() = default;
+
 	unique_ptr<Formula> interpretFormula(DagNode* formulaDag, PropositionTable& propTable) const;
 
 	virtual int build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const = 0;

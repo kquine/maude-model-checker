@@ -9,8 +9,8 @@
 #define REALIZEDPROPGENERATOR_HH_
 #include "rule.hh"
 #include "searchState.hh"
-#include "PropSet/PropSet.hh"
 #include "Interface/PropEvaluator.hh"
+#include "PropSet.hh"
 
 namespace modelChecker {
 

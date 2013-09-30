@@ -10,7 +10,7 @@
 #include "variableDagNode.hh"
 #include "Utility/indexedSet.hh"
 #include "PropTable/ParamPropositionTable.hh"
-#include "PropSet/PropSet.hh"
+#include "PropChecker/PropSet.hh"
 #include "ParamVarInfo.hh"
 
 namespace modelChecker {

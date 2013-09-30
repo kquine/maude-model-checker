@@ -43,26 +43,26 @@ public:
 
 	SystemGraphTraits(unique_ptr<PL>&& pl, unique_ptr<EnabledPropHandler>&& enph): propLabel(move(pl)), enabledHandler(move(enph)) {}
 
-	bool satisfiesStateProp(unsigned int propId, const State& s) const;
-	bool satisfiesEventProp(unsigned int propId, const Transition& t) const;
+	template <typename STATE>
+	bool satisfiesStateProp(unsigned int propId, const STATE& s) const;
+
+	template <typename TRANSITION>
+	bool satisfiesEventProp(unsigned int propId, const TRANSITION& t) const;
+
 	void updateAllLabels(DagNode* stateDag, const vector<DagNode*>& proofDags, State& s, vector<unique_ptr<Transition>>& trs) const;
 
 protected:
 	const unique_ptr<PL> propLabel;
 	const unique_ptr<EnabledPropHandler> enabledHandler;
-
-private:
-	using PreState = 		BaseSystemGraphOnceTraits::State;
-	using PreTransition = 	BaseSystemGraphOnceTraits::Transition;
 };
 
 template <typename PL>
-struct SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::State: public PreState, public PL::StateLabel {};
+struct SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::State: public BaseSystemGraphOnceTraits::State<Transition>, public PL::StateLabel {};
 
 template <typename PL>
-struct SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::Transition: public PreTransition, public ProofDagGenerator, public PL::EventLabel
+struct SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::Transition: public BaseSystemGraphOnceTraits::Transition, public ProofDagGenerator, public PL::EventLabel
 {
-	Transition(unsigned int nextState, unsigned int transitionIndex): PreTransition{nextState}, ProofDagGenerator(transitionIndex) {}
+	Transition(unsigned int nextState, unsigned int transitionIndex): BaseSystemGraphOnceTraits::Transition{nextState}, ProofDagGenerator(transitionIndex) {}
 	bool operator<(const Transition& t) const;
 };
 

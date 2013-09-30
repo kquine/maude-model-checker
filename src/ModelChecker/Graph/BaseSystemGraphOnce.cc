@@ -10,7 +10,8 @@
 namespace modelChecker {
 
 template <typename T>
-BaseSystemGraphOnce<T>::BaseSystemGraphOnce(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable): Super(initial,ptg,propTable) {}
+BaseSystemGraphOnce<T>::BaseSystemGraphOnce(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
+	BaseSystemGraph<T>(initial,ptg,propTable) {}
 
 template <class T> inline unsigned int
 BaseSystemGraphOnce<T>::getNrVisitedStates() const	// count only visited states
@@ -54,7 +55,7 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 	if ( !this->seen[stateNr] )
 	{
 		DagNode* cannStateDag = this->getStateDag(stateNr);
-		RewriteTransitionState rts(this->initial, cannStateDag);
+		RewriteTransitionState rts(this->getContext(), cannStateDag);
 		unique_ptr<State> s(new State);
 
 		unsigned int transitionCount = 0;
@@ -63,13 +64,12 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 		ptr_set<Transition> transitionPtrSet;	// to distinguish equivalent transitions
 		DagNodeCache tdags;		// to protect proofDags from the garbage collection.
 
-		while (DagNode* ns =  rts.getNextStateDag(this->initial))	// compute all transitions
+		while (DagNode* ns =  rts.getNextStateDag(this->getContext()))	// compute all transitions
 		{
 			auto nextState = StateDagContainer::insertDag(ns);
 			trs.emplace_back(new Transition(nextState, ++ transitionCount));
 
-			DagNode* td = this->ptGenerator.makeProofDag(rts.getPosition(),*rts.getRule(),rts.getSubstitution());
-			td->reduce(this->initial);
+			DagNode* td = this->getProofTerm(rts.getPosition(),*rts.getRule(),rts.getSubstitution());
 			proofDags.push_back(tdags.cache(td));
 			MemoryCell::okToCollectGarbage();	//FIXME: move this out and remove DagNodeCache??
 		}
