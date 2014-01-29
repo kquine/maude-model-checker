@@ -149,3 +149,8 @@ red modelCheck(initial,
 red modelCheck(initial,
     [] ( req -> (~ rnok W (snok \/ sdnk) ))) .
 
+red modelCheck(initial,
+    [] ( req -> O (~ req W (sok \/ snok \/ sdnk) )) /\
+    [] ( rfst -> (~ req W (rok \/ rnok))) /\
+    [] ( req -> (~ sok W rok)) /\
+    [] ( req -> (~ rnok W (snok \/ sdnk) ))) .

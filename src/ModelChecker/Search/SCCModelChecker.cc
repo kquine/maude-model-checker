@@ -19,6 +19,9 @@ SCCModelChecker<PA>::SCCModelChecker(unique_ptr<FairAutomaton<PA>>&& graph): gra
 template <typename PA> bool
 SCCModelChecker<PA>::findCounterExample()
 {
+	//FIXME: by definition, acc_fair is "empty", and the goal is also currently empty.
+	// therefore, the cycle loop below will immediately terminate without gathering necessary states...
+
 	if (const auto& res = findAcceptedSCC(graph->getInitialStates()))
 	{
 		const auto& goal = res->acc_fair->makeFairGoal();

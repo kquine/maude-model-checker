@@ -1,0 +1,138 @@
+
+---From: Beyond regular model checking, Dana Fisman and Amir Pnueli
+--- 
+---    repeat
+---       for p := 1 to N - 1 do
+---ready:    (P[i], S[p]) := (p, i)
+---wait:     await S[p] != i  or  ALL j!=i. P[j] < P[i]
+---crit:  P[i] := 0
+---    forever
+
+fmod NUMBERS is
+  sort Number .
+  op 0 : -> Number [ctor] .
+  op s : -> Number [ctor] .
+  op __ : Number Number -> Number [ctor comm assoc id: 0] .
+endfm
+
+fmod PROCS is
+  pr NUMBERS .
+
+  sort Proc .
+  op [_] : Number -> Proc [ctor] . --- with a priority
+
+  sort ProcSet .
+  subsort Proc < ProcSet .
+  op none : -> ProcSet [ctor] .
+  op __ : ProcSet ProcSet -> ProcSet [ctor comm assoc id: none] .
+endfm
+
+--- #process | #idle_process ; waiting_processes ; crit_processes | MaxPr
+fmod PETERSON-CONF is
+  pr PROCS .
+
+  sort Conf .
+  op _|_;_;_|_ : Number Number ProcSet ProcSet MaxPr -> Conf [ctor] .
+
+  --- max_pr, snd_max_pr
+  sort MaxPr .
+  op _,_ : Number Number -> MaxPr [ctor] .
+
+endfm
+
+
+mod PETERSON-MUTEX is
+  pr PETERSON-CONF .
+
+  vars I J K N M : Number . var MP : MaxPr .
+  var PS CPS : ProcSet .  
+
+--- an idle proc can increase its priority
+  rl [init]: N | s M ;     PS ; CPS | MP
+          => N |   M ; [0] PS ; CPS | MP .
+
+--- increase the priority if it has the single maximum priority
+  rl [inc1]: s s s I J N | M ;   [s I J] PS ; CPS |   s I J, J
+          => s s s I J N | M ; [s s I J] PS ; CPS | s s I J, J .
+
+--- increase the priority if it is not the latest proc acquiring the current priority.
+  rl [inc2]: s I N | M ; [I] [I]   PS ; CPS | MP
+          => s I N | M ; [I] [s I] PS ; CPS | max([I] [s I] PS CPS) .
+
+--- a proc with the max priority goes to the critical section
+  rl [crit]: s N | M ; [N] PS ; CPS     | MP
+          => s N | M ;     PS ; CPS [N] | MP .
+
+--- a proc in critical section can go to idle status
+  rl [exit]: s N |   M ; PS ; CPS [N] | MP 
+          => s N | s M ; PS ; CPS     | max(PS CPS) .
+
+--- NOTE: assuming a bounded number of procs (in the instantiated graph)
+--- the following equations satisfy FVP.
+
+  op max : ProcSet -> MaxPr .
+  eq max([I] [I J] [I J K] PS) = max([I J] [I J K] PS) [variant] .
+  eq max([I] [I J]) = I J, I [variant] .
+  eq max([I])  = I, 0 [variant] .
+  eq max(none) = 0, 0 [variant] .
+
+endm
+
+--- search s s s s | s s s s ; none ; none | 0,0 =>* C:Conf .
+
+load symbolic-checker-core .
+
+(mod PETERSON-MUTEX-SATISFACTION is
+  pr SYMBOLIC-CHECKER .
+  pr PETERSON-MUTEX .
+
+  subsort Conf < State .
+
+  op ex? : -> Prop . 
+
+  vars N M : Number . var MP : MaxPr .
+  vars PS CPS : ProcSet . vars R1 R2 : Proc .
+
+  eq N | M ; PS ; none      | MP  |= ex? = true [variant] .
+  eq N | M ; PS ; R1        | MP  |= ex? = true [variant] .
+  eq N | M ; PS ; R1 R2 CPS | MP  |= ex? = false [variant] .
+
+endm)
+
+---(
+(lfmc [20] N | N ; none ; none | 0,0  |=  [] ex? .)
+---)
+
+(mod PETERSON-MUTEX-INF-MC is
+  pr PETERSON-MUTEX-SATISFACTION .
+
+  vars I J N M : Number . var MP : MaxPr .
+  var PS CPS : ProcSet .
+
+  eq [a1]: s s N M | M ; [I] [I] [I] PS ; CPS | MP
+         =   s N M | M ;     [I] [I] PS ; CPS | MP [variant] .
+   
+  eq [a2]: s s s s I J N | M ; [s s I J] PS ; CPS | s s I J, J 
+         = s s s s I J N | M ;   [s I J] PS ; CPS |   s I J, J [variant] .  
+
+--- coherent completion
+  rl [inc2]:   s I N | M ; [I] [I]   PS ; CPS | MP
+          => s s I N | M ; [I] [I] [s I] PS ; CPS | max([I] [I] [s I] PS CPS) . --- a1
+
+---(
+  eq s s s s N | M ; [I] [I] [s I] [s I] PS ;          CPS | MP
+   =     s s N | M ; [I] [I]    shift(I,PS) ; shift(I,CPS) | max([I] [I] shift(I,PS) shift(I,CPS)) [variant] .
+   ---)
+
+--- NOTE: assuming a bounded number of procs (in the instantiated graph)
+--- the following equations satisfy FVP.
+
+  op shift : Number ProcSet -> ProcSet .
+  eq shift(J I,     [I] PS) =   [I] shift(J I, PS) [variant] .
+  eq shift(  I, [s J I] PS) = [J I] shift(  I, PS) [variant] .
+  eq shift(  I,       none) = none                 [variant] .
+endm)
+
+(lfmc N | N ; none ; none | 0,0  |=  [] ex? .)
+
+

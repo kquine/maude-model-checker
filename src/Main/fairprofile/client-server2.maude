@@ -82,57 +82,25 @@ mod CLIENT-SERVER-CHECK is
     eq FairnessAssumptions = 
     Just(req(b)) /\ Fair(reply(a, b)) /\ Fair(rec(b)) .
 
-    ops init init2 : -> State .
-    eq init = [a] [b,a,1,nil] [c,a,0,nil] [d] [e,d,2,nil] [f,d,3,nil] .
-
-    eq init2 = [a] [b,a,1,nil] [c,a,0,nil] .
+    ops init : -> State .
+    eq init 
+     = [a] [b,a,1,nil] [c,a,0,nil] [d] [e,d,2,nil] [f,d,3,nil] .
 
     *** abstraction
     eq (I <- CNT) (I <- CNT) = (I <- CNT) .
     *** ---extra rules below added by coherence completion
-    rl [reply]: (S <-{C,N}) [S]         => (S <-{C,N}) [S] (C <-{S,f(S,C,N)}) .
-    rl [rec]  : (C <-{S,M}) [C,S,N,nil] => (C <-{S,M}) [C,S,N,M] .
-    rl [loss] : (I <-{C,N})             => (I <-{C,N}) .
+    rl [reply] : (S <-{C,N}) [S] => (S <-{C,N}) [S] (C <-{S,f(S,C,N)}) .
 
 endm
 
 ---set show gc on .
 set verbose on .
 
---- true
-red modelCheckFair(init, <> answered(b),
-     (just : enabled(req(O:Oid)) => req(O:Oid)) ;
-     (fair : enabled(rec(O:Oid)) => rec(O:Oid)) ;
-     (fair : enabled(reply(O:Oid,O':Oid)) => reply(O:Oid,O':Oid))
-) .
-
-red modelCheckFair(init, <> answered(b), just(req(C:Oid)) ; fair(rec(C:Oid)) ; fair(reply(S:Oid,C:Oid))) .
-
-
-eof
-
 --------------------------------
 ---1 State graph test
 
-red modelCheck(init, []<> enabled.req(b)) .
-red modelCheck(init, [] ~ answered(a)) .
-
-red modelCheck(init, <> answered(b)) . --- false
-
----true
-red modelCheck(init,
-    (
-     (<>[] enabled.req(b) -> []<> ever-req(b)) /\
-     ([]<> enabled.rec(b) -> []<> answered(b)) /\
-     ([]<> enabled.reply(a,b) -> []<> ever-reply(a,b))
-    ) -> <> answered(b)) .
-
---- true
-red modelCheckFair(init, <> answered(b),
-     (just : enabled.req(b) => ever-req(b)) ;
-     (fair : enabled.rec(b) => answered(b)) ;
-     (fair : enabled.reply(a,b) => ever-reply(a,b))
- ) .
+--- false
+red modelCheck(init, <> answered(b)) .
 
 --- true
 red modelCheckFair(init, <> answered(b),
@@ -150,35 +118,20 @@ red modelCheckFair(init,
      (just : enabled.req(O:Oid) => ever-req(O:Oid))
 ) .
 
---- true
-red modelCheckFair(init, <> answered(b),
-     (just : enabled.req(O:Oid) => ever-req(O:Oid)) ;
-     (fair : enabled.rec(b) => answered(b)) ;
-     (fair : enabled.reply(a,b) => ever-reply(a,b))
- ) .
+---true
+red modelCheckFair(init,
+    (
+     (<>[] enabled.req(b) -> []<> ever-req(b))
+    ) -> <> answered(b),
+     (fair : enabled.rec(O:Oid) => answered(O:Oid)) ;
+     (fair : enabled.reply(O:Oid,O':Oid) => ever-reply(O:Oid,O':Oid))
+) .
 
 --------------------------------
 ---2 State/Event graph test
 
-red modelCheck(init, []<> req(b)) .
-red modelCheck(init, [] ~ rec(a)) .
-
-red modelCheck(init, <> rec(b)) . --- false
-
----true
-red modelCheck(init,
-    (
-     (<>[] enabled.req(b) -> []<> req(b)) /\
-     ([]<> enabled.rec(b) -> []<> rec(b)) /\
-     ([]<> enabled.reply(a,b) -> []<> reply(a,b))
-    ) -> <> answered(b)) .
-
---- true
-red modelCheckFair(init, <> rec(b),
-     (just : enabled.req(b) => req(b)) ;
-     (fair : enabled.rec(b) => answered(b)) ;
-     (fair : enabled.reply(a,b) => reply(a,b))
- ) .
+--- false
+red modelCheck(init, <> rec(b)) .
 
 --- true
 red modelCheckFair(init, <> answered(b),
@@ -196,36 +149,20 @@ red modelCheckFair(init,
      (just : enabled.req(O:Oid) => req(O:Oid))
 ) .
 
---- true
-red modelCheckFair(init, <> rec(b),
-     (just : enabled.req(O:Oid) => req(O:Oid)) ;
-     (fair : enabled.rec(b) => answered(b)) ;
-     (fair : enabled.reply(a,b) => reply(a,b))
- ) .
-
+---true
+red modelCheckFair(init,
+    (
+     (<>[] enabled.req(b) -> []<> req(b))
+    ) -> <> answered(b),
+     (fair : enabled.rec(O:Oid) => rec(O:Oid)) ;
+     (fair : enabled.reply(O:Oid,O':Oid) => reply(O:Oid,O':Oid))
+) .
 
 --------------------------------
 ---3 State/Event/Enabled graph test
 
-red modelCheck(init, []<> enabled(req(b))) .
-red modelCheck(init, [] ~ enabled(rec(a))) .
-
-red modelCheck(init, <> rec(b)) . --- false
-
----true
-red modelCheck(init,
-    (
-     (<>[] enabled(req(b)) -> []<> req(b)) /\
-     ([]<> enabled(rec(b)) -> []<> rec(b)) /\
-     ([]<> enabled(reply(a,b)) -> []<> reply(a,b))
-    ) -> <> answered(b)) .
-
---- true
-red modelCheckFair(init, <> rec(b),
-     (just : enabled(req(b)) => req(b)) ;
-     (fair : enabled(rec(b)) => answered(b)) ;
-     (fair : enabled(reply(a,b)) => reply(a,b))
-) .
+--- false
+red modelCheck(init, (<>[] enabled(req(b)) -> []<> req(b)) -> <> rec(b)) .
 
 --- true
 red modelCheckFair(init, <> answered(b),
@@ -243,76 +180,13 @@ red modelCheckFair(init,
      (just : enabled(req(O:Oid)) => req(O:Oid))
 ) .
 
---- true
-red modelCheckFair(init, <> rec(b),
-     (just : enabled(req(O:Oid)) => req(O:Oid)) ;
-     (fair : enabled(rec(b)) => answered(b)) ;
-     (fair : enabled(reply(a,b)) => reply(a,b))
-) .
-
---- true
-red modelCheckFair(init2, <> answered(b),
-     (just : enabled(req(O:Oid)) => req(O:Oid)) ;
+---true
+red modelCheckFair(init,
+    (
+     (<>[] enabled(req(b)) -> []<> req(b))
+    ) -> <> answered(b),
      (fair : enabled(rec(O:Oid)) => rec(O:Oid)) ;
      (fair : enabled(reply(O:Oid,O':Oid)) => reply(O:Oid,O':Oid))
-) .
-
-*** weak fairness test ***
-
---- false
-red modelCheck(init, (Fair(reply(a,b)) /\ Fair(rec(b))) -> <> rec(b)) .
-
---- true
-red modelCheckFair(init, (Fair(reply(a,b)) /\ Fair(rec(b))) -> <> rec(b),
-    (just : enabled(req(b)) => req(b))
-) .
-
---- true
-red modelCheckFair(init, (Fair(reply(a,b)) /\ Fair(rec(b))) -> <> rec(b),
-    (just : enabled(req(O:Oid)) => req(O:Oid))
-) .
-
---- true
-red modelCheckFair(init, (Fair(reply(a,b)) /\ Fair(rec(b))) -> <> rec(b),
-    (just : enabled(req(b)) => req(O:Oid))
-) .
-
---- true
-red modelCheckFair(init, (Fair(reply(a,b)) /\ Fair(rec(b))) -> <> rec(b),
-    (just : enabled(req(O:Oid)) => req(O:Oid))
-) .
-
---- true
-red modelCheckFair(init, (Fair(reply(a,b)) /\ Fair(rec(b))) -> <> rec(b),
-    (just : enabled(req(O:Oid)) => req(O:Oid))
-) .
-
-*** strong fairness test ***
-
---- true
-red modelCheckFair(init, <> rec(b),
-    (just : enabled(req(b)) => req(b)) ;
-    (fair : enabled(reply(a,b)) => reply(a,b)) ;
-    (fair : enabled(rec(b)) => rec(b)) 
-) .
-
---- true
-red modelCheckFair(init, <> rec(b),
-    (just : enabled(req(O:Oid)) => req(O:Oid)) ;
-    (fair : enabled(reply(O:Oid,b)) => reply(O:Oid,b)) ;
-    (fair : enabled(rec(b)) => rec(b)) 
-) .
-
---- false
-red modelCheckFair(init, <> rec(b),
-    (fair : enabled(reply(O:Oid,b)) => reply(a,O':Oid)) ;
-    (fair : enabled(rec(b)) => rec(b))
-) .
-
---- true
-red modelCheckFair(init, Just(req(b)) -> <> rec(b),
-    (fair : enabled(reply(O:Oid,O':Oid)) => reply(O:Oid,O':Oid)) ;
-    (fair : enabled(rec(O:Oid)) => rec(O:Oid))
 ) .
 
 q

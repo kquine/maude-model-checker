@@ -1,0 +1,70 @@
+
+mod CXT-MODEL is
+  including NAT .
+
+  sort Conf .
+  subsort Nat < Conf .
+  op [_] : Nat -> Conf .
+  op f : Conf Conf -> Conf .
+  ops a b : -> Conf .
+
+  var N : Nat . vars C D : Conf .
+
+  eq [s(N)] = f([N], [N]) .
+  eq [0] = a .
+
+  eq f(b,b) = b .
+
+  rl [tob]: a => b .
+  rl [toa]: b => a .
+
+endm
+
+load ltlr-checker .
+
+mod CXT-MODEL-PRED is
+  protecting CXT-MODEL .
+  including LTLR-MODEL-CHECKER .
+  including SPATIAL-ACTION-PATTERN-EQS .
+
+--- context
+  sorts Context$Conf .
+  subsorts Conf < Context$Conf < StateContext .
+  op f : Context$Conf Conf -> Context$Conf [ditto] .
+  op f : Conf Context$Conf -> Context$Conf [ditto] .
+  op [] : -> Context$Conf [ctor] .    --- defined for each sort of rules' rhs
+
+  var CXT : StateContext . var CF : Conf . var XCF : Context$Conf . 
+  var R : RuleName . var SUB : StateSubstitution .
+
+--- position
+  sorts Pos .
+  subsort Nat < Pos .
+  op nil : -> Pos [ctor] .
+  op _._ : Pos Pos -> Pos [ctor assoc id: nil] .
+
+  op pos : Context$Conf -> Pos .
+  eq pos([]) = nil .
+  eq pos(f(XCF,CF)) = 0 . pos(XCF) .
+  eq pos(f(CF,XCF)) = 1 . pos(XCF) .
+
+--- predicates
+  subsort Conf < State .
+
+  op reach : Conf -> Prop .
+  eq C:Conf |= reach(C:Conf) = true .
+
+  op pos : RuleName Pos -> Action .
+ ceq {CXT | R : SUB} |= pos(R,P:Pos) = true if P:Pos := pos(CXT) .
+endm
+
+set verbose on .
+
+red modelCheck([2], <> reach(b)) .
+
+red modelCheckFair([2], <> reach(b), fair({'tob})  ) .
+
+red modelCheckFair([2], <> reach(b), fair({CXT | 'tob}) ) .
+
+red modelCheckFair([2], <> reach(b), fair(pos('tob,P:Pos)) ) .
+

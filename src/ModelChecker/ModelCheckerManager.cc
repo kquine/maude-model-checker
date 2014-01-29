@@ -89,17 +89,23 @@ ModelCheckerManager::initModelChecker(unique_ptr<AbstractFairnessTable>&& fTable
 {
 	if ( eventProps.empty() )			// no event props
 	{
+		Verbose("ModelChecker: a system graph may compute only state propositions..");
+
 		unique_ptr<StatePropLabel> pl(new StatePropLabel(fStateProps,*spc,epc.get()));
 		if (sfc)	makeGraph<FairStateSystemGraph>(move(pl),unique_ptr<StateFairLabel>(new StateFairLabel(*sfc)),move(fTable));
 		else		makeGraph<StateSystemGraph>(move(pl));
 	}
 	else if ( enabledProps.empty() )	// there exist event props, but no enabled props
 	{
+		Verbose("ModelChecker: a system graph may compute state and event propositions..");
+
 		if (sfc || efc)	initFairLabel<FairStateEventSystemGraph>(move(fTable));
 		else			initPropLabel<StateEventSystemGraph>();
 	}
 	else
 	{
+		Verbose("ModelChecker: a system graph may compute state, event, and enabled propositions..");
+
 		auto enph = PropCheckerFactory::createHandler(enabledProps, formula.nrFormulaPropIds, propTable);
 		if (sfc || efc)	initFairLabel<FairStateEventEnabledSystemGraph>(move(fTable),move(enph));
 		else			initPropLabel<StateEventEnabledSystemGraph>(move(enph));

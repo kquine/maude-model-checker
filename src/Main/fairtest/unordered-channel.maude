@@ -51,6 +51,7 @@ load ltlr-checker
 mod UNORDERED-CHANNEL-PREDS is
   protecting UNORDERED-CHANNEL-ABSTRACTION .
   protecting LTLR-MODEL-CHECKER .
+  including SPATIAL-ACTION-PATTERN-EQS . --- inefficient for some cases
 
   vars M N K P : Nat . vars L L1 L2 : List . var  C : Conf . var  B : Bool . 
 
