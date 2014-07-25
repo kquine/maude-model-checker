@@ -28,6 +28,10 @@ private:
 
 	void computeGenRules(SearchState& sc, RewritingContext& context, PropSet& result);
 
+	// adapted from deepCopyCondition in importModule.cc (declared as private)
+	static void deepCopyCondition(const Vector<ConditionFragment*>& original,
+					Vector<ConditionFragment*>& copy);
+
 	vector<unique_ptr<Rule> > genRules;
 
     RewritingContext& parentContext;

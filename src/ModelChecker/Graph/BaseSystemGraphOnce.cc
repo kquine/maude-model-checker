@@ -62,18 +62,27 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 		vector<unique_ptr<Transition>> trs;
 		vector<DagNode*> proofDags;
 		ptr_set<Transition> transitionPtrSet;	// to distinguish equivalent transitions
-		DagNodeCache tdags;		// to protect proofDags from the garbage collection.
+		ProtectedDagNodeSet tdags;		// to protect proofDags from the garbage collection.
 
 		while (DagNode* ns =  rts.getNextStateDag(this->getContext()))	// compute all transitions
 		{
 			auto nextState = StateDagContainer::insertDag(ns);
 			trs.emplace_back(new Transition(nextState, ++ transitionCount));
 
+			// identify a unique proof dag
 			DagNode* td = this->getProofTerm(rts.getPosition(),*rts.getRule(),rts.getSubstitution());
-			proofDags.push_back(tdags.cache(td));
-			MemoryCell::okToCollectGarbage();	//FIXME: move this out and remove DagNodeCache??
+			auto di = tdags.dagNode2Index(td);
+			if (di == NONE)
+			{
+				di = tdags.cardinality();
+				tdags.insert(td);
+			}
+
+			proofDags.push_back(tdags.index2DagNode(di));
+			MemoryCell::okToCollectGarbage();
 		}
-		static_cast<T*>(this)->updateAllLabels(cannStateDag, proofDags, *s, trs);	//FIXME: need to compute labels only once for the same proof terms here...
+
+		static_cast<T*>(this)->updateAllLabels(cannStateDag, proofDags, *s, trs);
 
 		for (auto& tr : trs)
 		{
@@ -84,20 +93,6 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 	}
 	return stateNr;		// return an integer version to compare with NONE later..
 }
-
-template <typename T>
-inline DagNode*
-BaseSystemGraphOnce<T>::DagNodeCache::cache(DagNode* d)
-{
-	auto i = this->dagNode2Index(d);
-	if (i == NONE)
-	{
-		i = this->cardinality();
-		this->insert(d);
-	}
-	return this->index2DagNode(i);
-}
-
 
 
 } /* namespace modelChecker */

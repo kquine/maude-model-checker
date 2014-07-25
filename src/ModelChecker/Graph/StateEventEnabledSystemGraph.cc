@@ -38,9 +38,9 @@ template <typename PL>
 template <typename STATE> bool
 SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::satisfiesStateProp(unsigned int propId, const STATE& s) const
 {
-	if (enabledHandler->getPropTable().isEnabledProp(propId))
+	if (enabledHandler->isEnabledProp(propId))
 	{
-		auto evtId = enabledHandler->getPropTable().getEnabledEventId(propId);
+		auto evtId = enabledHandler->getEnabledEventId(propId);
 		for (auto& j : s.transitions)
 			if (propLabel->satisfiesEventProp(evtId, *j)) return true;
 		return false;

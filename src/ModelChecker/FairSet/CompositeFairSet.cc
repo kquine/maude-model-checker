@@ -67,9 +67,9 @@ CompositeFairSet::clone() const
 }
 
 unique_ptr<FairSet::Goal>
-CompositeFairSet::makeFairGoal() const
+CompositeFairSet::makeFairGoal(const AbstractFairnessTable& table) const
 {
-	return unique_ptr<FairSet::Goal>(new Goal(*this));
+	return unique_ptr<FairSet::Goal>(new Goal(*this, table));
 }
 
 unique_ptr<FairSet::Bad>
@@ -91,10 +91,13 @@ CompositeFairSet::dump(ostream& o) const
 }
 
 
-CompositeFairSet::Goal::Goal(const CompositeFairSet& f)
+CompositeFairSet::Goal::Goal(const CompositeFairSet& f, const AbstractFairnessTable& table)
 {
 	fairGoals.resize(f.fairSets.size());
-	transform(f.fairSets.begin(), f.fairSets.end(), fairGoals.begin(), [](const unique_ptr<FairSet>& i) { return i->makeFairGoal(); });
+
+	for (unsigned int i = 0; i < fairGoals.size(); ++i)
+		fairGoals[i] = f.fairSets[i]->makeFairGoal(
+							static_cast<const CompositeFairnessTable&>(table).getComponent(i));
 }
 
 bool

@@ -66,7 +66,8 @@ ParamStrongFairSet::dump(ostream& o) const
 	ParamRealizedSet::dump(o);
 }
 
-ParamStrongFairSet::Goal::Goal(const ParamStrongFairSet& f): StrongFairSet::Goal(f) {}
+ParamStrongFairSet::Goal::Goal(unsigned int nrFairness, const ParamStrongFairSet& f):
+		StrongFairSet::Goal(nrFairness, f) {}
 
 
 bool

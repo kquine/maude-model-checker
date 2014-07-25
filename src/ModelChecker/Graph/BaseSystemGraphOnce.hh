@@ -29,12 +29,6 @@ public:
 	unsigned int getNrVisitedTransitions(unsigned int stateNr) const final;
 
 private:
-	struct DagNodeCache: private ProtectedDagNodeSet
-	{
-		using ProtectedDagNodeSet::cardinality;
-		DagNode* cache(DagNode* d);
-	};
-
 	unsigned int insertState(DagNode* stateDag);					/* implements */
 	int computeNextState(unsigned int stateNr, unsigned int index);	/* implements */
 

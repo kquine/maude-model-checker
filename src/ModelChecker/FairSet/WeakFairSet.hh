@@ -33,7 +33,7 @@ public:
 	bool operator<(const FairSet& fs) const override;
 
 	virtual unique_ptr<FairSet> clone() const override;
-	unique_ptr<FairSet::Goal> makeFairGoal() const override;
+	unique_ptr<FairSet::Goal> makeFairGoal(const AbstractFairnessTable& table) const override;
 	unique_ptr<FairSet::Bad> makeBadGoal() const override;
 
 	void dump(ostream& o) const override;
@@ -46,12 +46,12 @@ protected:
 class WeakFairSet::Goal: public FairSet::Goal
 {
 public:
-	Goal(const WeakFairSet& fs);
+	Goal(unsigned int nrFairness, const WeakFairSet& f);
 	bool empty() const override;
 	virtual bool update(const FairSet& f, const AbstractFairnessTable& table) override;
 	void dump(ostream& o) const override;
 protected:
-	NatSet weakFairGoal;	// falsified entities
+	NatSet weakFairGoal;	// all fairness indices
 };
 
 struct WeakFairSet::Bad: public FairSet::Bad

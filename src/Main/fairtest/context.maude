@@ -68,3 +68,4 @@ red modelCheckFair([2], <> reach(b), fair({CXT | 'tob}) ) .
 
 red modelCheckFair([2], <> reach(b), fair(pos('tob,P:Pos)) ) .
 
+q

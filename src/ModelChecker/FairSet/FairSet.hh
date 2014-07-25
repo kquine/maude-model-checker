@@ -26,7 +26,7 @@ struct FairSet
 	virtual bool operator<(const FairSet& f) const = 0;
 
 	virtual unique_ptr<FairSet> clone() const = 0;
-	virtual unique_ptr<Goal> makeFairGoal() const = 0;
+	virtual unique_ptr<Goal> makeFairGoal(const AbstractFairnessTable& table) const = 0;
 	virtual unique_ptr<Bad> makeBadGoal() const = 0;
 
 	virtual void dump(ostream& o) const = 0;

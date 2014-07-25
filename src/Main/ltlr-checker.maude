@@ -79,7 +79,9 @@ endfm
 fmod SPATIAL-ACTION-PATTERN-EQS is
   including SPATIAL-ACTION-PATTERN .
 
-  var CXT : StateContext . var R : RuleName . var SUB SUB' : StateSubstitution .
+  var CXT : [StateContext] . --- TODO: to deal with some broken context terms
+  var R : RuleName . 
+  var SUB SUB' : [StateSubstitution] .
 
   eq {CXT | R : SUB}        |= {R}             = true .
   eq {CXT | R : SUB ; SUB'} |= {R : SUB}       = true .
@@ -141,7 +143,7 @@ fmod LTLR-MODEL-CHECKER is
   including FAIRNESS-SPEC .
   including LTLR-COUNTEREXAMPLE .
 
-  subsort State < StateContext .
+---  subsort State < StateContext .  --- TODO: should be avoid in a normal situation
 
   --- internally used for computing realized props
   op reProp? : State -> Prop .

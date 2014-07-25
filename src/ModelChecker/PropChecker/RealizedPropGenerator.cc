@@ -22,6 +22,10 @@
 
 //		higher class definitions
 #include "matchSearchState.hh"
+#include "equalityConditionFragment.hh"
+#include "sortTestConditionFragment.hh"
+#include "assignmentConditionFragment.hh"
+#include "rewriteConditionFragment.hh"
 
 // core class definitions
 #include "rewritingContext.hh"
@@ -57,11 +61,13 @@ RealizedPropGenerator::generateRealizedProps(DagNode* target, PropSet& result)
 	parentContext.addInCount(*context);
 }
 
-//TODO: in this version, many redundant props are generated when considering spatial action patterns due to AC matching..
-// Using unifications is in general not allowed here, but we may consider it for simple spatial action patterns..
 void
 RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& context, PropSet& result)
 {
+	//TODO: in this version, many redundant props are generated when considering spatial action
+	// patterns due to AC matching.. Using unifications is in general not allowed here, but
+	// we may consider it for simple spatial action patterns..
+
 	for(const unique_ptr<Rule>& r : genRules)
 	{
 		if (sc.findFirstSolution(r.get(), r->getExtLhsAutomaton()))
@@ -110,17 +116,50 @@ RealizedPropGenerator::constructRules()
 }
 
 unique_ptr<Rule>
-RealizedPropGenerator::makeRule(Term* left, Term* right, const Vector<ConditionFragment*>& condition) const
+RealizedPropGenerator::makeRule(Term* left, Term* right, const Vector<ConditionFragment*>& cond) const
 {
 	Term* lterm = pEval.getRealizedTerm(left->deepCopy(nullptr));	// will be freed when the rule is freed
 	Term* rterm = right->deepCopy(nullptr);							// will be freed when the rule is freed
 
-	unique_ptr<Rule> rule(new Rule(NONE, lterm, rterm, condition));
+	Vector<ConditionFragment*> newcond;
+	deepCopyCondition(cond, newcond);
+
+	unique_ptr<Rule> rule(new Rule(NONE, lterm, rterm, newcond));
 	rule->setModuleInfo(0, NONE);
 	rule->check();
 	rule->preprocess();
 	rule->compile(true);
 	return rule;
+}
+
+
+// adapted from deepCopyCondition in importModule.cc
+void
+RealizedPropGenerator::deepCopyCondition(const Vector<ConditionFragment*>& original,
+				Vector<ConditionFragment*>& copy)
+{
+	int nrFragments = original.length();
+	copy.expandTo(nrFragments);
+	for (int i = 0; i < nrFragments; ++i)
+    {
+		ConditionFragment* c = original[i];
+		if (EqualityConditionFragment* e = dynamic_cast<EqualityConditionFragment*>(c))
+		{
+			copy[i] = new EqualityConditionFragment(e->getLhs()->deepCopy(nullptr),
+					e->getRhs()->deepCopy(nullptr));
+		}
+		else if (SortTestConditionFragment* s = dynamic_cast<SortTestConditionFragment*>(c))
+		{
+			copy[i] = new SortTestConditionFragment(s->getLhs()->deepCopy(nullptr), s->getSort());
+		}
+		else if(AssignmentConditionFragment* a = dynamic_cast<AssignmentConditionFragment*>(c))
+		{
+			copy[i] = new AssignmentConditionFragment(a->getLhs()->deepCopy(nullptr),
+					      a->getRhs()->deepCopy(nullptr));
+		}
+		else
+			CantHappen("bad condition fragment");	// no rewrite conditions
+    }
 }
 
 } /* namespace modelChecker */

@@ -33,7 +33,7 @@ public:
 class ParamStrongFairSet::Goal: public StrongFairSet::Goal
 {
 public:
-	Goal(const ParamStrongFairSet& fs);
+	Goal(unsigned int nrFairness, const ParamStrongFairSet& fs);
 	bool update(const FairSet& f, const AbstractFairnessTable& table) override;
 };
 

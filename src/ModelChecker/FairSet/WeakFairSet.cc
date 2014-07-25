@@ -5,10 +5,17 @@
  *      Author: kquine
  */
 
+// utility stuff
 #include "macros.hh"
 #include "vector.hh"
-
 #include "natSet.hh"
+
+// forward declarations
+#include "interface.hh"
+#include "core.hh"
+
+// ltlr definitions
+#include "FairTable/FairnessTable.hh"
 #include "WeakFairSet.hh"
 
 namespace modelChecker {
@@ -72,9 +79,10 @@ WeakFairSet::clone() const
 }
 
 unique_ptr<FairSet::Goal>
-WeakFairSet::makeFairGoal() const
+WeakFairSet::makeFairGoal(const AbstractFairnessTable& table) const
 {
-	return unique_ptr<FairSet::Goal>(new Goal(*this));
+	auto& wtable = static_cast<const WeakFairnessTable&>(table);
+	return unique_ptr<FairSet::Goal>(new Goal(wtable.nrFairness(), *this));
 }
 
 unique_ptr<FairSet::Bad>
@@ -90,7 +98,12 @@ WeakFairSet::dump(ostream& o) const
 }
 
 
-WeakFairSet::Goal::Goal(const WeakFairSet& f): weakFairGoal(f.falsifiedWeakFair) {}
+WeakFairSet::Goal::Goal(unsigned int nrFairness, const WeakFairSet& f)
+{
+	for (auto i = nrFairness ; i > 0 ; --i)
+		weakFairGoal.insert(i - 1);		// add all fairness
+	weakFairGoal.subtract(f.falsifiedWeakFair); // but not falsified
+}
 
 bool
 WeakFairSet::Goal::empty() const

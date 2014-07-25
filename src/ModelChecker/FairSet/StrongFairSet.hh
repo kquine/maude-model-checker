@@ -35,7 +35,7 @@ public:
 	bool operator<(const FairSet& fs) const override;
 
 	virtual unique_ptr<FairSet> clone() const override;
-	unique_ptr<FairSet::Goal> makeFairGoal() const override;
+	unique_ptr<FairSet::Goal> makeFairGoal(const AbstractFairnessTable& table) const override;
 	virtual unique_ptr<FairSet::Bad> makeBadGoal() const override;
 
 	void dump(ostream& o) const override;
@@ -49,7 +49,7 @@ protected:
 class StrongFairSet::Goal: public FairSet::Goal
 {
 public:
-	Goal(const StrongFairSet& fs);
+	Goal(unsigned int nrFairness, const StrongFairSet& fs);
 	bool empty() const override;
 	bool update(const FairSet& f, const AbstractFairnessTable& table) override;
 	void dump(ostream& o) const override;

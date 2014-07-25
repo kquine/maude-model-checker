@@ -172,7 +172,7 @@ MetaLevelOpSymbol::makeMatchSearchState2(MetaModule* m,
 	    }
 	}
     }
-  return false;
+  return nullptr;
 }
 
 bool

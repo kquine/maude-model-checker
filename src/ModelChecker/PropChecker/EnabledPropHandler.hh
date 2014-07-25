@@ -25,7 +25,9 @@ public:
 
 	virtual unique_ptr<PropSet> computeEnabledProps(const vector<unique_ptr<PropSet>>& trueEventPropIds) const;
 
-	const PropositionTable& getPropTable() const { return propositions; }	// FIXME: to be removed..
+	bool isEnabledProp(unsigned int propId) const		{ return propositions.isEnabledProp(propId); }
+	int getEnabledEventId(unsigned int propId) const	{ return propositions.getEnabledEventId(propId); }
+
 
 protected:
 	const vector<unsigned int> fairEnabledPropIds;

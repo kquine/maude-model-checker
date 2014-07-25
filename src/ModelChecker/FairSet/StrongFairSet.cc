@@ -5,10 +5,17 @@
  *      Author: kquine
  */
 
+// utility stuff
 #include "macros.hh"
 #include "vector.hh"
-
 #include "natSet.hh"
+
+// forward declarations
+#include "interface.hh"
+#include "core.hh"
+
+// ltlr definitions
+#include "FairTable/FairnessTable.hh"
 #include "StrongFairSet.hh"
 
 namespace modelChecker {
@@ -79,9 +86,10 @@ StrongFairSet::clone() const
 }
 
 unique_ptr<FairSet::Goal>
-StrongFairSet::makeFairGoal() const
+StrongFairSet::makeFairGoal(const AbstractFairnessTable& table) const
 {
-	return unique_ptr<FairSet::Goal>(new Goal(*this));
+	auto& stable = static_cast<const StrongFairnessTable&>(table);
+	return unique_ptr<FairSet::Goal>(new Goal(stable.nrFairness(), *this));
 }
 
 unique_ptr<FairSet::Bad>
@@ -96,9 +104,14 @@ StrongFairSet::dump(ostream& o) const
 	o << "(false_strong: " << falsifiedSupp << " , " << falsifiedCons << ")";
 }
 
-StrongFairSet::Goal::Goal(const StrongFairSet& f): strongFairGoal(f.falsifiedCons)
+StrongFairSet::Goal::Goal(unsigned int nrFairness, const StrongFairSet& f)
 {
-	strongFairGoal.subtract(f.falsifiedSupp);	// only (true => false)
+	for (auto i = nrFairness ; i > 0 ; --i)
+		strongFairGoal.insert(i - 1);	// add all fairness
+
+	// but not both falsified
+	strongFairGoal.subtract(f.falsifiedSupp);
+	strongFairGoal.subtract(f.falsifiedCons);
 }
 
 bool

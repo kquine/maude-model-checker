@@ -26,14 +26,14 @@ public:
 
 	void dump(ostream& o) const override;
 
-	unique_ptr<FairSet::Goal> makeFairGoal() const override;
+	unique_ptr<FairSet::Goal> makeFairGoal(const AbstractFairnessTable& table) const override;
 
 };
 
 class ParamWeakFairSet::Goal: public WeakFairSet::Goal
 {
 public:
-	Goal(const ParamWeakFairSet& fs);
+	Goal(unsigned int nrFairness, const ParamWeakFairSet& fs);
 	bool update(const FairSet& f, const AbstractFairnessTable& table) override;
 };
 

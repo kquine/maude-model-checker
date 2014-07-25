@@ -56,13 +56,15 @@ ParamWeakFairSet::dump(ostream& o) const
 }
 
 unique_ptr<FairSet::Goal>
-ParamWeakFairSet::makeFairGoal() const
+ParamWeakFairSet::makeFairGoal(const AbstractFairnessTable& table) const
 {
-	return unique_ptr<FairSet::Goal>(new Goal(*this));
+	auto& wtable = static_cast<const ParamWeakFairnessTable&>(table);
+	return unique_ptr<FairSet::Goal>(new Goal(wtable.nrFairness(), *this));
 }
 
 
-ParamWeakFairSet::Goal::Goal(const ParamWeakFairSet& f): WeakFairSet::Goal(f) {}
+ParamWeakFairSet::Goal::Goal(unsigned int nrFairness, const ParamWeakFairSet& f):
+		WeakFairSet::Goal(nrFairness, f) {}
 
 bool
 ParamWeakFairSet::Goal::update(const FairSet& f, const AbstractFairnessTable& table)

@@ -18,7 +18,7 @@ class ParamWeakFairnessChecker: public WeakFairnessChecker, private RealizedFair
 public:
 	ParamWeakFairnessChecker(const vector<unsigned int>& weakFairIds, const vector<unsigned int>& paramWeakFairIds, ParamWeakFairnessTable& fTable);
 
-	unsigned int getNrFairness() const override;	// TODO: keep track of the number
+	unsigned int getNrFairness() const override;
 	unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
 
 	unique_ptr<FairSet> computeCompactFairness(const PropSet& trueProps) override;
