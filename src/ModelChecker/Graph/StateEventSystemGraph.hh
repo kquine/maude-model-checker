@@ -42,6 +42,8 @@ public:
 	SystemGraphTraits(unique_ptr<PL>&& pl): propLabel(move(pl)) {}
 
 	bool insertTransition(unsigned int nextState, State& n);
+	void insertDeadlockTransition(unsigned int stateNr, State& n);
+
 	bool satisfiesStateProp(unsigned int propId, const State& s) const;
 	bool satisfiesEventProp(unsigned int propId, const Transition& t) const;
 	unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, State& s) const;

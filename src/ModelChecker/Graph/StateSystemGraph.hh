@@ -44,6 +44,9 @@ public:
 	bool insertTransition(unsigned int nextState, STATE& n) const;
 
 	template <typename STATE>
+	void insertDeadlockTransition(unsigned int stateNr, STATE& n) const;
+
+	template <typename STATE>
 	bool satisfiesStateProp(unsigned int propId, const STATE& s) const;
 
 	template <typename TRANSITION>

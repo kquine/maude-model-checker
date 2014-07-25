@@ -30,11 +30,14 @@
 
 namespace modelChecker {
 
-ProofTermGenerator::ProofTermGenerator(MixfixModule* module, Symbol* prooftermSymbol, Symbol* assignOp, Symbol* holeOp,
-		Symbol* substitutionSymbol, Symbol* emptySubstSymbol, QuotedIdentifierSymbol* qidSymbol, Symbol* unlabeledSymbol, Symbol* noContextSymbol):
-				module(module), prooftermSymbol(prooftermSymbol), assignOp(assignOp), holeOp(holeOp),
+ProofTermGenerator::ProofTermGenerator(MixfixModule* module, RewritingContext& parent,
+		Symbol* prooftermSymbol, Symbol* assignOp, Symbol* holeOp,
+		Symbol* substitutionSymbol, Symbol* emptySubstSymbol, QuotedIdentifierSymbol* qidSymbol,
+		Symbol* unlabeledSymbol, Symbol* noContextSymbol, DagNode* deadlockDag):
+				module(module), parent(parent),
+				prooftermSymbol(prooftermSymbol), assignOp(assignOp), holeOp(holeOp),
 				substitutionSymbol(substitutionSymbol), emptySubstSymbol(emptySubstSymbol), qidSymbol(qidSymbol),
-				unlabeledSymbol(unlabeledSymbol), noContextSymbol(noContextSymbol) {}
+				unlabeledSymbol(unlabeledSymbol), noContextSymbol(noContextSymbol), deadlockDag(deadlockDag){}
 
 DagNode*
 ProofTermGenerator::makeProofDag(const PositionState* ps, const Rule& rule, const Substitution* subst) const
@@ -43,7 +46,16 @@ ProofTermGenerator::makeProofDag(const PositionState* ps, const Rule& rule, cons
 	args[0] = makeContextDag(ps, rule.getLhs()->getSort());
 	args[1] = makeRuleNameDag(rule.getLabel().id());
 	args[2] = makeSubstitutionDag(subst, &rule);
-	return prooftermSymbol->makeDagNode(args);
+
+	DagNode* pd = prooftermSymbol->makeDagNode(args);
+	pd->reduce(parent);
+	return pd;
+}
+
+DagNode*
+ProofTermGenerator::getDeadlockDag() const
+{
+	return deadlockDag;
 }
 
 DagNode*

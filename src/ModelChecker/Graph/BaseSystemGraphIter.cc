@@ -50,6 +50,7 @@ BaseSystemGraphIter<T>::computeNextState(unsigned int stateNr, unsigned int inde
 
 	if (index < nrTransitions)
 		return n.transitions[index]->nextState;
+
 	if (! n.explore)
 		return NONE;	// fully explored
 
@@ -64,8 +65,17 @@ BaseSystemGraphIter<T>::computeNextState(unsigned int stateNr, unsigned int inde
 		}
 		else
 		{
-			n.explore.reset();			// remove active state
-			return NONE;				// no more transition,, (fully explored transitions)
+			if (nrTransitions == 0 && index == 0)	// deadlock: add a fake self loop
+			{
+				static_cast<T*>(this)->insertDeadlockTransition(stateNr, n);
+				n.explore.reset();
+				return stateNr;
+			}
+			else
+			{
+				n.explore.reset();			// remove active state
+				return NONE;				// no more transition,, (fully explored transitions)
+			}
 		}
 	}
 	return n.transitions[index]->nextState;

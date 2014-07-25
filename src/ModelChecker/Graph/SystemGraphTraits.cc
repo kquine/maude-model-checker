@@ -33,20 +33,30 @@ namespace modelChecker {
 DagNode*
 RuleDagGenerator::makeDag(DagNode*, RewritingContext& context, const ProofTermGenerator& ptg) const
 {
-	DagNode* d = ptg.makeProofDag(nullptr,*rule, nullptr);
-	d->reduce(context);
-	return d;
+	if (rule)
+	{
+		DagNode* d = ptg.makeProofDag(nullptr, *rule, nullptr);
+		d->reduce(context);
+		return d;
+	}
+	else
+		return ptg.getDeadlockDag();
 }
 
 DagNode*
 ProofDagGenerator::makeDag(DagNode* stateDag, RewritingContext& parent, const ProofTermGenerator& ptg) const
 {
-	unique_ptr<RewriteTransitionState>  tr(new RewriteTransitionState(parent, stateDag));
-	for (unsigned int i = 0; i < transitionIndex; ++i)
-		tr->getNextStateDag(parent);
-	DagNode* d = ptg.makeProofDag(tr->getPosition(), *tr->getRule(), tr->getSubstitution());
-	d->reduce(parent);
-	return d;
+	if (transitionIndex > 0)
+	{
+		unique_ptr<RewriteTransitionState>  tr(new RewriteTransitionState(parent, stateDag));
+		for (unsigned int i = 0; i < transitionIndex; ++i)
+			tr->getNextStateDag(parent);
+		DagNode* d = ptg.makeProofDag(tr->getPosition(), *tr->getRule(), tr->getSubstitution());
+		d->reduce(parent);
+		return d;
+	}
+	else
+		return ptg.getDeadlockDag();
 }
 
 } /* namespace modelChecker */

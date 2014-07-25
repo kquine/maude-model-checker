@@ -52,7 +52,7 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 	if ( stateNr >= this->seen.size() )
 		this->seen.resize(stateNr + 1);
 
-	if ( !this->seen[stateNr] )
+	if ( !this->seen[stateNr] )		// if not already "enabled"
 	{
 		DagNode* cannStateDag = this->getStateDag(stateNr);
 		RewriteTransitionState rts(this->getContext(), cannStateDag);
@@ -70,7 +70,7 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 			trs.emplace_back(new Transition(nextState, ++ transitionCount));
 
 			// identify a unique proof dag
-			DagNode* td = this->getProofTerm(rts.getPosition(),*rts.getRule(),rts.getSubstitution());
+			DagNode* td = this->ptGenerator.makeProofDag(rts.getPosition(),*rts.getRule(),rts.getSubstitution());
 			auto di = tdags.dagNode2Index(td);
 			if (di == NONE)
 			{
@@ -80,6 +80,14 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 
 			proofDags.push_back(tdags.index2DagNode(di));
 			MemoryCell::okToCollectGarbage();
+		}
+
+		if (transitionCount == 0)	// deadlock: add a fake self loop
+		{
+			Assert(proofDags.empty() && trs.empty(), "BaseSystemGraphOnce::enableState: invalid deadlock");
+			trs.emplace_back(new Transition(stateNr, 0)); // 0 indicates a deadlock transition!
+			DagNode* td = this->ptGenerator.getDeadlockDag();
+			proofDags.push_back(td);
 		}
 
 		static_cast<T*>(this)->updateAllLabels(cannStateDag, proofDags, *s, trs);

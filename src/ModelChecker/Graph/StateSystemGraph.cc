@@ -64,4 +64,13 @@ SystemGraphTraits<StateSystemGraph<PL>>::insertTransition(unsigned int nextState
 	return false;
 }
 
+template <typename PL>
+template <typename STATE> void
+SystemGraphTraits<StateSystemGraph<PL>>::insertDeadlockTransition(unsigned int stateNr, STATE& n) const
+{
+	Assert(n.explore->nextStateSet.empty(), "StateSystemGraph::insertDeadlockTransition: not deadlock");
+	n.explore->nextStateSet.insert(stateNr);
+	n.transitions.emplace_back(new Transition(stateNr, nullptr));
+}
+
 } /* namespace modelChecker */

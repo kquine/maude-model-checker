@@ -27,7 +27,7 @@ struct ProofDagGenerator
 	ProofDagGenerator(unsigned int index): transitionIndex(index) {}
 	DagNode* makeDag(DagNode* stateDag, RewritingContext& context, const ProofTermGenerator& ptg) const;
 private:
-	const unsigned int transitionIndex;		// to construct a proofterm
+	const unsigned int transitionIndex;		// to construct a proofterm (NOTE: 0 means deadlock)
 };
 
 template <typename T>

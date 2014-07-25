@@ -58,7 +58,8 @@ SystemGraphTraits<StateEventSystemGraph<PL>>::insertTransition(unsigned int next
 	auto& as = *n.explore;
 	unique_ptr<Transition> t(new Transition(nextState, ++ as.transitionCount));
 
-	DagNode* eventDag = static_cast<StateEventSystemGraph<PL>*>(this)->getProofTerm(as.getPosition(), *as.getRule(), as.getSubstitution());	// create a proof term
+	DagNode* eventDag = static_cast<StateEventSystemGraph<PL>*>(this)->ptGenerator.makeProofDag(
+			as.getPosition(), *as.getRule(), as.getSubstitution());	// create a proof term
 	propLabel->updateEventLabel(eventDag, *t);	// compute all event props and store the formula event props
 
 	if (as.transitionPtrSet.insert(t.get()).second)		// if a new transition identified
@@ -67,6 +68,19 @@ SystemGraphTraits<StateEventSystemGraph<PL>>::insertTransition(unsigned int next
 		return true;
 	}
 	return false;
+}
+
+template <typename PL> void
+SystemGraphTraits<StateEventSystemGraph<PL>>::insertDeadlockTransition(unsigned int stateNr, State& n)
+{
+	Assert(n.explore->transitionCount == 0 && n.explore->transitionPtrSet.empty(),
+			"StateEventSystemGraph::insertDeadlockTransition: not deadlock");
+
+	unique_ptr<Transition> t(new Transition(stateNr, 0));	// 0 indicates a deadlock transition!
+	DagNode* eventDag = static_cast<StateEventSystemGraph<PL>*>(this)->ptGenerator.getDeadlockDag();
+	propLabel->updateEventLabel(eventDag, *t);
+	n.explore->transitionPtrSet.insert(t.get());
+	n.transitions.push_back(std::move(t));
 }
 
 template <typename PL> bool

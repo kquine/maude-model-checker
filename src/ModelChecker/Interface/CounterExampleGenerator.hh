@@ -18,7 +18,7 @@ class CounterExampleGenerator
 	using Edge = ModelChecker::Edge;
 
 public:
-	CounterExampleGenerator(Symbol* counterexampleSymbol, Symbol* transitionSymbol, Symbol* transitionListSymbol, Symbol* nilTransitionListSymbol, DagNode* deadlockDag);
+	CounterExampleGenerator(Symbol* counterexampleSymbol, Symbol* transitionSymbol, Symbol* transitionListSymbol, Symbol* nilTransitionListSymbol);
 
 	DagNode* makeCounterexample(const DagSystemGraph& dg, const list<Edge>& path, const list<Edge>& cycle) const;
 
@@ -30,7 +30,6 @@ private:
     Symbol* transitionSymbol;
     Symbol* transitionListSymbol;
     Symbol* nilTransitionListSymbol;
-    DagNode* deadlockDag;
 };
 
 } /* namespace modelChecker */

@@ -21,7 +21,7 @@ namespace modelChecker {
 
 template <class T>
 BaseSystemGraph<T>::BaseSystemGraph(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-	initial(initial), ptGenerator(ptg), propTable(propTable)
+	ptGenerator(ptg), initial(initial), propTable(propTable)
 {
 	initial.reduce();
 }
@@ -69,14 +69,6 @@ template <class T> inline RewritingContext&
 BaseSystemGraph<T>::getContext() const
 {
 	return initial;
-}
-
-template <class T> inline DagNode*
-BaseSystemGraph<T>::getProofTerm(const PositionState* ps, const Rule& rule, const Substitution* subst) const
-{
-	DagNode* pd = ptGenerator.makeProofDag(ps,rule,subst);
-	pd->reduce(initial);
-	return pd;
 }
 
 template <class T> inline typename BaseSystemGraph<T>::State&

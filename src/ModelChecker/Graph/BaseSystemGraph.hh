@@ -44,16 +44,14 @@ public:
 
 protected:
 	RewritingContext& getContext() const;
-	DagNode* getProofTerm(const PositionState* ps, const Rule& rule, const Substitution* subst) const;
-
 	State& getState(unsigned int stateNr) const;
 	Transition& getTransition(unsigned int stateNr, unsigned int transitionNr) const;
 
 	vector<unique_ptr<State>> seen;
+	const ProofTermGenerator& ptGenerator;
 
 private:
 	RewritingContext& initial;
-	const ProofTermGenerator& ptGenerator;
 	const PropositionTable& propTable;
 };
 

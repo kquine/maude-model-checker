@@ -16,11 +16,13 @@ namespace modelChecker {
 class ProofTermGenerator
 {
 public:
-	ProofTermGenerator(MixfixModule* module, Symbol* prooftermSymbol, Symbol* assignOp, Symbol* holeOp,
+	ProofTermGenerator(MixfixModule* module, RewritingContext& parent,
+			Symbol* prooftermSymbol, Symbol* assignOp, Symbol* holeOp,
 			Symbol* substitutionSymbol, Symbol* emptySubstSymbol, QuotedIdentifierSymbol* qidSymbol,
-			Symbol* unlabeledSymbol, Symbol* noContextSymbol);
+			Symbol* unlabeledSymbol, Symbol* noContextSymbol, DagNode* deadlockDag);
 
 	DagNode* makeProofDag(const PositionState* ps, const Rule& rule, const Substitution* subst) const;
+	DagNode* getDeadlockDag() const;
 
 private:
     DagNode* makeContextDag(const PositionState* ps, const Sort* holeSort) const;
@@ -31,6 +33,7 @@ private:
     Symbol* findHoleOp(const Sort* holeSort) const;
 
     MixfixModule* module;
+    RewritingContext& parent;
 
     Symbol* prooftermSymbol;
     Symbol* assignOp;
@@ -41,6 +44,8 @@ private:
     QuotedIdentifierSymbol* qidSymbol;
     Symbol* unlabeledSymbol;
     Symbol* noContextSymbol;
+
+    DagNode* deadlockDag;
 };
 
 } /* namespace modelChecker */

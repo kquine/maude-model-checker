@@ -29,9 +29,9 @@
 namespace modelChecker {
 
 CounterExampleGenerator::CounterExampleGenerator(Symbol* counterexampleSymbol, Symbol* transitionSymbol,
-		Symbol* transitionListSymbol, Symbol* nilTransitionListSymbol, DagNode* deadlockDag):
+		Symbol* transitionListSymbol, Symbol* nilTransitionListSymbol):
 				counterexampleSymbol(counterexampleSymbol), transitionSymbol(transitionSymbol),
-				transitionListSymbol(transitionListSymbol), nilTransitionListSymbol(nilTransitionListSymbol), deadlockDag(deadlockDag) {}
+				transitionListSymbol(transitionListSymbol), nilTransitionListSymbol(nilTransitionListSymbol) {}
 
 DagNode*
 CounterExampleGenerator::makeCounterexample(const DagSystemGraph& dg, const list<Edge>& path, const list<Edge>& cycle) const
@@ -72,8 +72,6 @@ CounterExampleGenerator::makeTransition(const DagSystemGraph& dg, unsigned int s
 	static Vector<DagNode*> targs(2);
 	targs[0] = dg.getStateDag(stateNr);
 	targs[1] = dg.getTransitionDag(stateNr, count);
-	if (targs[1] == nullptr)
-		targs[1] = deadlockDag;
 	return transitionSymbol->makeDagNode(targs);
 }
 

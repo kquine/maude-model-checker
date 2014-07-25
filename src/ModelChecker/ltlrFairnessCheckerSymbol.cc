@@ -230,14 +230,16 @@ LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context
     //
     const PropEvaluator stateEval(satisfiesSymbol, realizedPropSymbol, trueTerm.getDag());
     const PropEvaluator eventEval(actionmatchSymbol, realizedActionSymbol, trueTerm.getDag());
-    const ProofTermGenerator ptg(safeCast(MixfixModule*,getModule()),prooftermSymbol,assignOp,holeOp,substitutionSymbol,emptySubstSymbol,qidSymbol,unlabeledSymbol,noContextSymbol);
+    const ProofTermGenerator ptg(safeCast(MixfixModule*,getModule()), context,
+    		prooftermSymbol,assignOp,holeOp,substitutionSymbol,emptySubstSymbol,qidSymbol,
+    		unlabeledSymbol,noContextSymbol,deadlockTerm.getDag());
     ModelCheckerManager mcm(*formula, *propTable, move(fairTable), stateEval, eventEval, ptg, *sysCxt);
     //
     // 5. perform the model checking
     //
     DagNode* resultDag;
     try {
-    	const CounterExampleGenerator cg(counterexampleSymbol,transitionSymbol,transitionListSymbol,nilTransitionListSymbol,deadlockTerm.getDag());
+    	const CounterExampleGenerator cg(counterexampleSymbol,transitionSymbol,transitionListSymbol,nilTransitionListSymbol);
     	resultDag = mcm.findCounterExample() ? cg.makeCounterexample(mcm.getDagSystemGraph(), mcm.getLeadIn(), mcm.getCycle()) : trueTerm.getDag();
     } catch (const logic_error& e)
     {
