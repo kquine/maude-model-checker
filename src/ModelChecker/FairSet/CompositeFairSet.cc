@@ -111,7 +111,8 @@ CompositeFairSet::Goal::update(const FairSet& f, const AbstractFairnessTable& ta
 {
 	bool result = false;
 	for (unsigned int i = 0; i < fairGoals.size(); ++i)
-		result |= fairGoals[i]->update(*static_cast<const CompositeFairSet&>(f).fairSets[i], table);
+		result |= fairGoals[i]->update(*static_cast<const CompositeFairSet&>(f).fairSets[i],
+				static_cast<const CompositeFairnessTable&>(table).getComponent(i));
 	return result;
 }
 
