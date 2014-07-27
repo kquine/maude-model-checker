@@ -238,7 +238,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
     Graph* gRef = nullptr;
     {
     	unique_ptr<BuchiAutomaton2> propGraph(new BuchiAutomaton2(&formula->data, formula->top));
-    	unique_ptr<StateFoldingGraph<StateMetaGraph>> tGraph = createSystemGraph(*sysCxt, subsume, stateProps, *spc, ptg, propTable);
+    	unique_ptr<Graph> tGraph = createSystemGraph(*sysCxt, subsume, stateProps, *spc, ptg, propTable);
     	gRef = tGraph.get();
     	prod.reset(new Prod(move(tGraph), move(propGraph)));
     }
@@ -269,7 +269,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 }
 
 
-unique_ptr<StateFoldingGraph<StateMetaGraph>>
+unique_ptr<SymbolicModelCheckerSymbol::Graph>
 SymbolicModelCheckerSymbol::createSystemGraph(RewritingContext& sysCxt,
 		bool subsumption, const vector<unsigned int>& stateProps, PropChecker& spc,
 		const ProofTermGenerator& ptg, const PropositionTable& propTable)
@@ -290,12 +290,12 @@ SymbolicModelCheckerSymbol::createSystemGraph(RewritingContext& sysCxt,
 	unique_ptr<FoldingChecker> foldc(new FoldingChecker(foldingSymbol, trueTerm.getDag(), &sysCxt));
 
 	// create a folding graph
-    return unique_ptr<StateFoldingGraph<StateMetaGraph>>(new StateFoldingGraph<StateMetaGraph>(std::move(mgraph),std::move(foldc)));
+    return unique_ptr<Graph>(new StateFoldingGraph<StateMetaGraph>(std::move(mgraph),std::move(foldc)));
 }
 
 DagNode*
 SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool complete, bool subsume,
-		StateFoldingGraph<StateMetaGraph>& g, const ModelChecker& mc)
+		Graph& g, const ModelChecker& mc)
 {
 	Vector<DagNode*> res_args(4);
 	if (result)
