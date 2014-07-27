@@ -15,20 +15,20 @@
 namespace modelChecker {
 
 template <typename PA>
-NDFSModelChecker<PA>::NDFSModelChecker(unique_ptr<Automaton<PA>>&& prod): prod(move(prod)) {}
+NDFSModelChecker<PA>::NDFSModelChecker(Automaton<PA>& prod): prod(prod) {}
 
 template <typename PA> bool
 NDFSModelChecker<PA>::findCounterExample()
 {
 	intersectionStates.emplace_back(new StateSet);
-	auto& is = prod->getInitialStates();
+	auto& is = prod.getInitialStates();
 	bool result = any_of(is.begin(), is.end(), [&](const State& i) {return this->dfs1(i);});
 
 #ifndef NO_PREFIX_OPT
 	if (result)	// Shorten prefix of a counterexample using BFS if it's found
 	{
 		leadIn.clear();
-		PrefixBFSGraph(*prod,intersectionStates,cycleState).doBFS(leadIn);
+		PrefixBFSGraph(prod,intersectionStates,cycleState).doBFS(leadIn);
 	}
 #endif
 	return result;
@@ -39,9 +39,9 @@ template <typename PA> bool
 NDFSModelChecker<PA>::trap(const State& s) const
 {
 	const int propertyIndex = s.second;
-	if (prod->getPropertyAutomaton().isAccepting(propertyIndex))
+	if (prod.getPropertyAutomaton().isAccepting(propertyIndex))
 	{
-		auto& cm = prod->getPropertyAutomaton().getTransitions(propertyIndex);
+		auto& cm = prod.getPropertyAutomaton().getTransitions(propertyIndex);
 		if (cm.size() == 1 && cm.begin()->first == propertyIndex && cm.begin()->second == bdd_true())
 			return true;
 	}
@@ -68,7 +68,7 @@ NDFSModelChecker<PA>::dfs1(const State& initial)
 	intersectionStates[initial.first]->dfs1Seen.insert(initial.second);
 	intersectionStates[initial.first]->onDfs1Stack.insert(initial.second);
 	leadIn.push_back(make_pair(NONE,NONE));	// dummy node to make "leadIn" have the same size with dfs1 stack.
-	dfs1.push(prod->makeTransitionIterator(initial));
+	dfs1.push(prod.makeTransitionIterator(initial));
 
 	while (!dfs1.empty())
 	{
@@ -88,7 +88,7 @@ NDFSModelChecker<PA>::dfs1(const State& initial)
 			intersectionStates[ns.first]->dfs1Seen.insert(ns.second);
 			intersectionStates[ns.first]->onDfs1Stack.insert(ns.second);
 			leadIn.push_back(make_pair(dfs1.top()->getSource().first, sysIndex));
-			dfs1.push(prod->makeTransitionIterator(ns));
+			dfs1.push(prod.makeTransitionIterator(ns));
 
 			// if a trap state, then stop immediately (a cycle part counterexample will be an empty list)
 			if (trap(ns))
@@ -101,7 +101,7 @@ NDFSModelChecker<PA>::dfs1(const State& initial)
 		else	// pop
 		{
 			auto& cur = dfs1.top()->getSource();
-			if (prod->getPropertyAutomaton().isAccepting(cur.second))	// if accepting state
+			if (prod.getPropertyAutomaton().isAccepting(cur.second))	// if accepting state
 			{
 				if (dfs2(cur))
 				{
@@ -129,7 +129,7 @@ NDFSModelChecker<PA>::dfs2(const State& initial)
 	stack<unique_ptr<TransitionIterator> > dfs2;
 	intersectionStates[initial.first]->dfs2Seen.insert(initial.second);
 	cycle.push_back(make_pair(NONE,NONE));	// dummy node to make "cycle" have the same size with dfs2 stack.
-	dfs2.push(prod->makeTransitionIterator(initial));
+	dfs2.push(prod.makeTransitionIterator(initial));
 
 	while (!dfs2.empty())
 	{
@@ -155,7 +155,7 @@ NDFSModelChecker<PA>::dfs2(const State& initial)
 			{
 				sset.dfs2Seen.insert(ns.second);
 				cycle.push_back(make_pair(dfs2.top()->getSource().first, sysIndex));
-				dfs2.push(prod->makeTransitionIterator(ns));
+				dfs2.push(prod.makeTransitionIterator(ns));
 			}
 			// skip
 		}

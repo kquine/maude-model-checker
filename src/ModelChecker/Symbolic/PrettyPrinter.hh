@@ -16,11 +16,6 @@ public:
 	PrettyPrinter(Symbol* prettyPrintSymbol, RewritingContext* context);
 	void print(ostream& o, DagNode* target) const;
 
-protected:
-    bool attachSymbol(const char* purpose, Symbol* symbol);
-    void copyAttachments(PrettyPrinter* original, SymbolMap* map);
-    void getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols);
-
 private:
     static void printBubble(ostream& s, const Vector<int>& bubble);
 

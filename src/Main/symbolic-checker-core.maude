@@ -129,7 +129,7 @@ fmod BOUNDED-FOLDING-MODEL-CHECKER is
       --- counterexamples
       term-hook falseTerm             (false)
       term-hook deadlockTerm          ((deadlock).MetaEdge)
-)
+
       op-hook transitionSymbol        ({_,_} : State MetaEdge ~> Transition)
       op-hook transitionListSymbol    (__ : TransitionList TransitionList ~> TransitionList)
       op-hook nilTransitionListSymbol (nil : ~> TransitionList)
@@ -145,7 +145,7 @@ endfm
 ***  Full Maude Narrowing Connector  ***
 ****************************************
 
-load full-maude26b
+load full-maude27
 
 fmod META-LMC-PARAMETERS is 
   pr META-MODULE .
@@ -184,9 +184,9 @@ fmod LMC-RESULT-SET is
   sort StepResultSet .
   subsort StepResult < StepResultSet .
   op empty : -> StepResultSet [ctor] .
-  op _|_ : StepResultSet StepResultSet -> StepResultSet
+  op _||_ : StepResultSet StepResultSet -> StepResultSet
     [ctor assoc comm id: empty prec 65] .
-  eq X:StepResult | X:StepResult = X:StepResult .
+  eq X:StepResult || X:StepResult = X:StepResult .
 
   var M : Module . vars NextVar : Nat . vars S S' : Substitution .
   vars T TS CtTS : Term . var TL : TermList . var TP : Type . var R : Rule .
@@ -196,13 +196,13 @@ fmod LMC-RESULT-SET is
   op to4Tuple : Module ResultContextSet -> StepResult .
   eq to4Tuple(M, empty ) = empty .
   eq to4Tuple(M, {T,TP,S,S',Ct,CtS,TS,CtTS,NextVar,Tr,B} | RTS )
-   = {CtTS, leastSort(M,CtTS), S .. S' / getRuleSet(Tr)} | 
+   = {CtTS, leastSort(M,CtTS), S .. S' / getRuleSet(Tr)} || 
      to4Tuple(M, RTS) .
 
   op _|>_ : StepResult TermList -> StepResult .
   eq (empty).StepResult |> TL = (empty).StepResult .
-  eq ({T,TP,S / R} | SRS) |> TL = {T,TP,S |> TL / R} | (SRS |> TL) .
-  eq (failure | SRS ) |> TL = failure | (SRS |> TL) .
+  eq ({T,TP,S / R} || SRS) |> TL = {T,TP,S |> TL / R} || (SRS |> TL) .
+  eq (failure || SRS ) |> TL = failure || (SRS |> TL) .
 
   op getRuleSet : TraceNarrow -> RuleSet .
   eq getRuleSet({T,S,TP,R} Tr) = R getRuleSet(Tr) .
@@ -210,10 +210,10 @@ fmod LMC-RESULT-SET is
 
   sort VariantSet .
   subsort Variant < VariantSet .
-  op empty : -> VariantSet [ctor] .
-  op _|_ : VariantSet VariantSet -> VariantSet
-    [ctor assoc comm id: empty prec 65 format (d d n d)] .
-  eq X:Variant | X:Variant = X:Variant .
+  op emptyVariantSet : -> VariantSet [ctor] .
+  op _#_ : VariantSet VariantSet -> VariantSet
+    [ctor assoc comm id: emptyVariantSet prec 65 format (d d n d)] .
+  eq X:Variant # X:Variant = X:Variant .
 endfm
 
 mod META-LMC-THEORY is
@@ -233,11 +233,11 @@ mod META-LMC-THEORY is
 --- meta rules
  crl [init] : < init(ST) > 
            => RS / SUB' |=> mid(getTerm(metaReduce((##m##),ST'))) 
-  if {ST',TP,SUB' / RS} | SRS := variant(ST) . 
+  if {ST',TP,SUB' / RS} || SRS := variant(ST) . 
 
  crl [mid]  :  < mid(ST) > 
            => RS / SUB' |=> mid(getTerm(metaReduce((##m##),ST')))
-  if {ST',TP,SUB' / RS} | SRS := next(ST) .
+  if {ST',TP,SUB' / RS} || SRS := next(ST) .
 endm
 
 fmod META-NARROWING-INTERFACE is
@@ -264,9 +264,9 @@ fmod META-NARROWING-INTERFACE is
    
   op metaGenVariant2 : Module Term Nat Nat -> VariantSet .
  ceq metaGenVariant2(M, T, NextVar, N)
-   = VR | metaGenVariant2(M,T,NextVar,s N) 
+   = VR # metaGenVariant2(M,T,NextVar,s N) 
    if VR := metaGetVariant(M,T,empty,NextVar,N) .
-  eq metaGenVariant2(M, T, NextVar, N) = empty [owise] .
+  eq metaGenVariant2(M, T, NextVar, N) = emptyVariantSet [owise] .
 
 --- variant narrowing prop instantiations.
 --- compute the PI-instantated states of the given state.
@@ -279,17 +279,17 @@ fmod META-NARROWING-INTERFACE is
 
   --- StateSet Prop -> StateSet (trMod for genVariant)
   op propInstSet : StepResultSet Term ~> StepResultSet .
-  eq propInstSet({ST,TP,SUB / RS} | SRS, PT)
+  eq propInstSet({ST,TP,SUB / RS} || SRS, PT)
    = filterPropVars({ST,TP,SUB / RS}, metaGenVariant(trMod(##m##), '_|=_[ST, PT]))
-   | propInstSet(SRS, PT) .
+   || propInstSet(SRS, PT) .
   eq propInstSet(empty, PT) = empty .
 
   op filterPropVars : StepResult VariantSet ~> StepResultSet .
-  eq filterPropVars({ST,TP,SUB / RS}, {T,SUB1,N} | VS)
+  eq filterPropVars({ST,TP,SUB / RS}, {T,SUB1,N} # VS)
    = if inst?(T) then {ST << SUB1,TP, SUB .. SUB1 / RS} 
      else empty fi 
-   | filterPropVars({ST,TP,SUB / RS}, VS) .
-  eq filterPropVars(SR, empty) = empty .
+   || filterPropVars({ST,TP,SUB / RS}, VS) .
+  eq filterPropVars(SR, emptyVariantSet) = empty .
 
   --- TODO: by not filtering, we may allow more patterns that are not reduced 
   --- to true/false. However, it easily generates spurious counter examples.. 
@@ -402,16 +402,16 @@ fmod META-NARROWING-COND-INTERFACE is
 
   --- StateSet Prop -> StateSet
   op condInstSet : StepResultSet Term ~> StepResultSet .
- ceq condInstSet({ST,TP,SUB / RS} | SRS, T)
-   = filterCondVars({ST,TP,SUB / RS}, VS) | condInstSet(SRS, T) 
+ ceq condInstSet({ST,TP,SUB / RS} || SRS, T)
+   = filterCondVars({ST,TP,SUB / RS}, VS) || condInstSet(SRS, T) 
   if VS := metaGenVariant(trMod(##m##), T << SUB) .
   eq condInstSet(empty, T) = empty .
 
   --- only true instances (hence the conditions should be complete and FVP)
   op filterCondVars : StepResult VariantSet ~> StepResultSet .
-  eq filterCondVars({ST,TP,SUB / RS}, {'true.Bool,SUB1,N} | VS)
+  eq filterCondVars({ST,TP,SUB / RS}, {'true.Bool,SUB1,N} # VS)
    = {ST << SUB1, TP, SUB .. SUB1 / RS} 
-   | filterCondVars({ST,TP,SUB / RS}, VS) .
+   || filterCondVars({ST,TP,SUB / RS}, VS) .
   eq filterCondVars(SR, VS) = empty [owise] .
 
   --- applying substitution to condition
@@ -482,12 +482,12 @@ mod META-SYMBOLIC-COND-CONNECTOR is
  crl [init-cond] : 
        < init(ST,CD) >
     => RS / SUB' |=> mid(getTerm(metaReduce((##m##),ST')),condNorm(CD << SUB'))
-  if {ST',TP,SUB' / RS} | SRS := variant(ST,CD) .
+  if {ST',TP,SUB' / RS} || SRS := variant(ST,CD) .
 
  crl [mid-cond] : 
        < mid(ST,CD) >
     => RS / SUB' |=> mid(getTerm(metaReduce((##m##),ST')),condNorm(CD << SUB'))
-  if {ST',TP,SUB' / RS} | SRS := next(ST,CD) .
+  if {ST',TP,SUB' / RS} || SRS := next(ST,CD) .
 
   ops next variant : Term EqCondition -> StepResultSet .
   eq next(ST,CD)    
@@ -518,12 +518,12 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
  crl [init-cond] : 
        < init(ST,CD) >
     => RS / SUB' |=> mid(getTerm(metaReduce((##m##),ST')),condNorm(CD << SUB'))
-  if {ST',TP,SUB' / RS} | SRS := variant(ST) /\ condOK(CD << SUB') .
+  if {ST',TP,SUB' / RS} || SRS := variant(ST) /\ condOK(CD << SUB') .
 
  crl [mid-cond]  : 
        < mid(ST,CD) >
     => RS / SUB' |=> mid(getTerm(metaReduce((##m##),ST')),condNorm(CD << SUB'))
-  if {ST',TP,SUB' / RS} | SRS := next(ST) /\ condOK(CD << SUB') .
+  if {ST',TP,SUB' / RS} || SRS := next(ST) /\ condOK(CD << SUB') .
 
 --- Another method to check a condition.
   op condOK : EqCondition ~> Bool .
@@ -554,10 +554,10 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
                                      '_or_[condList(CD',false)]]) .
 
   op implyOKsub : VariantSet ~> Bool .
- ceq implyOKsub({T,SUB,N} | VS)
+ ceq implyOKsub({T,SUB,N} # VS)
    = T' =/= 'true.Bool and-then implyOKsub(VS)
   if T' := getTerm(metaReduce((##m##),T)) .
-  eq implyOKsub(empty) = true .
+  eq implyOKsub(emptyVariantSet) = true .
 
   op condList : EqCondition Bool ~> TermList .
   eq condList(T = 'true.Bool /\ CD, B) 

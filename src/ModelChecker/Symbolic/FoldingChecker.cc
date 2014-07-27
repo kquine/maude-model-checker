@@ -38,7 +38,7 @@ FoldingChecker::FoldingChecker(Symbol* foldingRelSymbol, DagNode* trueDag, Rewri
 bool
 FoldingChecker::fold(DagNode* s, DagNode* t) const
 {
-	Assert(trueDag != nullptr, "StateFoldingChecker::fold: trueDag not set");
+	Assert(trueDag != nullptr, "FoldingChecker::fold: trueDag not set");
 	static Vector<DagNode*> args(2);
 	args[0] = s;
 	args[1] = t;

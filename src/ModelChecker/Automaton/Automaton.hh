@@ -8,6 +8,7 @@
 #ifndef AUTOMATON_HH_
 #define AUTOMATON_HH_
 #include <memory>
+#include "AbstractAutomaton.hh"
 #include "buchiAutomaton2.hh"
 #include "genBuchiAutomaton.hh"
 
@@ -16,18 +17,15 @@ namespace modelChecker {
 template <typename PropertyAutomaton> struct PropertyTransitionTraits;
 
 template <typename PA>
-class Automaton
+class Automaton: public AbstractAutomaton
 {
 public:
-	using State			= pair<int,int>;
-	using PropertyIndex	= typename PropertyTransitionTraits<PA>::PropertyTransitionSet::const_iterator;
+	using State =			AbstractAutomaton::State;
+	using PropertyIndex	=	typename PropertyTransitionTraits<PA>::PropertyTransitionSet::const_iterator;
 	struct Transition;
 	struct TransitionIterator;
 
-	virtual ~Automaton() = default;
-
 	virtual const PA& getPropertyAutomaton() const = 0;
-	virtual const vector<State>& getInitialStates() const = 0;
 	virtual unique_ptr<TransitionIterator> makeTransitionIterator(const State& state) = 0;
 };
 

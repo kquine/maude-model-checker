@@ -23,7 +23,7 @@ public:
 	using Transition =			typename FairAutomaton<PA>::Transition;
 	using TransitionIterator =	typename FairAutomaton<PA>::TransitionIterator;
 
-	explicit SCCModelChecker(unique_ptr<FairAutomaton<PA>>&& graph);
+	explicit SCCModelChecker(FairAutomaton<PA>& graph);
 
 	bool findCounterExample() override;
 
@@ -66,7 +66,7 @@ protected:
 
 	unsigned int max = 0;				// dfs index
 	IndexMap H;
-	const unique_ptr<FairAutomaton<PA>> graph;
+	FairAutomaton<PA>& graph;
 
 private:
 	class SCCBFSGraph;
@@ -83,7 +83,7 @@ class SCCModelChecker<PA>::SCCBFSGraph: public BFSGraph<PA>
 {
 public:
 	SCCBFSGraph(SCCModelChecker<PA>& mc, const IndexMap& H, unsigned int root, const vector<State>& initials):
-		BFSGraph<PA>(*mc.graph, initials), root(root), map(H), mc(mc) {}
+		BFSGraph<PA>(mc.graph, initials), root(root), map(H), mc(mc) {}
 
 protected:
 	const unsigned int root;
@@ -95,7 +95,7 @@ template <typename PA>
 struct SCCModelChecker<PA>::PrefixBFSGraph: public SCCBFSGraph
 {
 	PrefixBFSGraph(SCCModelChecker<PA>& mc, const IndexMap& H, unsigned int root):
-		SCCBFSGraph(mc,H,root,mc.graph->getInitialStates()) {}
+		SCCBFSGraph(mc,H,root, mc.graph.getInitialStates()) {}
 
 	bool inDomain(const State& s) const	{ return this->map.contains(s); }
 	bool isTarget(const State& s) const	{ return inDomain(s) && this->map.get(s) >= this->root; }
@@ -127,7 +127,7 @@ public:
 
 	bool inDomain(const State& s) const	{ return this->map.contains(s) && this->map.get(s) >= this->root; }
 	bool isTarget(const State& ) const	{ return false; }
-	bool isTarget(const Transition& t)	{ return goal.update(*this->mc.graph->makeFairSet(t), this->mc.graph->getFairnessTable()); }
+	bool isTarget(const Transition& t)	{ return goal.update(*this->mc.graph.makeFairSet(t), this->mc.graph.getFairnessTable()); }
 
 private:
 	FairSet::Goal& goal;

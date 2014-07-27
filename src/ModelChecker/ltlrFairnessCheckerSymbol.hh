@@ -37,7 +37,7 @@ public:
     LTLRFairnessCheckerSymbol(const LTLRFairnessCheckerSymbol&) = delete;
     LTLRFairnessCheckerSymbol& operator=(const LTLRFairnessCheckerSymbol&) = delete;
 
-    int build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const override	{ return TemporalSymbol::build(formula,propositions,dagNode); }
+    int build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const override;
 
     bool attachData(const Vector<Sort*>& opDeclaration, const char* purpose, const Vector<const char*>& data) override;
     bool attachSymbol(const char* purpose, Symbol* symbol) override;
@@ -81,6 +81,12 @@ private:
     CachedDag deadlockTerm;
     CachedDag trueTerm;
 };
+
+inline int
+LTLRFairnessCheckerSymbol::build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const
+{
+	return TemporalSymbol::build(formula,propositions,dagNode);
+}
 
 }
 #endif        /* _LTLRFAIRNESSCHECKERSYMBOL_HH */

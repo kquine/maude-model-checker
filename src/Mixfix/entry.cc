@@ -554,8 +554,8 @@ MixfixModule::newFancySymbol(Token prefixName,
       return new InterpreterManagerSymbol(name);
     case SymbolType::LTLR_FAIRCHECKER_SYMBOL:
           return new modelChecker::LTLRFairnessCheckerSymbol(name, nrArgs);
-//    case SymbolType::SYMBOLIC_MODEL_CHECKER_SYMBOL:
-//          return new modelChecker::SymbolicModelCheckerSymbol(name, nrArgs);
+    case SymbolType::SYMBOLIC_MODEL_CHECKER_SYMBOL:
+          return new modelChecker::SymbolicModelCheckerSymbol(name, nrArgs);
     }
 
   int lineNr = prefixName.lineNumber();

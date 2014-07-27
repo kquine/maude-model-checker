@@ -17,8 +17,8 @@ public:
 	bool fold(DagNode* s, DagNode* t) const;
 
 private:
-    DagNode* trueDag;
 	Symbol* foldingRelSymbol;
+    DagNode* trueDag;
 	RewritingContext* parentContext;
 };
 

@@ -15,7 +15,7 @@
 namespace modelChecker {
 
 template <bool hasState, bool hasEvent, typename SA, typename PA>
-class FairProductAutomaton: public FairAutomaton<PA>, private ProductAutomaton<hasState,hasEvent,SA,PA>
+class FairProductAutomaton: public FairAutomaton<PA>
 {
 public:
 	using State = 					typename Automaton<PA>::State;
@@ -27,15 +27,16 @@ public:
 	unique_ptr<FairSet> makeFairSet(const Transition& t) override;
 	AbstractFairnessTable& getFairnessTable() const override	{ return *fairTable; }
 
-	const PA& getPropertyAutomaton() const  override			{ return ProductAutomaton<hasState,hasEvent,SA,PA>::getPropertyAutomaton(); }
-	const vector<State>& getInitialStates() const override		{ return ProductAutomaton<hasState,hasEvent,SA,PA>::getInitialStates(); }
+	const PA& getPropertyAutomaton() const  override			{ return base.getPropertyAutomaton(); }
+	const vector<State>& getInitialStates() const override		{ return base.getInitialStates(); }
 
 	unique_ptr<PreTransitionIterator>
-	makeTransitionIterator(const State& state) override			{ return ProductAutomaton<hasState,hasEvent,SA,PA>::makeTransitionIterator(state); }
+	makeTransitionIterator(const State& state) override			{ return base.makeTransitionIterator(state); }
 
 private:
 	CompositeFairnessTable* makeInitFairTable(unique_ptr<AbstractFairnessTable>&& systemFairTable) const;
 
+	ProductAutomaton<hasState,hasEvent,SA,PA> base;
 	const unique_ptr<CompositeFairnessTable> fairTable;		// (system + formula) fairness table
 	const FormulaFairnessTable* formulaRef;					// a reference to the formula fairness table
 };

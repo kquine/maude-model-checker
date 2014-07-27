@@ -15,7 +15,7 @@
 namespace modelChecker {
 
 template <typename PA>
-StreettModelChecker<PA>::StreettModelChecker(unique_ptr<FairAutomaton<PA>>&& graph): SCCModelChecker<PA>(move(graph)) {}
+StreettModelChecker<PA>::StreettModelChecker(FairAutomaton<PA>& graph): SCCModelChecker<PA>(graph) {}
 
 template <typename PA>
 unique_ptr<typename SCCModelChecker<PA>::SCC>
@@ -46,12 +46,12 @@ StreettModelChecker<PA>::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad
 				if (stack.hasNextSucc())
 				{
 					Transition t = stack.pickSucc();
-					unique_ptr<FairSet> a(this->graph->makeFairSet(t));
+					unique_ptr<FairSet> a(this->graph.makeFairSet(t));
 					stack.nextSucc();
 #ifdef TDEBUG
 					cout << t.source << " --> " << t.target << " " << flush;	a->dump(cout);	cout << endl;
 #endif
-					if (bad != nullptr && bad->isBad(*a, this->graph->getFairnessTable()))	// if bad transition
+					if (bad != nullptr && bad->isBad(*a, this->graph.getFairnessTable()))	// if bad transition
 					{
 #ifdef TDEBUG
 						cout << "    # BAD  ";	bad->dump(cout);	cout << endl;

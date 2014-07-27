@@ -23,7 +23,7 @@ class NDFSModelChecker: public ModelChecker
 	using TransitionIterator =	typename Automaton<PA>::TransitionIterator;
 
 public:
-	explicit NDFSModelChecker(unique_ptr<Automaton<PA>>&& prod);
+	explicit NDFSModelChecker(Automaton<PA>& prod);
 
 	bool findCounterExample() override;
 
@@ -45,7 +45,7 @@ private:
 	State cycleState;					// intersection of cycle and prefix after nested dfs
 	vector<unique_ptr<StateSet>> intersectionStates;
 
-	const unique_ptr<Automaton<PA>> prod;
+	Automaton<PA>& prod;
 };
 
 template <typename PA>

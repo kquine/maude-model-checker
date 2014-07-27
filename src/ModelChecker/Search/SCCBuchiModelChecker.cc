@@ -14,7 +14,7 @@
 namespace modelChecker {
 
 template <typename PA>
-SCCBuchiModelChecker<PA>::SCCBuchiModelChecker(unique_ptr<FairAutomaton<PA>>&& graph): SCCModelChecker<PA>(move(graph)) {}
+SCCBuchiModelChecker<PA>::SCCBuchiModelChecker(FairAutomaton<PA>& graph): SCCModelChecker<PA>(graph) {}
 
 template <typename PA>
 unique_ptr<typename SCCModelChecker<PA>::SCC>
@@ -32,7 +32,7 @@ SCCBuchiModelChecker<PA>::findAcceptedSCC(const vector<State>& initials)
 				if (stack.hasNextSucc())
 				{
 					Transition t = stack.pickSucc();
-					auto a = this->graph->makeFairSet(t);
+					auto a = this->graph.makeFairSet(t);
 					stack.nextSucc();
 #ifdef TDEBUG
 					cout << t.source << " --> " << t.target << " " << flush;	a->dump(cout);	cout << endl;

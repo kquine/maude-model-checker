@@ -15,7 +15,7 @@ template <typename PA>
 class StreettModelChecker: public SCCModelChecker<PA>
 {
 public:
-	explicit StreettModelChecker(unique_ptr<FairAutomaton<PA>>&& graph);
+	explicit StreettModelChecker(FairAutomaton<PA>& graph);
 
 private:
 	using Super 		= SCCModelChecker<PA>;

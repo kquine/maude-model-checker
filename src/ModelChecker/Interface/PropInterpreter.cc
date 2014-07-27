@@ -40,14 +40,19 @@ PropInterpreter::isStateProp(DagNode* propDag) const
 bool
 PropInterpreter::isEventProp(DagNode* propDag) const
 {
-	Assert(propDag->getSortIndex() != Sort::SORT_UNKNOWN, "The sort of " << QUOTE(propDag) << " is not computed yet.");
-	return propDag->leq(actionmatchSymbol->getOpDeclarations()[0].getDomainAndRange()[1]);
+	if (actionmatchSymbol != nullptr)
+	{
+		Assert(propDag->getSortIndex() != Sort::SORT_UNKNOWN, "The sort of " << QUOTE(propDag) << " is not computed yet.");
+		return propDag->leq(actionmatchSymbol->getOpDeclarations()[0].getDomainAndRange()[1]);
+	}
+	else
+		return false;
 }
 
 DagNode*
 PropInterpreter::getEnabledActionProp(DagNode* propDag) const
 {
-	if (propDag->symbol() == enabledSymbol)
+	if (enabledSymbol != nullptr && propDag->symbol() == enabledSymbol)
 	{
 		DagArgumentIterator ei(propDag);
 		if (ei.valid())

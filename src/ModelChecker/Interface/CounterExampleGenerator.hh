@@ -15,9 +15,9 @@ namespace modelChecker {
 
 class CounterExampleGenerator
 {
+public:
 	using Edge = ModelChecker::Edge;
 
-public:
 	CounterExampleGenerator(Symbol* counterexampleSymbol, Symbol* transitionSymbol, Symbol* transitionListSymbol, Symbol* nilTransitionListSymbol);
 
 	DagNode* makeCounterexample(const DagSystemGraph& dg, const list<Edge>& path, const list<Edge>& cycle) const;

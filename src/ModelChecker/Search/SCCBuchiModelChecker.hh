@@ -15,7 +15,7 @@ template <typename PA>
 class SCCBuchiModelChecker : public SCCModelChecker<PA>
 {
 public:
-	explicit SCCBuchiModelChecker(unique_ptr<FairAutomaton<PA>>&& graph);
+	explicit SCCBuchiModelChecker(FairAutomaton<PA>& graph);
 
 private:
 	using Super 		= SCCModelChecker<PA>;

@@ -188,28 +188,32 @@ ModelCheckerManager::makeProd(unique_ptr<SA>&& sysGraph, unique_ptr<PA>&& propGr
 template <bool hasState, bool hasEvent, typename SA> void
 ModelCheckerManager::makeModelChecker(unique_ptr<SA>&& sysGraph, unique_ptr<BuchiAutomaton2>&& propGraph)
 {
-	using Prod = ProductAutomaton<hasState,hasEvent,SA,BuchiAutomaton2>;
-	unique_ptr<Prod> prod(new Prod(move(sysGraph), move(propGraph)));
+	auto propSize = propGraph->getNrStates();
 
-	Verbose("ModelChecker: Use the NDFS algorithm with a Buchi automaton (" << prod->getPropertyAutomaton().getNrStates() << " states).");
-	modelChecker.reset(new NDFSModelChecker<BuchiAutomaton2>(move(prod)));
+	using Prod = ProductAutomaton<hasState,hasEvent,SA,BuchiAutomaton2>;
+	product.reset(new Prod(move(sysGraph), move(propGraph)));
+
+	Verbose("ModelChecker: Use the NDFS algorithm with a Buchi automaton (" << propSize << " states).");
+	modelChecker.reset(new NDFSModelChecker<BuchiAutomaton2>(static_cast<Prod&>(*product)));
 }
 
 template <bool hasState, bool hasEvent, typename SA> void
 ModelCheckerManager::makeModelChecker(unique_ptr<SA>&& sysGraph, unique_ptr<GenBuchiAutomaton>&& propGraph, unique_ptr<AbstractFairnessTable>&& fairTable)
 {
-	using Prod = FairProductAutomaton<hasState,hasEvent,SA,GenBuchiAutomaton>;
-	unique_ptr<Prod> prod(new Prod(move(sysGraph), move(propGraph), move(fairTable)));
+	auto propSize = propGraph->getNrStates();
 
-	if (prod->getFairnessTable().hasStrongFairness())
+	using Prod = FairProductAutomaton<hasState,hasEvent,SA,GenBuchiAutomaton>;
+	product.reset(new Prod(move(sysGraph), move(propGraph), move(fairTable)));
+
+	if (static_cast<Prod*>(product.get())->getFairnessTable().hasStrongFairness())
 	{
-		Verbose("ModelChecker: Use the Streett algorithm with a gen-Buchi automaton (" << prod->getPropertyAutomaton().getNrStates() << " states).");
-		modelChecker.reset(new StreettModelChecker<GenBuchiAutomaton>(move(prod)));
+		Verbose("ModelChecker: Use the Streett algorithm with a gen-Buchi automaton (" << propSize << " states).");
+		modelChecker.reset(new StreettModelChecker<GenBuchiAutomaton>(static_cast<Prod&>(*product)));
 	}
 	else
 	{
-		Verbose("ModelChecker: Use the SCC-Buchi algorithm with a gen-Buchi automaton (" << prod->getPropertyAutomaton().getNrStates() << " states).");
-		modelChecker.reset(new SCCBuchiModelChecker<GenBuchiAutomaton>(move(prod)));
+		Verbose("ModelChecker: Use the SCC-Buchi algorithm with a gen-Buchi automaton (" << propSize << " states).");
+		modelChecker.reset(new SCCBuchiModelChecker<GenBuchiAutomaton>(static_cast<Prod&>(*product)));
 	}
 }
 

@@ -61,9 +61,14 @@ libModelChecker_a_SOURCES = \
     Interface/ProofTermGenerator.cc \
     Interface/CounterExampleGenerator.cc \
     Interface/FormulaBuilder.cc \
+    Symbolic/FoldingChecker.cc \
+    Symbolic/PrettyPrinter.cc \
+    Symbolic/StateMetaGraph.cc \
+    Symbolic/InputInterpreter.cc \
+    Symbolic/ConcreteResultGenerator.cc \
     ModelCheckerManager.cc \
-    ltlrFairnessCheckerSymbol.cc 
-	
+    ltlrFairnessCheckerSymbol.cc \
+    SymbolicModelCheckerSymbol.cc
 
 noinst_HEADERS = \
 	ltlrFairnessCheckerSymbol.hh \

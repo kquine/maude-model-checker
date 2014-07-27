@@ -23,12 +23,7 @@
 #include "dagArgumentIterator.hh"
 
 //		core class definitions
-#include "symbolMap.hh"
 #include "rewritingContext.hh"
-
-//		built in class definitions
-#include "bindingMacros.hh"
-
 
 #include "PrettyPrinter.hh"
 

@@ -14,14 +14,14 @@
 namespace modelChecker {
 
 template <typename PA>
-SCCModelChecker<PA>::SCCModelChecker(unique_ptr<FairAutomaton<PA>>&& graph): graph(move(graph)) {}
+SCCModelChecker<PA>::SCCModelChecker(FairAutomaton<PA>& graph): graph(graph) {}
 
 template <typename PA> bool
 SCCModelChecker<PA>::findCounterExample()
 {
-	if (const auto& res = findAcceptedSCC(graph->getInitialStates()))
+	if (const auto& res = findAcceptedSCC(graph.getInitialStates()))
 	{
-		const auto& goal = res->acc_fair->makeFairGoal(graph->getFairnessTable());
+		const auto& goal = res->acc_fair->makeFairGoal(graph.getFairnessTable());
 		const State& root = PrefixBFSGraph(*this,H,res->root).doBFS(leadIn);	// prefix
 
 		State s = root;
@@ -54,7 +54,7 @@ SCCModelChecker<PA>::SCCStack::dfsPush(const State& s, unique_ptr<FairSet>&& a)
 {
 	mc.H.set(s, ++mc.max);
 	sccStack.emplace(new SCC(mc.max, move(a)));
-	dfsStack.emplace(mc.graph->makeTransitionIterator(s));
+	dfsStack.emplace(mc.graph.makeTransitionIterator(s));
 }
 
 template <typename PA>
@@ -99,14 +99,14 @@ SCCModelChecker<PA>::SCCStack::merge(unsigned int threshold, unique_ptr<FairSet>
 #ifdef TDEBUG
 			cout << "  + ";	sccStack.top()->acc_fair->dump(cout);	cout << endl;
 #endif
-			back->merge(*sccStack.top()->acc_fair, mc.graph->getFairnessTable());
+			back->merge(*sccStack.top()->acc_fair, mc.graph.getFairnessTable());
 		}
 		if (sccStack.top()->incoming_fair)
 		{
 #ifdef TDEBUG
 			cout << "  + ";	sccStack.top()->incoming_fair->dump(cout);	cout << endl;
 #endif
-			back->merge(*sccStack.top()->incoming_fair, mc.graph->getFairnessTable());
+			back->merge(*sccStack.top()->incoming_fair, mc.graph.getFairnessTable());
 		}
 		sccStack.pop();
 	}
@@ -115,7 +115,7 @@ SCCModelChecker<PA>::SCCStack::merge(unsigned int threshold, unique_ptr<FairSet>
 #ifdef TDEBUG
 		cout << "  + ";	top_acc->dump(cout);	cout << endl;
 #endif
-		top_acc->merge(*back, mc.graph->getFairnessTable());
+		top_acc->merge(*back, mc.graph.getFairnessTable());
 	}
 	else
 		top_acc = std::move(back);

@@ -84,6 +84,7 @@ private:
 	// a model checker
 	//
 	DagSystemGraph* dagGraphRef = nullptr;
+	unique_ptr<AbstractAutomaton> product;
 	unique_ptr<ModelChecker> modelChecker;
 };
 

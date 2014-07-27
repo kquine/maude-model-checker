@@ -81,6 +81,10 @@ endm
 set verbose on .
 
 red modelCheck(init(6), [] ~ deadlock -> <> eating(1)) .
+red modelCheckFair(init(6), <> eating(1),
+     (just : enabled(wake(I:NzNat)) => wake(I:NzNat)) ;
+     (fair : enabled(grab(I:NzNat)) => grab(I:NzNat))
+) .
 red modelCheckFair(init(6), [] ~ deadlock -> <> eating(1),
      (just : enabled(wake(I:NzNat)) => wake(I:NzNat)) ;
      (fair : enabled(grab(I:NzNat)) => grab(I:NzNat))

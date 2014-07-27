@@ -56,9 +56,10 @@ BaseSystemGraphIter<T>::computeNextState(unsigned int stateNr, unsigned int inde
 
 	while (nrTransitions <= index)
 	{
-		if (DagNode* ns = n.explore->getNextStateDag(this->getContext()))		// if there is a next state
+		// if there is a next state
+		if (DagNode* ns = static_cast<ActiveState*>(n.explore.get())->getNextStateDag(this->getContext()))
 		{
-			auto nextState = this->insertState(ns);
+			auto nextState = static_cast<T*>(this)->insertState(ns);
 			if (static_cast<T*>(this)->insertTransition(nextState, n))	// if a new transition identified
 				++ nrTransitions;
 			MemoryCell::okToCollectGarbage();

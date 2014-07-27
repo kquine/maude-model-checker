@@ -109,8 +109,6 @@ red modelCheckFair(init, <> answered(b),
 red modelCheckFair(init, <> answered(b), just(req(C:Oid)) ; fair(rec(C:Oid)) ; fair(reply(S:Oid,C:Oid))) .
 
 
-eof
-
 --------------------------------
 ---1 State graph test
 

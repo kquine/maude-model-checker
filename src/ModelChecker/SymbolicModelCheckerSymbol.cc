@@ -18,6 +18,8 @@
 #include "S_Theory.hh"
 #include "builtIn.hh"
 #include "higher.hh"
+#include "strategyLanguage.hh"
+#include "mixfix.hh"
 
 //      interface class definitions
 #include "symbol.hh"
@@ -43,23 +45,20 @@
 // model checker
 #include "buchiAutomaton2.hh"
 #include "Search/NDFSModelChecker.hh"
-#include "Graph/StateTransitionMetaGraph.hh"
-
+#include "PropChecker/PropCheckerFactory.hh"
+#include "Symbolic/StateMetaGraph.hh"
+#include "Symbolic/PrettyPrinter.hh"
+#include "Symbolic/InputInterpreter.hh"
+#include "Symbolic/ConcreteResultGenerator.hh"
 #include "SymbolicModelCheckerSymbol.hh"
 
 #define SDEBUG
+// #define TDEBUG
 
 namespace modelChecker {
 
 
-SymbolicModelCheckerSymbol::SymbolicModelCheckerSymbol(int id, int arity):
-	TemporalSymbol(id, arity),
-	satisfiesSymbol(nullptr), metaStateSymbol(nullptr), metaTransitionSymbol(nullptr),
-	subsumeFoldingRelSymbol(nullptr), renameFoldingRelSymbol(nullptr), compatibleTransSymbol(nullptr),
-	prettyPrintStateSymbol(nullptr), prettyPrintTransSymbol(nullptr),
-    unboundedSymbol(nullptr), succSymbol(nullptr),
-    resultreportSymbol(nullptr)
-{}
+SymbolicModelCheckerSymbol::SymbolicModelCheckerSymbol(int id, int arity): TemporalSymbol(id, arity) {}
 
 bool
 SymbolicModelCheckerSymbol::attachData(const Vector<Sort*>& opDeclaration, const char* purpose, const Vector<const char*>& data)
@@ -181,18 +180,17 @@ SymbolicModelCheckerSymbol::reset()
 
 
 bool
-SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context)
+SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context) noexcept
 {
 	Assert(this == subject->symbol(), "bad symbol");
 	FreeDagNode* d = safeCast(FreeDagNode*, subject);
-
 	//
-	//	0. arguments
+	//	1. declare the argument contexts, and reduce the arguments into the normal forms
 	//
-	unique_ptr<RewritingContext> sysContext(context.makeSubcontext(d->getArgument(0)));
-	unique_ptr<RewritingContext> formulaCxt(context.makeSubcontext(negate(d->getArgument(1))));
-    unique_ptr<RewritingContext> boolCxt(context.makeSubcontext(d->getArgument(2)));
-    unique_ptr<RewritingContext> boundCxt(context.makeSubcontext(d->getArgument(3)));
+	const unique_ptr<RewritingContext> sysCxt(context.makeSubcontext(d->getArgument(0)));
+	const unique_ptr<RewritingContext> formulaCxt(context.makeSubcontext(negate(d->getArgument(1))));
+    const unique_ptr<RewritingContext> boolCxt(context.makeSubcontext(d->getArgument(2)));
+    const unique_ptr<RewritingContext> boundCxt(context.makeSubcontext(d->getArgument(3)));
 
 	formulaCxt->reduce();	context.addInCount(*formulaCxt);
 	boolCxt->reduce();		context.addInCount(*boolCxt);
@@ -200,139 +198,112 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 #ifdef TDEBUG
 	cout << "Negated formula: " << formulaCxt->root() << endl;
 #endif
-
 	//
-	//	1. Convert a formula Dag into a LogicFormula.
+	// 2. interpret input flags
 	//
-    LogicFormula formula;
-    DagNodeSet propositions;
-	int top = build(formula, propositions, formulaCxt->root());
-	if (top == NONE)
-	{
-		IssueAdvisory("negated LTL formula " << QUOTE(formulaCxt->root()) <<" did not reduce to a valid negative normal form.");
-		return TemporalSymbol::eqRewrite(subject, context);
-	}
-	bool subsumption = interpretBoolDag(boolCxt->root());
-	long globalBound = interpretNatDag(boundCxt->root());
+	const InputInterpreter iInterpreter(succSymbol, unboundedSymbol, trueTerm.getDag(), falseTerm.getDag());
+	bool subsume = iInterpreter.interpretBoolDag(boolCxt->root());
+	long globalBound = iInterpreter.interpretNatDag(boundCxt->root());
+	//
+	// 3. interpret the formula
+	//
+	unique_ptr<Formula> formula;
+	const PropInterpreter pInterpreter(satisfiesSymbol, nullptr, nullptr);
+	PropositionTable propTable(pInterpreter);
+    try {
+    	formula = interpretFormula(formulaCxt->root(), propTable);
+    }
+    catch (const invalid_argument& e)
+    {
+    	IssueAdvisory(e.what());
+    	return TemporalSymbol::eqRewrite(subject, context);
+    }
 #ifdef TDEBUG
-	cout << "top = " << top << endl;
-	formula.dump(cout);
+	cout << "top = " << formula->top << endl;
+	formula->data.dump(cout);
 #endif
+    //
+    // 4. construct an model checker environment
+    //
+	vector<unsigned int> stateProps;
+	for (unsigned int i = 0; i < propTable.cardinality(); ++i)
+		stateProps.push_back(i);
 
+	const PropEvaluator stateEval(satisfiesSymbol, nullptr, trueTerm.getDag());
+    unique_ptr<PropChecker> spc = PropCheckerFactory::createChecker(stateProps, propTable, stateEval, context);
+    const ProofTermGenerator ptg(nullptr, context, nullptr,nullptr,nullptr,
+    		nullptr,nullptr,nullptr, nullptr,nullptr,deadlockTerm.getDag());	// only for deadlock dag
+
+    unique_ptr<Prod> prod;
+    Graph* gRef = nullptr;
+    {
+    	unique_ptr<BuchiAutomaton2> propGraph(new BuchiAutomaton2(&formula->data, formula->top));
+    	unique_ptr<StateFoldingGraph<StateMetaGraph>> tGraph = createSystemGraph(*sysCxt, subsume, stateProps, *spc, ptg, propTable);
+    	gRef = tGraph.get();
+    	prod.reset(new Prod(move(tGraph), move(propGraph)));
+    }
 	//
-	//  2. search graph and automaton
+	//  5. perform bounded model checking
 	//
-	BuchiAutomaton2 propAutomaton(&formula, top);
-	StateTransitionMetaGraph graph(sysContext.get(), metaStateSymbol, metaTransitionSymbol);
-
-	unique_ptr<FoldingChecker> sfc(new FoldingChecker(graph,
-			(subsumption ? subsumeFoldingRelSymbol : renameFoldingRelSymbol), trueTerm.getDag(), &context));
-	StateFoldingGraph nsg(&graph, sfc.get());
-
-	PropChecker stateChecker(satisfiesSymbol, trueTerm.getDag(), context);
-	SystemAutomaton systemAutomaton(&nsg, graph, propositions, &stateChecker);
-	ProductAutomaton<BuchiAutomaton2> prod(systemAutomaton, propAutomaton);
-
-	unique_ptr<ModelChecker> mc;
-	PrettyPrinter printState(prettyPrintStateSymbol, &context);
-	PrettyPrinter printTrans(prettyPrintTransSymbol, &context);
-
-	//
-	//  3. perform bounded model checking
-	//
-	bool result = false;
-#ifdef SDEBUG
-	int bound_state = 0;
-#endif
+    unique_ptr<ModelChecker> mc(new NDFSModelChecker<BuchiAutomaton2>(*prod));
+    bool result = false;
 	do {
 #ifdef SDEBUG
-		int oldSize = nsg.getNrStates();
-		cout << "##current bound = " << nsg.getCurrLevel() << ", #states = " << nsg.getNrStates() << endl;
+		cout << "##current bound = " << gRef->getCurrLevel() << ", #states = " << gRef->getNrStates() << endl;
 #endif
-		nsg.incrementLevel();
-#ifdef SDEBUG
-//		for (int k = bound_state; k < oldSize; ++k)
-//			nsg.dump(cout, k, &printState, &printTrans);
-		bound_state = oldSize;
-#endif
-		mc.reset(new NDFSModelChecker(prod));
+		gRef->incrementLevel();
+		mc.reset(new NDFSModelChecker<BuchiAutomaton2>(*prod));
 		result = mc->findCounterExample();
-	} while((globalBound == NONE || nsg.getCurrLevel() < globalBound) &&	// user bound
-			(result == false && ! nsg.reachFixpoint()));			// no counterexample & not fixedpoint
-#ifdef SDEBUG
-//	for (int k = bound_state; k < nsg.getNrAllStates(); ++k)
-//		nsg.dump(cout, k, &printState, &printTrans);
-#endif
+	}
+	while((globalBound == NONE || gRef->getCurrLevel() < globalBound) &&	// user bound
+			(result == false && ! gRef->reachFixpoint()));					// no counterexample & not fixedpoint
 
-	int nrSystemStates = nsg.getNrStates();
-	Verbose("SymbolicModelCheckerSymbol: Examined " << nrSystemStates <<
-		  " system state" << pluralize(nrSystemStates) << '.');
-
+	int nrSystemStates = gRef->getNrStates();
+	Verbose("SymbolicModelCheckerSymbol: Examined " << nrSystemStates << " system state" << pluralize(nrSystemStates) << '.');
 	//
 	//  3. results
 	//
-	DagNode* resultDag = makeModelCheckReportDag(result, nsg.getCurrLevel(), nsg.reachFixpoint(),
-			subsumption, *mc, nsg, graph, sfc.get());
-	context.addInCount(*sysContext);
+	DagNode* resultDag = makeModelCheckReportDag(result, gRef->getCurrLevel(), gRef->reachFixpoint(), subsume, *gRef, *mc);
+	context.addInCount(*sysCxt);
 	return context.builtInReplace(subject, resultDag);
 }
 
-bool
-SymbolicModelCheckerSymbol::interpretBoolDag(DagNode* dag)
-{
-    if (dag->symbol() == this->trueTerm.getDag()->symbol())
-    	return true;
-    else
-    {
-    	if (dag->symbol() != falseTerm.getDag()->symbol())
-    		IssueWarning("ModelChecker: the third argument is not reduced to boolean values");
-    	return false;
-    }
-}
 
-long
-SymbolicModelCheckerSymbol::interpretNatDag(DagNode* dag)
+unique_ptr<StateFoldingGraph<StateMetaGraph>>
+SymbolicModelCheckerSymbol::createSystemGraph(RewritingContext& sysCxt,
+		bool subsumption, const vector<unsigned int>& stateProps, PropChecker& spc,
+		const ProofTermGenerator& ptg, const PropositionTable& propTable)
 {
-	S_DagNode* tmpBoundDag = dynamic_cast<S_DagNode*>(dag);
-	if (tmpBoundDag != nullptr)
-		return tmpBoundDag->getNumber().get_si();
-	else
-	{
-		if (dag->symbol() != this->unboundedSymbol)
-			IssueWarning("ModelChecker: the fourth argument is not reduced to bound values, and assumed as infinity");
-		return NONE;
-	}
+	// create a state prop label generator
+	NatSet fprops;
+	for (auto i = stateProps.rbegin(); i != stateProps.rend(); ++i) fprops.insert(*i);
+
+	unique_ptr<StatePropLabel> spl(new StatePropLabel(fprops,spc,nullptr));
+	spl->setExtraFlag(false);	// set "no fairness"
+
+	// create a meta graph
+    unique_ptr<StateMetaGraph> mgraph(new StateMetaGraph(move(spl), sysCxt, ptg, propTable, metaStateSymbol));
+    mgraph->init();
+
+    // create a folding checker
+    Symbol* foldingSymbol = subsumption ? subsumeFoldingRelSymbol : renameFoldingRelSymbol;
+	unique_ptr<FoldingChecker> foldc(new FoldingChecker(foldingSymbol, trueTerm.getDag(), &sysCxt));
+
+	// create a folding graph
+    return unique_ptr<StateFoldingGraph<StateMetaGraph>>(new StateFoldingGraph<StateMetaGraph>(std::move(mgraph),std::move(foldc)));
 }
 
 DagNode*
-SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool complete, bool subsumption,
-		const ModelChecker& mc, StateFoldingGraph& nsg, const DagGraphMap& dags, FoldingChecker* sfc)
+SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool complete, bool subsume,
+		StateFoldingGraph<StateMetaGraph>& g, const ModelChecker& mc)
 {
 	Vector<DagNode*> res_args(4);
 	if (result)
 	{
-		CounterExampleGenerator ceGenerator(counterexampleSymbol, transitionSymbol, transitionListSymbol,
-		    		nilTransitionListSymbol, deadlockTerm.getDag());
-		if (subsumption)
-		{
-			list<Edge> path;
-			list<Edge> cycle;
-			if (concretePath(nsg,sfc,mc.getLeadIn(), mc.getCycle(), path, cycle))
-			{
-				res_args[0] = nullptr; //FIXME: ceGenerator.makeCounterexample(nsg.getDagGraphMap(), path, cycle);
-				res_args[1] = trueTerm.getDag();
-			}
-			else	// spurious counterexample
-			{
-				res_args[0] = nullptr; //FIXME: ceGenerator.makeCounterexample(nsg.getDagGraphMap(), mc.getLeadIn(), mc.getCycle());
-				res_args[1] = falseTerm.getDag();
-			}
-		}
-		else	// renaming equivalence (no spurious counterexample)
-		{
-			res_args[0] = nullptr; //FIXME: ceGenerator.makeCounterexample(nsg.getDagGraphMap(), mc.getLeadIn(), mc.getCycle());
-			res_args[1] = trueTerm.getDag();
-		}
+		ConcreteResultGenerator cA(g, counterexampleSymbol, transitionSymbol, transitionListSymbol, nilTransitionListSymbol);
+		auto ceg = cA.makeConcreteCounterExample(subsume, mc.getLeadIn(), mc.getCycle());
+		res_args[0] = ceg.first;
+		res_args[1] = ceg.second ? trueTerm.getDag() : falseTerm.getDag();
 	}
 	else
 	{
@@ -341,161 +312,7 @@ SymbolicModelCheckerSymbol::makeModelCheckReportDag(bool result, int bound, bool
 	}
 	res_args[2] = succSymbol->makeNatDag(bound);
 	res_args[3] = complete ? trueTerm.getDag() : falseTerm.getDag();
-
 	return resultreportSymbol->makeDagNode(res_args);
-}
-
-
-bool
-SymbolicModelCheckerSymbol::concretePath(StateFoldingGraph& gph, FoldingChecker* sfc,
-		const list<Edge>& path, const list<Edge>& cycle,
-		list<Edge>& resP, list<Edge>& resCy)
-{
-	Assert (!path.empty() || !cycle.empty(), "ModelChecker: empty counterexample");
-	bool result = false;
-	resP.clear();
-	resCy.clear();
-	result = path.empty()?
-			constConcrPath(gph,sfc, path, cycle, cycle.begin(), true, cycle.front().first, resP, resCy):
-			constConcrPath(gph,sfc, path, cycle, path.begin(), false, path.front().first, resP, resCy);
-	return result;
-}
-
-bool
-SymbolicModelCheckerSymbol::constConcrPath(StateFoldingGraph& gph, FoldingChecker* sfc,
-		const list<Edge>& path, const list<Edge>& cycle,
-		list<Edge>::const_iterator pos, bool inCycle,
-		int spos, list<Edge>& resP, list<Edge>& resCy)
-{
-	if (!inCycle && pos == path.end())
-	{
-		if (cycle.empty())
-			return true;
-		else
-			return constConcrPath(gph,sfc, path,cycle, cycle.begin(),true, spos,resP,resCy);
-	}
-	if (inCycle && pos == cycle.end())
-	{
-		//TODO: how to construct a concrete infinite path?
-		//return foldState(cycle.front().first,spos);
-		return cycle.front().first == spos;
-	}
-
-	if (pos->first == spos || sfc->fold(pos->first , spos))
-	{
-		if (pos->second == 0 && gph.getNrTransitions(pos->first) == 0) // deadlock
-		{
-			if ( gph.getUnderlyingGraph().getNextState(spos, 0) == NONE )
-			{
-				if (inCycle)
-					resCy.push_front(make_pair(spos,0));
-				else
-					resP.push_front(make_pair(spos,0));
-				return true;
-			}
-			return false;
-		}
-		else
-		{
-			int index = 0;
-			int next = NONE;
-			DagNode* fd = nullptr; //FIXME; gph.getDagGraphMap().getTransitionDag(pos->first,pos->second);
-			pos ++;
-
-			while ((next = gph.getUnderlyingGraph().getNextState(spos, index)) != NONE)
-			{
-				//FIXME: DagNode* od = gph.getDagGraphMap().getTransitionDag(spos,index);
-				//FIXME: if (tfc->fold(fd,od))
-				{
-					//FIXME: if (constConcrPath(gph,sfc,tfc, path, cycle, pos, inCycle, next, resP, resCy))
-					{
-						if (inCycle)
-							resCy.push_front(make_pair(spos,index));
-						else
-							resP.push_front(make_pair(spos,index));
-						return true;
-					}
-				}
-				++index;
-			}
-		}
-	}
-	return false;
-}
-
-
-SymbolicModelCheckerSymbol::FoldingChecker::FoldingChecker(
-		const DagGraphMap& dags, Symbol* foldingRelSymbol, DagNode* trueDag, RewritingContext* context):
-		dags(dags), foldingRelSymbol(foldingRelSymbol), trueDag(trueDag), parentContext(context) {}
-
-bool
-SymbolicModelCheckerSymbol::FoldingChecker::fold(int s, int t) const
-{
-	Assert(trueDag != nullptr, "StateFoldingChecker::fold: trueDag not set");
-	static Vector<DagNode*> args(2);
-	args[0] = dags.getStateDag(s);
-	args[1] = dags.getStateDag(t);
-
-	DagNode* checkDag = foldingRelSymbol->makeDagNode(args);
-#ifdef TDEBUG
-	cout << checkDag << " is reduced to ";
-#endif
-	const unique_ptr<RewritingContext> testContext(
-			parentContext->makeSubcontext(checkDag));
-	testContext->reduce();
-	bool result = trueDag->equal(testContext->root());
-#ifdef TDEBUG
-	cout << testContext->root() << endl;
-#endif
-	parentContext->addInCount(*testContext);
-	return result;
-}
-
-
-
-SymbolicModelCheckerSymbol::SystemAutomaton::SystemAutomaton(
-		StateFoldingGraph* graph, const DagGraphMap& dags, DagNodeSet& props, PropChecker* pc):
-			gph(graph), dags(dags), props(props), pc(pc)
-{
-	sInfo.expandTo(1);
-}
-
-int
-SymbolicModelCheckerSymbol::SystemAutomaton::getNextState(int stateNr, int transitionNr)
-{
-	Assert(stateNr < sInfo.size(), "SystemAutomaton::getNextState: unknown state");
-	int n = gph->getNextState(stateNr, transitionNr);
-	if (n == NONE)
-	{
-		// fake a self loop for deadlocked state (if not hit bound)
-		if (transitionNr == 0 && !gph->boundState(stateNr))
-			return stateNr;
-	}
-	else
-	{
-		if (n >= sInfo.size())
-			sInfo.expandTo(n + 1);
-	}
-	return n;
-}
-
-bool
-SymbolicModelCheckerSymbol::SystemAutomaton::satisfiesStateProp(int propId, int stateNr)
-{
-	NatSet& testedProps = sInfo[stateNr]->testedProps;
-	NatSet& trueProps = sInfo[stateNr]->trueProps;
-	if (testedProps.contains(propId))
-		return trueProps.contains(propId);
-	else
-	{
-		testedProps.insert(propId);
-		if (pc->computeProp(dags.getStateDag(stateNr), props.index2DagNode(propId)))
-		{
-			trueProps.insert(propId);
-			return true;
-		}
-		return false;
-	}
 }
 
 }
