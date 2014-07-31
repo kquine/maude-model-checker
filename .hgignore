@@ -37,3 +37,11 @@ syntax: glob
 .dirstamp
 syntax: regexp
 ^src/Main/maude\.dSYM$
+syntax: regexp
+^test-driver$
+syntax: regexp
+^src/Mixfix/surface\.cc$
+syntax: regexp
+^src/Mixfix/surface\.h$
+syntax: regexp
+^src/Mixfix/lexer\.cc$
