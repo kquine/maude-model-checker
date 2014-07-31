@@ -16,6 +16,9 @@ namespace modelChecker {
 
 template <typename PropertyAutomaton> struct PropertyTransitionTraits;
 
+/**
+ * A basic automata interface
+ */
 template <typename PA>
 class Automaton: public AbstractAutomaton
 {
@@ -29,6 +32,9 @@ public:
 	virtual unique_ptr<TransitionIterator> makeTransitionIterator(const State& state) = 0;
 };
 
+/**
+ * A transition for an automaton
+ */
 template <typename PA>
 struct Automaton<PA>::Transition
 {
@@ -37,6 +43,9 @@ struct Automaton<PA>::Transition
 	PropertyIndex propertyIndex;
 };
 
+/**
+ * An old-style iterator for transitions
+ */
 template <typename PA>
 struct Automaton<PA>::TransitionIterator
 {
@@ -55,6 +64,9 @@ protected:
 	typename Automaton<PA>::Transition tr;
 };
 
+/**
+ * Print a state
+ */
 template <typename T1, typename T2>
 inline ostream& operator<<(ostream &o, const pair<T1,T2>& pair)
 {
@@ -62,9 +74,9 @@ inline ostream& operator<<(ostream &o, const pair<T1,T2>& pair)
 	return o;
 }
 
-//
-// property transition specializations
-//
+/**
+ * property transition specialization for Buchi automata
+ */
 template <>
 struct PropertyTransitionTraits<BuchiAutomaton2>
 {
@@ -74,6 +86,9 @@ struct PropertyTransitionTraits<BuchiAutomaton2>
 	static const Bdd& getFormula(const PropertyTransition&t)	{ return t.second; }
 };
 
+/**
+ * property transition specialization for generalied Buchi automata
+ */
 template <>
 struct PropertyTransitionTraits<GenBuchiAutomaton>
 {

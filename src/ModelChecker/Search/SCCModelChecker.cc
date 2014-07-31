@@ -40,7 +40,9 @@ SCCModelChecker<PA>::findCounterExample()
 template <typename PA> bool
 SCCModelChecker<PA>::SCCStack::hasNextSucc()
 {
-	while ( !dfsStack.empty() && sccStack.top()->root <= mc.H.get(dfsStack.top()->getSource()) && !dfsStack.top()->hasNext())	// pop SCCs with no successors
+	// pop SCCs with no successors
+	while ( !dfsStack.empty() &&
+			sccStack.top()->root <= mc.H.get(dfsStack.top()->getSource()) && !dfsStack.top()->hasNext())
 	{
 		stateStack.push(dfsStack.top()->getSource());	// keep states of the top SCC for later use
 		dfsStack.pop();

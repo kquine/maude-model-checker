@@ -30,10 +30,16 @@ template <bool hasState, bool hasEvent, typename SA, typename PA>
 ProductAutomaton<hasState,hasEvent,SA,PA>::ProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property):
 	systemAut(move(system)), propertyAut(move(property))
 {
+	//
+	// First, create a set of initial states
+	//
 	for(auto i : propertyAut->getInitialStates())
 		initialStates.emplace_back(0,i);
 }
 
+/**
+ * Create an appropriate transition iterator
+ */
 template <bool hasState, bool hasEvent, typename SA, typename PA>
 inline unique_ptr<typename ProductAutomaton<hasState,hasEvent,SA,PA>::TransitionIterator>
 ProductAutomaton<hasState,hasEvent,SA,PA>::makeTransitionIterator(const State& state)
@@ -43,14 +49,15 @@ ProductAutomaton<hasState,hasEvent,SA,PA>::makeTransitionIterator(const State& s
 	return unique_ptr<TransitionIterator>(ti);
 }
 
-//
-// an iterator for state-only graphs
-//
+/**
+ * An iterator for state-only graphs
+ */
 template <>
 struct ProductTransitionIteratorTraits<true,false>
 {
 	template <typename SA, typename PA>
-	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr, const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
+	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr,
+			const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
 	{
 		switch(first)
 		{
@@ -77,14 +84,15 @@ struct ProductTransitionIteratorTraits<true,false>
 	}
 };
 
-//
-// an iterator for event-only graphs (formula, not fairness)
-//
+/**
+ * An iterator for event-only graphs (formula, not fairness)
+ */
 template <>
 struct ProductTransitionIteratorTraits<false,true>
 {
 	template <typename SA, typename PA>
-	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr, const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
+	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr,
+			const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
 	{
 		switch(first)
 		{
@@ -98,7 +106,8 @@ struct ProductTransitionIteratorTraits<false,true>
 						break;
 
 					// check state/event props
-					if (ks.satisfiesStateEventFormula(PropertyTransitionTraits<PA>::getFormula(*tr.propertyIndex), tr.source.first, tr.systemIndex))
+					if (ks.satisfiesStateEventFormula(PropertyTransitionTraits<PA>::getFormula(
+							*tr.propertyIndex), tr.source.first, tr.systemIndex))
 					{
 						tr.target.second = PropertyTransitionTraits<PA>::getNextState(*tr.propertyIndex);
 						return;
@@ -113,16 +122,17 @@ struct ProductTransitionIteratorTraits<false,true>
 	}
 };
 
-//
-// an iterator for state/event graphs (formula, not fairness)
-//
+/**
+ * an iterator for state/event graphs (formula, not fairness)
+ */
 template <>
 struct ProductTransitionIteratorTraits<true,true>
 {
 	Bdd label;	// temporary label
 
 	template <typename SA, typename PA>
-	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr, const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
+	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr,
+			const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
 	{
 		pair<bool,Bdd> test;
 		switch(first)
@@ -130,7 +140,8 @@ struct ProductTransitionIteratorTraits<true,true>
 		case 1:
 			for (tr.propertyIndex = ts.begin(); tr.propertyIndex != ts.end(); ++tr.propertyIndex)
 			{
-				test = ks.satisfiesPartialStateFormula(PropertyTransitionTraits<PA>::getFormula(*tr.propertyIndex), tr.source.first);
+				test = ks.satisfiesPartialStateFormula(PropertyTransitionTraits<PA>::getFormula(
+						*tr.propertyIndex), tr.source.first);
 
 				if (test.first)
 				{
@@ -140,8 +151,9 @@ struct ProductTransitionIteratorTraits<true,true>
 						tr.target.first = ks.getNextState(tr.source.first, tr.systemIndex);
 						if (tr.target.first == NONE)
 							break;
-
+						//
 						// check state/event props
+						//
 						if (ks.satisfiesStateEventFormula(label, tr.source.first, tr.systemIndex))
 						{
 							tr.target.second = PropertyTransitionTraits<PA>::getNextState(*tr.propertyIndex);

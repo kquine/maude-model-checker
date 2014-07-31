@@ -1,10 +1,9 @@
 /*
- * StateDagGraph.cc
+ * DefaultStateDagContainer.cc
  *
- *  Created on: May 24, 2011
+ *  Created on: Jul 29, 2014
  *      Author: kquine
  */
-
 
 //	utility stuff
 #include "macros.hh"
@@ -20,12 +19,13 @@
 #include "symbol.hh"
 #include "dagNode.hh"
 
-#include "StateDagContainer.hh"
+// ltlr definitions
+#include "DefaultStateDagContainer.hh"
 
 namespace modelChecker {
 
 unsigned int
-StateDagContainer::insertDag(DagNode* dag)
+DefaultStateDagContainer::stateDag2index(DagNode* dag)
 {
 	int nextState;
 	const unsigned int hashConsIndex = hashConsSet.insert(dag);	// NOTE: hashConsSet must always return a positive number
@@ -50,4 +50,4 @@ StateDagContainer::insertDag(DagNode* dag)
 	return nextState;
 }
 
-}
+} /* namespace modelChecker */

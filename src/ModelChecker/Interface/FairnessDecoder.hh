@@ -17,7 +17,8 @@ class FairnessDecoder
 {
 public:
 	FairnessDecoder(const FormulaBuilder& fBuilder, PropositionTable& propTable,
-			Symbol* fairnessSymbol, Symbol* strongFairTypeSymbol, Symbol* weakFairTypeSymbol, Symbol* fairnessSetSymbol, Symbol* emptyFairnessSetSymbol);
+			Symbol* fairnessSymbol, Symbol* strongFairTypeSymbol, Symbol* weakFairTypeSymbol,
+			Symbol* fairnessSetSymbol, Symbol* emptyFairnessSetSymbol);
 
 	unique_ptr<AbstractFairnessTable> interpretFairnessSet(DagNode* fairSetDag) const;
 

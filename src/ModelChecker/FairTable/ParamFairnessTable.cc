@@ -50,10 +50,12 @@ ParamFairnessTable<Formula>::getPropTable() const
 
 template <typename Formula>
 unique_ptr<typename ParamFairnessTable<Formula>::GroundFairness>
-ParamFairnessTable<Formula>::createFormulaFairness(const Formula& f, const vector<unsigned int>& propIds, DagNode* fairDag) const
+ParamFairnessTable<Formula>::createFormulaFairness(const Formula& f,
+		const vector<unsigned int>& propIds, DagNode* fairDag) const
 {
 	unique_ptr<GroundFairness> gfi = Super::createFormulaFairness(f, propIds, fairDag);
-	return fairDag->isGround() ? move(gfi) : unique_ptr<ParamFairness>(new ParamFairness(*gfi,fairDag,propIds,paramPropTableRef));
+	return fairDag->isGround() ?
+			move(gfi) : unique_ptr<ParamFairness>(new ParamFairness(*gfi,fairDag,propIds,paramPropTableRef));
 }
 
 template <typename Formula> unsigned int

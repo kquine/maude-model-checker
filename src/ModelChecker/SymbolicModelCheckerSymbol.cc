@@ -61,7 +61,8 @@ namespace modelChecker {
 SymbolicModelCheckerSymbol::SymbolicModelCheckerSymbol(int id, int arity): TemporalSymbol(id, arity) {}
 
 bool
-SymbolicModelCheckerSymbol::attachData(const Vector<Sort*>& opDeclaration, const char* purpose, const Vector<const char*>& data)
+SymbolicModelCheckerSymbol::attachData(const Vector<Sort*>& opDeclaration,
+		const char* purpose, const Vector<const char*>& data)
 {
 	NULL_DATA(purpose, SymbolicModelCheckerSymbol, data);
 	return  TemporalSymbol::attachData(opDeclaration, purpose, data);
@@ -231,14 +232,12 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 
 	const PropEvaluator stateEval(satisfiesSymbol, nullptr, trueTerm.getDag());
     unique_ptr<PropChecker> spc = PropCheckerFactory::createChecker(stateProps, propTable, stateEval, context);
-    const ProofTermGenerator ptg(nullptr, context, nullptr,nullptr,nullptr,
-    		nullptr,nullptr,nullptr, nullptr,nullptr,deadlockTerm.getDag());	// only for deadlock dag
 
     unique_ptr<Prod> prod;
     Graph* gRef = nullptr;
     {
     	unique_ptr<BuchiAutomaton2> propGraph(new BuchiAutomaton2(&formula->data, formula->top));
-    	unique_ptr<Graph> tGraph = createSystemGraph(*sysCxt, subsume, stateProps, *spc, ptg, propTable);
+    	unique_ptr<Graph> tGraph = createSystemGraph(*sysCxt, subsume, stateProps, *spc, propTable);
     	gRef = tGraph.get();
     	prod.reset(new Prod(move(tGraph), move(propGraph)));
     }
@@ -247,23 +246,38 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	//
     unique_ptr<ModelChecker> mc(new NDFSModelChecker<BuchiAutomaton2>(*prod));
     bool result = false;
-	do {
 #ifdef SDEBUG
-		cout << "##current bound = " << gRef->getCurrLevel() << ", #states = " << gRef->getNrStates() << endl;
+	unsigned int bound_state = 0;
+	PrettyPrinter printState(prettyPrintStateSymbol, &context);
+	PrettyPrinter printTrans(prettyPrintTransSymbol, &context);
 #endif
+	do {
+		auto oldSize = gRef->getNrStates();
+		Verbose("SymbolicModelCheckerSymbol: examined " << oldSize << " logical state" << pluralize(oldSize)
+				<< " in bound " << gRef->getCurrLevel() << '.');
 		gRef->incrementLevel();
+#ifdef SDEBUG
+		if (globalVerboseFlag)
+			for (auto k = bound_state; k < oldSize; ++k)
+				gRef->dump(cout, k, &printState, &printTrans);
+		bound_state = oldSize;
+#endif
 		mc.reset(new NDFSModelChecker<BuchiAutomaton2>(*prod));
 		result = mc->findCounterExample();
 	}
 	while((globalBound == NONE || gRef->getCurrLevel() < globalBound) &&	// user bound
 			(result == false && ! gRef->reachFixpoint()));					// no counterexample & not fixedpoint
-
-	int nrSystemStates = gRef->getNrStates();
-	Verbose("SymbolicModelCheckerSymbol: Examined " << nrSystemStates << " system state" << pluralize(nrSystemStates) << '.');
+#ifdef SDEBUG
+	if (globalVerboseFlag)
+		for (auto k = bound_state; k < gRef->getNrVisitedStates(); ++k)
+			gRef->dump(cout, k, &printState, &printTrans);
+#endif
+	auto nrSysStates = gRef->getNrStates();
+	Verbose("SymbolicModelCheckerSymbol: examined " << nrSysStates << " logical state" << pluralize(nrSysStates) << '.');
 	//
 	//  3. results
 	//
-	DagNode* resultDag = makeModelCheckReportDag(result, gRef->getCurrLevel(), gRef->reachFixpoint(), subsume, *gRef, *mc);
+	auto resultDag = makeModelCheckReportDag(result, gRef->getCurrLevel(), gRef->reachFixpoint(), subsume, *gRef, *mc);
 	context.addInCount(*sysCxt);
 	return context.builtInReplace(subject, resultDag);
 }
@@ -272,7 +286,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 unique_ptr<SymbolicModelCheckerSymbol::Graph>
 SymbolicModelCheckerSymbol::createSystemGraph(RewritingContext& sysCxt,
 		bool subsumption, const vector<unsigned int>& stateProps, PropChecker& spc,
-		const ProofTermGenerator& ptg, const PropositionTable& propTable)
+		const PropositionTable& propTable)
 {
 	// create a state prop label generator
 	NatSet fprops;
@@ -282,7 +296,8 @@ SymbolicModelCheckerSymbol::createSystemGraph(RewritingContext& sysCxt,
 	spl->setExtraFlag(false);	// set "no fairness"
 
 	// create a meta graph
-    unique_ptr<StateMetaGraph> mgraph(new StateMetaGraph(move(spl), sysCxt, ptg, propTable, metaStateSymbol));
+    unique_ptr<StateMetaGraph> mgraph(new StateMetaGraph(move(spl), sysCxt, propTable,
+    		metaStateSymbol, metaTransitionSymbol, deadlockTerm.getDag()));
     mgraph->init();
 
     // create a folding checker

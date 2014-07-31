@@ -53,7 +53,8 @@ protected:
 		const bool noEvent;
 	};
 
-	virtual unique_ptr<GroundFairness> createFormulaFairness(const Formula& f, const vector<unsigned int>& propIds, DagNode* fairDag) const;
+	virtual unique_ptr<GroundFairness> createFormulaFairness(const Formula& f,
+			const vector<unsigned int>& propIds, DagNode* fairDag) const;
 
 	vector<unique_ptr<Fairness>> fairTable;		// fairId |-> fairnessInfo
 

@@ -13,6 +13,9 @@
 
 namespace modelChecker {
 
+/**
+ * An automaton with fairness
+ */
 template <typename PA>
 class FairAutomaton: public Automaton<PA>
 {

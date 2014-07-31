@@ -16,8 +16,11 @@ namespace modelChecker {
 class PropCheckerFactory
 {
 public:
-	static unique_ptr<PropChecker> createChecker(const vector<unsigned int>& targets, PropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context);
-	static unique_ptr<EnabledPropHandler> createHandler(const vector<unsigned int>& enabledProps, unsigned int nrFormulaPropIds, const PropositionTable& propTable);
+	static unique_ptr<PropChecker> createChecker(const vector<unsigned int>& targets,
+			PropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context);
+
+	static unique_ptr<EnabledPropHandler> createHandler(const vector<unsigned int>& enabledProps,
+			unsigned int nrFormulaPropIds, const PropositionTable& propTable);
 };
 
 } /* namespace modelChecker */

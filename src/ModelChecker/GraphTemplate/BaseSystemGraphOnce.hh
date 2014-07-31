@@ -23,10 +23,19 @@ public:
 	using typename BaseSystemGraph<T>::State;
 	using typename BaseSystemGraph<T>::Transition;
 
-	BaseSystemGraphOnce(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
+	BaseSystemGraphOnce(RewritingContext& initial, const PropositionTable& propTable);
 
 	unsigned int getNrVisitedStates() const final;
 	unsigned int getNrVisitedTransitions(unsigned int stateNr) const final;
+
+protected:
+	//
+	// template functions (to be implemented in subclasses)
+	//
+	unsigned int stateDag2index(DagNode* dag);
+	DagNode* makeProofDag(const RewriteTransitionState& rts) const;
+	DagNode* getDeadlockDag() const;
+	void updateAllLabels(DagNode* sd, const vector<DagNode*>& pd, State& s, vector<unique_ptr<Transition>>& trs) const;
 
 private:
 	unsigned int insertState(DagNode* stateDag);					/* implements */

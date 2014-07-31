@@ -142,7 +142,8 @@ NDFSModelChecker<PA>::dfs2(const State& initial)
 #endif
 			dfs2.top()->next();
 
-			Assert( ns.first >= 0 && (unsigned int)ns.first < intersectionStates.size(), "visited system state for the first time on dfs2");
+			Assert( ns.first >= 0 && (unsigned int)ns.first < intersectionStates.size(),
+					"visited system state for the first time on dfs2");
 			StateSet& sset = *intersectionStates[ns.first];
 			if ( sset.onDfs1Stack.contains(ns.second))	// found an accepted cycle
 			{

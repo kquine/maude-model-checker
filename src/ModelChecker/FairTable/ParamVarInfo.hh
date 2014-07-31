@@ -12,7 +12,7 @@
 
 namespace modelChecker {
 
-/*
+/**
  * Since we do not need to actually instantiate a term, we define a data structure to
  * manage variable info for s param fair formula, instead of using the existing one.
  */

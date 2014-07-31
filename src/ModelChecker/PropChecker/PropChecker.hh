@@ -17,7 +17,8 @@ namespace modelChecker {
 class PropChecker
 {
 public:
-	PropChecker(const vector<unsigned int>& propIds, const PropositionTable& propositions, const PropEvaluator& pe, RewritingContext& context);
+	PropChecker(const vector<unsigned int>& propIds, const PropositionTable& propositions,
+			const PropEvaluator& pe, RewritingContext& context);
 	virtual ~PropChecker() = default;
 
 	const vector<unsigned int>& getGroundPropIds() const;

@@ -32,7 +32,7 @@ namespace modelChecker {
 template <typename PL>
 StateEventEnabledSystemGraph<PL>::StateEventEnabledSystemGraph(unique_ptr<PL>&& pl, unique_ptr<EnabledPropHandler>&& enph,
 		RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-			Super(initial,ptg,propTable), SystemGraphTraits<StateEventEnabledSystemGraph<PL>>(move(pl),move(enph)) {}
+			Super(initial,propTable), CompactProofTermTransitionGraph(ptg), Traits(move(pl),move(enph)) {}
 
 template <typename PL>
 template <typename STATE> bool
@@ -56,13 +56,17 @@ SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::satisfiesEventProp(unsigned
 }
 
 template <typename PL> void
-SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::updateAllLabels(DagNode* sd, const vector<DagNode*>& proofDags, State& s, vector<unique_ptr<Transition>>& trs) const
+SystemGraphTraits<StateEventEnabledSystemGraph<PL>>::updateAllLabels(DagNode* sd, const vector<DagNode*>& proofDags,
+		State& s, vector<unique_ptr<Transition>>& trs) const
 {
-	unique_ptr<PropSet> trueStateProps = propLabel->updateStateLabel(sd,s);		// compute and store all state props (for s)
+	// compute and store all state props (for s)
+	unique_ptr<PropSet> trueStateProps = propLabel->updateStateLabel(sd,s);
 
 	vector<unique_ptr<PropSet>> trueEventProps(trs.size());
+
+	// compute and store all event prop (for transitions)
 	for (unsigned int i = 0; i < trs.size(); ++i)
-		trueEventProps[i] = propLabel->updateEventLabel(proofDags[i],*trs[i]);	// compute and store all event prop (for transitions)
+		trueEventProps[i] = propLabel->updateEventLabel(proofDags[i],*trs[i]);
 }
 
 template <typename PL> bool

@@ -10,8 +10,8 @@
 namespace modelChecker {
 
 template <typename T>
-BaseSystemGraphOnce<T>::BaseSystemGraphOnce(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-	BaseSystemGraph<T>(initial,ptg,propTable) {}
+BaseSystemGraphOnce<T>::BaseSystemGraphOnce(RewritingContext& initial, const PropositionTable& propTable):
+	BaseSystemGraph<T>(initial,propTable) {}
 
 template <class T> inline unsigned int
 BaseSystemGraphOnce<T>::getNrVisitedStates() const	// count only visited states
@@ -29,7 +29,7 @@ BaseSystemGraphOnce<T>::getNrVisitedTransitions(unsigned int stateNr) const
 template <typename T> unsigned int
 BaseSystemGraphOnce<T>::insertState(DagNode* stateDag)
 {
-	return enableState(StateDagContainer::insertDag(stateDag));
+	return enableState(static_cast<T*>(this)->stateDag2index(stateDag));
 }
 
 template <typename T> int
@@ -55,7 +55,7 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 	if ( !this->seen[stateNr] )		// if not already "enabled"
 	{
 		DagNode* cannStateDag = this->getStateDag(stateNr);
-		RewriteTransitionState rts(this->getContext(), cannStateDag);
+		RewriteTransitionState rts(this->context, cannStateDag);
 		unique_ptr<State> s(new State);
 
 		unsigned int transitionCount = 0;
@@ -64,13 +64,13 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 		ptr_set<Transition> transitionPtrSet;	// to distinguish equivalent transitions
 		ProtectedDagNodeSet tdags;		// to protect proofDags from the garbage collection.
 
-		while (DagNode* ns =  rts.getNextStateDag(this->getContext()))	// compute all transitions
+		while (DagNode* ns =  rts.getNextStateDag(this->context))	// compute all transitions
 		{
-			auto nextState = StateDagContainer::insertDag(ns);
+			auto nextState = static_cast<T*>(this)->stateDag2index(ns);
 			trs.emplace_back(new Transition(nextState, ++ transitionCount));
 
 			// identify a unique proof dag
-			DagNode* td = this->ptGenerator.makeProofDag(rts.getPosition(),*rts.getRule(),rts.getSubstitution());
+			DagNode* td = static_cast<T*>(this)->makeProofDag(rts);
 			auto di = tdags.dagNode2Index(td);
 			if (di == NONE)
 			{
@@ -86,7 +86,7 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 		{
 			Assert(proofDags.empty() && trs.empty(), "BaseSystemGraphOnce::enableState: invalid deadlock");
 			trs.emplace_back(new Transition(stateNr, 0)); // 0 indicates a deadlock transition!
-			DagNode* td = this->ptGenerator.getDeadlockDag();
+			DagNode* td = static_cast<T*>(this)->getDeadlockDag();
 			proofDags.push_back(td);
 		}
 

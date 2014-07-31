@@ -13,10 +13,10 @@
 
 namespace modelChecker {
 
-//
-// NOTE: intended only for system graphs, while composite checkers/fair-sets
-// are also used for generalized Buchi automata.
-//
+/**
+ * A CompositeFairnessChecker. This is intended only for system graphs,
+ * while composite checkers/fair-sets are also used for generalized Buchi automata.
+ */
 class CompositeFairnessChecker: public FairnessChecker
 {
 public:
@@ -24,7 +24,6 @@ public:
 
 	unsigned int getNrFairness() const override;
 	unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
-
 	unique_ptr<FairSet> computeCompactFairness(const PropSet& trueProps) override;
 	unique_ptr<FairSet> unzip(const FairSet& fs) const override;
 

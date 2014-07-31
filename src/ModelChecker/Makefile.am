@@ -50,11 +50,12 @@ libModelChecker_a_SOURCES = \
 	FairSet/ParamRealizedSet.cc \
 	FairSet/ParamWeakFairSet.cc \
 	FairSet/ParamStrongFairSet.cc \
-	Graph/RewriteTransitionState.cc \
-	Graph/StateDagContainer.cc \
-	Graph/SystemGraphTraits.cc \
 	GraphLabel/StateEventPropLabel.cc \
 	GraphLabel/StateEventFairLabel.cc \
+	GraphTemplate/CompactProofTermTransitionGraph.cc \
+	GraphTemplate/RuleTransitionGraph.cc \
+	GraphTemplate/RewriteTransitionState.cc \
+	GraphTemplate/DefaultStateDagContainer.cc \
     Interface/PropInterpreter.cc \
     Interface/PropEvaluator.cc \
     Interface/FairnessDecoder.cc \

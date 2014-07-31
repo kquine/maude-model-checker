@@ -48,7 +48,9 @@ void
 ParamRealizedSet::extend(const NatSet& other, NatSet& target, const RealizedFairnessTable& rtable) const
 {
 	NatSet not_realized_other = other;
-	not_realized_other.subtract(realizedFair);	// NOTE: not_realized_other may contain ground/param fairness indices; e.g., badFair
+
+	// NOTE: not_realized_other may contain ground/param fairness indices; e.g., badFair
+	not_realized_other.subtract(realizedFair);
 
 	for (auto i : not_realized_other)
 	{

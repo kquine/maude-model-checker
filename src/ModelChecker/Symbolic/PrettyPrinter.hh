@@ -17,10 +17,21 @@ public:
 	void print(ostream& o, DagNode* target) const;
 
 private:
-    static void printBubble(ostream& s, const Vector<int>& bubble);
+	inline int unBackQuoteId(DagNode* d) const;
+    void printBubble(ostream& s, const Vector<int>& bubble) const;
 
     Symbol* prettyPrintSymbol;
     RewritingContext* parentContext;
 };
+
+inline int
+PrettyPrinter::unBackQuoteId(DagNode* d) const
+{
+	if (auto qd = dynamic_cast<QuotedIdentifierDagNode*>(d))
+		return Token::unBackQuoteSpecials(qd->getIdIndex());
+	else
+		return d->symbol()->id();
+}
+
 } /* namespace modelChecker */
 #endif /* PRETTYPRINTER_HH_ */

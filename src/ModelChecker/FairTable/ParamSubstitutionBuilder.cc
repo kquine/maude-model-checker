@@ -20,19 +20,22 @@
 
 namespace modelChecker {
 
-ParamSubstitutionBuilder::ParamSubstitutionBuilder(DagNode* fairnessDag, const vector<unsigned int>& propIds, const ParamPropositionTable& propTable):
-		ParamVarInfo(fairnessDag), propTable(propTable)
+ParamSubstitutionBuilder::ParamSubstitutionBuilder(DagNode* fairnessDag,
+		const vector<unsigned int>& propIds, const ParamPropositionTable& propTable):
+				ParamVarInfo(fairnessDag), propTable(propTable)
 {
 	for (auto p : propIds)
 		if (propTable.isParamProp(p))
 			pidInfo.emplace_back(new PropVarInfo(p, propTable, *this));
 
+	// sorted by a number of vars
 	sort(pidInfo.begin(), pidInfo.end(),
-			[](const unique_ptr<PropVarInfo>& a, decltype(a) b) { return a->varMap.size() > b->varMap.size(); });	// sorted by a number of vars
+			[](const unique_ptr<PropVarInfo>& a, decltype(a) b) { return a->varMap.size() > b->varMap.size(); });
 }
 
 void
-ParamSubstitutionBuilder::buildRealizedFairness(const PropSet& ps, unsigned int paramPropId, RealizedFairnessTable& rftable, deque<pair<unsigned int,NatSet>>& result) const
+ParamSubstitutionBuilder::buildRealizedFairness(const PropSet& ps, unsigned int paramPropId,
+		RealizedFairnessTable& rftable, deque<pair<unsigned int,NatSet>>& result) const
 {
 	set<unsigned int> fids;
 	ParamSubstitution t(ParamVarInfo::getNrVariables());
@@ -43,8 +46,8 @@ ParamSubstitutionBuilder::buildRealizedFairness(const PropSet& ps, unsigned int 
 }
 
 void
-ParamSubstitutionBuilder::computeParamSubstitutions(const PropInfoPos i, ParamSubstitution& t, const PropSet& ps, bool ever,
-		unsigned int paramPropId, RealizedFairnessTable& rftable, set<unsigned int>& result) const
+ParamSubstitutionBuilder::computeParamSubstitutions(const PropInfoPos i, ParamSubstitution& t, const PropSet& ps,
+		bool ever, unsigned int paramPropId, RealizedFairnessTable& rftable, set<unsigned int>& result) const
 {
 	if (i != pidInfo.cend())
 	{
@@ -68,7 +71,8 @@ ParamSubstitutionBuilder::computeParamSubstitutions(const PropInfoPos i, ParamSu
 	{
 		if (ever)
 		{
-			//  add the realized fairness into the table except for the empty case; directly add it to the table to avoid a redundant comparison "<"
+			// add the realized fairness into the table except for the empty case;
+			// directly add it to the table to avoid a redundant comparison "<"
 			auto fi = rftable.insertFairnessInstance(paramPropId,t);
 			result.insert(fi);
 		}
@@ -121,7 +125,8 @@ ParamSubstitutionBuilder::dumpPropSubst(unsigned int propId, const ParamSubstitu
 	cout << "} ";
 }
 
-ParamSubstitutionBuilder::PropVarInfo::PropVarInfo(unsigned int propId, const ParamPropositionTable& propTable, const ParamVarInfo& varInfo): propId(propId)
+ParamSubstitutionBuilder::PropVarInfo::PropVarInfo(unsigned int propId,
+		const ParamPropositionTable& propTable, const ParamVarInfo& varInfo): propId(propId)
 {
 	varMap.resize(propTable.getParamNrVars(propId));
 	for (unsigned int i = 0; i < varMap.size(); ++i)

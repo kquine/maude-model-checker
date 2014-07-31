@@ -24,7 +24,8 @@ namespace modelChecker {
 
 RewriteTransitionState::RewriteTransitionState(RewritingContext& parent, DagNode* stateDag):
 		RewriteSearchState(parent.makeSubcontext(stateDag), NONE,
-				RewriteSearchState::GC_CONTEXT|RewriteSearchState::SET_UNREWRITABLE|PositionState::SET_UNSTACKABLE, 0, UNBOUNDED) {}
+				RewriteSearchState::GC_CONTEXT | RewriteSearchState::SET_UNREWRITABLE | PositionState::SET_UNSTACKABLE,
+				0, UNBOUNDED) {}
 
 DagNode*
 RewriteTransitionState::getNextStateDag(RewritingContext& parent)

@@ -135,7 +135,9 @@ ParamPropositionTable::compact(const map<unsigned int,set<const ParamSubstitutio
 {
 	vector<MatchingInfo> result(match.size());
 	transform(match.begin(), match.end(), result.begin(),
-			[](const pair<unsigned int,set<const ParamSubstitution*>>& i) { return make_pair(i.first,vector<const ParamSubstitution*>(i.second.begin(),i.second.end())); });
+			[](const pair<unsigned int,set<const ParamSubstitution*>>& i) {
+		return make_pair(i.first,vector<const ParamSubstitution*>(i.second.begin(),i.second.end()));
+	});
 	return result;
 }
 
@@ -154,7 +156,8 @@ ParamPropositionTable::updatePropInfo(unsigned int propId)
 		}
 		else
 		{
-			paramPropSymbolMap[propDag->symbol()].push_back(propId);	// register a related symbol for the prop (except for enalbed props)
+			// register a related symbol for the prop (except for enalbed props)
+			paramPropSymbolMap[propDag->symbol()].push_back(propId);
 			pInfoId = paramInfoTable.size();
 			paramInfoTable.emplace_back(new ParamInfo(TermUtil::constructTerm(propDag)));
 		}

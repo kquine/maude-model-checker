@@ -32,7 +32,8 @@ public:
 
 	virtual int build(LogicFormula& formula, DagNodeSet& propositions, DagNode* dagNode) const = 0;
 
-	bdd translateFairnessFormula(unsigned int subformulaIndex, const LogicFormula& formula, set<unsigned int>& propIds) const;
+	bdd translateFairnessFormula(unsigned int subformulaIndex,
+			const LogicFormula& formula, set<unsigned int>& propIds) const;
 };
 
 } /* namespace modelChecker */

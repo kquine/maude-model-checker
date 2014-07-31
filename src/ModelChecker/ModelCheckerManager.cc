@@ -22,6 +22,7 @@
 #include "dagNode.hh"
 
 //	ltlr definitions
+#include "Utility/ptr_set.hh"
 #include "Automaton/FairProductAutomaton.hh"
 #include "Graph/FairStateSystemGraph.hh"
 #include "Graph/FairStateEventSystemGraph.hh"
@@ -46,8 +47,9 @@
 
 namespace modelChecker {
 
-ModelCheckerManager::ModelCheckerManager(Formula& f, PropositionTable& props, unique_ptr<AbstractFairnessTable>&& fairTable,
-	const PropEvaluator& sev, const PropEvaluator& eev, const ProofTermGenerator& ptg, RewritingContext& sysCxt):
+ModelCheckerManager::ModelCheckerManager(Formula& f, PropositionTable& props,
+		unique_ptr<AbstractFairnessTable>&& fairTable, const PropEvaluator& sev,
+		const PropEvaluator& eev, const ProofTermGenerator& ptg, RewritingContext& sysCxt):
 			formula(f), propTable(props), pGenerator(ptg), sysContext(sysCxt)
 {
 	initPropFairCheckers(sev, eev, fairTable.get());
@@ -55,7 +57,8 @@ ModelCheckerManager::ModelCheckerManager(Formula& f, PropositionTable& props, un
 }
 
 void
-ModelCheckerManager::initPropFairCheckers(const PropEvaluator& sev, const PropEvaluator& eev, AbstractFairnessTable* fairTablePtr)
+ModelCheckerManager::initPropFairCheckers(const PropEvaluator& sev,
+		const PropEvaluator& eev, AbstractFairnessTable* fairTablePtr)
 {
 	for (unsigned int i = 0; i < propTable.cardinality(); ++i)
 	{
@@ -70,8 +73,14 @@ ModelCheckerManager::initPropFairCheckers(const PropEvaluator& sev, const PropEv
 		hasEventProp |= propTable.isEventProp(i);
 	}
 
-	for (auto i = stateProps.rbegin(); i != stateProps.rend(); ++i)	{ if (*i < formula.nrFormulaPropIds) fStateProps.insert(*i); }
-	for (auto i = eventProps.rbegin(); i != eventProps.rend(); ++i)	{ if (*i < formula.nrFormulaPropIds) fEventProps.insert(*i); }
+	for (auto i = stateProps.rbegin(); i != stateProps.rend(); ++i)
+	{
+		if (*i < formula.nrFormulaPropIds) fStateProps.insert(*i);
+	}
+	for (auto i = eventProps.rbegin(); i != eventProps.rend(); ++i)
+	{
+		if (*i < formula.nrFormulaPropIds) fEventProps.insert(*i);
+	}
 
 	spc = 	PropCheckerFactory::createChecker(stateProps, propTable, sev, sysContext);
 	epc =	PropCheckerFactory::createChecker(eventProps, propTable, eev, sysContext);
@@ -92,8 +101,10 @@ ModelCheckerManager::initModelChecker(unique_ptr<AbstractFairnessTable>&& fTable
 		Verbose("ModelChecker: a system graph may compute only state propositions..");
 
 		unique_ptr<StatePropLabel> pl(new StatePropLabel(fStateProps,*spc,epc.get()));
-		if (sfc)	makeGraph<FairStateSystemGraph>(move(pl),unique_ptr<StateFairLabel>(new StateFairLabel(*sfc)),move(fTable));
-		else		makeGraph<StateSystemGraph>(move(pl));
+		if (sfc)
+			makeGraph<FairStateSystemGraph>(move(pl),unique_ptr<StateFairLabel>(new StateFairLabel(*sfc)),move(fTable));
+		else
+			makeGraph<StateSystemGraph>(move(pl));
 	}
 	else if ( enabledProps.empty() )	// there exist event props, but no enabled props
 	{
@@ -129,7 +140,8 @@ template <template <typename...> class Graph, typename... Args> void
 ModelCheckerManager::initPropLabel(Args&&... args)
 {
 	if (!fStateProps.empty() && !fEventProps.empty())
-		makeGraph<Graph>(unique_ptr<StateEventPropLabel>(new StateEventPropLabel(fStateProps,fEventProps,*spc,*epc)),forward<Args>(args)...);
+		makeGraph<Graph>(unique_ptr<StateEventPropLabel>(new StateEventPropLabel(
+				fStateProps,fEventProps,*spc,*epc)),forward<Args>(args)...);
 	else if ( !fStateProps.empty() )
 		makeGraph<Graph>(unique_ptr<StatePropLabel>(new StatePropLabel(fStateProps,*spc,epc.get())),forward<Args>(args)...);
 	else if ( !fEventProps.empty())
@@ -151,10 +163,12 @@ ModelCheckerManager::makeGraph(unique_ptr<PL>&& pl, Args&&... args)
 }
 
 template <template <typename,typename> class Graph, typename PL, typename FL, typename... Args> void
-ModelCheckerManager::makeGraph(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, unique_ptr<AbstractFairnessTable>&& fairTable, Args&&... args)
+ModelCheckerManager::makeGraph(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl,
+		unique_ptr<AbstractFairnessTable>&& fairTable, Args&&... args)
 {
 	pl->setExtraFlag(true);		// notify that there exist fairness props.
-	unique_ptr<Graph<PL,FL>> sysGraph(new Graph<PL,FL>(move(pl), move(fl),forward<Args>(args)..., sysContext, pGenerator, propTable));
+	unique_ptr<Graph<PL,FL>> sysGraph(new Graph<PL,FL>(move(pl),
+			move(fl),forward<Args>(args)..., sysContext, pGenerator, propTable));
 	sysGraph->init();
 	dagGraphRef = sysGraph.get();
 
@@ -198,7 +212,8 @@ ModelCheckerManager::makeModelChecker(unique_ptr<SA>&& sysGraph, unique_ptr<Buch
 }
 
 template <bool hasState, bool hasEvent, typename SA> void
-ModelCheckerManager::makeModelChecker(unique_ptr<SA>&& sysGraph, unique_ptr<GenBuchiAutomaton>&& propGraph, unique_ptr<AbstractFairnessTable>&& fairTable)
+ModelCheckerManager::makeModelChecker(unique_ptr<SA>&& sysGraph,
+		unique_ptr<GenBuchiAutomaton>&& propGraph, unique_ptr<AbstractFairnessTable>&& fairTable)
 {
 	auto propSize = propGraph->getNrStates();
 

@@ -30,7 +30,8 @@ public:
 	    }
 	}
 
-	static pair<bool,Bdd> satisfiesPartialFormula(Bdd formula, const std::function<bool(unsigned int)>& domain, const std::function<bool(unsigned int)>& truth)
+	static pair<bool,Bdd> satisfiesPartialFormula(Bdd formula,
+			const std::function<bool(unsigned int)>& domain, const std::function<bool(unsigned int)>& truth)
 	{
 	    for(;;)
 	    {

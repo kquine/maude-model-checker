@@ -15,6 +15,9 @@
 
 namespace modelChecker {
 
+/**
+ * A factory class to generate various fairness checkers
+ */
 class FairnessCheckerFactory
 {
 public:

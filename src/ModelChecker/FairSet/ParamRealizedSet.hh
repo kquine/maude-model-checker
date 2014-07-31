@@ -21,7 +21,8 @@ public:
 	void paste(const ParamRealizedSet& f);
 	void merge(const ParamRealizedSet& f);
 
-	void extend(const NatSet& other, NatSet& target, const RealizedFairnessTable& rtable) const;	// extend target with a fair in other
+	// extend target with a fair in other
+	void extend(const NatSet& other, NatSet& target, const RealizedFairnessTable& rtable) const;
 	void extend(const ParamRealizedSet& other, NatSet& target, const RealizedFairnessTable& rtable) const;
 
 	void dump(ostream& o) const;

@@ -19,7 +19,8 @@
 
 namespace modelChecker {
 
-ParamStrongFairnessChecker::ParamStrongFairnessChecker(const vector<unsigned int>& strongFairIds, const vector<unsigned int>& prStrongFairIds, ParamStrongFairnessTable& fTable):
+ParamStrongFairnessChecker::ParamStrongFairnessChecker(const vector<unsigned int>& strongFairIds,
+		const vector<unsigned int>& prStrongFairIds, ParamStrongFairnessTable& fTable):
 	StrongFairnessChecker(strongFairIds, fTable), RealizedFairnessGenerator(prStrongFairIds, fTable), fTableRef(fTable) {}
 
 unsigned int
@@ -31,11 +32,14 @@ ParamStrongFairnessChecker::getNrFairness() const
 unique_ptr<FairSet>
 ParamStrongFairnessChecker::computeAllFairness(const PropSet& trueProps)
 {
-	auto result = new ParamStrongFairSet(move(static_cast<StrongFairSet&>(*StrongFairnessChecker::computeAllFairness(trueProps))));
+	auto result = new ParamStrongFairSet(
+			std::move(static_cast<StrongFairSet&>(*StrongFairnessChecker::computeAllFairness(trueProps))));
 
 	for (auto& pt : this->generateRealizedFairness(trueProps))
 	{
-		auto truth = [&] (unsigned int propId) { return fTableRef.getPropTable().isParamProp(propId) ? pt.second.contains(propId) : trueProps.isTrue(propId);};
+		auto truth = [&] (unsigned int propId) {
+			return fTableRef.getPropTable().isParamProp(propId) ? pt.second.contains(propId) : trueProps.isTrue(propId);
+		};
 		auto& formula = fTableRef.getFairFormula(pt.first);
 
 		result->setRealized(pt.first);
@@ -48,11 +52,14 @@ ParamStrongFairnessChecker::computeAllFairness(const PropSet& trueProps)
 unique_ptr<FairSet>
 ParamStrongFairnessChecker::computeCompactFairness(const PropSet& trueProps)
 {
-	auto result = new ParamStrongFairSet(move(static_cast<StrongFairSet&>(*StrongFairnessChecker::computeCompactFairness(trueProps))));
+	auto result = new ParamStrongFairSet(
+			std::move(static_cast<StrongFairSet&>(*StrongFairnessChecker::computeCompactFairness(trueProps))));
 
 	for (auto& pt : this->generateRealizedFairness(trueProps))
 	{
-		auto truth = [&] (unsigned int propId) { return fTableRef.getPropTable().isParamProp(propId) ? pt.second.contains(propId) : trueProps.isTrue(propId);};
+		auto truth = [&] (unsigned int propId) {
+			return fTableRef.getPropTable().isParamProp(propId) ? pt.second.contains(propId) : trueProps.isTrue(propId);
+		};
 		auto& formula = fTableRef.getFairFormula(pt.first);
 
 		auto compactId = compactIndices.insert(pt.first).first + StrongFairnessChecker::getNrFairness();
@@ -69,7 +76,8 @@ ParamStrongFairnessChecker::unzip(const FairSet& fs) const
 	auto& pss = static_cast<const ParamStrongFairSet&>(fs);
 	auto result = new ParamStrongFairSet(move(static_cast<StrongFairSet&>(*StrongFairnessChecker::unzip(fs))));
 
-	for (unsigned int sn = StrongFairnessChecker::getNrFairness(), i = 0; i < compactIndices.size(); ++i)	// store an expanded version
+	// store an expanded version
+	for (unsigned int sn = StrongFairnessChecker::getNrFairness(), i = 0; i < compactIndices.size(); ++i)
 	{
 		if ( pss.getSuppFalse(sn + i) )	result->setSuppFalse(compactIndices[i]);
 		if ( pss.getConsFalse(sn + i) )	result->setConsFalse(compactIndices[i]);

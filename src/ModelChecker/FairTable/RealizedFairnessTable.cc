@@ -79,7 +79,10 @@ RealizedFairnessTable::updateInstanceBaseMap(const InstanceSubstMap& substMap, c
 		{
 			const auto& iBase = getInstanceInfo(i->second)->directBase;
 			for (auto k = fBase.begin(); k != fBase.end(); )
-				iBase.find(*k) != iBase.end() ? fBase.erase(k++) : ++k;		// any direct base of f is removed if it's also one of j.
+			{
+				// any direct base of f is removed if it's also one of j.
+				iBase.find(*k) != iBase.end() ? fBase.erase(k++) : ++k;
+			}
 			fBase.insert(i->second);
 		}
 
@@ -88,10 +91,15 @@ RealizedFairnessTable::updateInstanceBaseMap(const InstanceSubstMap& substMap, c
 		if (f->first.subsume(j->first))
 		{
 			auto& jBase = getInstanceInfo(j->second)->directBase;
-			if (none_of(jBase.begin(), jBase.end(), [&fDes] (unsigned int l) { return fDes[l]; }))	// if any direct base of j has not been marked as a descendant of f.
+
+			// if any direct base of j has not been marked as a descendant of f.
+			if (none_of(jBase.begin(), jBase.end(), [&fDes] (unsigned int l) { return fDes[l]; }))
 			{
 				for (auto k = jBase.begin(); k != jBase.end(); )
-					fBase.find(*k) != fBase.end() ? jBase.erase(k++) : ++k;	// any direct base of j is removed if it's also one of f
+				{
+					// any direct base of j is removed if it's also one of f
+					fBase.find(*k) != fBase.end() ? jBase.erase(k++) : ++k;
+				}
 				jBase.insert(f->second);
 			}
 			fDes[j->second] = true;

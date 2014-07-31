@@ -10,8 +10,8 @@
 namespace modelChecker {
 
 template <typename T>
-BaseSystemGraphIter<T>::BaseSystemGraphIter(RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-	BaseSystemGraph<T>(initial,ptg,propTable) {}
+BaseSystemGraphIter<T>::BaseSystemGraphIter(RewritingContext& initial, const PropositionTable& propTable):
+	BaseSystemGraph<T>(initial,propTable) {}
 
 template <class T> inline unsigned int
 BaseSystemGraphIter<T>::getNrVisitedStates() const	// count only visited states
@@ -28,12 +28,12 @@ BaseSystemGraphIter<T>::getNrVisitedTransitions(unsigned int stateNr) const
 template <typename T> unsigned int
 BaseSystemGraphIter<T>::insertState(DagNode* stateDag)
 {
-	auto nextState = StateDagContainer::insertDag(stateDag);
+	auto nextState = static_cast<T*>(this)->stateDag2index(stateDag);
 	if (nextState == this->seen.size())	// if a new state identified
 	{
 		DagNode* cannStateDag = this->getStateDag(nextState);
 		unique_ptr<State> s(new State);
-		s->explore.reset(new ActiveState(this->getContext(),stateDag));
+		s->explore.reset(new ActiveState(this->context,stateDag));
 		static_cast<T*>(this)->updateStateLabel(cannStateDag, *s);
 		this->seen.push_back(std::move(s));
 	}
@@ -57,10 +57,10 @@ BaseSystemGraphIter<T>::computeNextState(unsigned int stateNr, unsigned int inde
 	while (nrTransitions <= index)
 	{
 		// if there is a next state
-		if (DagNode* ns = static_cast<ActiveState*>(n.explore.get())->getNextStateDag(this->getContext()))
+		if (DagNode* ns = n.explore->getNextStateDag(this->context))
 		{
 			auto nextState = static_cast<T*>(this)->insertState(ns);
-			if (static_cast<T*>(this)->insertTransition(nextState, n))	// if a new transition identified
+			if (static_cast<T*>(this)->insertTransition(nextState, n, ns))	// if a new transition identified
 				++ nrTransitions;
 			MemoryCell::okToCollectGarbage();
 		}

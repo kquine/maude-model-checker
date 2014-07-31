@@ -30,7 +30,8 @@ ParamSubstitution::ParamSubstitution(const VariableInfo& vi, const Substitution&
 		subst[j] = sb.value(j);
 }
 
-ParamSubstitution::ParamSubstitution(const ParamSubstitution& src, const vector<unsigned int>& varMap): subst(varMap.size())
+ParamSubstitution::ParamSubstitution(const ParamSubstitution& src,
+		const vector<unsigned int>& varMap): subst(varMap.size())
 {
 	setSubst(src, varMap);
 }
@@ -73,7 +74,8 @@ ParamSubstitution::setSubst(const vector<unsigned int>& varMap, const ParamSubst
 bool
 ParamSubstitution::operator<(const ParamSubstitution& ps) const
 {
-	return std::lexicographical_compare(subst.begin(), subst.end(), ps.subst.begin(), ps.subst.end());	// NOTE: the bot (nullptr) is less than any other
+	// NOTE: the bot (nullptr) is less than any other
+	return std::lexicographical_compare(subst.begin(), subst.end(), ps.subst.begin(), ps.subst.end());
 }
 
 bool
@@ -86,7 +88,10 @@ bool
 ParamSubstitution::subsume(const ParamSubstitution& ps) const
 {
 	// a subsumes b iff a is bot or a == b.
-	return subst.size() == ps.subst.size() && equal(subst.begin(), subst.end(), ps.subst.begin(), [](DagNode* a, DagNode* b) { return a == nullptr || a == b; });
+	return subst.size() == ps.subst.size() &&
+			equal(subst.begin(), subst.end(), ps.subst.begin(), [](DagNode* a, DagNode* b) {
+				return a == nullptr || a == b;
+			});
 }
 
 } /* namespace modelChecker */

@@ -62,7 +62,9 @@ CompositeFairSet::clone() const
 {
 	CompositeFairSet* cfs = new CompositeFairSet;
 	cfs->fairSets.resize(fairSets.size());
-	transform(fairSets.begin(), fairSets.end(), cfs->fairSets.begin(), [](const unique_ptr<FairSet>& i) { return i->clone(); });
+	transform(fairSets.begin(), fairSets.end(), cfs->fairSets.begin(), [](const unique_ptr<FairSet>& i) {
+		return i->clone();
+	});
 	return unique_ptr<FairSet>(cfs);
 }
 
@@ -130,7 +132,9 @@ CompositeFairSet::Goal::dump(ostream& o) const
 
 CompositeFairSet::Bad::Bad(const CompositeFairSet& f): fairBadSets(f.fairSets.size())
 {
-	transform(f.fairSets.begin(), f.fairSets.end(), fairBadSets.begin(), [](const unique_ptr<FairSet>& i) { return i->makeBadGoal(); });
+	transform(f.fairSets.begin(), f.fairSets.end(), fairBadSets.begin(), [](const unique_ptr<FairSet>& i) {
+		return i->makeBadGoal();
+	});
 }
 
 bool

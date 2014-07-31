@@ -12,6 +12,7 @@
 #include "protectedDagNodeSet.hh"
 #include "Graph/DagSystemGraph.hh"
 #include "FoldingChecker.hh"
+#include "PrettyPrinter.hh"
 
 namespace modelChecker {
 
@@ -41,12 +42,16 @@ public:
 	bool boundState(int stateNr) const;
 	void incrementLevel();
 
+	void dump(ostream& o, unsigned int stateNr, PrettyPrinter* stateP, PrettyPrinter* transP) const;	// state dump
+
 private:
 	struct State;
 	struct MaximalState;
 	struct FoldedState;
 
 	void insertFoldedState(unsigned int stateNr);
+
+	void dump_fold(ostream& o, unsigned int stateNr) const;
 
 	const unique_ptr<GRAPH> graph;			// underlying graph
 	const unique_ptr<FoldingChecker> sfc;	// state folding checker

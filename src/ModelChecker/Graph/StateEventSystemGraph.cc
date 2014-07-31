@@ -31,8 +31,9 @@ namespace modelChecker {
 
 
 template <typename PL>
-StateEventSystemGraph<PL>::StateEventSystemGraph(unique_ptr<PL>&& pl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-	Super(initial,ptg,propTable), SystemGraphTraits<StateEventSystemGraph<PL>>(move(pl)) {}
+StateEventSystemGraph<PL>::StateEventSystemGraph(unique_ptr<PL>&& pl, RewritingContext& initial,
+		const ProofTermGenerator& ptg, const PropositionTable& propTable):
+			Super(initial,propTable), CompactProofTermTransitionGraph(ptg), Traits(move(pl)) {}
 
 template <typename PL> bool
 SystemGraphTraits<StateEventSystemGraph<PL>>::satisfiesStateProp(unsigned int propId, const State& s) const
@@ -53,13 +54,12 @@ SystemGraphTraits<StateEventSystemGraph<PL>>::updateStateLabel(DagNode* stateDag
 }
 
 template <typename PL> bool
-SystemGraphTraits<StateEventSystemGraph<PL>>::insertTransition(unsigned int nextState, State& n)
+SystemGraphTraits<StateEventSystemGraph<PL>>::insertTransition(unsigned int nextState, State& n, DagNode*)
 {
 	auto& as = *n.explore;
 	unique_ptr<Transition> t(new Transition(nextState, ++ as.transitionCount));
 
-	DagNode* eventDag = static_cast<StateEventSystemGraph<PL>*>(this)->ptGenerator.makeProofDag(
-			as.getPosition(), *as.getRule(), as.getSubstitution());	// create a proof term
+	DagNode* eventDag = static_cast<StateEventSystemGraph<PL>*>(this)->makeProofDag(as);	// create a proof term
 	propLabel->updateEventLabel(eventDag, *t);	// compute all event props and store the formula event props
 
 	if (as.transitionPtrSet.insert(t.get()).second)		// if a new transition identified
@@ -77,7 +77,7 @@ SystemGraphTraits<StateEventSystemGraph<PL>>::insertDeadlockTransition(unsigned 
 			"StateEventSystemGraph::insertDeadlockTransition: not deadlock");
 
 	unique_ptr<Transition> t(new Transition(stateNr, 0));	// 0 indicates a deadlock transition!
-	DagNode* eventDag = static_cast<StateEventSystemGraph<PL>*>(this)->ptGenerator.getDeadlockDag();
+	DagNode* eventDag = static_cast<StateEventSystemGraph<PL>*>(this)->getDeadlockDag();
 	propLabel->updateEventLabel(eventDag, *t);
 	n.explore->transitionPtrSet.insert(t.get());
 	n.transitions.push_back(std::move(t));

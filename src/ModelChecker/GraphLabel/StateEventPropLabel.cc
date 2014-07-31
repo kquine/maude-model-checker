@@ -18,7 +18,8 @@
 
 namespace modelChecker {
 
-StateEventPropLabel::StateEventPropLabel(const NatSet& stateProps, const NatSet& eventProps, PropChecker& spc, PropChecker& epc): statePC(spc), eventPC(epc)
+StateEventPropLabel::StateEventPropLabel(const NatSet& stateProps,
+		const NatSet& eventProps, PropChecker& spc, PropChecker& epc): statePC(spc), eventPC(epc)
 {
 	unsigned int max_id = max(stateProps.max(), eventProps.max());
 

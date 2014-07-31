@@ -20,7 +20,8 @@ namespace modelChecker {
 
 ParamPropChecker::ParamPropChecker(const vector<unsigned int>& groundPropIds, const vector<unsigned int>& paramPropIds,
 		ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& context):
-				PropChecker(groundPropIds, propTable, pe, context), RealizedPropGenerator(paramPropIds, propTable, pe, context) {}
+				PropChecker(groundPropIds, propTable, pe, context),
+				RealizedPropGenerator(paramPropIds, propTable, pe, context) {}
 
 unique_ptr<PropSet>
 ParamPropChecker::computeCheckResult(DagNode* target)

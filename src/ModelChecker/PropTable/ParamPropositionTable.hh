@@ -65,7 +65,9 @@ private:
 	const InstancePropInfo* getInstancePropInfo(unsigned int propId) const;
 
 	vector<unique_ptr<ParamInfo>> paramInfoTable;
-	map<const Symbol*,vector<unsigned int> > paramPropSymbolMap;		// top symbol |-> a set of the corresponding param prop ids
+
+	// top symbol |-> a set of the corresponding param prop ids
+	map<const Symbol*,vector<unsigned int> > paramPropSymbolMap;
 };
 
 

@@ -15,7 +15,8 @@ namespace modelChecker {
 class ParamEnabledPropHandler: public EnabledPropHandler
 {
 public:
-	ParamEnabledPropHandler(const vector<unsigned int>& groundFairEnbPropIds, const vector<unsigned int>& paramFairEnbPropIds, const ParamPropositionTable& propTable);
+	ParamEnabledPropHandler(const vector<unsigned int>& groundFairEnbPropIds,
+			const vector<unsigned int>& paramFairEnbPropIds, const ParamPropositionTable& propTable);
 
 	unique_ptr<PropSet> computeEnabledProps(const vector<unique_ptr<PropSet>>& trueEventPropIds) const override;
 

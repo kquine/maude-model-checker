@@ -15,15 +15,17 @@
 
 namespace modelChecker {
 
+/**
+ * An interface for checking fairness conditions.
+ */
 class FairnessChecker
 {
 public:
 	virtual ~FairnessChecker() = default;
 
 	virtual unsigned int getNrFairness() const = 0;
-	virtual unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) = 0;
-
-	virtual unique_ptr<FairSet> computeCompactFairness(const PropSet& trueProps) = 0;
+	virtual unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) = 0;		// for state-only or event-only
+	virtual unique_ptr<FairSet> computeCompactFairness(const PropSet& trueProps) = 0;	// for state/event
 	virtual unique_ptr<FairSet> unzip(const FairSet& fs) const = 0;
 
 protected:

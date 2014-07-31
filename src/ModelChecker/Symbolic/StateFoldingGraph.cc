@@ -13,8 +13,6 @@
 #include "interface.hh"
 #include "core.hh"
 #include "higher.hh"
-#include "strategyLanguage.hh"
-#include "mixfix.hh"
 
 //	lmc declarations
 #include "StateFoldingGraph.hh"
@@ -175,6 +173,45 @@ StateFoldingGraph<GRAPH>::insertFoldedState(unsigned int stateNr)
 	else	// folding cases
 	{
 		foldGraph[stateNr].reset(new FoldedState(std::move(foldingStates)));
+	}
+}
+
+
+template <typename GRAPH> void
+StateFoldingGraph<GRAPH>::dump(ostream& o, unsigned int stateNr, PrettyPrinter* stateP, PrettyPrinter* transP) const
+{
+	if (auto fs = dynamic_cast<const FoldedState*>(foldGraph[stateNr].get()))
+	{
+	}
+	else
+	{
+		o << " " << stateNr;
+		o << ": ";
+		stateP->print(cout, getStateDag(stateNr));
+		o << endl;
+	}
+	for (int j = 0; j < graph->getNrTransitions(stateNr); ++j)
+	{
+		auto nx = graph->getNextState(stateNr,j);
+		o << "    " << "-[ ";
+		transP->print(cout, graph->getTransitionDag(stateNr,j));
+		o << " ]-> " << nx;
+		dump_fold(o, nx);
+		o << endl;
+	}
+}
+
+template <typename GRAPH> void
+StateFoldingGraph<GRAPH>::dump_fold(ostream& o, unsigned int stateNr) const
+{
+	if (auto fs = dynamic_cast<const FoldedState*>(foldGraph[stateNr].get()))
+	{
+		o << "[folded";
+		FOR_EACH_CONST(j, set<int>, fs->foldRel)
+		{
+			o << " " << *j;
+		}
+		o << "]";
 	}
 }
 

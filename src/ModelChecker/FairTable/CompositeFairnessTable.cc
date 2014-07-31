@@ -17,7 +17,9 @@ namespace modelChecker {
 bool
 CompositeFairnessTable::hasStrongFairness() const
 {
-	return any_of(fairTables.begin(), fairTables.end(), [] (const unique_ptr<AbstractFairnessTable>& i) { return i->hasStrongFairness(); });
+	return any_of(fairTables.begin(), fairTables.end(), [] (const unique_ptr<AbstractFairnessTable>& i) {
+		return i->hasStrongFairness();
+	});
 }
 
 unsigned int

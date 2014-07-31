@@ -27,9 +27,13 @@
 
 namespace modelChecker {
 
-
+/**
+ * A FairProductAutomaton constructor. Since it "moves" two input arguments, it is important to
+ * first construct "base" ProductAutomaton instance before the others.
+ */
 template <bool hasState, bool hasEvent, typename SA, typename PA>
-FairProductAutomaton<hasState,hasEvent,SA,PA>::FairProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property, unique_ptr<AbstractFairnessTable>&& systemFairTable):
+FairProductAutomaton<hasState,hasEvent,SA,PA>::FairProductAutomaton(unique_ptr<SA>&& system,
+		unique_ptr<PA>&& property, unique_ptr<AbstractFairnessTable>&& systemFairTable):
 	base(move(system),move(property)),
 	fairTable(makeInitFairTable(move(systemFairTable))),
 	formulaRef(&static_cast<FormulaFairnessTable&>(fairTable->getComponent(fairTable->nrComponents()-1))) {}

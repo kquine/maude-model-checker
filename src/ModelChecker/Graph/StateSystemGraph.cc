@@ -29,8 +29,9 @@
 namespace modelChecker {
 
 template <typename PL>
-StateSystemGraph<PL>::StateSystemGraph(unique_ptr<PL>&& pl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
-	Super(initial,ptg,propTable), SystemGraphTraits<StateSystemGraph<PL>>(move(pl)) {}
+StateSystemGraph<PL>::StateSystemGraph(unique_ptr<PL>&& pl, RewritingContext& initial,
+		const ProofTermGenerator& ptg, const PropositionTable& propTable):
+			Super(initial,propTable), RuleTransitionGraph(ptg), Traits(move(pl)) {}
 
 template <typename PL>
 template <typename STATE> bool
@@ -46,15 +47,16 @@ SystemGraphTraits<StateSystemGraph<PL>>::satisfiesEventProp(unsigned int, const 
 	throw logic_error("StateSystemGraph::satisfiesEventProp.");
 }
 
-template <typename PL> unique_ptr<PropSet>
-SystemGraphTraits<StateSystemGraph<PL>>::updateStateLabel(DagNode* stateDag, State& s) const
+template <typename PL>
+template <typename STATE> unique_ptr<PropSet>
+SystemGraphTraits<StateSystemGraph<PL>>::updateStateLabel(DagNode* stateDag, STATE& s) const
 {
 	return propLabel->updateStateLabel(stateDag, s);
 }
 
 template <typename PL>
 template <typename STATE> bool
-SystemGraphTraits<StateSystemGraph<PL>>::insertTransition(unsigned int nextState, STATE& n) const
+SystemGraphTraits<StateSystemGraph<PL>>::insertTransition(unsigned int nextState, STATE& n, DagNode*) const
 {
 	if (n.explore->nextStateSet.insert(nextState).second)	// if a new transition identified
 	{

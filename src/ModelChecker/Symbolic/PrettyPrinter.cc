@@ -49,14 +49,13 @@ PrettyPrinter::print(ostream& o, DagNode* target) const
 	Vector<int> bubble;
 	if ( !i.valid()) // single QID
 	{
-		bubble.append(Token::unBackQuoteSpecials(safeCast(QuotedIdentifierDagNode*,printContext->root())->getIdIndex()));
+		bubble.append(unBackQuoteId(printContext->root()));
 	}
 	else
 	{
 		while (i.valid())
 		{
-			//cout << Token::name(safeCast(QuotedIdentifierDagNode*,i.argument())->getIdIndex());
-			bubble.append(Token::unBackQuoteSpecials(safeCast(QuotedIdentifierDagNode*,i.argument())->getIdIndex()));
+			bubble.append(unBackQuoteId(i.argument()));
 			i.next();
 		}
 	}
@@ -66,7 +65,7 @@ PrettyPrinter::print(ostream& o, DagNode* target) const
 
 // burrowed from Interface::printBubble
 void
-PrettyPrinter::printBubble(ostream& s, const Vector<int>& bubble)
+PrettyPrinter::printBubble(ostream& s, const Vector<int>& bubble) const
 {
 	bool ansiActive = false;
 	bool needSpace = false;

@@ -21,7 +21,8 @@ namespace modelChecker {
 
 ParamEnabledPropHandler::ParamEnabledPropHandler(const vector<unsigned int>& grFairEnbPropIds,
 		const vector<unsigned int>& prFairEnbPropIds, const ParamPropositionTable& propTable):
-				EnabledPropHandler(grFairEnbPropIds, propTable), paramFairEnabledPropIds(prFairEnbPropIds), paramPropTableRef(propTable) {}
+				EnabledPropHandler(grFairEnbPropIds, propTable),
+				paramFairEnabledPropIds(prFairEnbPropIds), paramPropTableRef(propTable) {}
 
 unique_ptr<PropSet>
 ParamEnabledPropHandler::computeEnabledProps(const vector<unique_ptr<PropSet>>& trueEventPropIds) const

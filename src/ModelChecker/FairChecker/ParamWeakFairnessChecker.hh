@@ -16,11 +16,11 @@ namespace modelChecker {
 class ParamWeakFairnessChecker: public WeakFairnessChecker, private RealizedFairnessGenerator
 {
 public:
-	ParamWeakFairnessChecker(const vector<unsigned int>& weakFairIds, const vector<unsigned int>& paramWeakFairIds, ParamWeakFairnessTable& fTable);
+	ParamWeakFairnessChecker(const vector<unsigned int>& weakFairIds,
+			const vector<unsigned int>& paramWeakFairIds, ParamWeakFairnessTable& fTable);
 
 	unsigned int getNrFairness() const override;
 	unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
-
 	unique_ptr<FairSet> computeCompactFairness(const PropSet& trueProps) override;
 	unique_ptr<FairSet> unzip(const FairSet& fs) const override;
 

@@ -20,7 +20,8 @@
 
 namespace modelChecker {
 
-RealizedFairnessGenerator::RealizedFairnessGenerator(const vector<unsigned int>& paramFairIds, RealizedFairnessTable& fairTable):
+RealizedFairnessGenerator::RealizedFairnessGenerator(const vector<unsigned int>& paramFairIds,
+		RealizedFairnessTable& fairTable):
 	paramFairIds(paramFairIds), fairTable(fairTable) {}
 
 deque<pair<unsigned int,NatSet>>

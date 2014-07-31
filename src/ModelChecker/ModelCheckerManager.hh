@@ -25,8 +25,9 @@ class ModelCheckerManager
 {
 	using Formula =	FormulaBuilder::Formula;
 public:
-	ModelCheckerManager(Formula& formula, PropositionTable& propTable, unique_ptr<AbstractFairnessTable>&& fairTable,
-			const PropEvaluator& stateEval, const PropEvaluator& eventEval, const ProofTermGenerator& ptg, RewritingContext& context);
+	ModelCheckerManager(Formula& formula, PropositionTable& propTable,
+			unique_ptr<AbstractFairnessTable>&& fairTable, const PropEvaluator& stateEval,
+			const PropEvaluator& eventEval, const ProofTermGenerator& ptg, RewritingContext& context);
 
 	const DagSystemGraph& getDagSystemGraph() const		{ return *dagGraphRef; }
 	const list<ModelChecker::Edge>& getLeadIn() const	{ return modelChecker->getLeadIn(); }
@@ -57,7 +58,8 @@ private:
 	void makeModelChecker(unique_ptr<SA>&& sysGraph, unique_ptr<BuchiAutomaton2>&& propGraph);
 
 	template <bool hasState, bool hasEvent, typename SA>
-	void makeModelChecker(unique_ptr<SA>&& sysGraph, unique_ptr<GenBuchiAutomaton>&& propGraph, unique_ptr<AbstractFairnessTable>&& fairTable);
+	void makeModelChecker(unique_ptr<SA>&& sysGraph,
+			unique_ptr<GenBuchiAutomaton>&& propGraph, unique_ptr<AbstractFairnessTable>&& fairTable);
 
 	//
 	// formula and propositions

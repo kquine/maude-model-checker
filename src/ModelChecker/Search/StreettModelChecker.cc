@@ -91,7 +91,8 @@ StreettModelChecker<PA>::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad
 #ifdef TDEBUG
 					cout << "## POP" << endl;
 #endif
-					if (const auto& new_bad = makeNewBadGoal(stack.topSCC()->acc_fair,bad))  // revisit the SCC ff there is a new bad goal
+					// revisit the SCC ff there is a new bad goal
+					if (const auto& new_bad = makeNewBadGoal(stack.topSCC()->acc_fair,bad))
 					{
 						queue<State> new_region;
 						new_region.push(stack.sccPop(true));	// pop the top SCC with *unvisit*

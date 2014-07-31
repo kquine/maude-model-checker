@@ -57,7 +57,11 @@ public:
 
 	bool isTarget(const State& s) const	{ return s == cycleState; }
 	bool isTarget(const Transition& t)	{ return isTarget(t.target); }
-	bool inDomain(const State& s) const	{ return (size_t)s.first < stateMap.size() ? stateMap[s.first]->dfs1Seen.contains(s.second) : false; } // ignore unvisited states
+
+	bool inDomain(const State& s) const	{
+		// ignore unvisited states
+		return (size_t)s.first < stateMap.size() ? stateMap[s.first]->dfs1Seen.contains(s.second) : false;
+	}
 
 private:
 	const State cycleState;

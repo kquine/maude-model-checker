@@ -57,7 +57,8 @@ namespace modelChecker {
 LTLRFairnessCheckerSymbol::LTLRFairnessCheckerSymbol(int id, int arity): TemporalSymbol(id, arity) {}
 
 bool
-LTLRFairnessCheckerSymbol::attachData(const Vector<Sort*>& opDeclaration, const char* purpose, const Vector<const char*>& data)
+LTLRFairnessCheckerSymbol::attachData(const Vector<Sort*>& opDeclaration,
+		const char* purpose, const Vector<const char*>& data)
 {
     NULL_DATA(purpose, LTLRFairnessCheckerSymbol, data);
     return  TemporalSymbol::attachData(opDeclaration, purpose, data);
@@ -133,7 +134,8 @@ LTLRFairnessCheckerSymbol::copyAttachments(Symbol* original, SymbolMap* map)
 }
 
 void
-LTLRFairnessCheckerSymbol::getDataAttachments(const Vector<Sort*>& opDeclaration, Vector<const char*>& purposes, Vector<Vector<const char*> >& data)
+LTLRFairnessCheckerSymbol::getDataAttachments(const Vector<Sort*>& opDeclaration,
+		Vector<const char*>& purposes, Vector<Vector<const char*> >& data)
 {
     APPEND_DATA(purposes, data, LTLRFairnessCheckerSymbol);
     TemporalSymbol::getDataAttachments(opDeclaration, purposes, data);
@@ -204,21 +206,27 @@ LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context
     // 1. declare the argument contexts, and reduce the formula/fairness arguments into the normal forms
     //
     const unique_ptr<RewritingContext> sysCxt(context.makeSubcontext(d->getArgument(0)));
-	const unique_ptr<RewritingContext> formulaCxt(context.makeSubcontext(negate(d->getArgument(1))));	formulaCxt->reduce();	context.addInCount(*formulaCxt);
-	const unique_ptr<RewritingContext> fairnessCxt(context.makeSubcontext(d->getArgument(2)));			fairnessCxt->reduce();	context.addInCount(*fairnessCxt);
+	const unique_ptr<RewritingContext> formulaCxt(context.makeSubcontext(negate(d->getArgument(1))));
+	const unique_ptr<RewritingContext> fairnessCxt(context.makeSubcontext(d->getArgument(2)));
+
+	formulaCxt->reduce();	context.addInCount(*formulaCxt);
+	fairnessCxt->reduce();	context.addInCount(*fairnessCxt);
 	//
 	// 2. create a prop table and a fairness decoder
 	//
 	const PropInterpreter pInterpreter(satisfiesSymbol, actionmatchSymbol, enabledSymbol);
-	const unique_ptr<PropositionTable> propTable(TermUtil::checkGround(fairnessCxt->root()) ? new PropositionTable(pInterpreter) : new ParamPropositionTable(pInterpreter));
-	const FairnessDecoder fDecoder(*this, *propTable, fairnessSymbol, strongFairTypeSymbol, weakFairTypeSymbol, fairnessSetSymbol, emptyFairnessSetSymbol);
+	const unique_ptr<PropositionTable> propTable(TermUtil::checkGround(fairnessCxt->root()) ?
+			new PropositionTable(pInterpreter) : new ParamPropositionTable(pInterpreter));
+	const FairnessDecoder fDecoder(*this, *propTable, fairnessSymbol,
+			strongFairTypeSymbol, weakFairTypeSymbol, fairnessSetSymbol, emptyFairnessSetSymbol);
 	//
 	// 3. interpret the formula and the fairness conditions
 	//
     unique_ptr<Formula> formula;
     unique_ptr<AbstractFairnessTable> fairTable;
     try {
-    	formula = interpretFormula(formulaCxt->root(), *propTable);		// NOTE: the formula must be interpreted BEFORE fairness formulas.
+    	// NOTE: the formula must be interpreted BEFORE fairness formulas.
+    	formula = interpretFormula(formulaCxt->root(), *propTable);
     	fairTable = fDecoder.interpretFairnessSet(fairnessCxt->root());
     } catch (const invalid_argument& e)
     {
@@ -240,7 +248,8 @@ LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context
     DagNode* resultDag;
     try {
     	const CounterExampleGenerator cg(counterexampleSymbol,transitionSymbol,transitionListSymbol,nilTransitionListSymbol);
-    	resultDag = mcm.findCounterExample() ? cg.makeCounterexample(mcm.getDagSystemGraph(), mcm.getLeadIn(), mcm.getCycle()) : trueTerm.getDag();
+    	resultDag = mcm.findCounterExample() ?
+    			cg.makeCounterexample(mcm.getDagSystemGraph(), mcm.getLeadIn(), mcm.getCycle()) : trueTerm.getDag();
     } catch (const logic_error& e)
     {
     	IssueAdvisory(e.what());

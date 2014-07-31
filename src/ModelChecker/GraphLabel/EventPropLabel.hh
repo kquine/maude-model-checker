@@ -21,14 +21,33 @@ public:
 	using StateLabel = EmptyPropLabel::Label;
 	using EventLabel = BasePropLabel::Label;
 
-	EventPropLabel(const NatSet& props, PropChecker* spc, PropChecker& epc): EmptyPropLabel(spc), BasePropLabel(props,epc) {}
+	EventPropLabel(const NatSet& props, PropChecker* spc, PropChecker& epc):
+		EmptyPropLabel(spc), BasePropLabel(props,epc) {}
 
-	void setExtraFlag(bool flag) 											{ BasePropLabel::setExtraFlag(flag); }
-	bool satisfiesStateProp(unsigned int propId, const StateLabel& l) const	{ return EmptyPropLabel::satisfiesProp(propId,l); }
-	bool satisfiesEventProp(unsigned int propId, const EventLabel& l) const	{ return BasePropLabel::satisfiesProp(propId,l);}
+	void setExtraFlag(bool flag)
+	{
+		BasePropLabel::setExtraFlag(flag);
+	}
 
-	unique_ptr<PropSet> updateStateLabel(DagNode* dag, StateLabel& l) const	{ return EmptyPropLabel::updateLabel(dag,l); }
-	unique_ptr<PropSet> updateEventLabel(DagNode* dag, EventLabel& l) const	{ return BasePropLabel::updateLabel(dag,l); }
+	bool satisfiesStateProp(unsigned int propId, const StateLabel& l) const
+	{
+		return EmptyPropLabel::satisfiesProp(propId,l);
+	}
+
+	bool satisfiesEventProp(unsigned int propId, const EventLabel& l) const
+	{
+		return BasePropLabel::satisfiesProp(propId,l);
+	}
+
+	unique_ptr<PropSet> updateStateLabel(DagNode* dag, StateLabel& l) const
+	{
+		return EmptyPropLabel::updateLabel(dag,l);
+	}
+
+	unique_ptr<PropSet> updateEventLabel(DagNode* dag, EventLabel& l) const
+	{
+		return BasePropLabel::updateLabel(dag,l);
+	}
 };
 
 } /* namespace modelChecker */

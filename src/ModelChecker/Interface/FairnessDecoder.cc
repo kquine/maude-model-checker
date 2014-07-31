@@ -35,8 +35,9 @@
 
 namespace modelChecker {
 
-FairnessDecoder::FairnessDecoder(const FormulaBuilder& fBuilder, PropositionTable& propTable, Symbol* fairnessSymbol,
-		Symbol* strongFairTypeSymbol, Symbol* weakFairTypeSymbol, Symbol* fairnessSetSymbol, Symbol* emptyFairnessSetSymbol):
+FairnessDecoder::FairnessDecoder(const FormulaBuilder& fBuilder, PropositionTable& propTable,
+		Symbol* fairnessSymbol, Symbol* strongFairTypeSymbol, Symbol* weakFairTypeSymbol,
+		Symbol* fairnessSetSymbol, Symbol* emptyFairnessSetSymbol):
 				fBuilder(fBuilder), propTable(propTable), fairnessSymbol(fairnessSymbol),
 				strongFairTypeSymbol(strongFairTypeSymbol), weakFairTypeSymbol(weakFairTypeSymbol),
 				fairnessSetSymbol(fairnessSetSymbol), emptyFairnessSetSymbol(emptyFairnessSetSymbol) {}
@@ -65,8 +66,12 @@ FairnessDecoder::interpretFairnessSet(DagNode* fairSetDag) const
 			}
 		}
 
-		unique_ptr<WeakFairnessTable>	wft(weakParam	? new ParamWeakFairnessTable(static_cast<ParamPropositionTable&>(propTable))   : new WeakFairnessTable(propTable));
-		unique_ptr<StrongFairnessTable> sft(strongParam ? new ParamStrongFairnessTable(static_cast<ParamPropositionTable&>(propTable)) : new StrongFairnessTable(propTable));
+		unique_ptr<WeakFairnessTable>	wft(weakParam	?
+				new ParamWeakFairnessTable(static_cast<ParamPropositionTable&>(propTable)) :
+				new WeakFairnessTable(propTable));
+		unique_ptr<StrongFairnessTable> sft(strongParam ?
+				new ParamStrongFairnessTable(static_cast<ParamPropositionTable&>(propTable)) :
+				new StrongFairnessTable(propTable));
 
 		for (auto i : wConds)	wft->insertFairnessFormula(get<2>(*i), get<0>(*i), get<3>(*i));
 		for (auto i : sConds)	sft->insertFairnessFormula(make_pair(get<1>(*i),get<2>(*i)), get<0>(*i), get<3>(*i));
@@ -101,7 +106,8 @@ FairnessDecoder::parseFairnessSet(DagNode* fairSetDag) const
 	else
 	{
 		if (fairSetDag->symbol() != emptyFairnessSetSymbol)
-			throw invalid_argument(StringStream() << "fairness condition " << QUOTE(fairSetDag) << " did not reduce to a valid term.");
+			throw invalid_argument(StringStream() << "fairness condition " <<
+					QUOTE(fairSetDag) << " did not reduce to a valid term.");
 	}
 	return result;
 }
@@ -114,8 +120,10 @@ FairnessDecoder::parseFairnessDag(DagNode* fairnessDag) const
 	LogicFormula premF, consF;
 
 	set<unsigned int> propIds;
-	bdd prem = fBuilder.translateFairnessFormula(fBuilder.build(premF, propTable.getDagNodeSet(), d->getArgument(1)), premF, propIds);
-	bdd cons = fBuilder.translateFairnessFormula(fBuilder.build(consF, propTable.getDagNodeSet(), d->getArgument(2)), consF, propIds);
+	bdd prem = fBuilder.translateFairnessFormula(fBuilder.build(premF,
+			propTable.getDagNodeSet(), d->getArgument(1)), premF, propIds);
+	bdd cons = fBuilder.translateFairnessFormula(fBuilder.build(consF,
+			propTable.getDagNodeSet(), d->getArgument(2)), consF, propIds);
 	propTable.updatePropTable();
 
 	if (d->getArgument(0)->symbol() == weakFairTypeSymbol)

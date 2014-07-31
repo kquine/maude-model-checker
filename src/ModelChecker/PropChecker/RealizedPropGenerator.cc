@@ -38,7 +38,8 @@
 
 namespace modelChecker {
 
-RealizedPropGenerator::RealizedPropGenerator(const vector<unsigned int>& paramPropIds, ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& parent):
+RealizedPropGenerator::RealizedPropGenerator(const vector<unsigned int>& paramPropIds,
+		ParamPropositionTable& propTable, const PropEvaluator& pe, RewritingContext& parent):
 				parentContext(parent), pEval(pe), paramPropIds(paramPropIds), propTable(propTable)
 {
 	constructRules();
@@ -85,7 +86,8 @@ RealizedPropGenerator::computeGenRules(SearchState& sc, RewritingContext& contex
 						result.setInstance(pi, propTable);
 				}
 				else
-					throw logic_error(StringStream() << "Derived term " << QUOTE(this) << " is non-ground and realized substitutions cannot be correctly generated.");
+					throw logic_error(StringStream() << "Derived term " <<
+							QUOTE(this) << " is non-ground and realized substitutions cannot be correctly generated.");
 			}
 			while (sc.findNextSolution());
 		}
@@ -122,7 +124,7 @@ RealizedPropGenerator::makeRule(Term* left, Term* right, const Vector<ConditionF
 	Term* rterm = right->deepCopy(nullptr);							// will be freed when the rule is freed
 
 	Vector<ConditionFragment*> newcond;
-	deepCopyCondition(cond, newcond);
+	deepCopyCondition(cond, newcond);		// will be freed when the rule is freed
 
 	unique_ptr<Rule> rule(new Rule(NONE, lterm, rterm, newcond));
 	rule->setModuleInfo(0, NONE);

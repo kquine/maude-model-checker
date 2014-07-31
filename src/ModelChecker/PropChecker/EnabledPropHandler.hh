@@ -21,7 +21,8 @@ public:
 	bool isFormulaEnabled(unsigned int propId) const;
 
 	template <typename PL, typename EL>
-	bool satisfiesEnabledProp(unsigned int propId, const typename PL::StateLabel& sL, const vector<unique_ptr<EL>>& eventLs, const PL& propLabel) const;
+	bool satisfiesEnabledProp(unsigned int propId,
+			const typename PL::StateLabel& sL, const vector<unique_ptr<EL>>& eventLs, const PL& propLabel) const;
 
 	virtual unique_ptr<PropSet> computeEnabledProps(const vector<unique_ptr<PropSet>>& trueEventPropIds) const;
 
@@ -36,7 +37,8 @@ protected:
 
 
 template <typename PL, typename EL> inline bool
-EnabledPropHandler::satisfiesEnabledProp(unsigned int propId, const typename PL::StateLabel& sL, const vector<unique_ptr<EL>>& eventLs, const PL& propLabel) const
+EnabledPropHandler::satisfiesEnabledProp(unsigned int propId,
+		const typename PL::StateLabel& sL, const vector<unique_ptr<EL>>& eventLs, const PL& propLabel) const
 {
 	if (propositions.isEnabledProp(propId))
 	{

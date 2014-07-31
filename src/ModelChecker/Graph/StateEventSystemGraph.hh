@@ -7,8 +7,10 @@
 
 #ifndef STATEEVENTSYSTEMGRAPH_HH_
 #define STATEEVENTSYSTEMGRAPH_HH_
-#include "BaseSystemGraphIter.hh"
 #include "PropChecker/PropSet.hh"
+#include "GraphTemplate/BaseSystemGraphIter.hh"
+#include "GraphTemplate/CompactProofTermTransitionGraph.hh"
+#include "GraphTemplate/DefaultStateDagContainer.hh"
 
 namespace modelChecker {
 
@@ -16,19 +18,36 @@ namespace modelChecker {
  * an ordinary state/event-based RW system graph; every state proposition should be defined by equations.
  */
 template <typename PL>
-class StateEventSystemGraph: public BaseSystemGraphIter<StateEventSystemGraph<PL>>, private SystemGraphTraits<StateEventSystemGraph<PL>>
+class StateEventSystemGraph:
+		public BaseSystemGraphIter<StateEventSystemGraph<PL>>,
+		private CompactProofTermTransitionGraph,
+		private DefaultStateDagContainer,
+		private SystemGraphTraits<StateEventSystemGraph<PL>>
 {
 	friend class BaseSystemGraph<StateEventSystemGraph>;
 	friend class BaseSystemGraphIter<StateEventSystemGraph>;
 	friend class SystemGraphTraits<StateEventSystemGraph<PL>>;
-	using Super = BaseSystemGraphIter<StateEventSystemGraph<PL>>;
+
+	using Super =	BaseSystemGraphIter<StateEventSystemGraph<PL>>;
+	using Traits =	SystemGraphTraits<StateEventSystemGraph<PL>>;
 
 public:
-	using typename SystemGraphTraits<StateEventSystemGraph<PL>>::State;
-	using typename SystemGraphTraits<StateEventSystemGraph<PL>>::Transition;
-	using typename SystemGraphTraits<StateEventSystemGraph<PL>>::ActiveState;
+	using typename Traits::State;
+	using typename Traits::Transition;
+	using typename Traits::ActiveState;
 
-	StateEventSystemGraph(unique_ptr<PL>&& sepl, RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable);
+	StateEventSystemGraph(unique_ptr<PL>&& sepl, RewritingContext& initial,
+			const ProofTermGenerator& ptg, const PropositionTable& propTable);
+
+private:
+	using DefaultStateDagContainer::index2StateDag;				/* implements */
+	using DefaultStateDagContainer::stateDag2index;				/* implements */
+	using CompactProofTermTransitionGraph::makeTransitionDag;	/* implements */
+	using Traits::insertTransition;								/* implements */
+	using Traits::insertDeadlockTransition;						/* implements */
+	using Traits::satisfiesStateProp;							/* implements */
+	using Traits::satisfiesEventProp;							/* implements */
+	using Traits::updateStateLabel;								/* implements */
 };
 
 template <typename PL>
@@ -41,9 +60,8 @@ public:
 
 	SystemGraphTraits(unique_ptr<PL>&& pl): propLabel(move(pl)) {}
 
-	bool insertTransition(unsigned int nextState, State& n);
+	bool insertTransition(unsigned int nextState, State& n, DagNode*);
 	void insertDeadlockTransition(unsigned int stateNr, State& n);
-
 	bool satisfiesStateProp(unsigned int propId, const State& s) const;
 	bool satisfiesEventProp(unsigned int propId, const Transition& t) const;
 	unique_ptr<PropSet> updateStateLabel(DagNode* stateDag, State& s) const;
@@ -53,12 +71,17 @@ private:
 };
 
 template <typename PL>
-struct SystemGraphTraits<StateEventSystemGraph<PL>>::State: public BaseSystemGraphIterTraits::State<ActiveState,Transition>, public PL::StateLabel {};
+struct SystemGraphTraits<StateEventSystemGraph<PL>>::State:
+	public BaseSystemGraphIterTraits::State<ActiveState,Transition>, public PL::StateLabel {};
 
 template <typename PL>
-struct SystemGraphTraits<StateEventSystemGraph<PL>>::Transition: public BaseSystemGraphIterTraits::Transition, public ProofDagGenerator, public PL::EventLabel
+struct SystemGraphTraits<StateEventSystemGraph<PL>>::Transition:
+	public BaseSystemGraphIterTraits::Transition,
+	public CompactProofTermTransitionGraph::Transition, public PL::EventLabel
 {
-	Transition(unsigned int nextState, unsigned int transitionIndex): BaseSystemGraphIterTraits::Transition{nextState}, ProofDagGenerator(transitionIndex) {}
+	Transition(unsigned int nextState, unsigned int transitionIndex):
+		BaseSystemGraphIterTraits::Transition{nextState},
+		CompactProofTermTransitionGraph::Transition(transitionIndex) {}
 	bool operator<(const Transition& t) const;
 };
 

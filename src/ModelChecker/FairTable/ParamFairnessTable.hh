@@ -35,7 +35,8 @@ public:
 private:
 	struct ParamFairness: public GroundFairness, public RealizedFairnessTable::ParamInfo
 	{
-		ParamFairness(const GroundFairness& fi, DagNode* fDag, const vector<unsigned int>& propIds, const ParamPropositionTable& pTable):
+		ParamFairness(const GroundFairness& fi, DagNode* fDag,
+				const vector<unsigned int>& propIds, const ParamPropositionTable& pTable):
 			GroundFairness(fi), ParamInfo(fDag,propIds,pTable) {}
 	};
 	struct InstanceFairnessInfo: public Fairness, public RealizedFairnessTable::InstanceInfo
@@ -43,7 +44,8 @@ private:
 		InstanceFairnessInfo(unsigned int pfi, const ParamSubstitution* s): InstanceInfo(pfi, s) {}
 	};
 
-	unique_ptr<GroundFairness> createFormulaFairness(const Formula& f, const vector<unsigned int>& propIds, DagNode* fairDag) const override;
+	unique_ptr<GroundFairness> createFormulaFairness(const Formula& f,
+			const vector<unsigned int>& propIds, DagNode* fairDag) const override;
 
 	unsigned int getNextFairIndex() const;
 	typename ParamFairnessTable<Formula>::ParamInfo& getParamInfo(unsigned int fairId) const override;

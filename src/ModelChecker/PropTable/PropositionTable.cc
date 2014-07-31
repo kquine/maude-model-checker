@@ -23,7 +23,8 @@ PropositionTable::PropositionTable(const PropInterpreter& pi): pInterpreter(pi) 
 void
 PropositionTable::updatePropTable()
 {
-	for ( ; (unsigned int)this->cardinality() > minIndex; ++ minIndex)	//NOTE: cardinality always returns a positive number
+	//NOTE: cardinality always returns a positive number
+	for ( ; (unsigned int)this->cardinality() > minIndex; ++ minIndex)
 	{
 		if ( minIndex >= propInfoTable.size() || ! propInfoTable[minIndex] )
 			updatePropInfo(minIndex);	// may invoke the overridden function

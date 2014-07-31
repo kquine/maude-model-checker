@@ -21,7 +21,9 @@ public:
 	const ParamSubstitutionBuilder& getSubstBuilder(unsigned int fairId) const;
 
 	const ParamSubstitution& getRealizedFairSubst(unsigned int fairId) const;
-	unsigned int getRealizedFairId(unsigned int fairId, const NatSet& realizedFair) const;	// find the realized fair id in realizedFair (i.e.,parameter abstraction)
+
+	// find the realized fair id in realizedFair (i.e.,parameter abstraction)
+	unsigned int getRealizedFairId(unsigned int fairId, const NatSet& realizedFair) const;
 	unsigned int insertFairnessInstance(unsigned int paramFairId, const ParamSubstitution& propSubst);
 
 protected:
@@ -29,9 +31,12 @@ protected:
 
 	struct ParamInfo
 	{
-		ParamInfo(DagNode* fDag, const vector<unsigned int>& propIds, const ParamPropositionTable& pTable): builder(fDag,propIds,pTable) {}
+		ParamInfo(DagNode* fDag, const vector<unsigned int>& propIds,
+				const ParamPropositionTable& pTable): builder(fDag,propIds,pTable) {}
 		ParamSubstitutionBuilder builder;
-		InstanceSubstMap substMap;				// realized substitution |-> an instance fair id  (its keys are ordered by the lexico-order)
+
+		// realized substitution |-> an instance fair id  (its keys are ordered by the lexico-order)
+		InstanceSubstMap substMap;
 	};
 
 	struct InstanceInfo
@@ -51,7 +56,9 @@ protected:
 	virtual void insertInstance(unsigned int pfi, const ParamSubstitution* s) = 0;
 
 private:
-	void updateInstanceBaseMap(const InstanceSubstMap& substMap, const InstanceSubstMap::const_iterator f);	// update the dependency map when f is newly added
+
+	// update the dependency map when f is newly added
+	void updateInstanceBaseMap(const InstanceSubstMap& substMap, const InstanceSubstMap::const_iterator f);
 };
 
 } /* namespace modelChecker */

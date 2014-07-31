@@ -29,17 +29,21 @@ unique_ptr<FormulaBuilder::Formula>
 FormulaBuilder::interpretFormula(DagNode* formulaDag, PropositionTable& propTable) const
 {
 	if (! TermUtil::checkGround(formulaDag))
-		throw invalid_argument(StringStream() << "negated LTL formula " << QUOTE(formulaDag) << " did not reduce to a ground term.");
+		throw invalid_argument(StringStream() << "negated LTL formula " <<
+				QUOTE(formulaDag) << " did not reduce to a ground term.");
 	else
 	{
 		unique_ptr<Formula> formula(new Formula);
 		formula->top = build(formula->data, propTable.getDagNodeSet(), formulaDag);
 		if (formula->top == NONE)
-			throw invalid_argument(StringStream() << "negated LTL formul " << QUOTE(formulaDag) << "a did not reduce to a valid negative normal form.");
+			throw invalid_argument(StringStream() << "negated LTL formul " <<
+					QUOTE(formulaDag) << "a did not reduce to a valid negative normal form.");
 		else
 		{
 			formula->nrRealFormulaPropIds = propTable.cardinality();
-			propTable.updatePropTable();	// update of the prop table will add event props from the existing enabled props.
+
+			// update of the prop table will add event props from the existing enabled props.
+			propTable.updatePropTable();
 			formula->nrFormulaPropIds = propTable.cardinality();
 			return formula;
 		}
@@ -47,7 +51,8 @@ FormulaBuilder::interpretFormula(DagNode* formulaDag, PropositionTable& propTabl
 }
 
 bdd
-FormulaBuilder::translateFairnessFormula(unsigned int subformulaIndex, const LogicFormula& formula, set<unsigned int>& propIds) const
+FormulaBuilder::translateFairnessFormula(unsigned int subformulaIndex,
+		const LogicFormula& formula, set<unsigned int>& propIds) const
 {
 	switch (formula.getOp(subformulaIndex))
 	{

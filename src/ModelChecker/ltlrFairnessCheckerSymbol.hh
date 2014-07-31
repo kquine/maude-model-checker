@@ -43,7 +43,8 @@ public:
     bool attachSymbol(const char* purpose, Symbol* symbol) override;
     bool attachTerm(const char* purpose, Term* term) override;
     void copyAttachments(Symbol* original, SymbolMap* map) override;
-    void getDataAttachments(const Vector<Sort*>& opDeclaration, Vector<const char*>& purposes, Vector<Vector<const char*> >& data) override;
+    void getDataAttachments(const Vector<Sort*>& opDeclaration,
+    		Vector<const char*>& purposes, Vector<Vector<const char*> >& data) override;
     void getSymbolAttachments(Vector<const char*>& purposes, Vector<Symbol*>& symbols) override;
     void getTermAttachments(Vector<const char*>& purposes, Vector<Term*>& terms) override;
     bool eqRewrite(DagNode* subject, RewritingContext& context) noexcept override;
