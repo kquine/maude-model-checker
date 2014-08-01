@@ -1,7 +1,6 @@
 SUBDIRS = \
 	3rdParty \
 	Utility \
-	ModelChecker \
 	Temporal \
 	Interface \
 	Core \
@@ -23,4 +22,6 @@ SUBDIRS = \
 	MSCP10 \
 	StrategyLanguage \
 	Mixfix \
+	SMT \
+	ModelChecker \
 	Main

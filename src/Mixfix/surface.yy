@@ -121,7 +121,7 @@ int yylex(YYSTYPE* lvalp);
  */
 %token <yyToken> KW_MOD KW_OMOD KW_VIEW
 %token KW_PARSE KW_NORMALIZE KW_REDUCE KW_REWRITE
-%token KW_LOOP KW_NARROW KW_XG_NARROW KW_MATCH KW_XMATCH KW_UNIFY
+%token KW_LOOP KW_NARROW KW_XG_NARROW KW_MATCH KW_XMATCH KW_UNIFY KW_CHECK
 %token KW_GET KW_VARIANTS KW_VARIANT
 %token KW_EREWRITE KW_FREWRITE KW_SREWRITE
 %token KW_CONTINUE KW_SEARCH
@@ -135,7 +135,7 @@ int yylex(YYSTYPE* lvalp);
 %token KW_DO KW_CLEAR
 %token KW_PROTECT KW_EXTEND KW_INCLUDE KW_EXCLUDE
 %token KW_CONCEAL KW_REVEAL KW_COMPILE KW_COUNT
-%token KW_DEBUG KW_RESUME KW_ABORT KW_STEP KW_WHERE KW_CREDUCE KW_SREDUCE KW_DUMP KW_PROFILE
+%token KW_DEBUG KW_IRREDUNDANT KW_RESUME KW_ABORT KW_STEP KW_WHERE KW_CREDUCE KW_SREDUCE KW_DUMP KW_PROFILE
 %token KW_NUMBER KW_RAT KW_COLOR
 %token <yyInt64> SIMPLE_NUMBER
 %token KW_PWD KW_CD KW_PUSHD KW_POPD KW_LS KW_LOAD KW_QUIT KW_EOF
@@ -208,7 +208,7 @@ int yylex(YYSTYPE* lvalp);
 /*
  *	Nonterminals that return bool.
  */
-%type <yyBool> polarity select match optDebug conceal exclude arrow
+%type <yyBool> polarity select match optDebug optIrredundant conceal exclude arrow
 /*
  *	Nonterminals that return int.
  */
@@ -570,7 +570,7 @@ viewEndOpMap	:	':'
 			  //	press on.
 			  //
 			  opDescription = lexerBubble;
-			  lexBubble(END_STATEMENT, 1)
+			  lexBubble(END_STATEMENT, 1);
 			}
 			endBubble
 			{
@@ -1095,12 +1095,12 @@ attrKeyword2	:	KW_ASSOC | KW_COMM | KW_ID | KW_IDEM | KW_ITER | KW_LEFT | KW_RIG
 /*
  *	Commands.
  */
-command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
+command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			endBubble
 			{
 			  interpreter.setCurrentModule(lexerBubble);
 			}
-		|	KW_DUMP			{ lexBubble(END_COMMAND, 1) }
+		|	KW_DUMP			{ lexBubble(END_COMMAND, 1); }
 			endBubble
 			{
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -1204,6 +1204,19 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
 			    interpreter.sRewrite(lexerBubble, number, $1);
 			}
+
+		|	KW_CHECK
+			{
+			  lexerCmdMode();
+			  moduleExpr.contractTo(0);
+			}
+			moduleAndTerm
+			{
+			  lexerInitialMode();
+			  if (interpreter.setCurrentModule(moduleExpr, 1))
+			    interpreter.check(lexerBubble);
+			}
+
 		|	search
 			{
 			  lexerCmdMode();
@@ -1254,7 +1267,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
 			    interpreter.variantUnify(lexerBubble, number, $1);
 			}
 
-		|	optDebug KW_GET KW_VARIANTS
+		|	optDebug KW_GET optIrredundant KW_VARIANTS
 			{
 			  lexerCmdMode();
 			  moduleExpr.contractTo(0);
@@ -1264,7 +1277,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
 			{
 			  lexerInitialMode();
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
-			    interpreter.getVariants(lexerBubble, number, $1);
+			    interpreter.getVariants(lexerBubble, number, $3, $1);
 			}
 		|	optDebug KW_CONTINUE optNumber '.'
 			{
@@ -1422,7 +1435,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
  */
 		|	KW_SET KW_SHOW KW_ADVISE polarity '.'
 			{
-			  globalAdvisoryFlag = $4;
+			  globalAdvisoryFlag = alwaysAdviseFlag ? true : $4;
 			}
 		|	KW_SET KW_SHOW KW_STATS polarity '.'
 			{
@@ -1601,6 +1614,10 @@ match		:	KW_XMATCH		{ $$ = true; }
 		;
 
 optDebug       	:	KW_DEBUG 	       	{ $$ = true; }
+		|	       			{ $$ = false; }
+		;
+
+optIrredundant	:	KW_IRREDUNDANT		{ $$ = true; }
 		|	       			{ $$ = false; }
 		;
 

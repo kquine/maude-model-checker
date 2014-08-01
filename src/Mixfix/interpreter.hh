@@ -175,11 +175,12 @@ public:
   void eRewrite(const Vector<Token>& subject, Int64 limit, Int64 gas, bool debug);
   void sRewrite(const Vector<Token>& subjectAndStrategy, Int64 limit, bool debug);
   void cont(Int64 limit, bool debug);
+  void check(const Vector<Token>& subject);
 
   void match(const Vector<Token>& bubble, bool withExtension, Int64 limit);
   void unify(const Vector<Token>& bubble, Int64 limit);
   void search(const Vector<Token>& bubble, Int64 limit, Int64 depth, SearchKind searchKind);
-  void getVariants(const Vector<Token>& bubble, Int64 limit, bool debug);
+  void getVariants(const Vector<Token>& bubble, Int64 limit, bool irredundant, bool debug);
   void variantUnify(const Vector<Token>& bubble, Int64 limit, bool debug);
 
   void showSearchPath(int stateNr);

@@ -383,26 +383,58 @@ Interpreter::creduce(const Vector<Token>& subject)
 #endif
 }
 
+#include "stackMachine.hh"
+#include "stackMachineRhsCompiler.hh"
+#include "frame.hh"
+
 void
 Interpreter::sreduce(const Vector<Token>& subject)
 {
-
-  if (DagNode* d = makeDag(subject))
+  if (Term* t = currentModule->getFlatModule()->parseTerm(subject))
     {
+      //
+      //	Partly normalize term (don't flatten).
+      //
+      t = t->normalize(false);
+      //
+      //	Set EAGER flag in eager terms since term2InstructionSequence() needs this
+      //	to determine subterm sharability.
+      //
+      NatSet eagerVariables;
+      Vector<int> problemVariables;
+      t->markEager(0, eagerVariables, problemVariables);
+      //
+      //	Now compile a sequence of instructions to build the term, evaluating alond the way.
+      //
+      Instruction* instructionSequence = t->term2InstructionSequence();
+      //
+      //	If some function symbol didn't generate an instruction we get the null sequence to
+      //	flag unsupported feature.
+      //
+      if (instructionSequence == 0)
+	{
+	  IssueWarning("sreduce unsupported operator (Maude VM compiler).");
+	  return;
+	}
+      //
+      //	Now run the sequence in a stack machine.
+      //
+      VisibleModule* fm = currentModule->getFlatModule();
+      fm->stackMachineCompile();
+
+      startUsingModule(fm);
+      Timer timer(getFlag(SHOW_TIMING));
+
       if (getFlag(SHOW_COMMAND))
 	{
 	  UserLevelRewritingContext::beginCommand();
-	  cout << "sreduce in " << currentModule << " : " << d << " ." << endl;
+	  cout << "sreduce in " << currentModule << " : " << t << " ." << endl;
 	}
-
-      VisibleModule* fm = currentModule->getFlatModule();
-      startUsingModule(fm);
-      Timer timer(getFlag(SHOW_TIMING));
-      //
-      //	Start of stack based reduction
-      //
-      DagNode* r = d;  // HACK - don't have implementation yet
-      int nrRewrites = 0;
+      
+      t->deepSelfDestruct();
+      StackMachine sm;
+      DagNode* r = sm.execute(instructionSequence);
+      Int64 nrRewrites = sm.getEqCount();
       //
       //	End of stack based reduction.
       //
@@ -418,6 +450,110 @@ Interpreter::sreduce(const Vector<Token>& subject)
 	}
       cout << "result " << r->getSort() << ": " << r << '\n';
       cout.flush();
+      delete instructionSequence;
       (void) fm->unprotect();
+    }
+}
+
+#include "SMT_Symbol.hh"
+#include "variableTerm.hh"
+#include "cvc4/smt/smt_engine.h"
+
+void
+Interpreter::check(const Vector<Token>& subject)
+{
+  if (Term* term = currentModule->getFlatModule()->parseTerm(subject))
+    {
+      VariableInfo variableInfo;
+      term->indexVariables(variableInfo);
+      DagNode* d = term->term2Dag();
+
+      if (getFlag(SHOW_COMMAND))
+	{
+	  UserLevelRewritingContext::beginCommand();
+	  cout << "check in " << currentModule << " : " << d << " ." << endl;
+	}
+
+      VisibleModule* fm = currentModule->getFlatModule();
+      startUsingModule(fm);
+
+      if (SMT_Symbol* s = dynamic_cast<SMT_Symbol*>(d->symbol()))
+	{
+	  //
+	  //	Check to see term is of a SMT Boolean sort.
+	  //
+	  SMT_Base::SortIndexToSMT_TypeMap& sortMap = fm->getSortMap();
+	  Sort* rangeSort = term->symbol()->getRangeSort();
+	  SMT_Base::SortIndexToSMT_TypeMap::const_iterator k = sortMap.find(rangeSort->getIndexWithinModule());
+	  Assert(k != sortMap.end(), "bad SMT sort");
+	  //
+	  //	Make an SMT variable for each variable occurring in dag.
+	  //
+	  if (k->second == SMT_Base::BOOLEAN)
+	    {
+	      ExprManager em;
+	      int nrVariables = variableInfo.getNrRealVariables();
+	      Vector<Expr> variables(nrVariables);
+	      for (int i = 0; i < nrVariables; ++i)
+		{
+		  VariableTerm* v = safeCast(VariableTerm*, variableInfo.index2Variable(i));
+		  const char* name = Token::name(v->id());
+		  Type t;
+		  int sortIndex = v->getSort()->getIndexWithinModule();
+		  SMT_Base::SortIndexToSMT_TypeMap::const_iterator j = sortMap.find(sortIndex);
+		  if (j == sortMap.end())
+		    {
+		      IssueWarning(*v << ": variable " << QUOTE(static_cast<Term*>(v)) << " does not belong to an SMT sort.");
+		      goto fail;
+		    }
+		  switch(j->second)
+		    {
+		    case SMT_Base::BOOLEAN:
+		      {
+			DebugAdvisory("made Boolean variable " << static_cast<Term*>(v));
+			t = em.booleanType();
+			break;
+		      }
+		    case SMT_Base::INTEGER:
+		      {
+			DebugAdvisory("made Integer variable " << static_cast<Term*>(v));
+			t = em.integerType();
+			break;
+		      }
+		    case SMT_Base::REAL:
+		      {
+			t = em.realType();
+			DebugAdvisory("made Real variable " << static_cast<Term*>(v));
+			break;
+		      }
+		    }
+		  variables[i] = em.mkVar(name, t);
+		}
+	      //
+	      //	Convert Maude dag in to SMT expression.
+	      //
+	      Expr e = s->dagToCVC4(d, variables, sortMap, em);
+	      if (!(e.isNull()))
+		{
+		  //
+		  //	Check satisfiability.
+		  //
+		  SmtEngine smt(&em);
+		  DebugAdvisory("CVC4 Expression is " << e);
+		  smt.assertFormula(e);
+		  const Result result2 = smt.checkSat(em.mkConst(true));
+		  cout << "Result from CVC4 is: " << result2 << endl;
+		}
+	      //else
+	      //  IssueWarning(*term << ": term " << QUOTE(term) << " is not a pure SMT expression.");
+	    }
+	  else
+	    IssueWarning(*term << ": term " << QUOTE(term) << " does not belong to an SMT Boolean sort.");
+	}
+      else
+	IssueWarning(*term << ": term " << QUOTE(term) << " is not headed by an SMT operator.");
+    fail:
+      term->deepSelfDestruct();
+      fm->unprotect();
     }
 }

@@ -184,6 +184,19 @@ public:
   //
   virtual Term* instantiate2(const Vector<Term*>& varBindings, SymbolMap* translator);
 
+  //
+  //	The following function should be redefined for any theory that uses
+  //	index based matching.
+  //
+  virtual void computeMatchIndices() const;
+
+  //
+  //	Functionality for the stack based rewrite engine.
+  //
+  Instruction* term2InstructionSequence();
+  int recordSubterms(StackMachineRhsCompiler& compiler, TermSet& visited);
+  virtual int recordSubterms2(StackMachineRhsCompiler& compiler, TermSet& visited);
+
 #ifdef COMPILER
   void generateRhs(CompilationContext& context,
 		   int indentLevel,
@@ -378,6 +391,13 @@ Term::dagify()
   converted.insert(this);
   subDags.append(d);
   return d;
+}
+
+inline int
+Term::recordSubterms(StackMachineRhsCompiler& compiler, TermSet& visited)
+{
+  int slotIndex = visited.term2Index(this);
+  return (slotIndex >= 0) ? slotIndex : recordSubterms2(compiler, visited);
 }
 
 inline void

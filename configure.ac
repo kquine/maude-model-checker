@@ -3,7 +3,7 @@
 #
 #	Initialize autoconf stuff.
 #
-AC_INIT(Maude, alpha96b, [maude-bugs@maude.cs.uiuc.edu])
+AC_INIT(Maude, alpha103, [maude-bugs@maude.cs.uiuc.edu])
 #
 #	Allow directory names that look like macros.
 #
@@ -16,7 +16,7 @@ AC_CANONICAL_HOST
 #
 #	Initialize automake stuff.
 #
-AM_INIT_AUTOMAKE(Maude, alpha96b)
+AM_INIT_AUTOMAKE(Maude, alpha103)
 AM_INIT_AUTOMAKE([subdir-objects])
 #
 #	Cause defines to be put in a header file rather than passed as
@@ -74,6 +74,18 @@ if (test -z "$BUDDY_LIB") then
 fi
 AC_SUBST(BUDDY_LIB)
 #
+#	Check if user set a particular CVC4 library to use and if
+#	not set default.
+#
+if (test -z "$CVC4_LIB") then
+  CVC4_LIB="-lcvc4"
+fi
+AC_SUBST(CVC4_LIB)
+#
+#	CVC4 needs the clock_gettime() function from the POSIX Realtime Extensions library.
+#
+AC_CHECK_LIB(rt, clock_gettime)
+#
 #	Check to see if we should use Tecla for command line editing.
 #
 AC_ARG_WITH(tecla,
@@ -94,21 +106,6 @@ else
   TECLA_LIBS=""
 fi
 AC_SUBST(TECLA_LIBS)
-#
-#	Check to see if we should use hacked version of Mac rope implementation.
-#
-AC_ARG_WITH(rope-ugly-hack,
-	    AC_HELP_STRING([--with-rope-ugly-hack],
-                           [use hacked up version of Mac rope implentation [default=no]]),
-			   [WITH_ROPE_UGLY_HACK=$withval],
-			   [WITH_ROPE_UGLY_HACK=no])
-if (test $WITH_ROPE_UGLY_HACK = yes) then
-#
-#	Define flag so we include local hacked up version rather than system version of
-#	rope and ropeimpl.h
-#
-  AC_DEFINE([USE_ROPE_UGLY_HACK], [], [use hacked up version of Mac rope implementation])
-fi
 #
 #	Check to see if we should use libsigsegv to handle segmentation faults.
 #
@@ -138,6 +135,14 @@ if (test -z "$GMP_LIBS") then
   GMP_LIBS="-lgmpxx -lgmp"
 fi
 AC_SUBST(GMP_LIBS)
+#
+#	Check if the user set particular GCC libraries to use - otherwise
+#	let the compiler pick.
+#
+if (test -z "$GCC_LIBS") then
+  GCC_LIBS=""
+fi
+AC_SUBST(GCC_LIBS)
 #
 #	*** HEADERS ***
 #
@@ -274,14 +279,6 @@ else
   fi
 fi
 #
-#	Check to see if we should use Doug Lea's malloc().
-#
-AC_ARG_WITH(dlmalloc,
-	    AC_HELP_STRING([--with-dlmalloc],
-                           [use Doug Lea's malloc() [default=yes]]),
-			   [WITH_DLMALLOC=$withval],
-			   [WITH_DLMALLOC=yes])
-#
 #	Fixes for known hosts.
 #
 FIXFLAGS=""
@@ -295,20 +292,15 @@ case $host in
     FIXFLAGS="-mieee"
     ;;
 #
-#	gcc on x86-64 on linux doesn't seem to be able to link an
-#	external malloc with conflicting with the one defined in
-#	lib64/libc.a
+#	(no longer deal with dlmalloc)
 #
   x86_64-*-linux-*)
-    WITH_DLMALLOC=no
     ;;
 #
-#	Doug Lea's malloc() is unstable on Darwin - presumably because
-#	of brk()/sbrk() issues.
+#	(no longer deal with dlmalloc)
 #    
   *-darwin*)
     AC_DEFINE([DARWIN], [], [enable Darwin specific fixes])
-    WITH_DLMALLOC=no
     ;;
 
 esac
@@ -351,7 +343,6 @@ fi
 #
 #	Conditional compilation and linking.
 #
-AM_CONDITIONAL(USE_DLMALLOC, test $WITH_DLMALLOC = yes) 
 AM_CONDITIONAL(BUILD_COMPILER, test $COMPILER = yes) 
 
 AC_CONFIG_FILES([Makefile
@@ -379,6 +370,7 @@ AC_CONFIG_FILES([Makefile
 		 src/MSCP10/Makefile
 		 src/StrategyLanguage/Makefile
 		 src/Mixfix/Makefile
+		 src/SMT/Makefile
 		 src/ModelChecker/Makefile
 		 src/Main/Makefile
 		 tests/Makefile

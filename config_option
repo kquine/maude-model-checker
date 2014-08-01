@@ -1,3 +1,12 @@
---enable-debug=yes ARCHFLAGS="i386" CC="gcc-mp-4.6" CXX="g++-mp-4.6" CPPFLAGS="-I/opt/local/include -I/Users/kquine/usr/include" LDFLAGS="-L/opt/local/lib" CFLAGS="-g3 -gdwarf-2 " CXXFLAGS="-g3 -gdwarf-2" TECLA_LIBS="/USERS/kquine/usr/lib/libtecla.a -lcurses" GMP_LIBS="/opt/local/lib/libgmpxx.a /opt/local/lib/libgmp.a" LIBSIGSEGV_LIB="/opt/local/lib/libsigsegv.a"  BUDDY_LIB="/usr/local/lib/libbdd.a"
-
-CC="${CC}" CXX="${CXX}"
+./configure \
+FLEX=/opt/local/bin/flex \
+BISON=/opt/local/bin/bison \
+CFLAGS="-Wall -Wno-deprecated -O2 -static-libstdc++ -static-libgcc -fno-crossjumping -fno-stack-protector -fstrict-aliasing -mmacosx-version-min=10.5 -finline-limit=10000" \
+CXXFLAGS="-Wall -Wno-deprecated -O2 -static-libstdc++ -static-libgcc -fno-crossjumping -fno-stack-protector -fstrict-aliasing -mmacosx-version-min=10.5 -finline-limit=10000" \
+CPPFLAGS="-I/Users/kquine/usr/include" \
+LDFLAGS="-L/Users/kquine/usr/lib" \
+BUDDY_LIB="/Users/kquine/usr/lib/libbdd.a" \
+TECLA_LIBS="/Users/kquine/usr/lib/libtecla.a /usr/lib/libncurses.dylib" \
+LIBSIGSEGV_LIB="/Users/kquine/usr/lib/libsigsegv.a" \
+GMP_LIBS="/Users/kquine/usr/lib/libgmp.a /Users/kquine/usr/lib/libgmpxx.a" \
+CVC4_LIB="/Users/kquine/usr/lib/libcvc4.dylib"

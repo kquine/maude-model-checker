@@ -11,7 +11,11 @@ TESTS = \
 	attributes \
 	diophantine \
 	variantUnification \
-	variantNarrowing
+	variantNarrowing \
+	CU_Unification \
+	assocUnification \
+	sreduce \
+	smtTest
 
 MAUDE_FILES = \
 	dekker.maude \
@@ -26,7 +30,11 @@ MAUDE_FILES = \
 	attributes.maude \
 	diophantine.maude \
 	variantUnification.maude \
-	variantNarrowing.maude
+	variantNarrowing.maude \
+	CU_Unification.maude \
+	assocUnification.maude \
+	sreduce.maude \
+	smtTest.maude
 
 RESULT_FILES = \
 	dekker.expected \
@@ -41,6 +49,10 @@ RESULT_FILES = \
 	attributes.expected \
 	diophantine.expected \
 	variantUnification.expected \
-	variantNarrowing.expected
+	variantNarrowing.expected \
+	CU_Unification.expected \
+	assocUnification.expected \
+	sreduce.expected \
+	smtTest.expected
 
 EXTRA_DIST = $(TESTS) $(MAUDE_FILES) $(RESULT_FILES)

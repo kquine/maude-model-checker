@@ -23,12 +23,12 @@
 /*
  *	Commands.
  */
-command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
+command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			endBubble
 			{
 			  interpreter.setCurrentModule(lexerBubble);
 			}
-		|	KW_DUMP			{ lexBubble(END_COMMAND, 1) }
+		|	KW_DUMP			{ lexBubble(END_COMMAND, 1); }
 			endBubble
 			{
 			  if (interpreter.setCurrentModule(lexerBubble))
@@ -132,6 +132,19 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
 			    interpreter.sRewrite(lexerBubble, number, $1);
 			}
+
+		|	KW_CHECK
+			{
+			  lexerCmdMode();
+			  moduleExpr.contractTo(0);
+			}
+			moduleAndTerm
+			{
+			  lexerInitialMode();
+			  if (interpreter.setCurrentModule(moduleExpr, 1))
+			    interpreter.check(lexerBubble);
+			}
+
 		|	search
 			{
 			  lexerCmdMode();
@@ -182,7 +195,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
 			    interpreter.variantUnify(lexerBubble, number, $1);
 			}
 
-		|	optDebug KW_GET KW_VARIANTS
+		|	optDebug KW_GET optIrredundant KW_VARIANTS
 			{
 			  lexerCmdMode();
 			  moduleExpr.contractTo(0);
@@ -192,7 +205,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
 			{
 			  lexerInitialMode();
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
-			    interpreter.getVariants(lexerBubble, number, $1);
+			    interpreter.getVariants(lexerBubble, number, $3, $1);
 			}
 		|	optDebug KW_CONTINUE optNumber '.'
 			{
@@ -350,7 +363,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1) }
  */
 		|	KW_SET KW_SHOW KW_ADVISE polarity '.'
 			{
-			  globalAdvisoryFlag = $4;
+			  globalAdvisoryFlag = alwaysAdviseFlag ? true : $4;
 			}
 		|	KW_SET KW_SHOW KW_STATS polarity '.'
 			{
@@ -529,6 +542,10 @@ match		:	KW_XMATCH		{ $$ = true; }
 		;
 
 optDebug       	:	KW_DEBUG 	       	{ $$ = true; }
+		|	       			{ $$ = false; }
+		;
+
+optIrredundant	:	KW_IRREDUNDANT		{ $$ = true; }
 		|	       			{ $$ = false; }
 		;
 

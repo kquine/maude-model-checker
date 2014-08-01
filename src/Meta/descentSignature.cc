@@ -39,6 +39,7 @@
   MACRO(metaUnify, 4)
   MACRO(metaDisjointUnify, 4)
   MACRO(metaGetVariant, 5)
+  MACRO(metaGetIrredundantVariant, 5)
   MACRO(metaVariantUnify, 5)
   MACRO(metaVariantDisjointUnify, 5)
   MACRO(metaSearch, 7)
@@ -72,3 +73,4 @@
   MACRO(metaUpView, 1)
   MACRO(metaUpTerm, 1)
   MACRO(metaDownTerm, 2)
+  MACRO(metaCheck, 2)

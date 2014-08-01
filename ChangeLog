@@ -1,3 +1,50 @@
+2014-04-22  Steven Eker  <eker@ape.csl.sri.com>
+
+	* configure.ac: added configuration for CVC4 and POSIX Realtime
+	Extensions library (needed by CVC4)
+
+===================================Maude103===========================================
+
+2014-04-04  Steven Eker  <eker@ape.csl.sri.com>
+
+	* tests/Misc/assocUnification (MAUDE_LIB): created
+
+	* tests/Misc/assocUnification.maude: created
+
+	* tests/Misc/unification.maude: change assoc to assoc id: in TEST2
+	since assoc is now partially supported
+
+===================================Maude102===========================================
+
+2014-02-06  Steven Eker  <eker@ape.csl.sri.com>
+
+	* configure.ac: removed rope_UGLY_HACK option
+
+	* src/3rdParty/Makefile.am (noinst_HEADERS): removed
+	rope_UGLY_HACK stuff
+
+2014-01-31  Steven Eker  <eker@ape.csl.sri.com>
+
+	* configure.ac: no longer offer dlmalloc option
+
+	* src/3rdParty/malloc.c: deleted
+
+	* src/3rdParty/Makefile.am: remove all mention of dlmalloc
+
+===================================Maude100a===========================================
+
+2013-03-12  Steven Eker  <eker@ape.csl.sri.com>
+
+	* tests/Misc/unification (MAUDE_LIB): created
+
+	* tests/Misc/CU_Unification.maude: created
+
+2013-03-11  Steven Eker  <eker@ape.csl.sri.com>
+
+	* tests/ResolvedBugs/unificationMar2013 (MAUDE_LIB): created
+
+	* tests/ResolvedBugs/unificationMar2013.maude: created
+
 2012-08-06  Steven Eker  <eker@ape.csl.sri.com>
 
 	* src/3rdParty/ropeimpl_UGLY_HACK.h: hacked up verison of Mac ropeimpl.h

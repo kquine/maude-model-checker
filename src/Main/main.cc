@@ -63,12 +63,120 @@
 #include "interpreter.hh"
 #include "global.hh"
 
+
+#include "cvc4/expr/expr_manager.h"
+#include "cvc4/smt/smt_engine.h"
+
+using namespace CVC4;
+
+void
+testCVC4()
+{
+  ExprManager em;
+  SmtEngine smt(&em);
+  Expr onePlusTwo = em.mkExpr(kind::PLUS,
+                              em.mkConst(Rational(1)),
+                              em.mkConst(Rational(2)));
+  std::cout << Expr::setlanguage(language::output::LANG_CVC4)
+            << smt.getInfo("name")
+            << " says that 1 + 2 = "
+            << smt.simplify(onePlusTwo)
+            << std::endl;
+}
+
+void
+test2()
+{
+  ExprManager em;
+  Expr helloworld = em.mkVar("Hello World!", em.booleanType());
+  SmtEngine smt(&em);
+  std::cout << helloworld << " is " << smt.query(helloworld) << std::endl;
+}
+
+void
+test3()
+{
+  ExprManager em;
+  SmtEngine smt(&em);
+  smt.setOption("incremental", SExpr("true"));  // Enable incremental solving
+
+  Type real = em.realType();
+  Type integer = em.integerType();
+
+  Expr x = em.mkVar("x", integer);
+  Expr y = em.mkVar("y", real);
+
+  Expr three = em.mkConst(Rational(3));
+  Expr neg2 = em.mkConst(Rational(-2));
+  Expr two_thirds = em.mkConst(Rational(2,3));
+
+  Expr three_y = em.mkExpr(kind::MULT, three, y);  // 3y
+  Expr diff = em.mkExpr(kind::MINUS, y, x);  // y - x
+
+  Expr x_geq_3y = em.mkExpr(kind::GEQ, x, three_y);  // x >= 3y
+  Expr x_leq_y = em.mkExpr(kind::LEQ, x, y);  // x <= y
+  Expr neg2_lt_x = em.mkExpr(kind::LT, neg2, x);  // -2 < x
+
+  Expr assumptions = em.mkExpr(kind::AND, x_geq_3y, x_leq_y, neg2_lt_x);  // x >= 3y /\ x <= y /\ -2 < x
+  smt.assertFormula(assumptions);
+
+  //smt.push();
+  Expr diff_leq_two_thirds = em.mkExpr(kind::LEQ, diff, two_thirds);   // y - x <= 2/3
+  cout << "Prove that " << diff_leq_two_thirds << " with CVC4." << endl;
+  cout << "CVC4 should report VALID." << endl;
+  cout << "Result from CVC4 is: " << smt.query(diff_leq_two_thirds) << endl;
+  //smt.pop();
+
+  smt.push();
+  Expr diff_is_two_thirds = em.mkExpr(kind::EQUAL, diff, two_thirds);  // y - x = 2/3
+  smt.assertFormula(diff_is_two_thirds);
+  cout << "Show that the asserts are consistent with " << endl;
+  cout << diff_is_two_thirds << " with CVC4." << endl;
+  cout << "CVC4 should report SAT." << endl;
+  cout << "Result from CVC4 is: " << smt.checkSat(em.mkConst(true)) << endl;
+  smt.pop();
+
+}
+
+
+void
+test4()
+{
+  ExprManager em;
+  SmtEngine smt(&em);
+  smt.setOption("incremental", SExpr("true"));  // Enable incremental solving
+
+  Type integer = em.integerType();
+
+  Expr x = em.mkVar("x", integer);
+  Expr y = em.mkVar("y", integer);
+  
+  Expr x_geq_y = em.mkExpr(kind::GEQ, x, y);
+  Expr max_x_y = em.mkExpr(kind::ITE, x_geq_y, x, y);
+
+  Expr max_x_y_geq_x = em.mkExpr(kind::GEQ, max_x_y, x);
+
+  cout << "valid = " << smt.query(max_x_y_geq_x) << endl;
+
+  smt.push();
+  smt.assertFormula(max_x_y_geq_x);
+  cout << "sat = " << smt.checkSat(em.mkConst(true)) << endl;
+  smt.pop();
+
+}
+
+
+
 int
 main(int argc, char* argv[])
 {
-  // extern int yydebug;
-  // yydebug = 0;
+  void testSeq();
 
+  //testSeq();
+  //testCVC4();
+  //test2();
+  //test3();
+  //test4();
   //
   //	Global function declatations
   //
@@ -119,7 +227,15 @@ main(int argc, char* argv[])
 	  else if (strcmp(arg, "-no-banner") == 0)
 	    outputBanner = false;
 	  else if (strcmp(arg, "-no-advise") == 0)
-	    globalAdvisoryFlag = false;
+	    {
+	      if (!alwaysAdviseFlag)
+		globalAdvisoryFlag = false;
+	    }
+	  else if (strcmp(arg, "-always-advise") == 0)
+	    {
+	      alwaysAdviseFlag = true;
+	      globalAdvisoryFlag = true;
+	    }
 	  else if (strcmp(arg, "-no-wrap") == 0)
 	    lineWrapping = false;
 	  else if (strcmp(arg, "-batch") == 0)
@@ -223,6 +339,7 @@ printHelp(const char* name)
     "  -no-prelude\t\tDo not read in the standard prelude\n" <<
     "  -no-banner\t\tDo not output banner on startup\n" <<
     "  -no-advise\t\tNo advisories on startup\n" <<
+    "  -always-advise\t\tAlways show advisories regardless" <<
     "  -no-mixfix\t\tDo not use mixfix notation for output\n" <<
     "  -no-wrap\t\tDo not automatic line wrapping for output\n" <<
     "  -ansi-color\t\tUse ANSI control sequences\n" <<
@@ -278,3 +395,128 @@ findPrelude(string& directory, string& fileName)
 	       ": unable to locate file: " << QUOTE(fileName));
   return false;
 }
+
+#include "sequenceAssignment.hh"
+
+int delannoy(int m, int n);
+int countAssignments(int nrLhsVars, int nrRhsVars);
+
+void
+testSeq()
+{
+  int lhsMax = 10;
+  int rhsMax = 10;
+
+  for (int i = 0; i < lhsMax; ++i)
+    {
+      for (int j = 0; j < rhsMax; ++j)
+	{
+	  int d = delannoy(i, j);
+	  int a = countAssignments(i + 1, j + 1);
+	  if (a == d)
+	    cout << "correct " << d << endl;
+	  else
+	    cout << "fail " << a << " vs " << d << endl;
+	}
+      cout << endl;
+    }
+}
+
+
+int
+countAssignments(int nrLhsVars, int nrRhsVars)
+{
+  SequenceAssignment s(nrLhsVars, nrRhsVars);
+
+  int nrSols = 0;
+  while (s.findNextSolution(nrSols == 0))
+    ++nrSols;
+
+  return nrSols;
+}
+
+  /*
+  int nrLhsVars = 5;
+  int nrRhsVars = 4;
+
+  SequenceAssignment s(nrLhsVars, nrRhsVars);
+
+  s.setLhsBound(2, 1);
+  s.setRhsBound(1, 1);
+  s.setRhsBound(2, 1);
+
+  int solNr = 1;
+  while (s.findNextSolution())
+    {
+      Vector<Vector<int> > lhsAssign(nrLhsVars);
+      Vector<Vector<int> > rhsAssign(nrRhsVars);
+
+      int freeVarIndex = 0;
+      int lIndex = 0;
+      int rIndex = 0;
+
+      lhsAssign[lIndex].append(freeVarIndex);
+      rhsAssign[rIndex].append(freeVarIndex);
+
+      const SequenceAssignment::Solution& sol = s.getSolution();
+      cout << "(sol " << solNr << ") ";
+      FOR_EACH_CONST(i, SequenceAssignment::Solution, sol)
+	{
+	  cout << " " << *i;
+	  ++freeVarIndex;
+	  lIndex += SequenceAssignment::leftDelta(*i);
+	  rIndex += SequenceAssignment::rightDelta(*i);
+	  lhsAssign[lIndex].append(freeVarIndex);
+	  rhsAssign[rIndex].append(freeVarIndex);
+	}
+      cout << endl;
+      {
+	int v = 0;
+	FOR_EACH_CONST(j, Vector<Vector<int> >, lhsAssign)
+	  {
+	    cout << "L" << v << " <-";
+	    FOR_EACH_CONST(k, Vector<int>, *j)
+	      cout << " X" << *k;
+	    cout << endl;
+	    ++v;
+	  }
+      }
+      {
+	int v = 0;
+	FOR_EACH_CONST(j, Vector<Vector<int> >, rhsAssign)
+	  {
+	    cout << "R" << v << " <-";
+	    FOR_EACH_CONST(k, Vector<int>, *j)
+	      cout << " X" << *k;
+	    cout << endl;
+	    ++v;
+	  }
+      }
+
+      cout << endl;
+      ++solNr;
+    }
+  */
+
+#include <map>
+
+int
+delannoy(int m, int n)
+{
+  typedef pair<int, int> Pair;
+  typedef map<Pair, int> Memo;
+  static Memo memo;
+
+  if (m == 0 || n == 0)
+    return 1;
+
+  Pair p(m, n);
+  Memo::const_iterator i = memo.find(p);
+  if (i != memo.end())
+    return i->second;
+
+  int d = delannoy(m - 1, n) + delannoy(m - 1, n - 1) + delannoy(m, n - 1);
+  memo.insert(Memo::value_type(p, d));
+  return d;
+}
+

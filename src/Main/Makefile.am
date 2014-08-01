@@ -4,10 +4,6 @@ if BUILD_COMPILER
   FULL_COMPILER_LIB = ../FullCompiler/libfullCompiler.a
 endif
 
-if USE_DLMALLOC
-  DLMALLOC_LIB = ../3rdParty/libdlmalloc.a
-endif
-
 maude_CPPFLAGS = \
 	-I$(top_srcdir)/src/Utility \
 	-I$(top_srcdir)/src/Temporal \
@@ -23,6 +19,7 @@ maude_CPPFLAGS = \
 	-I$(top_srcdir)/src/ObjectSystem \
 	-I$(top_srcdir)/src/Mixfix \
 	-I$(top_srcdir)/src/BuiltIn \
+	-I$(top_srcdir)/src/SMT \
 	-I$(top_srcdir)/src/MSCP10 \
 	-I$(top_srcdir)/src/IO_Stuff \
 	-I$(top_srcdir)/src/ACU_Persistent \
@@ -42,6 +39,7 @@ maude_LDADD = \
 	../Meta/libmeta.a \
 	../ObjectSystem/libobjectSystem.a \
 	../BuiltIn/libbuiltIn.a \
+	../SMT/libSMT.a \
 	../Higher/libhigher.a \
 	../FreeTheory/libfreeTheory.a \
 	../AU_Theory/libAU_Theory.a \
@@ -61,6 +59,7 @@ maude_LDADD = \
 	$(FULL_COMPILER_LIB) \
 	../Utility/libutility.a \
 	$(BUDDY_LIB) \
+	$(CVC4_LIB) \
 	$(TECLA_LIBS) \
 	$(LIBSIGSEGV_LIB) \
 	$(GMP_LIBS) \
@@ -76,7 +75,8 @@ data_DATA = \
 	linear.maude \
 	machine-int.maude \
 	term-order.maude \
-	metaInterpreter.maude
+	metaInterpreter.maude \
+	smt.maude
 
 EXTRA_DIST = \
 	prelude.maude \
@@ -85,5 +85,5 @@ EXTRA_DIST = \
 	linear.maude \
 	machine-int.maude \
 	term-order.maude \
-	metaInterpreter.maude
-
+	metaInterpreter.maude \
+	smt.maude

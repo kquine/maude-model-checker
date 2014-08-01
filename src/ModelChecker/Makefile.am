@@ -8,6 +8,7 @@ libModelChecker_a_CPPFLAGS = \
 	-I$(top_srcdir)/src/Higher \
 	-I$(top_srcdir)/src/Temporal \
 	-I$(top_srcdir)/src/Mixfix \
+	-I$(top_srcdir)/src/SMT \
 	-I$(top_srcdir)/src/StrategyLanguage \
 	-I$(top_srcdir)/src/BuiltIn \
 	-I$(top_srcdir)/src/Variable \
