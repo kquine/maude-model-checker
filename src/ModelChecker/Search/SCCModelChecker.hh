@@ -128,7 +128,8 @@ public:
 	bool inDomain(const State& s) const	{ return this->map.contains(s) && this->map.get(s) >= this->root; }
 	bool isTarget(const State& ) const	{ return false; }
 	bool isTarget(const Transition& t)	{
-		return goal.update(*this->mc.graph.makeFairSet(t), this->mc.graph.getFairnessTable());
+		return goal.empty() ||	// already satisfied
+			   goal.update(*this->mc.graph.makeFairSet(t), this->mc.graph.getFairnessTable());
 	}
 
 private:
