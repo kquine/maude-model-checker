@@ -1,7 +1,7 @@
 
-fmod UNORDERED-CHANNEL-EQ is
+mod UNORDERED-CHANNEL is
   protecting NAT .
-  vars N M J K : Nat .      vars L P Q : List .
+  vars N M J K : Nat .      vars L P : List .  var  C : Conf .
 
 --- list
   sort List .
@@ -26,60 +26,61 @@ fmod UNORDERED-CHANNEL-EQ is
 --- state
   sort ChannelState .
   op {_,_|_|_,_} : List Nat Conf List Nat -> ChannelState [ctor] .
-endfm
 
-mod UNORDERED-CHANNEL is
-  pr UNORDERED-CHANNEL-EQ .
-  vars N M J K : Nat .      vars L P Q : List .  var  C : Conf .
-
+--- rules
   rl [snd]: {N ; L, M | C | P, K} => {N ; L, M | [N, M] C | P, K} .
   rl [rec]: {L, M | [N, J] C | P, J}  
-    => {L, M | ack(J) C | P @ (N ; nil), s(J)}  .
-  rl [rec-ack]: {N ; L, J | ack(J) C | P, M}  => {L, s(J) | C | P, M} .
+         => {L, M | ack(J) C | P @ (N ; nil), s(J)}  .
+  rl [ack]: {N ; L, J | ack(J) C | P, M}  => {L, s(J) | C | P, M} .
 endm
 
-mod UNORDERED-CHANNEL-ABSTRACTION is
+mod UNORDERED-CHANNEL-ABS is
   including UNORDERED-CHANNEL .
-  vars N M J K : Nat .      vars L P Q : List .  var  C : Conf .
+  vars N M J K : Nat .      vars L P : List .  var  C : Conf .
 
-  eq [A1]: {L, M | [N, J] [N, J] C | P, K} = {L, M | [N, J] C | P, K} .
-  rl [rec2]: {L, M | [N, J] C | P, J} => {L, M | [N, J] ack(J) C | P @ (N ; nil), s(J)} .
+  eq {L, M | [N, J] [N, J] C | P, K} = {L, M | [N, J] C | P, K} .
+
+  rl [rec]: {L, M | [N, J] C | P, J} 
+         => {L, M | [N, J] ack(J) C | P @ (N ; nil), s(J)} .
 endm
 
 load ltlr-checker
 
 mod UNORDERED-CHANNEL-PREDS is
-  protecting UNORDERED-CHANNEL-ABSTRACTION .
+  protecting UNORDERED-CHANNEL-ABS .
   protecting LTLR-MODEL-CHECKER .
-  including SPATIAL-ACTION-PATTERN-EQS . --- inefficient for some cases
+  including SPATIAL-ACTION-PATTERN .
 
   vars M N K P : Nat . vars L L1 L2 : List . var  C : Conf . var  B : Bool . 
 
   subsort ChannelState < State .
 
-  ops prefix rec-q : List -> Prop .
+  op prefix : List -> Prop .
   eq {L1, N | C | K ; L2, P} |= prefix(M ; L) 
    = (M == K) and  ({L1, N | C | L2, P} |=  prefix(L)) .
   eq {L1, N | C | nil, K} |=  prefix(L) = true .
   eq {L1, N | C | M ; L2, K} |=  prefix(nil) = false .
 
+  op rec-q : List -> Prop .
   eq {L1, N | C | L2, K} |=  rec-q(L) = L == L2 .
 
   op init : -> State .
-  eq init = {0 ; s(0) ; s(s(0)) ; nil , 0 | null | nil , 0} .
+  eq init = {0 ; 1 ; 2 ; nil , 0 | null | nil , 0} .
 endm
 
 set verbose on .
 
-red modelCheck(init, [] prefix(0 ; s(0) ; s(s(0)) ; nil)) .
+--- true
+red modelCheck(init, [] prefix(0 ; 1 ; 2 ; nil)) .
 
 --- false
-red modelCheck(init, <> rec-q(0 ; s(0) ; s(s(0)) ; nil)) .
+red modelCheck(init, <> rec-q(0 ; 1 ; 2 ; nil)) .
 
 --- true
-red modelCheck(init, <> rec-q(0 ; s(0) ; s(s(0)) ; nil) \/ (<>[] {'snd})) .
+red modelCheck(init, ([]<> ~ {'snd}) -> <> rec-q(0 ; 1 ; 2 ; nil)) .
 
-red modelCheckFair(init, <> rec-q(0 ; s(0) ; s(s(0)) ; nil),
+--- true
+red modelCheckFair(init, <> rec-q(0 ; 1 ; 2 ; nil),
     (just : {'snd} => False)) .
 
 

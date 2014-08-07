@@ -10,7 +10,7 @@
 #include "quotedIdentifierSymbol.hh"
 #include "quotedIdentifierDagNode.hh"
 #include "mixfixModule.hh"
-#include "PositionState.hh"
+#include "positionState.hh"
 
 namespace modelChecker {
 

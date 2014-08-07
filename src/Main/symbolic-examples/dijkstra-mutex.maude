@@ -19,11 +19,11 @@ fmod DIJKSTRA-DATA is
   op 1 : -> WaitFlag [ctor] .
   op 2 : -> Flag [ctor] .
 
-  sorts Status L0Status NL15Status NL1Status NL5Status NCrtStatus .
-  subsorts L0Status < NL15Status < NL1Status NL5Status < NCrtStatus < Status .
-  op l0 : -> L0Status [ctor] .
-  op l1 : -> NL5Status [ctor] .
-  ops l2 l3 : -> NL15Status [ctor] .
+  sorts Status L1Status NL15Status NL1Status NL5Status NCrtStatus .
+  subsorts L1Status < NL15Status < NL1Status NL5Status < NCrtStatus < Status .
+  op l1 : -> L1Status [ctor] .
+  op l2 : -> NL5Status [ctor] .
+  ops l3 l4 : -> NL15Status [ctor] .
   op l5 : -> NL1Status [ctor] .
   op crit : -> Status [ctor] .
 
@@ -52,7 +52,7 @@ fmod DIJKSTRA-MUTEX-PROC is
   subsorts WNL15Proc < WNL1Proc WNL5Proc .
   subsorts NL1Proc NL5Proc < NCrtProc .
   subsorts WNL1Proc WNL5Proc < WNCrProc .
-  op {_,_,_} : InitFlag L0Status Turn -> InitProc [ctor] .
+  op {_,_,_} : InitFlag L1Status Turn -> InitProc [ctor] .
   op {_,_,_} : Flag NL15Status Turn -> NL15Proc [ctor] .
   op {_,_,_} : Flag NL1Status Turn -> NL1Proc [ctor] .
   op {_,_,_} : Flag NL5Status Turn -> NL5Proc [ctor] .
@@ -86,7 +86,7 @@ fmod DIJKSTRA-MUTEX-PROC is
   subsorts CWNL15Proc < CWNL1Proc CWNL5Proc .
   subsorts CNL1Proc CNL5Proc < CNCrtProc .
   subsorts CWNL1Proc CWNL5Proc < CWNCrProc .
-  op {_,_,_} : InitFlag L0Status CTurn -> CInitProc [ctor] .
+  op {_,_,_} : InitFlag L1Status CTurn -> CInitProc [ctor] .
   op {_,_,_} : Flag NL15Status CTurn -> CNL15Proc [ctor] .
   op {_,_,_} : Flag NL1Status CTurn -> CNL1Proc [ctor] .
   op {_,_,_} : Flag NL5Status CTurn -> CNL5Proc [ctor] .
@@ -200,33 +200,30 @@ mod DIJKSTRA-MUTEX is
   sort Conf .
   op <_> : CProcSet -> Conf [ctor] .
 
-  rl [l1]  : < {F,l0,-} CPS >          => < {1,l1,-} CPS > .
-  rl [l1]  : < {F,l0,!} PS >           => < {1,l1,!} PS > .
+  rl [l1]  : < {F,l1,-} CPS >          => < {1,l2,-} CPS > .
+  rl [l1]  : < {F,l1,!} PS >           => < {1,l2,!} PS > .
 
-  rl [l2]  : < {F,l1,-} {0,S,!} PS >   => < {F,l1,!} {0,S,-} PS > .
-  rl [l2]  : < {F,l1,!} PS >           => < {F,l2,!} PS > .
+  rl [l2]  : < {F,l2,-} {0,S,!} PS >   => < {F,l2,!} {0,S,-} PS > .
+  rl [l2]  : < {F,l2,!} PS >           => < {F,l3,!} PS > .
 
-  rl [l3]  : < {F,l2,-} CPS >          => < {2,l3,-} CPS > .
-  rl [l3]  : < {F,l2,!} PS >           => < {2,l3,!} PS > .
+  rl [l3]  : < {F,l3,-} CPS >          => < {2,l4,-} CPS > .
+  rl [l3]  : < {F,l3,!} PS >           => < {2,l4,!} PS > .
 
-  rl [l4]  : < {F,l3,-} CWS >          => < {F,crit,-} CWS > .
-  rl [l4]  : < {F,l3,!} WS >           => < {F,crit,!} WS > .
-  rl [l4]  : < {F,l3,-} {2,S,-} CPS >  => < {1,l1,-} {2,S,-} CPS > .
-  rl [l4]  : < {F,l3,!} {2,S,-} PS >   => < {1,l1,!} {2,S,-} PS > .
-  rl [l4]  : < {F,l3,-} {2,S,!} PS >   => < {1,l1,-} {2,S,!} PS > .
+  rl [l4]  : < {F,l4,-} CWS >          => < {F,crit,-} CWS > .
+  rl [l4]  : < {F,l4,!} WS >           => < {F,crit,!} WS > .
+  rl [l4]  : < {F,l4,-} {2,S,-} CPS >  => < {F,l1,-} {2,S,-} CPS > .
+  rl [l4]  : < {F,l4,!} {2,S,-} PS >   => < {F,l1,!} {2,S,-} PS > .
+  rl [l4]  : < {F,l4,-} {2,S,!} PS >   => < {F,l1,-} {2,S,!} PS > .
 
-  rl [l5]  : < {F,crit,-} CPS >        => < {0,l5,-} CPS > .
-  rl [l5]  : < {F,crit,!} PS >         => < {0,l5,!} PS > .
-
-  rl [l0] : < {F,l5,-} CPS >           => < {F,l0,-} CPS > .
-  rl [l0] : < {F,l5,!} PS >            => < {F,l0,!} PS > .
+  rl [l5]  : < {F,crit,-} CPS >        => < {0,l1,-} CPS > .
+  rl [l5]  : < {F,crit,!} PS >         => < {0,l1,!} PS > .
 endm
 
 ---(
-search < {0,l0,-} {0,l0,-} {0,l0,!} > =>* < CPS > .
+search < {0,l1,-} {0,l1,-} {0,l1,!} > =>* < CPS > .
 ---)
 
-load symbolic-checker-core
+load symbolic-checker
 
 (mod DIJKSTRA-MUTEX-SATISFACTION is
   pr SYMBOLIC-CHECKER .
@@ -256,27 +253,14 @@ endm)
 (mod DIJKSTRA-MUTEX-SATISFACTION-WIDENING is
   pr DIJKSTRA-MUTEX-SATISFACTION .
 
-  vars F F' : Flag .  var CIS : CInitProcSet .
-  var NL1PS : NL1ProcSet . var NL5PS : NL5ProcSet .
-  var CNL1PS : CNL1ProcSet . var CNL5PS : CNL5ProcSet .
-  var CPS : CProcSet .
+  var F : Flag .  var CIS : CInitProcSet .  var CPS : CProcSet .
 
----(
-  eq < {F,l1,-} {F,l1,-} CNL1PS > = < {F,l1,-} CNL1PS > [variant] .
-  eq < {F,l1,-} {F,l1,-} {F',l1,!} NL1PS > = < {F,l1,-} {F',l1,!} NL1PS > [variant] .
-  eq < {F,l1,-} {F,l1,-} {2,crit,!} NL1PS > = < {F,l1,-} {2,crit,!} NL1PS > [variant] .
-
-  eq < {F,l5,-} {F,l5,-} CNL5PS > = < {F,l5,-} CNL5PS > [variant] .
-  eq < {F,l5,-} {F,l5,-} {F',l5,!} NL5PS > = < {F,l5,-} {F',l5,!} NL5PS > [variant] .
-  eq < {F,l5,-} {F,l5,-} {2,crit,!} NL5PS > = < {F,l5,-} {2,crit,!} NL5PS > [variant] .
----)
-  eq < {F,l1,-} {F,l1,-} CPS > = < {F,l1,-} CPS > [variant] .
-  eq < {F,l5,-} {F,l5,-} CPS > = < {F,l5,-} CPS > [variant] .
+--- bisimilar equational abstraction
+  eq < {F,l2,-} {F,l2,-} CPS > = < {F,l2,-} CPS > [variant] .
 
 endm)
 
 set verbose on .
-
 
 ---   true (complete with depth 16)
 (lfmc < CIS > |= [] ex?  .)

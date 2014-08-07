@@ -377,7 +377,7 @@ FloatOpSymbol::eqRewrite(DagNode* subject, RewritingContext& context)
 	      }
 	    }
 	}
-      if (!isnan(r))
+      if (!std::isnan(r))
 	return floatSymbol->rewriteToFloat(subject, context, r);  
     }
   else if (nrArgs == 1)
@@ -435,12 +435,12 @@ double
 FloatOpSymbol::safePow(double a1, double a2, bool& defined)
 {
   defined = true;
-  if (isnan(a1))
+  if (std::isnan(a1))
     {
       defined = false;
       return a1;
     }
-  if (isnan(a2))
+  if (std::isnan(a2))
     {
       defined = false;
       return a2;
@@ -490,7 +490,7 @@ FloatOpSymbol::safePow(double a1, double a2, bool& defined)
       return 0.0;
     }
   double r = pow(a1, a2);
-  if (isnan(r))
+  if (std::isnan(r))
     defined = false;
   else if (a1 < 0.0 && r != 0.0)
     {

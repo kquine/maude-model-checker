@@ -151,6 +151,8 @@ endm)
 
 endm)
 
+set verbose on .
+
 (lfmc < N | VS | none | IS > |= [] ex? .)
 
 

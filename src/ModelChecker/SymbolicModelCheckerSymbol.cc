@@ -52,7 +52,7 @@
 #include "Symbolic/ConcreteResultGenerator.hh"
 #include "SymbolicModelCheckerSymbol.hh"
 
-#define SDEBUG
+// #define SDEBUG
 // #define TDEBUG
 
 namespace modelChecker {

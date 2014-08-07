@@ -16,14 +16,13 @@
 
 // interface class definitions
 #include "symbol.hh"
-#include "DagNodeSet.hh"
+#include "dagNodeSet.hh"
 #include "term.hh"
 
 // core class definitions
 #include "dagArgumentIterator.hh"
 #include "rewritingContext.hh"
 #include "symbolMap.hh"
-#include "dagNodeSet.hh"
 #include "rule.hh"
 #include "rewriteSequenceSearch.hh"
 

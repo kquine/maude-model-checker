@@ -30,6 +30,7 @@ fmod BAKERY-SYNTAX is
   op _;_;_ : Name Name ProcSet -> Conf .
 endfm
 
+
 mod BAKERY is
   protecting BAKERY-SYNTAX . 
   
@@ -40,10 +41,39 @@ mod BAKERY is
   rl [exit] : N ; M ; [crit(M)] PS => N ; s M ; [idle] PS .
 endm
 
-load symbolic-checker-core
+
+load symbolic-checker
+
+--- prop definitions for bakery
+(mod BAKERY-SATISFACTION1 is
+  pr BAKERY .
+  pr SYMBOLIC-CHECKER .
+
+  subsort Conf < State .
+
+  ops ever-wait? ever-crit? : -> Prop . 
+
+  vars N M : Name . vars PS : ProcSet . 
+  
+  eq s N ; M ; PS |= ever-wait? = true [variant] . 
+  eq 0 ; M ; PS    |= ever-wait? = false [variant] . 
+  eq N ; s M ; PS |= ever-crit? = true [variant] .
+  eq N ; 0 ; PS    |= ever-crit? = false [variant] . 
+endm)
+
+set verbose on .
+
+*** true
+(lfmc N ; N ; [idle] [idle] |= [] (ever-wait? -> <> ever-crit?) .)
+
+*** deadlock counterexample
+(lfmc N ; M ; IS:ProcIdleSet |= [] (ever-wait? -> <> ever-crit?) .)
+
+*** spurious counterexample
+(lfmc N ; M ; WS:ProcWaitSet |= [] (ever-wait? -> <> ever-crit?) .)
 
 
-(mod BAKERY-SATISFACTION is
+(mod BAKERY-SATISFACTION2 is
   pr BAKERY .
   pr SYMBOLIC-CHECKER .
 
@@ -51,8 +81,8 @@ load symbolic-checker-core
 
   ops ex? ini : -> Prop . 
 
-  var WS : ProcWaitSet . var IS : ProcIdleSet . vars PS PS' PS1 PS2 : ProcSet . 
-  vars N L M M1 M2 : Name . 
+  var WS : ProcWaitSet . var IS : ProcIdleSet . var PS : ProcSet . 
+  vars N M M1 M2 : Name .
 
 --- NOTE: ProcIdleSet < ProcWaitSet
   eq N ; M ; WS |= ex? = true [variant] .
@@ -60,17 +90,29 @@ load symbolic-checker-core
   eq N ; M ; [crit(M1)] [crit(M2)] PS |= ex? = false [variant] .
 endm)
 
-eof
+*** no counterexample
+(lmc [10] N:Name ; N:Name ; [idle] [idle] |= [] ex? .)
 
-(mod BAKERY-SATISFACTION-ABS2 is
-  pr BAKERY-SATISFACTION .
+*** true
+(lfmc N:Name ; N:Name ; [idle] [idle] |= [] ex? .)
+
+*** false
+(lfmc N ; M ; WS |= [] ex?  .)
+
+*** false (infinite graph, but a counterexample exists)
+(lfmc N ; N ; WS |= [] ex?  .)
+
+(mod BAKERY-SATISFACTION2-ABS is
+  pr BAKERY-SATISFACTION2 .
 
   var PS : ProcSet .  vars N M L : Name . var IS : ProcIdleSet .
 
+--- bisimilar equational abstraction
   eq s s s N M ; M ; PS [wait(s N M)] [wait(s s N M)]
    =   s s N M ; M ; PS [wait(s N M)]
   [variant] .
 endm)
 
+*** true
 (lfmc N ; N ; IS |= [] ex?  .)
 

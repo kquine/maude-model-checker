@@ -45,10 +45,12 @@ mod RW is
   rl [w2]: < N, false | write ; PS >    =>  < N, true | think ; PS > .
 endm
 
+---(
 search < 0, true | think ; think ; think ; think > 
    =>* < N, B | read ; write ; PS > .
 
 eof
+---)
 
 load symbolic-checker .
 
@@ -68,10 +70,11 @@ load symbolic-checker .
   eq < N, B | read ; write ; PS > |= ex? = false [variant] .
 
 --- equational abstractions 
---- NOTE: this seems to be bisimilar, but need to check!
----  however, for faithful FOLDING abstractions, only simulations are needed!
-  eq < s(s(N)),false | read ; read ; IS >  =  < s(N),false | read ; IS > .
+  eq < s(s(N)),false | read ; read ; IS >  
+   = <    s(N),false | read ; IS > [variant] .
 endm)
+
+set verbose on .
 
 (lfmc < 0, true | IS > |= [] ex? .)
 

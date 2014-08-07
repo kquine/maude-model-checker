@@ -7,7 +7,7 @@
 
 #ifndef FORMULAFAIRNESSTABLE_HH_
 #define FORMULAFAIRNESSTABLE_HH_
-#include "GenBuchiAutomaton.hh"
+#include "genBuchiAutomaton.hh"
 #include "AbstractFairnessTable.hh"
 #include "FairSet/FairSet.hh"
 

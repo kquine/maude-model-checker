@@ -1,5 +1,5 @@
 
-load symbolic-checker-core .
+load symbolic-checker
 
 --- The readers-writers problem in Maude
 --- From: All About Maude - A High-Performance Logical Framework.
