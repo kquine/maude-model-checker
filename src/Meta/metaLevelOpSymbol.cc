@@ -35,10 +35,12 @@
 #include "variable.hh"
 #include "higher.hh"
 #include "freeTheory.hh"
+#include "AU_Theory.hh"
 #include "NA_Theory.hh"
 #include "builtIn.hh"
 #include "strategyLanguage.hh"
 #include "mixfix.hh"
+#include "SMT.hh"
  
 //      interface class definitions
 #include "symbol.hh"
@@ -67,6 +69,8 @@
 #include "narrowingSequenceSearch.hh"
 #include "unificationProblem.hh"
 #include "variantSearch.hh"
+#include "narrowingSearchState2.hh"
+#include "narrowingSequenceSearch3.hh"
 
 //      free theory class definitions
 #include "freeNet.hh"
@@ -104,6 +108,8 @@
 #include "metaUnify.cc"
 #include "metaVariant.cc"
 #include "metaNarrow.cc"
+#include "metaNewNarrow.cc"
+#include "metaNewNarrow2.cc"
 
 MetaLevelOpSymbol::MetaLevelOpSymbol(int id, int nrArgs, const Vector<int>& strategy)
   : FreeSymbol(id, nrArgs, strategy)

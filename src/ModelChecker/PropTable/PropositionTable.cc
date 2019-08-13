@@ -40,7 +40,8 @@ PropositionTable::updatePropInfo(unsigned int propId)
 	if (! propInfoTable[propId])	// in order to update only once
 	{
 		DagNode* propDag = this->index2DagNode(propId);
-		propInfoTable[propId].reset(new PropInfo{pInterpreter.isEventProp(propDag),checkEnabled(propDag)});
+                auto npInfo = new PropInfo(pInterpreter.isEventProp(propDag),checkEnabled(propDag));
+		propInfoTable[propId].reset(npInfo);
 	}
 }
 

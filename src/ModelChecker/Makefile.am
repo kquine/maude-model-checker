@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 noinst_LIBRARIES = libModelChecker.a
 
 libModelChecker_a_CPPFLAGS = \

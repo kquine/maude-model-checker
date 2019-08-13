@@ -21,7 +21,7 @@
 */
 
 //
-//      Class for user level rewriting contexts
+//      Class for user level rewriting contexts.
 //
 #ifndef _userLevelRewritingContext_hh_
 #define _userLevelRewritingContext_hh_
@@ -56,17 +56,13 @@ public:
   };
 
   UserLevelRewritingContext(DagNode* root);
-  UserLevelRewritingContext(DagNode* root,
-			    UserLevelRewritingContext* parent,
-			    int purpose,
-			    bool localTraceFlag);
-
 
   static void setHandlers(bool handleCtrlC);
   static ParseResult commandLoop();
   static bool interrupted();
   static bool aborted();
   static void setInteractive(bool status);
+  static void setPrintAttributeStream(ostream* s);
   static void beginCommand();
   static void setDebug();
   static void clearDebug();
@@ -114,11 +110,22 @@ public:
 				 const NarrowingVariableInfo& originalVariables);
 
   static void printSubstitution(const Substitution& substitution,
-				const VariableInfo& varInfo);
+				const VariableInfo& varInfo,
+				const NatSet& ignoredIndices = NatSet());
+  
+  static void printSubstitution(const Vector<DagNode*>& substitution,
+				const NarrowingVariableInfo& variableInfo);
 
+  static void printSubstitution(const Substitution& substitution,
+				const NarrowingVariableInfo& variableInfo);
 
 
 private:
+  UserLevelRewritingContext(DagNode* root,
+			    UserLevelRewritingContext* parent,
+			    int purpose,
+			    bool localTraceFlag);
+
   static void interruptHandler(int);
   static void interruptHandler2(...);
 
@@ -147,10 +154,18 @@ private:
   static AutoWrapBuffer* wrapOut;
   static AutoWrapBuffer* wrapErr;
 
+  static ostream* printAttrStream;
+
   UserLevelRewritingContext* parent;
   const int purpose;
   bool localTraceFlag;
 };
+
+inline void
+UserLevelRewritingContext::setPrintAttributeStream(ostream* s)
+{
+  printAttrStream = s;
+}
 
 inline void
 UserLevelRewritingContext::clearTrialCount()

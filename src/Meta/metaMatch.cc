@@ -24,36 +24,6 @@
 //	Code for metaMatch() and metaXmatch() descent functions.
 //
 
-local_inline bool
-MetaLevelOpSymbol::getCachedMatchSearchState(MetaModule* m,
-					     FreeDagNode* subject,
-					     RewritingContext& context,
-					     Int64 solutionNr,
-					     MatchSearchState*& state,
-					     Int64& lastSolutionNr)
-{
-  if (solutionNr > 0)
-    {
-      CacheableState* cachedState;
-      if (m->remove(subject, cachedState, lastSolutionNr))
-	{
-	  if (lastSolutionNr <= solutionNr)
-	    {
-	      state = safeCast(MatchSearchState*, cachedState);
-	      //
-	      //	The parent context pointer of the root context in the
-	      //	NarrowingSequenceSearch is possibly stale.
-	      //
-	      safeCast(UserLevelRewritingContext*, state->getContext())->
-		beAdoptedBy(safeCast(UserLevelRewritingContext*, &context));
-	      return true;
-	    }
-	  delete cachedState;
-	}
-    }
-  return false;
-}
-
 local_inline MatchSearchState* 
 MetaLevelOpSymbol::makeMatchSearchState(MetaModule* m,
 					FreeDagNode* subject,
@@ -93,11 +63,11 @@ MetaLevelOpSymbol::metaMatch(FreeDagNode* subject, RewritingContext& context)
   Int64 solutionNr;
   if (MetaModule* m = metaLevel->downModule(subject->getArgument(0)))
     {
-      if (metaLevel->downSaturate64(subject->getArgument(4), solutionNr))
+      if (metaLevel->downSaturate64(subject->getArgument(4), solutionNr) && solutionNr >= 0)
 	{
 	  MatchSearchState* state;
 	  Int64 lastSolutionNr;
-	  if (getCachedMatchSearchState(m, subject, context, solutionNr, state, lastSolutionNr))
+	  if (getCachedStateObject(m, subject, context, solutionNr, state, lastSolutionNr))
 	    m->protect();  // Use cached state
 	  else if ((state = makeMatchSearchState(m, subject, context)))
 	    lastSolutionNr = -1;
@@ -184,12 +154,11 @@ MetaLevelOpSymbol::metaXmatch(FreeDagNode* subject, RewritingContext& context)
   if (MetaModule* m = metaLevel->downModule(subject->getArgument(0)))
     {
       Int64 solutionNr;
-      if (metaLevel->downSaturate64(subject->getArgument(6), solutionNr) &&
-	  solutionNr >= 0)
+      if (metaLevel->downSaturate64(subject->getArgument(6), solutionNr) && solutionNr >= 0)
 	{
 	  MatchSearchState* state;
 	  Int64 lastSolutionNr;
-	  if (getCachedMatchSearchState(m, subject, context, solutionNr, state, lastSolutionNr))
+	  if (getCachedStateObject(m, subject, context, solutionNr, state, lastSolutionNr))
 	    m->protect();  // Use cached state
 	  else if ((state = makeMatchSearchState2(m, subject, context)))
 	    lastSolutionNr = -1;

@@ -280,18 +280,20 @@ CUI_Symbol::normalizeAndComputeTrueSort(DagNode* subject, RewritingContext& cont
 void
 CUI_Symbol::stackArguments(DagNode* subject,
 			   Vector<RedexPosition>& stack,
-			   int parentIndex)
+			   int parentIndex,
+			   bool respectFrozen,
+			   bool eagerContext)
 {
   DagNode** args = safeCast(CUI_DagNode*, subject)->argArray;
   const NatSet& frozen = getFrozen();
 
   DagNode* d = args[0];
-  if (!(frozen.contains(0)) && !(d->isUnstackable()))
-    stack.append(RedexPosition(args[0], parentIndex, 0, eagerArgument(0)));
+  if (!(respectFrozen && frozen.contains(0)) && !(d->isUnstackable()))
+    stack.append(RedexPosition(args[0], parentIndex, 0, eagerContext && eagerArgument(0)));
 
   d = args[1];
-  if (!(frozen.contains(1)) && !(d->isUnstackable()))
-    stack.append(RedexPosition(args[1], parentIndex, 1, eagerArgument(1)));
+  if (!(respectFrozen && frozen.contains(1)) && !(d->isUnstackable()))
+    stack.append(RedexPosition(args[1], parentIndex, 1, eagerContext && eagerArgument(1)));
 }
 
 void
@@ -344,12 +346,38 @@ CUI_Symbol::computeGeneralizedSort(const SortBdds& sortBdds,
   bdd_freepair(argMap);
 }
 
+
+// experimental code for faster sort computations
+void
+CUI_Symbol::computeGeneralizedSort2(const SortBdds& sortBdds,
+				    const Vector<int>& realToBdd,
+				    DagNode* subject,
+				    Vector<Bdd>& outputBdds)
+{
+  DagNode** args = safeCast(CUI_DagNode*, subject)->argArray;
+  Vector<Bdd> inputBdds;
+  args[0]->computeGeneralizedSort2(sortBdds, realToBdd, inputBdds);
+  args[1]->computeGeneralizedSort2(sortBdds, realToBdd, inputBdds);
+  sortBdds.operatorCompose(this, inputBdds, outputBdds);
+}
+
 UnificationSubproblem*
 CUI_Symbol::makeUnificationSubproblem()
 {
   if (leftId() || rightId())
     return new CUI_UnificationSubproblem2();
   return new CUI_UnificationSubproblem();
+}
+
+int
+CUI_Symbol::unificationPriority() const
+{
+  if (idem())
+    return Symbol::unificationPriority();   // unimplemented
+  //
+  //	Make a rough guess about how branchy we are.
+  //
+  return comm() + 2 * (leftId() + rightId());
 }
 
 bool

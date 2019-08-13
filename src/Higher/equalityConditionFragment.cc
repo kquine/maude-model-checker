@@ -112,7 +112,7 @@ EqualityConditionFragment::compileMatch(VariableInfo& variableInfo, NatSet& boun
 bool
 EqualityConditionFragment::solve(bool findFirst,
 				 RewritingContext& solution,
-				 stack<ConditionState*>& /* state */)
+				 Stack<ConditionState*>& /* state */)
 {
   if (!findFirst)
     return false;
@@ -132,6 +132,18 @@ EqualityConditionFragment::solve(bool findFirst,
   delete lhsContext;
   delete rhsContext;
   return success;
+}
+
+void
+EqualityConditionFragment::buildInstances(Substitution& substitution, DagNode*& lhs, DagNode*& rhs)
+{
+  //
+  //	Equality fragments have a very different operational semantics when rewriting module SMT.
+  //	All we do here is return the instantiated lhs and rhs terms.
+  //
+  builder.safeConstruct(substitution);
+  lhs = substitution.value(lhsIndex);
+  rhs = substitution.value(rhsIndex);
 }
 
 #ifdef DUMP

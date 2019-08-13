@@ -158,14 +158,25 @@ MetaLevel::downParameterDecl(DagNode* metaParameterDecl, ImportModule* m)
       int name;
       ImportModule* theory;
       if (downQid(f->getArgument(0), name) &&
-	  downModuleExpression(f->getArgument(1), m, theory) &&
-	  theory->isTheory())
+	  downModuleExpression(f->getArgument(1), m, theory))
 	{
-	  Token t;
-	  t.tokenize(name, FileTable::META_LEVEL_CREATED);
-	  Interpreter* owner = safeCast(MetaModule*, m)->getOwner();  // HACK - probably all modules should have owners
-	  m->addParameter(t, owner->makeParameterCopy(name, theory));
-	  return true;
+	  if (MixfixModule::canHaveAsParameter(m->getModuleType(), theory->getModuleType()))
+	    {
+	      Token t;
+	      t.tokenize(name, FileTable::META_LEVEL_CREATED);
+	      Interpreter* owner = safeCast(MetaModule*, m)->getOwner();  // HACK - probably all modules should have owners
+	      m->addParameter(t, owner->makeParameterCopy(name, theory));
+	      return true;
+	    }
+	  else
+	    {
+	      IssueAdvisory(LineNumber(FileTable::META_LEVEL_CREATED) <<
+			    ": parameterization of " << 
+			    QUOTE(MixfixModule::moduleTypeString(m->getModuleType())) <<
+			    " " << m << " by " <<
+			    QUOTE(MixfixModule::moduleTypeString(theory->getModuleType())) <<
+			    " " << theory << " is not allowed.");
+	    }
 	}
     }
   return false;
@@ -708,6 +719,10 @@ MetaLevel::downStatementAttr(DagNode* metaAttr, MixfixModule* m, StatementAttrib
     ai.flags.setFlags(VARIANT);
   else if (ma == nonexecSymbol)
     ai.flags.setFlags(NONEXEC);
+  else if (ma == nonexecSymbol)
+    ai.flags.setFlags(NONEXEC);
+  else if (ma == narrowingSymbol)
+    ai.flags.setFlags(NARROWING);
   else if (ma == printSymbol && !ai.flags.getFlag(PRINT))
     {
       ai.flags.setFlags(PRINT);
@@ -763,8 +778,8 @@ MetaLevel::downPrintListItem(DagNode* metaPrintListItem, MixfixModule* m, Statem
 	    }
 	  else
 	    {
-	      IssueAdvisory("could not find sort " << QUOTE(Token::name(sortName)) <<
-			    " in meta-module \"" << QUOTE(m) << '.');
+	      //IssueAdvisory("could not find sort " << QUOTE(Token::name(sortName)) <<
+	      //	    " in meta-module \"" << QUOTE(m) << '.');
 	    }
 	}
     }
@@ -919,6 +934,13 @@ MetaLevel::downRule(DagNode* metaRule, MixfixModule* m)
 		  Rule* rl = new Rule(ai.label, l, r, condition);
 		  if (ai.flags.getFlag(NONEXEC))
 		    rl->setNonexec();
+		  if (ai.flags.getFlag(NARROWING))
+		    {
+		      if (condition.empty())
+			rl->setNarrowing();
+		      else
+			IssueAdvisory("narrowing attribute not allowed for conditional rule in meta-module " << QUOTE(m) << '.');
+		    }
 		  m->insertRule(rl);
 		  if (ai.metadata != NONE)
 		    m->insertMetadata(MixfixModule::RULE, rl, ai.metadata);
@@ -1120,8 +1142,8 @@ MetaLevel::downTerm(DagNode* metaTerm, MixfixModule* m)
 		  varName = Token::flaggedCode(varName);
 		return new VariableTerm(symbol, varName);
 	      }
-	    IssueAdvisory("could not find sort " << QUOTE(Token::name(sortName)) <<
-			  " in meta-module \"" << QUOTE(m) << '.');
+	    //IssueAdvisory("could not find sort " << QUOTE(Token::name(sortName)) <<
+	    //	  " in meta-module \"" << QUOTE(m) << '.');
 	    break; 
 	  }
 	case Token::AUX_CONSTANT:
@@ -1160,7 +1182,7 @@ MetaLevel::downTerm(DagNode* metaTerm, MixfixModule* m)
 		  case Token::SMALL_NAT:
 		  case Token::SMALL_NEG:
 		    {
-		      SMT_NumberSymbol* s = m->findSMT_NumberSymbol(component, SMT_Base::INTEGER);
+		      SMT_NumberSymbol* s = m->findSMT_NumberSymbol(component, SMT_Info::INTEGER);
 		      if (s != 0)
 			{
 			  mpq_class q(Token::name(cName));
@@ -1170,10 +1192,11 @@ MetaLevel::downTerm(DagNode* metaTerm, MixfixModule* m)
 		    }
 		  case Token::RATIONAL:
 		    {
-		      SMT_NumberSymbol* s = m->findSMT_NumberSymbol(component, SMT_Base::REAL);
+		      SMT_NumberSymbol* s = m->findSMT_NumberSymbol(component, SMT_Info::REAL);
 		      if (s != 0)
 			{
 			  mpq_class q(Token::name(cName));
+			  q.canonicalize();
 			  return new SMT_NumberTerm(s, q);
 			}
 		      break;
@@ -1192,8 +1215,8 @@ MetaLevel::downTerm(DagNode* metaTerm, MixfixModule* m)
 	      }
 	    else
 	      {
-		IssueAdvisory("could not find sort " << QUOTE(Token::name(sortName)) <<
-			      " in meta-module " << QUOTE(m) << '.');
+		//IssueAdvisory("could not find sort " << QUOTE(Token::name(sortName)) <<
+		//	      " in meta-module " << QUOTE(m) << '.');
 	      }
 	    break;
 	  }

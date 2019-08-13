@@ -182,7 +182,7 @@ RewritingContext::RewritingContext(DagNode* root)
   mbCount = 0;
   eqCount = 0;
   rlCount = 0;
-  
+
   narrowingCount = 0;
   variantNarrowingCount = 0;
   staleMarker = ROOT_OK;
@@ -202,6 +202,12 @@ RewritingContext::RewritingContext(int substitutionSize)
 inline
 RewritingContext::~RewritingContext()
 {
+}
+
+inline void
+RewritingContext::reduce()
+{
+  rootNode->reduce(*this);
 }
 
 inline DagNode*
@@ -295,6 +301,9 @@ RewritingContext::clearCount()
   mbCount = 0;
   eqCount = 0;
   rlCount = 0;
+
+  narrowingCount = 0;
+  variantNarrowingCount = 0;
 }
 
 inline void

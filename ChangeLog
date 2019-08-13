@@ -1,3 +1,122 @@
+2017-07-12  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Misc/smtTest.maude: added tests for violations
+	of SMT restrictions
+
+2017-06-26  Steven Eker  <eker@install.csl.sri.com>
+
+	* INSTALL: add Yices2 info
+
+2017-06-21  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Misc/smtTest (MAUDE_LIB): check for USE_YICES2
+
+2017-06-20  Steven Eker  <eker@install.csl.sri.com>
+
+	* configure.ac (GMP_LIBS): add configuration for Yices2
+
+2017-05-30  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Misc/smtTest.maude: move smt continue tests here
+	from continue.maude since they shouldn't be run if we don't
+	have CVC4 linked
+
+===================================Maude114===========================================
+
+2017-05-26  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaNarrow.maude: added tests for metaNarrowingSearchPath()
+
+	* tests/Misc/narrow.maude: added tests for fvu-narrow
+
+2017-05-02  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaNarrow.maude: metaNarrowingApply() no longer
+	takes label argument
+
+	* tests/Misc/continue.maude: use narrowing attribute
+
+2017-05-01  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Misc/narrow.maude: use narrowing attribute
+
+	* tests/Meta/metaNarrow.maude: use narrowing attribute
+
+===================================Maude113===========================================
+
+2017-04-13  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Misc/continue.maude: created
+
+===================================Maude112a===========================================
+
+2017-03-10  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaNarrow.maude: added metaNarrowingSearch() examples
+
+	* tests/Misc/narrow.maude: created
+
+===================================Maude111b===========================================
+
+2017-01-09  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaNarrow.maude: added examples
+
+2017-01-06  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaVariantUnify.maude: fix typo in metaVariantDisjointUnify()
+
+===================================Maude111a===========================================
+
+2016-12-19  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaNarrow.maude: created
+
+	* tests/Meta/metaNarrow (MAUDE_LIB): created
+
+===================================Maude111===========================================
+
+2016-06-27  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Misc/smtTest (MAUDE_LIB): skip test if we don't define USE_CVC4
+
+	* configure.ac: use no argument form of AM_INIT_AUTOMAKE
+
+===================================Maude110b===========================================
+
+2016-05-05  Steven Eker  <eker@install.csl.sri.com>
+
+	* configure.ac: changed bug report address from maude-bugs@maude.cs.uiuc.edu
+	to maude-bugs@lists.cs.illinois.edu
+
+===================================Maude110===========================================
+
+2016-02-26  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Misc/meseguerFiniteVariant.maude: created
+
+	* tests/Misc/meseguerFiniteVariant: created
+
+===================================Maude109===========================================
+
+2014-11-19  Steven Eker  <eker@ape.csl.sri.com>
+
+	* tests/Misc/assocUnification.maude: added examples to test new capabilities
+
+===================================Maude106===========================================
+
+2014-10-29  Steven Eker  <eker@ape.csl.sri.com>
+
+	* tests/Misc/smtTest.maude: updated with new syntax and examples
+
+===================================Maude105===========================================
+
+2014-08-14  Steven Eker  <eker@ape.csl.sri.com>
+
+	* tests/Misc/smtTest.maude: use new syntax
+
+===================================Maude104===========================================
+
 2014-04-22  Steven Eker  <eker@ape.csl.sri.com>
 
 	* configure.ac: added configuration for CVC4 and POSIX Realtime

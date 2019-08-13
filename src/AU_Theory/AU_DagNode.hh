@@ -46,9 +46,6 @@ public:
   DagNode* copyWithReplacement(Vector<RedexPosition>& redexStack,
 			       int first,
 			       int last);
-  void stackArguments(Vector<RedexPosition>& stack,
-		      int parentIndex,
-		      bool respectFrozen);
   //
   //	Functions required to handle extension information.
   //
@@ -79,7 +76,10 @@ public:
   //	Interface for narrowing.
   //
   bool indexVariables2(NarrowingVariableInfo& indices, int baseIndex);
-  DagNode* instantiateWithReplacement(const Substitution& substitution, const Vector<DagNode*>& eagerCopies, int argIndex, DagNode* newDag);
+  DagNode* instantiateWithReplacement(const Substitution& substitution,
+				      const Vector<DagNode*>* eagerCopies,
+				      int argIndex,
+				      DagNode* newDag);
   DagNode* instantiateWithCopies2(const Substitution& substitution, const Vector<DagNode*>& eagerCopies);
   //
   //	Functions particular to AU_DagNode.
@@ -99,6 +99,7 @@ private:
   //
   DagNode* markArguments();
   DagNode* copyEagerUptoReduced2();
+  DagNode* copyAll2();
   void clearCopyPointers2();
   //
   //	Functions particular to AU_DagNode.
@@ -120,6 +121,7 @@ private:
   friend class AU_ExtensionInfo;	// for constructing matched portion
   friend class AU_DequeDagNode;		// for conversion & comparison
   friend class AU_UnificationSubproblem;
+  friend class AU_UnificationSubproblem2;
 };
 
 AU_DagNode* getAU_DagNode(DagNode* dagNode);

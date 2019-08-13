@@ -46,7 +46,9 @@ public:
   DagNode* ruleRewrite(DagNode* subject, RewritingContext& context);
   void stackArguments(DagNode* subject,
 		      Vector<RedexPosition>& stack,
-		      int parentIndex);
+		      int parentIndex,
+		      bool respectFrozen,
+		      bool eagerContext);
   Term* termify(DagNode* dagNode);
   //
   //	Member functions overiding default handling.
@@ -60,6 +62,10 @@ public:
 			      const Vector<int>& realToBdd,
 			      DagNode* subject,
 			      Vector<Bdd>& generalizedSort);
+  void computeGeneralizedSort2(const SortBdds& sortBdds,
+			       const Vector<int>& realToBdd,
+			       DagNode* subject,
+			       Vector<Bdd>& outputBdds);
   UnificationSubproblem* makeUnificationSubproblem();
   int unificationPriority() const;
   bool canResolveTheoryClash();

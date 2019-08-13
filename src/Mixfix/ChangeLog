@@ -1,3 +1,1079 @@
+2017-08-11  Steven Eker  <eker@install.csl.sri.com>
+
+	* tokenizer.ll (Rope): use fixUp()
+	(Rope): don't allow \t in strings
+
+	* token.hh (T): added decl for static version of fixUp()
+
+	* token.cc (fixUp): added static version
+
+	* tokenizer.ll (Rope): use endOfRope flag
+	(Rope): use EOT character to indicate endOfRope and avoid
+	flex EOF handling
+
+	* quotedIdentifierOpSymbol.cc (eqRewrite): use builtInReplace()
+	in the empty and singleton tokenize() cases
+
+2017-08-10  Steven Eker  <eker@install.csl.sri.com>
+
+	* tokenizer.ll: created
+
+	* quotedIdentifierOpSymbol.hh (FreeSymbol): added decl for
+	makeQid()
+
+	* quotedIdentifierOpSymbol.cc (eqRewrite): implement tokenize()
+	(makeQid): added
+
+2017-08-08  Steven Eker  <eker@install.csl.sri.com>
+
+	* quotedIdentifierOpSymbol.cc (printQid): new needSpace
+	rule
+	(printQid): handle '\c Qids specially
+
+2017-08-07  Steven Eker  <eker@install.csl.sri.com>
+
+	* quotedIdentifierOpSymbol.cc (eqRewrite): implemented print()
+	case
+
+	* quotedIdentifierOpSymbol.hh (FreeSymbol): added decl for
+	printQidList(), printQid()
+
+	* quotedIdentifierOpSymbol.cc (printQid): added
+	(printQidList): added
+
+2017-08-04  Steven Eker  <eker@install.csl.sri.com>
+
+	* quotedIdentifierOpSymbol.hh (FreeSymbol): use
+	quotedIdentifierOpSignature.cc
+
+	* quotedIdentifierOpSymbol.cc (QuotedIdentifierOpSymbol)
+	(copyAttachments, getSymbolAttachments, attachSymbol): use
+	quotedIdentifierOpSignature.cc
+	(getDataAttachments): added cases for print and tokenize
+
+	* quotedIdentifierOpSignature.cc: created
+
+2017-07-31  Steven Eker  <eker@install.csl.sri.com>
+
+	* lexerAux.cc (getInput): added comments
+
+2017-07-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* entry.cc (newFancySymbol): added
+	SymbolType::STREAM_MANAGER_SYMBOL case
+
+	* symbolType.hh (S): added STREAM_MANAGER_SYMBOL
+
+	* specialSymbolTypes.cc: added streamManagerSymbol
+
+2017-07-24  Steven Eker  <eker@install.csl.sri.com>
+
+	* variableGenerator.cc (push, pop, clearAssertions): added
+	stub versions to allow linking without SMT support
+
+2017-07-19  Steven Eker  <eker@install.csl.sri.com>
+
+	* symbolType.hh (S): added FILE_MANAGER_SYMBOL
+
+	* entry.cc (newFancySymbol): add
+	SymbolType::FILE_MANAGER_SYMBOL case
+
+	* specialSymbolTypes.cc: added fileManagerSymbol
+
+	* command.cc (printAttributes): only print hook details
+	if nonempty
+
+===================================Maude115===========================================
+
+2017-07-11  Steven Eker  <eker@install.csl.sri.com>
+
+	* search.cc (checkSearchRestrictions): check for SMT
+	operators in pattern
+
+	* mixfixModule.hh (SharedTokens): added decl for new
+	findNonlinearVariable()
+	(SharedTokens): made findSMT_Symbol() public
+
+	* search.cc (search): don't make Pattern for smt-search
+	(checkSearchRestrictions): moved nonlinear variable check here
+
+	* mixfixModule.cc (findNonlinearVariable): added variableInfo
+	version
+
+	* search.cc (search): check for nonlinear variables in pattern
+	in smt-search case
+
+	* mixfixModule.cc (validForSMT_Rewriting): added line number info
+	to warnings
+
+2017-07-10  Steven Eker  <eker@install.csl.sri.com>
+
+	* mixfixModule.cc (MixfixModule): initialize smtStatus
+	(validForSMT_Rewriting): check and set smtStatus
+
+	* mixfixModule.hh (SharedTokens): added enum SMT_Status and
+	data member smtStatus
+
+2017-07-07  Steven Eker  <eker@install.csl.sri.com>
+
+	* search.cc (checkSearchRestrictions): issue warning if
+	validForSMT_Rewriting() returns false
+
+	* mixfixModule.cc (validForSMT_Rewriting): add line number to
+	error messages
+
+	* mixfixModule.hh (SharedTokens): added decl for
+	findNonlinearVariable()
+
+	* mixfixModule.cc (findNonlinearVariable): added
+	(validForSMT_Rewriting): check for nonlinear variables in lhs
+
+	* mixfixModule.hh (SharedTokens): containsSMT_Symbol()
+	-> findSMT_Symbol()
+
+	* mixfixModule.cc (containsSMT_Symbol): becomes
+	findSMT_Symbol()
+	(validForSMT_Rewriting): use findSMT_Symbol()
+
+	* mixfixModule.hh (SharedTokens): added decl for
+	containsSMT_Symbol()
+
+	* mixfixModule.cc (containsSMT_Symbol): added
+	(validForSMT_Rewriting): check for SMT symbols occurring
+	in the lhs of a rule
+
+2017-07-06  Steven Eker  <eker@install.csl.sri.com>
+
+	* mixfixModule.cc (validForSMT_Rewriting): added check for
+	non-SMT operators have SMT sorts as their range
+
+2017-06-30  Steven Eker  <eker@install.csl.sri.com>
+
+	* mixfixModule.cc (validForSMT_Rewriting): check for regular
+	symbols and polymorphic operators that have a collapse
+	axiom
+
+	* symbolType.hh (S): added COLLAPSE
+
+2017-06-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* yices2_Bindings.cc (checkDag): check for error from
+	yices_assert_formula()
+	(checkDag): treat all return values other than STATUS_SAT
+	and STATUS_UNSAT as SAT_UNKNOWN
+	(assertDag): symmetric changes
+	(dagToYices2): enforce 2nd argument of divisible to be
+	positive constant
+
+2017-06-27  Steven Eker  <eker@install.csl.sri.com>
+
+	* cvc4_Bindings.cc (dagToCVC4): check for non-positive
+	2nd arguments to divisible
+	(checkDag): catch CVC4::LogicException
+	(assertDag): catch CVC4::LogicException
+	(assertDag): don't both passing an argument to checkSat()
+
+2017-06-26  Steven Eker  <eker@install.csl.sri.com>
+
+	* cvc4_Bindings.cc (dagToCVC4): fix bug where DIVISIBLE
+	case could fall through
+
+	* yices2_Bindings.cc (dagToYices2): flipped argument order
+	to yices_divides_atom()
+
+2017-06-23  Steven Eker  <eker@install.csl.sri.com>
+
+	* yices2_Bindings.hh (SMT_EngineWrapper): delet decl for
+	makeRationalConstant()
+
+	* yices2_Bindings.cc (makeRationalConstant): fold into
+	dagToYices2()
+
+2017-06-20  Steven Eker  <eker@install.csl.sri.com>
+
+	* yices2_Bindings.cc (dagToYices2): implemented
+
+2017-06-16  Steven Eker  <eker@install.csl.sri.com>
+
+	* yices2_Bindings.cc (makeVariable): implemented
+	(makeBooleanExpr): implemented
+
+2017-06-15  Steven Eker  <eker@install.csl.sri.com>
+
+	* yices2_Bindings.cc: created
+
+	* yices2_Bindings.hh: created
+
+2017-06-14  Steven Eker  <eker@install.csl.sri.com>
+
+	* cvc4_Bindings.hh: created to hold CVC4 specific code
+
+	* variableGenerator.hh (SMT_EngineWrapper): stripped out
+	all CVC4 specific code
+
+	* cvc4_Bindings.cc: created to hold CVC4 specific code
+
+	* variableGenerator.cc: stripped out all CVC4 specific code
+
+2017-06-13  Steven Eker  <eker@install.csl.sri.com>
+
+	* prettyPrint.cc (printAttributes): fix bug where we weren't
+	printing the narrowing attribute if it was the only attribute
+
+2017-06-12  Steven Eker  <eker@install.csl.sri.com>
+
+	* mixfixModule.cc (checkFreshVariableNames): implemented
+
+	* mixfixModule.hh (SharedTokens): added decl for
+	checkFreshVariableNames()
+
+	* syntacticPreModule.cc (getFlatModule): call
+	checkFreshVariableNames()
+
+	* mixfixModule.cc (checkFreshVariableNames): added stub
+
+	* freshVariableSource.cc (variableNameConflict): need to consider
+	@ variables
+
+2017-06-09  Steven Eker  <eker@install.csl.sri.com>
+
+	* bufferPrint.cc (handleIter): use decideIteratedAmbiguity()
+	to decide needToDisambiguate and argumentRangeKnown
+
+	* dagNodePrint.cc (handleIter): use decideIteratedAmbiguity()
+	to decide needToDisambiguate and argumentRangeKnown
+
+	* entry.cc (checkPseudoIterated): rewritten using
+	iteratedMap
+
+	* termPrint.cc (handleIter): don't pass iflags argument to
+	decideIteratedAmbiguity()
+
+	* mixfixModule.hh (SharedTokens): updated decl for
+	decideIteratedAmbiguity()
+
+	* sharedPrint.cc (decideIteratedAmbiguity): use iteratedMap
+	(decideIteratedAmbiguity): delete iflags argument
+
+	* entry.cc (checkIterated): fill out iteratedMap
+
+	* mixfixModule.hh (SharedTokens): added typedef IteratedMap
+	and data member iteratedMap
+
+2017-06-08  Steven Eker  <eker@install.csl.sri.com>
+
+	* termPrint.cc (handleIter): use decideIteratedAmbiguity()
+	to do disambiguation properly
+
+	* mixfixModule.hh (SharedTokens): added decl for
+	decideIteratedAmbiguity()
+
+	* sharedPrint.cc (decideIteratedAmbiguity): added
+
+	* entry.cc (checkPseudoIterated, checkIterated): more detailed
+	warnings
+
+2017-06-07  Steven Eker  <eker@install.csl.sri.com>
+
+	* entry.cc (checkIterated): implemented
+	(addOpDeclaration): call checkIterated()
+
+	* mixfixModule.hh (SharedTokens): added decl for
+	checkIterated()
+
+	* entry.cc (checkPseudoIterated): fill out pseudoIteratedMap
+	(checkIterated): added stub
+
+	* mixfixModule.hh (SharedTokens): checkPseudoIterator() ->
+	checkPseudoIterated()
+	(SharedTokens): added typedefs NumberToSymbolMap,
+	PseudoIteratedMap and data member pseudoIteratedMap
+
+	* entry.cc (addOpDeclaration): updated calling convention
+	for checkPseudoIterator() again
+	(checkPseudoIterator): becomes checkPseudoIterated()
+	(addOpDeclaration): use checkPseudoIterated()
+
+	* mixfixModule.hh (SharedTokens): updated decl for
+	checkPseudoIterator()
+
+	* entry.cc (addOpDeclaration): updated calling convention
+	for checkPseudoIterator()
+	(checkPseudoIterator): replace with Symbol* base version
+
+	* token.hh (T): updated decl for checkPseudoIterator()
+
+	* entry.cc (checkPseudoIterator): implemented
+
+2017-06-06  Steven Eker  <eker@install.csl.sri.com>
+
+	* mixfixModule.hh (SharedTokens): added decl for checkPseudoIterator()
+
+	* entry.cc (addOpDeclaration): added call to checkPseudoIterator()
+	(checkPseudoIterator): added stub
+
+2017-06-05  Steven Eker  <eker@install.csl.sri.com>
+
+	* symbolType.hh (hasAtLeastOneFlag): added
+
+2017-05-31  Steven Eker  <eker@install.csl.sri.com>
+
+	* ops.cc (setPoly): check for duplicate arg numbers in
+	poly attribute
+
+===================================Maude114===========================================
+
+
+2017-05-26  Steven Eker  <eker@install.csl.sri.com>
+
+	* execute.cc (clearContinueInfo): deleted commented out code
+
+2017-05-19  Steven Eker  <eker@install.csl.sri.com>
+
+	* narrowing.cc (doVuNarrowing): reorganize printing
+	(doVuNarrowing): fix double delete bug
+
+	* search.cc (search): combine vu-narrow and fvu-narrow code
+
+	* interpreter.hh (ViewDatabase): deleted decl for doFvuNarrowing();
+	updated decl for doVuNarrowing()
+
+	* narrowing.cc (doFvuNarrowing): support continuation
+	(doVuNarrowing): deleted
+	(doFvuNarrowing): becomes doVuNarrow()
+	(vuNarrowingCont): use NarrowingSequenceSearch3
+
+2017-05-12  Steven Eker  <eker@install.csl.sri.com>
+
+	* narrowing.cc (doFvuNarrowing): print accumulated substitution
+
+	* userLevelRewritingContext.hh (ObjectSystemRewritingContext): added
+	decl for new printSubstitution()
+
+	* userLevelRewritingContext.cc (printSubstitution): added
+	Substitution&/VariableInfo& version
+
+	* lexer.ll: added fvu-narrow
+
+	* top.yy: added KW_FVU_NARROW
+
+	* commands.yy (search): added fvu-narrow support
+
+	* interpreter.hh (ViewDatabase): added decl for doFvuNarrowing()
+
+	* narrowing.cc (doFvuNarrowing): added
+
+	* search.cc (checkSearchRestrictions): support fvu-narrow
+	(search): fvu-narrow
+
+	* interpreter.hh (ViewDatabase): added FVU_NARROW to SearchKind
+
+2017-04-26  Steven Eker  <eker@install.csl.sri.com>
+
+	* specialTokens.cc: added narrowing
+
+	* makeGrammar.cc (makeAttributeProductions): added narrowing
+	attribute
+
+	* mixfixParser.hh (M): added MAKE_NARROWING_ATTRIBUTE to
+	enum SemanticActions
+
+	* mixfixParser.cc (makeAttributePart): added case for
+	MAKE_NARROWING_ATTRIBUTE
+
+	* mixfixParser.hh (M): added NARROWING to enum Flags
+
+	* prettyPrint.cc (printAttributes): support narrowing attribute
+
+	* mixfixParser.cc (makeStatementPart): handle narrowing flag
+
+	* importModule.cc (donateStatements2): copy narrowing flag
+
+===================================Maude113===========================================
+
+2017-04-13  Steven Eker  <eker@install.csl.sri.com>
+
+	* interpreter.cc (Interpreter): don't initialize savedContext
+
+	* loopMode.cc (doLoop): use CacheableRewritingContext and
+	savedState
+	(contLoop2): use CacheableRewritingContext and savedState
+
+	* interpreter.hh (ViewDatabase): deleted data member
+	savedContext
+	(ViewDatabase): updated decl for endRewriting()
+
+	* erewrite.cc (eRewrite): use CacheableRewritingContext
+	(eRewriteCont): use CacheableRewritingContext and savedState
+
+	* execute.cc (endRewriting): make context argument
+	CacheableRewritingContext; use savedState
+	(reduce): use CacheableRewritingContext
+	(rewrite, fRewrite): use CacheableRewritingContext
+	(fRewriteCont, rewriteCont): use CacheableRewritingContext,
+	savedState
+	(clearContinueInfo): don't delete or clear savedContext
+
+	* mixfix.hh: added class CacheableRewritingContext
+
+2017-04-11  Steven Eker  <eker@install.csl.sri.com>
+
+	* search.cc (search): deleted #if 0'd out code
+
+2017-04-06  Steven Eker  <eker@install.csl.sri.com>
+
+	* narrowing.cc (vuNarrowingCont, narrowingCont): support debug
+
+2017-04-04  Steven Eker  <eker@install.csl.sri.com>
+
+	* smtSearch.cc (doSmtSearch): print state and timing info; print
+	no more solutions message
+
+2017-04-03  Steven Eker  <eker@install.csl.sri.com>
+
+	* search.cc (search): use doSmtSearch()
+
+	* interpreter.hh (ViewDatabase): added decls for doSmtSearch(),
+	smtSearchCont()
+
+	* smtSearch.cc: created
+
+	* interpreter.hh (ViewDatabase): deleted data member
+	savedRewriteSequenceSearch
+
+	* execute.cc (clearContinueInfo): don't delete or clear
+	savedRewriteSequenceSearch
+
+	* interpreter.cc (Interpreter): don't clear savedRewriteSequenceSearch
+
+	* search.cc (showSearchGraph): use dynmaic_cast on savedState
+	(showSearchPath, showSearchPathLabels): use dynmaic_cast on savedState
+	(doSearching): use savedState
+	(searchCont): use savedState
+
+2017-03-31  Steven Eker  <eker@install.csl.sri.com>
+
+	* search.cc (searchCont): support debug
+
+	* interpreter.hh (ViewDatabase): updated decl for doSearching()
+
+	* search.cc (search): use QUANTIFY_START()
+	(doSearching): make solutionCount and limit 64-bit; use QUANTIFY_STOP()
+	(doSearching): restructured
+	(doSearching): don't call interrupted()
+	(searchCont): use QUANTIFY_START()
+
+	* interpreter.hh (ViewDatabase): added decl for checkSearchRestrictions()
+
+	* search.cc (search): destruct initial term and condition if we
+	are asked to narrow with a non-empty condition
+	(checkSearchRestrictions): added
+	(search): use checkSearchRestrictions()
+	(search): deepSelfDestruct() target if we fail checks
+
+	* interpreter.hh (ViewDatabase): updatede decl for search()
+
+	* search.cc (search): take debug argument
+
+	* commands.yy (command): added optDebug to search
+
+	* execute.cc (clearContinueInfo): don't delete and clear
+	savedStrategicSearch
+
+	* interpreter.cc (Interpreter): don't clear savedStrategicSearch
+
+	* interpreter.hh (ViewDatabase): updated decl for
+	doStrategicSearch(); deleted data member savedStrategicSearch
+
+	* srewrite.cc (sRewrite): support debug flag
+	(doStrategicSearch): make solutionCount and limit 64-bit;
+	restructured; use savedState
+	(sRewriteCont): use savedState; support debug flag
+
+	* getVariants.cc (doGetVariants): check interrupted() in the
+	irredundant case
+	(getVariants): QUANTIFY_START()
+	(getVariantsCont): QUANTIFY_START()
+	(doGetVariants): use QUANTIFY_STOP();
+
+	* narrowing.cc (doNarrowing): use QUANTIFY_STOP()
+	(narrowingCont): use QUANTIFY_START()
+	(doVuNarrowing): use QUANTIFY_STOP()
+	(vuNarrowingCont): use QUANTIFY_START()
+
+	* match.cc (match): use QUANTIFY_START()
+	(doMatching): use QUANTIFY_STOP()
+	(matchCont): use use QUANTIFY_START()
+	(doMatching): updated comments
+
+	* mixfix.hh: added QUANTIFY_START(), QUANTIFY_STOP()
+
+2017-03-30  Steven Eker  <eker@install.csl.sri.com>
+
+	* interpreter.hh (ViewDatabase): make savedSolutionCount an Int64
+
+	* getVariants.cc (doGetVariants): make solutionCount and limit
+	64-bit
+
+	* interpreter.hh (ViewDatabase): update decls for doNarrowing(),
+	doVuNarrowing(), doGetVariants(), doVariantUnification()
+
+	* narrowing.cc (doNarrowing, doVuNarrowing): make solutionCount
+	and limit 64-bit
+
+	* variantUnify.cc (variantUnify): echo debug flag
+	(doVariantUnification): make solutionCount and limit 64-bit
+
+	* getVariants.cc (getVariants): echo debug flag
+
+	* interpreter.hh (ViewDatabase): added decls for getVariantsCont()
+	and doGetVariants()
+
+	* getVariants.cc (doGetVariants): added
+	(getVariantsCont): added
+	(getVariants): use doGetVariants()
+
+	* variantUnify.cc (doVariantUnification): restructured;
+	use aborted()
+	(variantUnifyCont): handle debug flag
+
+2017-03-29  Steven Eker  <eker@install.csl.sri.com>
+
+	* narrowing.cc (doNarrowing): don't call interrupted(); tidy up
+	after abort or solution exhaustion
+	(doVuNarrowing): don't call interrupted(); tidy up
+	after abort or solution exhaustion
+
+	* getVariants.cc: renamed from variants.cc
+
+	* variantUnify.cc (variantUnify, doVariantUnification)
+	(variantUnifyCont): moved here
+
+	* interpreter.hh (ViewDatabase): added decls for doVariantUnification()
+	and variantUnifyCont()
+	(ViewDatabase): deleted decl for newNarrow()
+
+	* variants.cc (doVariantUnification): added
+	(variantUnifyCont): added
+
+	* search.cc (newNarrow): deleted
+
+	* variants.cc (getVariants, variantUnify): moved here
+
+	* narrowing.cc (doNarrowing): check for incompleteness
+	(doNarrowing): call printStats()
+
+2017-03-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* userLevelRewritingContext.cc (traceVariantNarrowingStep): use
+	narrowing version of printSubstitution()
+
+	* interpreter.hh (ViewDatabase): added decl for narrowingCont()
+
+	* userLevelRewritingContext.hh (ObjectSystemRewritingContext): added
+	decl for narrowing version of printSubstitution()
+
+	* narrowing.cc (doVuNarrowing): use narrowing version of
+	printSubstitution()
+
+	* userLevelRewritingContext.cc (printSubstitution): added narrowing
+	version
+
+	* unify.cc: fixed comment since we not longer support xunify
+
+	* narrowing.cc (narrowingCont): added
+	(doNarrowing): added continue support
+
+	* cacheableRewritingContext.hh: created
+
+	* userLevelRewritingContext.hh (ObjectSystemRewritingContext): made
+	complex ctor private
+
+2017-03-24  Steven Eker  <eker@install.csl.sri.com>
+
+	* execute.cc (clearContinueInfo): don't delete and clear
+	savedUnificationProblem
+
+	* interpreter.cc (Interpreter): don't clear
+	savedUnificationProblem
+
+	* interpreter.hh (ViewDatabase): delete data member
+	savedUnificationProblem
+
+	* unify.cc (unifyCont): use savedState
+	(doUnification): use savedState
+
+	* execute.cc (clearContinueInfo): don't delete and clear
+	savedMatchSearchState
+
+	* interpreter.cc (Interpreter): don't clear savedMatchSearchState
+
+	* interpreter.hh (ViewDatabase): delete data member
+	savedMatchSearchState
+
+	* match.cc (matchCont): use savedState
+	(doMatching): use savedState
+
+	* execute.cc (clearContinueInfo): delete and clear savedState
+
+	* interpreter.cc (Interpreter): clear savedState
+
+	* interpreter.hh (ViewDatabase): added data member savedState
+
+	* narrowing.cc (vuNarrowingCont): use savedState
+	(doVuNarrowing): use savedState
+
+2017-03-23  Steven Eker  <eker@install.csl.sri.com>
+
+	* narrowing.cc (vuNarrowingCont): added
+	(doVuNarrowing): support continuation
+
+	* interpreter.hh (ViewDatabase): added decl for vuNarrowingCont()
+
+	* search.cc (search): doNarrowing2() -> doVuNarrowing()
+
+	* interpreter.hh (ViewDatabase): doNarrowing2() ->
+	doVuNarrowing()
+
+	* narrowing.cc: created
+	(doNarrowing2): moved here
+	(doNarrowing): moved here
+	(doNarrowing2): becomes doVuNarrowing()
+
+===================================Maude112a===========================================
+
+2017-03-13  Steven Eker  <eker@install.csl.sri.com>
+
+	* process.cc (processImports): don't add illegal parameters, since
+	even the creation of the illegal parameter copies can cause issues
+
+2017-03-10  Steven Eker  <eker@install.csl.sri.com>
+
+	* search.cc (doNarrowing2): added incompleteness warning; took out
+	extra newline print
+
+2017-02-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* search.cc (doNarrowing2): added
+	(search): use doNarrowing2() to implement vu-narrow
+
+	* interpreter.hh (ViewDatabase): added decl for doNarrowing2()
+
+2017-02-27  Steven Eker  <eker@install.csl.sri.com>
+
+	* search.cc (search): added stub code for vu-narrow
+
+2017-02-24  Steven Eker  <eker@install.csl.sri.com>
+
+	* interpreter.hh (ViewDatabase): added VU_NARROW to enum SearchKind
+
+	* commands.yy (search): added KW_VU_NARROW to search
+
+	* lexer.ll: added keyword vu-narrow
+
+	* top.yy: added token KW_VU_NARROW
+
+===================================Maude111b===========================================
+
+2017-01-06  Steven Eker  <eker@install.csl.sri.com>
+
+	* banner.cc (printBanner): fix copyright year
+
+===================================Maude111a===========================================
+
+2016-12-15  Steven Eker  <eker@install.csl.sri.com>
+
+	* freshVariableSource.hh (FreshVariableGenerator): added decl for
+	belongsToFamily()
+
+	* freshVariableSource.cc (belongsToFamily): added
+
+2016-12-08  Steven Eker  <eker@install.csl.sri.com>
+
+	* freshVariableSource.hh (FreshVariableGenerator): added decl
+	for getFamily()
+
+	* freshVariableSource.cc (getFamily): added
+
+2016-12-07  Steven Eker  <eker@install.csl.sri.com>
+
+	* freshVariableSource.cc (getBaseName): added
+
+	* freshVariableSource.hh (FreshVariableGenerator): added decl for
+	getBaseName()
+
+2016-11-01  Steven Eker  <eker@install.csl.sri.com>
+
+	* search.cc (variantUnify): pass dummy argument to getNextUnifier()
+
+2016-10-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* doParse.cc (parseTerm): fix bug where we were calling fillInSortInfo()
+	before the module was semi-compiled and sort diagrams had been generated
+
+2016-10-26  Steven Eker  <eker@install.csl.sri.com>
+
+	* freshVariableSource.cc (getFreshVariableName): rewritten to handle
+	multiple families of fresh variables
+
+	* freshVariableSource.hh (FreshVariableGenerator): updated decl for
+	getFreshVariableName()
+	(FreshVariableGenerator): deleted data members cache, oddCache; added
+	data member caches
+
+===================================Maude111===========================================
+
+2016-06-27  Steven Eker  <eker@install.csl.sri.com>
+
+	* banner.cc (printBanner): update copyright year
+
+===================================Maude110b===========================================
+
+2016-05-17  Steven Eker  <eker@install.csl.sri.com>
+
+	* execute.cc (check): use normalize() and markEager() on term before
+	dagifying it.
+	(check): don't bother with markEager()
+
+2016-04-27  Steven Eker  <eker@install.csl.sri.com>
+
+	* userLevelRewritingContext.cc (checkForPrintAttribute): use
+	printAttrStream
+	added definition for printAttrStream
+
+	* userLevelRewritingContext.hh (ObjectSystemRewritingContext): added
+	decl for data member printAttrStream
+	(setPrintAttributeStream): added
+
+===================================Maude110===========================================
+
+2016-02-04  Steven Eker  <eker@install.csl.sri.com>
+
+	* search.cc (getVariants): use new getNextVariant() interface
+
+===================================Maude109===========================================
+
+2015-12-23  Steven Eker  <eker@ape.csl.sri.com>
+
+	* token.cc (codeToRope): += rather than append()
+
+	* auxProperty.cc: crope -> Rope throughout
+
+	* moduleCache.cc (makeRenamedCopy, makeParameterCopy)
+	(makeInstatiation, makeSummation): use Token::ropeToCode()
+
+	* token.hh (T): added decl for ropeToCode()
+
+	* token.cc (ropeToCode): added
+
+	* renaming.hh: include "rope.hh" rather than "ropeStuff.hh"
+
+	* moduleCache.cc: crope -> Rope throughout
+
+	* renaming.hh: crope -> Rope throughout
+
+	* renaming.cc: crope -> Rope throughout
+
+	* token.cc: crope -> Rope throughout
+
+	* token.hh: crope -> Rope throughout
+
+===================================Maude108a===========================================
+
+2015-09-11  Steven Eker  <eker@ape.csl.sri.com>
+
+	* prettyPrint.cc (<<): handle null DagNode* gracefully
+
+2015-08-21  Steven Eker  <eker@ape.csl.sri.com>
+
+	* bottom.yy: yyerror() now takes 2 args
+
+	* top.yy: #define YYPARSE_PARAM removed; %parse-param added;
+	PARSE_RESULT no longer needs a cast; yyerror() decl now takes 2
+	args
+
+	* interact.cc: yyparse() now takes
+	UserLevelRewritingContext::ParseResult* in decl
+
+	* top.yy: %pure_parser becomes %pure-parser
+
+2015-08-20  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.cc: respect USE_CVC4 flag
+
+	* variableGenerator.hh: respect USE_CVC4 flag
+
+2015-08-13  Steven Eker  <eker@ape.csl.sri.com>
+
+	* search.cc (variantUnify): check for incompleteness
+	(getVariants): check for incompleteness
+
+2015-07-23  Steven Eker  <eker@ape.csl.sri.com>
+
+	* unify.cc (doUnification): check for incompleteness
+
+===================================Maude108===========================================
+
+2014-11-20  Steven Eker  <eker@ape.csl.sri.com>
+
+	* parameterization.cc (handleRegularImports): added
+	DebugAdvisory() for handling import of parameterized module during
+	instantiation
+
+	* renaming.cc (makeCanonicalVersion): added DebugAdvisory() for
+	empty canonical renaming case
+
+===================================Maude107===========================================
+
+2014-11-19  Steven Eker  <eker@ape.csl.sri.com>
+
+	* importTranslation.cc (translateRegularSymbol): more detailed Assert()
+
+===================================Maude106===========================================
+
+2014-10-29  Steven Eker  <eker@ape.csl.sri.com>
+
+	* search.cc (smtSearch): deleted
+	(search): allocate VariableGenerator object on the heap now that
+	SMT_RewriteSequenceSearch destructs it
+	(search): call clearDebug() in SMT case
+	(search): call validForSMT_Rewriting()
+
+2014-10-23  Steven Eker  <eker@ape.csl.sri.com>
+
+	* search.cc (search): new solution format for smt-search results
+
+	* userLevelRewritingContext.hh (ObjectSystemRewritingContext):
+	updated decl for printSubstitution
+
+	* userLevelRewritingContext.cc (printSubstitution): rewritten to
+	take ignoredIndices
+
+	* search.cc (search): use new SMT_RewriteSequenceSearch semantics
+	(search): use getFinalConstraint() rather than getMatchConstraint
+
+2014-10-22  Steven Eker  <eker@ape.csl.sri.com>
+
+	* search.cc (search): rewritten to hande search modulo SMT
+	directly
+
+2014-10-21  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.cc (VariableGenerator): initialize pushCount
+
+	* variableGenerator.hh (push): added
+	(pop): added
+	(clearAssertions): handle pushCount;
+	(SMT_EngineWrapper): added data member pushCount
+
+2014-10-17  Steven Eker  <eker@ape.csl.sri.com>
+
+	* search.cc (smtSearch): rewritten to use new
+	SMT_RewriteSequenceSearch design
+
+2014-10-15  Steven Eker  <eker@ape.csl.sri.com>
+
+	* search.cc (smtSearch): rewritten to use SMT_RewriteSequenceSearch
+
+2014-10-14  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.hh (clearAssertions): made inline
+
+2014-10-03  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.cc (VariableGenerator): call push()
+
+	* variableGenerator.hh (clearAssertions): added
+
+2014-09-29  Steven Eker  <eker@ape.csl.sri.com>
+
+	* search.cc (smtSearch): pass VariableGenerator object to
+	SMT_RewriteSearchState via pointer rather than reference
+
+	* variableGenerator.hh: SMT_VariableManager -> SMT_EngineWrapper
+
+===================================Maude105===========================================
+
+2014-09-26  Steven Eker  <eker@ape.csl.sri.com>
+
+	* execute.cc (test): turned in to stub
+
+2014-09-25  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.cc (makeFreshVariable): rewritten to use
+	mpz_class
+
+	* variableGenerator.hh (SMT_VariableManager): updated decl for
+	makeFreshVariable()
+
+2014-09-19  Steven Eker  <eker@ape.csl.sri.com>
+
+	* search.cc (smtSearch): no # in solution message to avoid
+	confusion with fresh varaible numbering
+
+2014-09-18  Steven Eker  <eker@ape.csl.sri.com>
+
+	* execute.cc (printModifiers): fixed longstanding bug where we
+	weren't printing the [] notation if number2 was NONE and number
+	was something else
+
+	* interpreter.hh (ViewDatabase): added decl for smtSearch()
+
+	* search.cc (search): call smtSearch()
+	(smtSearch): added
+
+	* interpreter.hh (ViewDatabase): added SMT_SEARCH to enum
+	SearchKind
+
+	* commands.yy (search): added KW_SMT_SEARCH
+
+	* top.yy: added KW_SMT_SEARCH
+
+	* lexer.ll: added smt-search
+
+2014-09-16  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.cc (VariableGenerator): use setOption() call
+
+	* variableGenerator.hh (SMT_VariableManager): deleted data member
+	options
+
+2014-09-15  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.cc (VariableGenerator): set options; create
+	exprManager and smtEngine
+	(~VariableGenerator): added to destruct exprManger and smtEngine
+	(dagToCVC4, makeVariable, assertDag, makeRationalConstant): deref
+	exprManager
+	(assertDag, checkDag): deref smtEngine
+
+	* variableGenerator.hh (SMT_VariableManager): added data member
+	options; made exprManager and smtEngine into pointers; added decl
+	for ~VariableGenerator()
+
+	* userLevelRewritingContext.cc (printSubstitution): fix bug where
+	we trying to dereference a null pointer in a DebugAdvisory() when
+	a variable was unbound
+
+2014-09-12  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.hh (SMT_VariableManager): makeVariable()
+	become private now it is no longer overriding an abstract function
+	in the base class
+
+	* variableGenerator.cc (VariableGenerator, makeVariable): use
+	exprManager
+	(makeBooleanExpr): use our local version of dagToCVC4()
+	(assertDag): use exprManager
+
+2014-09-11  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.hh (SMT_VariableManager): added decls for
+	makeRationalConstant() and dagToCVC4()
+
+	* variableGenerator.cc (dagToCVC4): added
+	(makeRationalConstant): added
+
+	* execute.cc (sreduce): use new VariableGenerator semantics
+
+2014-09-08  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.hh (SMT_VariableManager): added decl for
+	makeBooleanExpr()
+
+	* variableGenerator.cc (VariableGenerator): init smtEngine
+	(assertDag, checkDag): added
+	(makeBooleanExpr): added
+	(assertDag, checkDag): simplified using makeBooleanExpr()
+
+	* variableGenerator.hh (SMT_VariableManager): added declarations
+	for assertDag() and checkDag()
+	(SMT_VariableManager): added data member smtEngine
+
+2014-09-05  Steven Eker  <eker@ape.csl.sri.com>
+
+	* execute.cc (test): use validForSMT_Rewriting()
+
+	* mixfixModule.hh (SharedTokens): added decl for
+	validForSMT_Rewriting()
+
+	* mixfixModule.cc (validForSMT_Rewriting): added
+
+2014-08-13  Steven Eker  <eker@ape.csl.sri.com>
+
+	* execute.cc (test): added
+
+	* interpreter.hh (ViewDatabase): added decl for test
+
+	* commands.yy (command): added actions for KW_TEST
+
+	* top.yy: added KW_TEST
+
+	* lexer.ll: added KW_TEST
+
+2014-08-12  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.cc (makeVariable): use SMT_Info
+	(makeFreshVariable): fleshed out stub
+
+2014-08-11  Steven Eker  <eker@ape.csl.sri.com>
+
+	* mixfixModule.cc (getSMT_NumberToken): use getSMT_Info()
+	(findSMT_NumberSymbol): use getSMT_Info()
+
+	* makeGrammar.cc (makeSymbolProductions): use getSMT_Info()
+
+	* graphPrint.cc (graphPrint): use getSMT_Info()
+
+	* bufferPrint.cc (handleSMT_NumberSymbol): use getSMT_Info()
+
+	* dagNodePrint.cc (handleSMT_Number): use getSMT_Info()
+
+	* termPrint.cc (handleSMT_Number): use getSMT_Info()
+
+	* mixfixModule.hh (SharedTokens): updated decl for findSMT_NumberSymbol()
+
+	* variableGenerator.cc (VariableGenerator): use smtInfo rather
+	than sortMap
+
+	* variableGenerator.hh (SMT_VariableManager): sortMap becomes
+	smtInfo; updated decl for ctor
+
+	* execute.cc (check): use smtInfo rather than sortMap
+
+	* mixfixModule.hh (SharedTokens): decl for getSMT_Info() replaces
+	decl for getSortMap();
+	(SharedTokens): sortMap becomes smtInfo
+
+	* mixfixModule.cc (getSortMap): becomes getSMT_Info()
+
+2014-08-06  Steven Eker  <eker@ape.csl.sri.com>
+
+	* variableGenerator.hh (SMT_VariableManager): added decl for
+	makeFreshVariable()
+
+	* variableGenerator.cc (makeFreshVariable): added
+
+2014-07-30  Steven Eker  <eker@ape.csl.sri.com>
+
+	* execute.cc (check): don't bother indexing variables
+
+2014-07-29  Steven Eker  <eker@ape.csl.sri.com>
+
+	* execute.cc (check): use VariableGenerator
+
+	* SMT_VariableGenerator.cc: becomes variableGenerator.cc
+
+	* SMT_VariableGenerator.hh: becomes variableGenerator.hh
+
+2014-07-28  Steven Eker  <eker@ape.csl.sri.com>
+
+	* SMT_VariableGenerator.cc: created
+
+	* SMT_VariableGenerator.hh: created
+
+===================================Maude104===========================================
+
 2014-06-04  Steven Eker  <eker@ape.csl.sri.com>
 
 	* execute.cc (check): clean up; extra sanity checks
@@ -2341,7 +3417,7 @@
 
 	* visibleModule.cc (showSortsAndSubsorts): for each line of
 	output, show main sort in color
-	
+
 ===================================Maude87===========================================
 
 2005-11-28  Steven Eker  <eker@goo.csl.sri.com>
@@ -2815,7 +3891,7 @@
 	* preModule.hh (getNrParameters, getParameterName, getParameter):
 	added
 
-	* parameterization.cc (handleInstantiationByTheoryView) 
+	* parameterization.cc (handleInstantiationByTheoryView)
 	(handleInstantiationByModuleView, instantiateBoundParameters): use
 	new version of isTheory()
 	(makeParameterCopy): use new version of isTheory()
@@ -2935,7 +4011,7 @@
 	parameter; deepCopy() term part of op->term mappings into instance
 	rather than using the original
 	(handleInstantiationByTheoryView): pass instance parameter to
-	addOpMappingsFromView() 
+	addOpMappingsFromView()
 	(handleInstantiationByModuleView): pass instance parameter to
 	addOpMappingsFromView()
 
@@ -3356,7 +4432,7 @@
 	makeTranslatedTerm()
 
 	* importTranslation.cc (makeTranslatedTerm): added stub
-	
+
 ===================================Maude86b===========================================
 
 2005-04-29  Steven Eker  <eker@goo.csl.sri.com>
@@ -3466,7 +4542,7 @@
 	* moduleDatabase.cc (setOmodInclude): substract() -> erase()
 
 	* moduleDatabase.hh (class ModuleDatabase): added typedef
-	ImportSet 
+	ImportSet
 	(class ModuleDatabase): defaultOmodIncludes becomes an ImportSet
 
 	* bufferPrint.cc (printDotSort, printVarSort, printSort):
@@ -3478,7 +4554,7 @@
 	* quotedIdentifierSymbol.cc (determineSort):
 	AUX_PARAMETERIZED_SORT -> AUX_STRUCTURED_SORT
 
-	* makeGrammar.cc (makeComponentProductions) 
+	* makeGrammar.cc (makeComponentProductions)
 	(makeParameterizedSortProductions): AUX_PARAMETERIZED_SORT ->
 	AUX_STRUCTURED_SORT
 
@@ -3488,7 +4564,7 @@
 	* token.hh (class Token): AUX_PARAMETERIZED_SORT ->
 	AUX_STRUCTURED_SORT
 
-	* auxProperty.cc (computeAuxProperty, sortName) 
+	* auxProperty.cc (computeAuxProperty, sortName)
 	(splitParameterizedSort, splitParameterList):
 	AUX_PARAMETERIZED_SORT -> AUX_STRUCTURED_SORT
 
@@ -3672,7 +4748,7 @@
 
 	* preModule.hh (User): updated decl for makeModule()
 
-	* import.cc (processImports): pass flatModule to makeModule() 
+	* import.cc (processImports): pass flatModule to makeModule()
 	(makeModule): take and pass enclosingModule
 
 	* renameModule.cc (makeInstantiation): don't replace parameter in
@@ -3788,7 +4864,7 @@
 	* interpreter.cc (makeClean): discard incomplete view
 
 	* interpreter.hh (endif): added decls for getCurrentView(),
-	setCurrentView() (*2) 
+	setCurrentView() (*2)
 	(getCurrentView): added
 	(endif): added data member currentView
 
@@ -3943,7 +5019,7 @@
 	(regretToInform): need to cast doomedEntity
 
 	* importModule.cc (addImport): addUser() in place of
-	dependentModules.append() 
+	dependentModules.append()
 	(addParameter): addUser() in place of dependentModules.append()
 	(deepSelfDestruct): removeUser() in place of removeDependent()
 	(deepSelfDestruct): use informUsers() in place of much special
@@ -4172,7 +5248,7 @@
 
 	* top.yy: added fragClear(), fragStore(), fragments
 
-	* modules.yy (sortNameFrags): added 
+	* modules.yy (sortNameFrags): added
 	(sortNameFrag): added
 	(sortName): rewritten
 
@@ -4190,7 +5266,7 @@
 	* modules.yy (startKeyword): added KW_ENDV
 	(inert): added KW_FROM
 	(midKeyword): moved KW_IS to inert
-	(endToken, tokenBarEqual, tokenBarIf, tokenBarColon) 
+	(endToken, tokenBarEqual, tokenBarIf, tokenBarColon)
 	(tokenBarColonTo): removed KW_IS
 
 	* lexer.ll: added KW_VIEW, KW_FROM, KW_ENDV
@@ -4340,7 +5416,7 @@
 	* interact.cc (selectBreakSymbols): deleted
 	(handleDebug): use breakId() instead of breakSymbols
 
-	* interpreter.hh (printConceal, traceExclude, breakSelect) 
+	* interpreter.hh (printConceal, traceExclude, breakSelect)
 	(traceSelect): rewritten, moved here
 	(endif): added decl for updateSet()
 
@@ -4367,22 +5443,22 @@
 	(class UserLevelRewritingContext): updated decls for
 	selectSymbols(), excludeModules(), selectBreakSymbols()
 
-	* interpreter.cc (printConceal, traceExclude, breakSelect) 
+	* interpreter.cc (printConceal, traceExclude, breakSelect)
 	(traceSelect): clear() replaces makeEmpty()
 
 	* interpreter.hh (endif): selected changed from IntSet to set<int>
 
 2005-01-18  Steven Eker  <eker@goo.csl.sri.com>
 
-	* userLevelRewritingContext.cc (tracePreScApplication) 
+	* userLevelRewritingContext.cc (tracePreScApplication)
 	(tracePreRuleRewrite, tracePreEqRewrite): support TRACE_BODY
 	option
 
 	* interpreter.hh (endif): added TRACE_REWRITE and TRACE_BODY to
 	DEFAULT_FLAGS
 
-	* userLevelRewritingContext.cc (tracePreScApplication) 
-	(tracePostRuleRewrite, tracePreRuleRewrite, tracePostEqRewrite) 
+	* userLevelRewritingContext.cc (tracePreScApplication)
+	(tracePostRuleRewrite, tracePreRuleRewrite, tracePostEqRewrite)
 	(tracePreEqRewrite): implement TRACE_REWRITE option
 
 	* trial.cc (traceBeginRuleTrial): use getFlag() rather than
@@ -4392,7 +5468,7 @@
 	(traceEndFragment): use getFlag() rather than
 	traceSubstitutionFlag
 
-	* userLevelRewritingContext.cc (tracePreRuleRewrite) 
+	* userLevelRewritingContext.cc (tracePreRuleRewrite)
 	(tracePreScApplication): use getFlag() rather than
 	traceSubstitutionFlag
 
@@ -4407,8 +5483,8 @@
 	deleted static members traceConditionFlag, traceWholeFlag,
 	traceSubstitutionFlag, traceSelectFlag, traceScFlag, traceEqFlag,
 	traceRuleFlag
-	(setTraceConditionFlag, setTraceWholeFlag) 
-	(setTraceSubstitutionFlag, setTraceSelectFlag, setTraceScFlag) 
+	(setTraceConditionFlag, setTraceWholeFlag)
+	(setTraceSubstitutionFlag, setTraceSelectFlag, setTraceScFlag)
 	(setTraceEqFlag, setTraceRuleFlag): deleted
 
 	* userLevelRewritingContext.cc (dontTrace): use getFlag() rather
@@ -4454,7 +5530,6 @@
 
 	* prelude.maude: added PrintOptions; metaPrettyPrint() now takes
 	PrintOptionSet arg; backward compatibility metaPrettyPrint() added
-	
 
 	* interpreter.hh (endif): renumbered enum PrintFlags
 
@@ -4480,8 +5555,8 @@
 	* bufferPrint.cc (prettyPrint): use printFlags instead of
 	printMixfix, printWithParens, printFlat
 
-	* mixfixModule.hh (setPrintMixfix, setPrintWithParens) 
-	(setPrintWithAliases, setPrintFlat, setPrintGraph) 
+	* mixfixModule.hh (setPrintMixfix, setPrintWithParens)
+	(setPrintWithAliases, setPrintFlat, setPrintGraph)
 	(setPrintConceal, setPrintFormat): deleted
 
 	* prettyPrint.cc: deleted static print* variables
@@ -4519,10 +5594,10 @@
 	handleDivision()
 	(prettyPrint): take printFlags arg
 
-	* dagNodePrint.cc (computeColor, handleIter, handleMinus) 
+	* dagNodePrint.cc (computeColor, handleIter, handleMinus)
 	(handleDivision, prettyPrint): use getPrintFlag()
 
-	* termPrint.cc (computeColor, handleIter, handleMinus) 
+	* termPrint.cc (computeColor, handleIter, handleMinus)
 	(handleDivision): use getPrintFlag()
 
 	* interpreter.hh (getPrintFlag): added
@@ -4545,7 +5620,7 @@
 	* loopMode.cc (printBubble): print unknown tokens of the form \c
 	with naively rather than skipping them altogther - this at least
 	handles _\/_ pretty printed in mixfix mode correctly
-	
+
 ===================================Maude86===========================================
 
 2004-12-23  Steven Eker  <eker@goo.csl.sri.com>
@@ -4770,7 +5845,7 @@
 2004-08-24  Steven Eker  <eker@goo.csl.sri.com>
 
 	* prelude.maude: added min and max to NAT, INT and RAT
-	
+
 ===================================Maude85===========================================
 
 2004-08-03  Steven Eker  <eker@goo.csl.sri.com>
@@ -4810,7 +5885,7 @@
 2004-06-29  Steven Eker  <eker@goo.csl.sri.com>
 
 	* prelude.maude: make module selectors work on theories
-	
+
 ===================================Maude84d===========================================
 
 2004-06-15  Steven Eker  <eker@goo.csl.sri.com>
@@ -4840,7 +5915,7 @@
 2004-06-01  Steven Eker  <eker@goo.csl.sri.com>
 
 	* prelude.maude: added fmod RANDOM
-	
+
 ===================================Maude84c===========================================
 
 2004-05-25  Steven Eker  <eker@goo.csl.sri.com>
@@ -4883,7 +5958,7 @@
 	* prelude.maude: changed definition of ['FOO] so that it works
 	with theories
 
-	* importModule.hh (class ImportModule): updated decl for 
+	* importModule.hh (class ImportModule): updated decl for
 
 	* importModule.cc (addImport): pass lineNumber by value
 	addImport()
@@ -5011,20 +6086,20 @@
 	(fDecList): deleted
 	(declaration): merged with fDeclaration and oDeclaration
 
-	* top.yy: deleted nonterminals notEndfm notEndm notEndom 
+	* top.yy: deleted nonterminals notEndfm notEndm notEndom
 
 	* modules.yy (startKeyword2): added KW_ENDTH KW_ENDFTH
 
 	* top.yy: added KW_TH KW_FTH KW_ENDTH KW_ENDFTH
 
 	* lexer.ll (id): added keywords th fth endth endfth
-	
+
 2004-05-07  Steven Eker  <eker@goo.csl.sri.com>
 
 	* ops.cc (setIdentity): added check for empty identity; didn't
 	fix our proble though since we never get here with an empy
 	identity; reverted change
-	
+
 ===================================Maude84b===========================================
 
 2004-04-27  Steven Eker  <eker@goo.csl.sri.com>
@@ -5084,7 +6159,7 @@
 	* top.yy: added tokens KW_PROTECT and KW_EXTEND
 
 	* lexer.ll: added keywords protect and extend
-	
+
 ===================================Maude84a===========================================
 
 2004-03-10  Steven Eker  <eker@goo.csl.sri.com>
@@ -5122,7 +6197,7 @@
 
 	* mixfixModule.hh (CommonTokens): deleted commented out decl for
 	copyPolymorph()
-	
+
 ===================================Maude84===========================================
 
 2004-02-25  Steven Eker  <eker@goo.csl.sri.com>
@@ -5405,7 +6480,7 @@
 
 	* importModule.hh (class ImportModule): repaced decl for
 	findSort()
-	donateRenamedSorts() with donateSorts2(); added decl for 
+	donateRenamedSorts() with donateSorts2(); added decl for
 	(class ImportModule): deleted decl for donateRenamedStatements()
 
 	* renameModule.cc (makeRenamedCopy): use donateSorts2()
@@ -5728,7 +6803,7 @@
 	* renaming.cc: created
 
 	* renaming.hh: created
-	
+
 ===================================Maude83a===========================================
 
 2003-11-12  Steven Eker  <eker@goo.csl.sri.com>
@@ -6076,7 +7151,7 @@
 	* top.yy: added decl for KW_POLY
 
 	* lexer.ll (id): added keywords poly, polymorphic
-	
+
 ===================================Maude83===========================================
 
 2003-10-09  Steven Eker  <eker@goo.csl.sri.com>
@@ -6209,7 +7284,7 @@
 	(operator<<): decided to make sort print function bullet proof
 	instead; it can now be called before connnected components are
 	calculated and sort indices are assigned
-	
+
 ===================================Maude82===========================================
 
 2003-07-22  Steven Eker  <eker@goo.csl.sri.com>
@@ -6320,7 +7395,7 @@
 2003-05-05  Steven Eker  <eker@goo.csl.sri.com>
 
 	* banner.cc: removed SUNOS and LIBv3 #ifdefs
-	
+
 ===================================Maude80a===========================================
 
 2003-05-03  Steven Eker  <eker@goo.csl.sri.com>
@@ -6359,7 +7434,7 @@
 2003-04-07  Steven Eker  <eker@goo.csl.sri.com>
 
 	* model-checker.maude: added => and <=> LTL operators
-	
+
 ===================================Maude80===========================================
 
 2003-03-21  Steven Eker  <eker@goo.csl.sri.com>
@@ -6507,7 +7582,7 @@
 	* commonTokens.cc: removed #pragma
 
 	* commonTokens.hh: removed #pragma
-	
+
 ===================================Maude79===========================================
 
 2003-02-20  Steven Eker  <eker@goo.csl.sri.com>
@@ -6532,7 +7607,7 @@
 	* commonTokens.cc (CommonTokens): addedarrowOne
 
 	* search.cc (search): use =>1 instead of => for one step rewriting
-	
+
 ===================================Maude78===========================================
 
 2003-01-06  Steven Eker  <eker@goo.csl.sri.com>
@@ -7024,7 +8099,6 @@
 	* prelude.maude: made QID-LIST ops ctors; use ditto for
 	op __ : TypeList TypeList
 	in fmod META-MODULE; made true and false ctors
-	
 
 	* modules.y: use setFlag(SymbolType::CTOR)
 
@@ -7201,7 +8275,7 @@
 	findMachineIntegerSymbol(); deleted PSEUDO_MACHINE_INTEGER from
 	enum InternalFlags; deleted data members overloadedMachineIntegers
 	and machineIntegerSymbols
-	
+
 ===================================Maude74==================================================
 
 2002-06-17  Steven Eker  <eker@goo.csl.sri.com>
@@ -7509,7 +8583,7 @@
 
 	* mixfixParser.cc (makeTerm): added MAKE_INTEGER case
 
-	* mixfixParser.hh (class MixfixParser): added MAKE_INTEGER to 
+	* mixfixParser.hh (class MixfixParser): added MAKE_INTEGER to
 
 	* makeGrammar.cc (makeSymbolProductions): added negative integer
 	syntax for MINUS_SYMBOL case
@@ -7766,7 +8840,7 @@
 
 	* commands.y: use interpreter.showModule(true) for show all
 	command; use interpreter.showVars() for show vars
-	
+
 	* visibleModule.cc (showVars): added
 
 	* mixfixModule.hh (class MixfixModule): deletd decl for
@@ -8019,7 +9093,7 @@
 	* import.cc (findModule): deleted
 
 	* preModule.hh (PreModule): deleted decl for findModule()
-	
+
 ===================================Maude72==================================================
 
 2002-04-08  Steven Eker  <eker@goo.csl.sri.com>
@@ -8170,7 +9244,7 @@
 
 	* commands.y: use setFlag(Interpreter::TRACE, ) in place of
 	setTraceFlag(); use setFlag(Interpreter::BREAK, ) in place of
-	setBreakFlag(); 
+	setBreakFlag();
 
 	* interpreter.cc (setFlag): moved here, support EXCEPTION_FLAGS
 
@@ -8329,7 +9403,6 @@
 	* interpreter.hh (class Interpreter): added data member selected;
 	added decls for addSelected(), traceSelect(), breakSelect(),
 	traceExclude(), printConceal()
-	
 
 	* interpreter.cc (addSelected): moved here from command.cc
 	(traceSelect): moved here from command.cc
@@ -8524,7 +9597,7 @@
 	* mixfixModule.cc: deleted explicit template instantiations
 
 	* main.cc: deleted explicit template instantiations
-	
+
 ===================================Maude71==================================================
 
 2002-03-08  Steven Eker  <eker@goo.csl.sri.com>
@@ -8625,7 +9698,6 @@
 
 	* prelude.maude: metaMatch now takes a condition; added format
 	attributes
-	
 
 2002-02-11  Steven Eker  <eker@goo.csl.sri.com>
 
@@ -8824,7 +9896,7 @@
 	* token.hh: ifdef LIBv3 for libstdc++-v3
 
 	* autoWrapBuffer.cc (sync): ifdef LIBv3 for libstdc++-v3
-	
+
 ===================================Maude70==================================================
 
 2002-01-24  Steven Eker  <eker@goo.csl.sri.com>
@@ -8882,7 +9954,7 @@
 	if-then-else to avoid problem with distinct pointers
 
 	* token.hh: #include <rope> -> #include <ext/rope>
-	
+
 ===================================Maude69==================================================
 
 2001-10-23  Steven Eker  <eker@goo.csl.sri.com>
@@ -9328,7 +10400,7 @@
 	* trial.cc (traceBeginEqTrial): pass subject to handleDebug()
 	(traceBeginRuleTrial): pass subject to handleDebug()
 	(traceBeginScTrial): pass subject to handleDebug()
-	
+
 ===================================Engine65==================================================
 
 2001-03-30  Steven Eker  <eker@goo.csl.sri.com>
@@ -9507,7 +10579,7 @@
 	* importModule.cc (ImportModule): removed unneeded #includes
 
 	* preModule.cc: removed unneeded #includes
-	
+
 ===================================Engine65==================================================
 
 2001-02-21  Steven Eker  <eker@goo.csl.sri.com>
@@ -10141,7 +11213,7 @@
 	abortFlag before printing message
 	(traceEndFragment): take trialRef argument and test it and
 	abortFlag before printing message
-	
+
 ===================================Engine64==================================================
 
 2000-11-08  Steven Eker  <eker@goo.csl.sri.com>
@@ -10247,7 +11319,7 @@
 
 	* token.cc (checkForSpecialProperty): handle null strings rather
 	than asserting that they don't arise
-	
+
 ===================================Engine63==================================================
 
 2000-09-14  Steven Eker  <eker@goo.csl.sri.com>
@@ -10281,7 +11353,7 @@
 
 	* metaLevelOpSymbol.hh (class MetaLevelOpSymbol):
 	META_SAME_COMPONENT -> META_SAME_KIND; metaSameComponent() ->
-	metaSameKind() 
+	metaSameKind()
 
 	* metaLevelOpSymbol.cc (metaLeastSort): rewritten
 	(metaSameComponent): becomes metaSameKind()
@@ -10559,7 +11631,7 @@
 
 	* fixUp.cc (findHookSymbol): look for ~> rather than -> in
 	op-hooks
-	
+
 ===================================Engine62==================================================
 
 2000-08-29  Steven Eker  <eker@goo.csl.sri.com>
@@ -10605,7 +11677,6 @@
 
 	* top.y: deleted tokenBarArrow; arrow declared type <yyBool>;
 	sortToken declared type <yyToken>
-	
 
 	* preModule.hh (Parent): added decls for addSortSpec() and
 	convertSortsToKinds(); deleted decl for setDomainAndRange()
@@ -10649,7 +11720,7 @@
 
 	* metaFastUp.cc (fastUpSort): removed hack for handling union
 	sorts since they should no longer exist
-	
+
 ===================================Engine61==================================================
 
 2000-07-28  Steven Eker  <eker@goo.csl.sri.com>
@@ -10784,7 +11855,7 @@
 2000-06-28  Steven Eker  <eker@goo.csl.sri.com>
 
 	* mixfixModule.hh (class MixfixModule): changed
-	overloadedMachineFloats from set<Int64> to set<double> 
+	overloadedMachineFloats from set<Int64> to set<double>
 
 	* prettyPrint.cc (prettyPrint): handle pseudo variables (both
 	versions)
@@ -11342,7 +12413,7 @@
 	(class MixfixModule): added PSEUDO_STRING to InternalFlags
 	(class MixfixModule): added STRING and STRING_OP to SymbolFlags
 	(class MixfixModule): rearranged SymbolInfo and added iflags
-	
+
 ===================================Maude 1.0.5 finished=======================================
 
 2000-04-05  Steven Eker  <eker@goo.csl.sri.com>
@@ -11548,7 +12619,7 @@
 	C strings
 
 	* metaFastUp.cc (fastUpTerm): (both versions) simplified using
-	quoteNameCode() 
+	quoteNameCode()
 
 	* bufferPrint.cc (prettyPrint): use quoteNameCode()
 
@@ -11851,7 +12922,7 @@
 
 	* execute.cc (printBubble): fixed bug where we weren't passing
 	Vector arg by ref
-	
+
 ===================================Engine56==================================================
 
 2000-02-24  Steven Eker  <eker@goo.csl.sri.com>
@@ -12406,7 +13477,7 @@
 
 	* compiler.cc (fullCompile): call generateSortVector() on each
 	sort
-	
+
 ===================================Engine55==================================================
 
 1999-12-20  Steven Eker  <eker@goo.csl.sri.com>
@@ -12546,7 +13617,7 @@
 	* lexerAux.cc (includeFile): rindex() -> strrchr()
 
 	* directoryManager.cc (realPath): index() -> strchr() (*2)
-	
+
 ===================================Engine53==================================================
 
 1999-10-26  Steven Eker  <eker@goo.csl.sri.com>
@@ -12583,7 +13654,7 @@
 	* top.y: added tokens KW_DO KW_CLEAR
 
 	* commands.y: added do clear memo command
-	added syntax for 
+	added syntax for
 
 	* entry.cc (addOpDeclaration): support memo for free symbols
 
@@ -12616,7 +13687,7 @@
 
 	* prettyPrint.cc (operator<<): (Term* and DagNode* versions); call
 	makeGrammar() as a HACK to set up gather info
-	
+
 ===================================Engine52==================================================
 
 1999-10-07  Steven Eker  <eker@goo.csl.sri.com>
@@ -12734,7 +13805,7 @@
 
 	* metaLevelOpSymbol.hh (class MetaLevelOpSymbol): added decl for
 	~MetaLevelOpSymbol()
-	
+
 ===================================Engine51==================================================
 
 1999-07-21  Steven Eker  <eker@goo.csl.sri.com>
@@ -12819,7 +13890,7 @@
 1999-06-10  Steven Eker  <eker@goo.csl.sri.com>
 
 	* main.cc: added #include <sys/ioctl.h> in LINUX case
-	
+
 ===================================Engine50==================================================
 
 1999-06-09  Steven Eker  <eker@goo.csl.sri.com>
@@ -12847,7 +13918,7 @@
 	print conceal foo .
 	print reveal foo .
 	set print conceal on/off .
-	
+
 ===================================Maude 1.0.3 released=======================================
 
 	* autoWrapBuffer.cc (sync): handle tabs
@@ -13070,7 +14141,7 @@
 
 	* entry.cc (addOpDeclaration): use FreeSymbol::newFreeSymbol() (2
 	places)
-	
+
 ===================================Engine49==================================================
 
 1999-04-30  Steven Eker  <eker@goo.csl.sri.com>
@@ -13188,7 +14259,7 @@
 1999-04-18  Steven Eker  <eker@goo.csl.sri.com>
 
 	* lexerAux.cc (eatComment): try to handle the EOF in comment case
-	
+
 ===================================Engine48==================================================
 ===================================Maude 1.0.2 released=======================================
 
@@ -13196,7 +14267,7 @@
 
 	* prettyPrint.cc (prettyPrint): (Term* and DagNode* versions)
 	fixed bug: ` instead of ' for quoted identifier
-	
+
 ===================================Maude 1.0.1 released=======================================
 
 1999-03-03  Steven Eker  <eker@goo.csl.sri.com>
@@ -13240,8 +14311,8 @@
 	SymbolFlags
 	(class MixfixModule): added data members machineIntegerComponents,
 	quotedIdentifierComponents, overloadedMachineIntegers,
-	overloadedQuotedIdentifiers 
-	
+	overloadedQuotedIdentifiers
+
 	* entry.cc (addOpDeclaration): fill out machineIntegerComponents
 	and quotedIdentifierComponents; set PSEUDO_MACHINE_INTEGER and
 	PSEUDO_QUOTED_IDENTIFIER flags; fill out overloadedMachineIntegers
@@ -13260,7 +14331,7 @@
 	variable
 	(pushd): Actually it's not a compiler bug but a subtle reference
 	bug; added comment in code to this effect
-	
+
 ===================================VectorExperiment==========================================
 
 1999-02-09  Steven Eker  <eker@goo.csl.sri.com>
@@ -13315,7 +14386,7 @@
 1999-01-28  Steven Eker  <eker@goo.csl.sri.com>
 
 	* directoryManager.cc (realPath): added
-	
+
 ===================================Engine47==================================================
 ===================================Maude 1.00 released=======================================
 
@@ -13507,7 +14578,7 @@
 	(match): call UserLevelRewritingContext::beginCommand()
 
 	* modules.y: use UserLevelRewritingContext::beginModule() (2
-	places) 
+	places)
 
 	* fileTable.cc (beginModule): no longer print ====== and module
 	name here
@@ -13533,7 +14604,7 @@
 	* interact.cc (commandLoop): when recovering from a control-C,
 	don't call displayPrompt() since setInteractive() will doe this
 	if needed when called from cleanUpLexer();
-	
+
 ===================================Engine46==================================================
 
 1999-01-11  Steven Eker  <eker@goo.csl.sri.com>
@@ -13739,7 +14810,6 @@
 	* command.cc (showModule): deleted old stub
 
 Fri Dec 18 18:50:43 1998  Steven Eker  <eker@goo.csl.sri.com>
-	
 
 	* preModule.hh (class PreModule): added decl for showModule()
 
@@ -13768,7 +14838,7 @@ Thu Dec 17 15:16:50 1998  Steven Eker  <eker@goo.csl.sri.com>
 
 	* mixfixModule.cc (mayAssoc): put leq() test arround the correct
 	way
-	
+
 ===================================Engine45==================================================
 
 Wed Dec 16 10:26:10 1998  Steven Eker  <eker@lilac.csl.sri.com>
@@ -13921,7 +14991,7 @@ Fri Dec 11 10:08:33 1998  Steven Eker  <eker@lilac.csl.sri.com>
 
 	* mixfixModule.hh (class MixfixModule): CREATE_SORT_TEST ->
 	MAKE_SORT_TEST in enum Actions
-	(class MixfixModule): deleted decl for 
+	(class MixfixModule): deleted decl for
 
 	* mixfixModule.cc (makeBoolProductions): CREATE_SORT_TEST ->
 	MAKE_SORT_TEST (2 places)
@@ -13944,10 +15014,10 @@ Fri Dec 11 10:08:33 1998  Steven Eker  <eker@lilac.csl.sri.com>
 
 	* entry.cc (addOpDeclaration): changed test for different flags so
 	we ignore overloaded flags
-	
+
 	* import.cc (fixUpDonatedOps): remember to translate sort as well
 	as sort test symbol!
-	
+
 	* mixfixModule.hh (class MixfixModule): added decl for instantiateSortTest()
 
 	* entry.cc (addOpDeclaration): added more detailed error meesage
@@ -14272,7 +15342,7 @@ Tue Dec  1 12:07:34 1998  Steven Eker  <eker@lilac.csl.sri.com>
 	added select non-terminal
 	opNamesList2 -> cOpNameList
 	simpleNameList2 -> cSimpleNameList
-	
+
 ===================================Engine44==================================================
 
 Mon Nov 30 16:52:02 1998  Steven Eker  <eker@lilac.csl.sri.com>
@@ -14385,7 +15455,7 @@ Mon Nov 23 11:08:39 1998  Steven Eker  <eker@lilac.csl.sri.com>
 	* command.cc (reduce): call UserLevelRewritingContext::setDebug()
 	if debug arg true and UserLevelRewritingContext::clearDebug() at
 	the end anyway
-	
+
 	* lexer.flex: added keyword debug
 
 	* top.y: added debug non terminal decl and token KW_DEBUG
@@ -14432,7 +15502,7 @@ Fri Nov 20 11:44:35 1998  Steven Eker  <eker@lilac.csl.sri.com>
 
 	* lexer.flex: use UserLevelRewritingContext::interrupted(), QUIT
 	-> KW_QUIT
-	
+
 	* bottom.y (yyerror): use UserLevelRewritingContext::interrupted()
 
 	* commands.y (command): debugging commands rewritten using
@@ -14565,7 +15635,7 @@ Mon Nov 16 10:39:06 1998  Steven Eker  <eker@lilac.csl.sri.com>
 	(errorRewrite): use RewritingContext::builtInReplace()
 	(errorRewrite2): use RewritingContext::builtInReplace()
 
-	* quotedIdentifierOpSymbol.cc (eqRewrite): traceStatus() -> getTraceStatus() 
+	* quotedIdentifierOpSymbol.cc (eqRewrite): traceStatus() -> getTraceStatus()
 
 	* userLevelRewritingContext.hh (class UserLevelRewritingContext):
 	updated complex ctor decl
@@ -14699,7 +15769,6 @@ Tue Nov 10 11:53:24 1998  Steven Eker  <eker@lilac.csl.sri.com>
 Mon Nov  9 11:40:20 1998  Steven Eker  <eker@lilac.csl.sri.com>
 
 	* modules.y: opNameList2 and simpleOpName2 moved to command.y
-	
 
 	* parser.bison: split into top.y, modules.y, commands.y, bottom.y
 
@@ -15064,7 +16133,7 @@ Mon Sep 21 10:32:40 1998  Steven Eker  <eker@lilac.csl.sri.com>
 	* prettyPrint.cc (showSorts): use leq(Sort*, int)
 	(showSorts): use leq(int, Sort*)
 	(showSorts): use leq(Sort*, Sort*) (2 places)
-	
+
 ===================================Engine40==================================================
 
 Thu Aug 27 13:47:16 1998  Steven Eker  <eker@lilac.csl.sri.com>
@@ -16439,7 +17508,7 @@ Thu Jun 11 18:26:40 1998  Steven Eker  <eker@lilac.csl.sri.com>
 	(parseSentence): no need to use contains
 
 	* preModule.hh (class PreModule): IntTable -> IntSet
-	
+
 ===================================Engine38==================================================
 
 Mon Jun  8 18:21:46 1998  Steven Eker  <eker@lilac.csl.sri.com>

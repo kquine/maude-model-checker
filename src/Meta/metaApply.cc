@@ -24,36 +24,6 @@
 //	Code for metaApply and metaXapply descent functions.
 //
 
-local_inline bool
-MetaLevelOpSymbol::getCachedRewriteSearchState(MetaModule* m,
-					       FreeDagNode* subject,
-					       RewritingContext& context,
-					       Int64 solutionNr,
-					       RewriteSearchState*& state,
-					       Int64& lastSolutionNr)
-{
-  if (solutionNr > 0)
-    {
-      CacheableState* cachedState;
-      if (m->remove(subject, cachedState, lastSolutionNr))
-	{
-	  if (lastSolutionNr <= solutionNr)
-	    {
-	      state = safeCast(RewriteSearchState*, cachedState);
-	      //
-	      //	The parent context pointer of the root context in the
-	      //	NarrowingSequenceSearch is possibly stale.
-	      //
-	      safeCast(UserLevelRewritingContext*, state->getContext())->
-		beAdoptedBy(safeCast(UserLevelRewritingContext*, &context));
-	      return true;
-	    }
-	  delete cachedState;
-	}
-    }
-  return false;
-}
-
 bool
 MetaLevelOpSymbol::metaApply(FreeDagNode* subject, RewritingContext& context)
 {
@@ -64,11 +34,11 @@ MetaLevelOpSymbol::metaApply(FreeDagNode* subject, RewritingContext& context)
   Int64 solutionNr;
   if (MetaModule* m = metaLevel->downModule(subject->getArgument(0)))
     {
-      if (metaLevel->downSaturate64(subject->getArgument(4), solutionNr))
+      if (metaLevel->downSaturate64(subject->getArgument(4), solutionNr) && solutionNr >= 0)
 	{
 	  RewriteSearchState* state;
 	  Int64 lastSolutionNr;
-	  if (getCachedRewriteSearchState(m, subject, context, solutionNr, state, lastSolutionNr))
+	  if (getCachedStateObject(m, subject, context, solutionNr, state, lastSolutionNr))
 	    m->protect();  // Use cached state
 	  else
 	    {
@@ -177,11 +147,11 @@ MetaLevelOpSymbol::metaXapply(FreeDagNode* subject, RewritingContext& context)
   if (MetaModule* m = metaLevel->downModule(subject->getArgument(0)))
     {
       Int64 solutionNr;
-      if (metaLevel->downSaturate64(subject->getArgument(6), solutionNr))
+      if (metaLevel->downSaturate64(subject->getArgument(6), solutionNr) && solutionNr >= 0)
 	{
 	  RewriteSearchState* state;
 	  Int64 lastSolutionNr;
-	  if (getCachedRewriteSearchState(m, subject, context, solutionNr, state, lastSolutionNr))
+	  if (getCachedStateObject(m, subject, context, solutionNr, state, lastSolutionNr))
 	    m->protect();  // Use cached state
 	  else
 	    {
@@ -267,9 +237,14 @@ MetaLevelOpSymbol::metaXapply(FreeDagNode* subject, RewritingContext& context)
 	    DagNode* replacement = state->getReplacement()->makeClone();  // for unique ptr
 	    Substitution* substitution = state->getContext();
 	    RewriteSearchState::DagPair top = state->rebuildDag(replacement);
+	    //
+	    //	Can't use dagNodeMap after reduce since the from dagNodes might
+	    //	garbage collected or even rewritten in place.
+	    //
 	    PointerMap qidMap;
 	    PointerMap dagNodeMap;
 	    DagRoot metaContext(metaLevel->upContext(top.first, m, replacement, qidMap, dagNodeMap));
+
 	    RewritingContext* resultContext =
 	      context.makeSubcontext(top.first, UserLevelRewritingContext::META_EVAL);
 	    if (trace)

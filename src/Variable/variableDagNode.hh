@@ -44,9 +44,6 @@ public:
   DagNode* copyWithReplacement(Vector<RedexPosition>& redexStack,
 			       int first,
 			       int last);
-  void stackArguments(Vector<RedexPosition>& stack,
-		      int parentIndex,
-		      bool respectFrozen);
   //
   //	Unification member functions.
   //
@@ -75,6 +72,7 @@ public:
 private:
   DagNode* markArguments();
   DagNode* copyEagerUptoReduced2();
+  DagNode* copyAll2();
   void clearCopyPointers2();
 
   bool safeVirtualReplacement(VariableDagNode* oldVar, VariableDagNode* newVar, UnificationContext& solution, PendingUnificationStack& pending);

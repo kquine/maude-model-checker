@@ -31,6 +31,7 @@
 #include "moduleCache.hh"
 #include "compiler.hh"
 #include "viewDatabase.hh"
+#include "SMT.hh"
 
 class Interpreter
   : public Environment,
@@ -48,7 +49,10 @@ public:
     {
       SEARCH,
       NARROW,
-      XG_NARROW
+      XG_NARROW,
+      SMT_SEARCH,
+      VU_NARROW,
+      FVU_NARROW,
     };
 
   enum Flags
@@ -176,12 +180,17 @@ public:
   void sRewrite(const Vector<Token>& subjectAndStrategy, Int64 limit, bool debug);
   void cont(Int64 limit, bool debug);
   void check(const Vector<Token>& subject);
+  //
+  //	This is just a utility command for development.
+  //
+  void test(const Vector<Token>& subject);
 
   void match(const Vector<Token>& bubble, bool withExtension, Int64 limit);
   void unify(const Vector<Token>& bubble, Int64 limit);
-  void search(const Vector<Token>& bubble, Int64 limit, Int64 depth, SearchKind searchKind);
+  void search(const Vector<Token>& bubble, Int64 limit, Int64 depth, SearchKind searchKind, bool debug);
   void getVariants(const Vector<Token>& bubble, Int64 limit, bool irredundant, bool debug);
   void variantUnify(const Vector<Token>& bubble, Int64 limit, bool debug);
+  void smtSearch(const Vector<Token>& subject, int limit, int depth);
 
   void showSearchPath(int stateNr);
   void showSearchPathLabels(int stateNr);
@@ -231,7 +240,7 @@ private:
   void printModifiers(Int64 number, Int64 number2);
   void printStats(const Timer& timer, RewritingContext& context, bool timingFlag);
   void endRewriting(Timer& timer,
-		    UserLevelRewritingContext* context,
+		    CacheableRewritingContext* context,
 		    VisibleModule* module,
 		    ContinueFuncPtr cf = 0);
   void rewriteCont(Int64 limit, bool debug);
@@ -244,19 +253,52 @@ private:
   void doSearching(Timer& timer,
 		   VisibleModule* module,
 		   RewriteSequenceSearch* state,
-		   int solutionCount,
-		   int limit);
+		   Int64 solutionCount,
+		   Int64 limit);
   void doNarrowing(Timer& timer,
 		   VisibleModule* module,
 		   NarrowingSequenceSearch* state,
-		   int solutionCount,
-		   int limit);
+		   Int64 solutionCount,
+		   Int64 limit);
+  void narrowingCont(Int64 limit, bool debug);
+  void doVuNarrowing(Timer& timer,
+		     VisibleModule* module,
+		     NarrowingSequenceSearch3* state,
+		     Int64 solutionCount,
+		     Int64 limit);
+  void vuNarrowingCont(Int64 limit, bool debug);
+  /*
+  void doFvuNarrowing(Timer& timer,
+		      VisibleModule* module,
+		      NarrowingSequenceSearch3* state,
+		      Int64 solutionCount,
+		      Int64 limit);
+  */
+  void doGetVariants(Timer& timer,
+		     VisibleModule* module,
+		     VariantSearch* state,
+		     Int64 solutionCount,
+		     Int64 limit);
+  void getVariantsCont(Int64 limit, bool debug);
+  void doVariantUnification(Timer& timer,
+			    VisibleModule* module,
+			    VariantSearch* state,
+			    Int64 solutionCount,
+			    Int64 limit);
+  void variantUnifyCont(Int64 limit, bool debug);
+  void doSmtSearch(Timer& timer,
+		   VisibleModule* module,
+		   SMT_RewriteSequenceSearch* state,
+		   Int64 solutionCount,
+		   Int64 limit);
+  void smtSearchCont(Int64 limit, bool debug);
+
   void doExternalRewriting(UserLevelRewritingContext* context, Int64 limit);
   void doStrategicSearch(Timer& timer,
 			 VisibleModule* module,
 			 StrategicSearch* state,
-			 int solutionCount,
-			 int limit);
+			 Int64 solutionCount,
+			 Int64 limit);
   void printDecisionTime(const Timer& timer);
   void printSearchTiming(const Timer& timer,  RewriteSequenceSearch* state);
   void doMatching(Timer& timer,
@@ -273,6 +315,11 @@ private:
 		     int limit);
   void unifyCont(Int64 limit, bool debug);
   void updateSet(set<int>& target, bool add);
+  bool checkSearchRestrictions(SearchKind searchKind,
+			       int searchType,
+			       Term* target,				     
+			       const Vector<ConditionFragment*>& condition,
+			       MixfixModule* module);
 
   ofstream* xmlLog;
   MaudemlBuffer* xmlBuffer;
@@ -284,12 +331,8 @@ private:
   //
   //	Continuation information.
   //
-  UserLevelRewritingContext* savedContext;
-  MatchSearchState* savedMatchSearchState;
-  UnificationProblem* savedUnificationProblem;
-  RewriteSequenceSearch* savedRewriteSequenceSearch;
-  StrategicSearch* savedStrategicSearch;
-  int savedSolutionCount;
+  CacheableState* savedState;
+  Int64 savedSolutionCount;
   VisibleModule* savedModule;
   ContinueFuncPtr continueFunc;
   Vector<Token> savedLoopSubject;

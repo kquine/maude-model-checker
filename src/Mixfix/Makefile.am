@@ -29,8 +29,8 @@ libmixfix_a_CPPFLAGS = \
 	-I$(top_srcdir)/src/3rdParty \
 	-I$(top_srcdir)/src/FullCompiler \
 	-I$(top_srcdir)/src/StrategyLanguage \
-	-I$(top_srcdir)/src/SMT \
-	-I$(top_srcdir)/src/ModelChecker
+	-I$(top_srcdir)/src/ModelChecker \
+	-I$(top_srcdir)/src/SMT
 
 libmixfix_a_SOURCES = \
 	syntaxContainer.cc \
@@ -67,15 +67,18 @@ libmixfix_a_SOURCES = \
 	printAttribute.cc \
 	banner.cc \
 	lexer.cc \
+	tokenizer.cc \
 	surface.cc \
 	freshVariableSource.cc \
+	variableGenerator.cc \
+	tokenizer.cc \
 	$(COMPILER_SRC)
 
 EXTRA_libmixfix_a_SOURCES = \
 	compiler.cc
 
-BUILT_SOURCES = surface.yy surface.cc surface.h lexer.cc
-CLEANFILES = surface.yy surface.cc surface.h lexer.cc
+BUILT_SOURCES = surface.yy surface.cc surface.h lexer.cc tokenizer.cc
+CLEANFILES = surface.yy surface.cc surface.h lexer.cc tokenizer.cc
 
 surface.yy: \
 	$(srcdir)/top.yy \
@@ -99,6 +102,10 @@ surface.cc surface.h: surface.yy
 lexer.cc: \
 	$(srcdir)/lexer.ll surface.h
 	$(FLEX) -t -p -p $(srcdir)/lexer.ll > lexer.cc
+
+tokenizer.cc: \
+	$(srcdir)/tokenizer.ll
+	$(FLEX) -Pzz -t -p -p $(srcdir)/tokenizer.ll > tokenizer.cc
 
 EXTRA_DIST = \
 	renameModule.cc \
@@ -134,8 +141,17 @@ EXTRA_DIST = \
 	commands.yy \
 	bottom.yy \
 	lexer.ll \
+	tokenizer.ll \
 	graphPrint.cc \
-	ansiEscapeSequences.cc
+	ansiEscapeSequences.cc \
+	narrowing.cc \
+	variantUnify.cc \
+	getVariants.cc \
+	smtSearch.cc \
+	cvc4_Bindings.cc \
+	yices2_Bindings.cc \
+	quotedIdentifierOpSignature.cc \
+	tokenizer.ll
 
 noinst_HEADERS = \
 	renaming.hh \
@@ -173,4 +189,8 @@ noinst_HEADERS = \
 	visibleModule.hh \
 	xmlBuffer.hh \
 	syntaxContainer.hh \
-	freshVariableSource.hh
+	freshVariableSource.hh \
+	variableGenerator.hh \
+	cacheableRewritingContext.hh \
+	cvc4_Bindings.hh \
+	yices2_Bindings.hh

@@ -78,6 +78,8 @@ public:
 
   DagNode* copyReducible();
   DagNode* copyEagerUptoReduced();
+  DagNode* copyAll();
+
   void clearCopyPointers();
   DagNode* copyAndReduce(RewritingContext& context);
   void setSortIndex(int index);
@@ -111,9 +113,6 @@ public:
   virtual DagNode* copyWithReplacement(Vector<RedexPosition>& redexStack,
 				       int first,
 				       int last) = 0;
-  virtual void stackArguments(Vector<RedexPosition>& redexStack,
-			      int parentIndex,
-			      bool respectFrozen) = 0;
   //
   //	Interface for unification.
   //
@@ -144,12 +143,18 @@ public:
   void computeGeneralizedSort(const SortBdds& sortBdds,
 			      const Vector<int>& realToBdd,  // first BDD variable for each free real variable
 			      Vector<Bdd>& generalizedSort);
+  void computeGeneralizedSort2(const SortBdds& sortBdds,
+			       const Vector<int>& realToBdd,  // first BDD variable for each free real variable
+			       Vector<Bdd>& outputBdds);
   //
   //	Interface for narrowing.
   //
   bool indexVariables(NarrowingVariableInfo& indices, int baseIndex);
   virtual bool indexVariables2(NarrowingVariableInfo& indices, int baseIndex);
-  virtual DagNode* instantiateWithReplacement(const Substitution& substitution, const Vector<DagNode*>& eagerCopies, int argIndex, DagNode* newDag)
+  virtual DagNode* instantiateWithReplacement(const Substitution& substitution,
+					      const Vector<DagNode*>* eagerCopies,  // null = lazy context
+					      int argIndex,
+					      DagNode* newDag)
     { CantHappen("Not implemented"); return 0; }
   //
   //	These member functions must be defined for each derived class in theories
@@ -202,6 +207,7 @@ protected:
   //
   virtual DagNode* markArguments() = 0;
   virtual DagNode* copyEagerUptoReduced2() = 0;
+  virtual DagNode* copyAll2() = 0;
   virtual void clearCopyPointers2() = 0;
 
 private:  
@@ -239,9 +245,9 @@ private:
 };
 
 #define SAFE_INSTANTIATE(dagNode, eagerFlag, substitution, eagerCopies) \
-if (DagNode* _t = (eagerFlag ?						\
-		   dagNode->instantiateWithCopies(substitution, eagerCopies) : \
-		   dagNode->instantiate(substitution)))			\
+  if (DagNode* _t = (eagerFlag ?					\
+		     dagNode->instantiateWithCopies(substitution, eagerCopies) : \
+		     dagNode->instantiate(substitution)))		\
   dagNode = _t
 
 //
@@ -595,6 +601,17 @@ DagNode::copyEagerUptoReduced()
   return copyPointer;
 }
 
+inline DagNode*
+DagNode::copyAll()
+{
+  if (!isCopied())
+    {
+      copyPointer = copyAll2();  // this destroys our top symbol
+      setCopied();
+    }
+  return copyPointer;
+}
+
 inline void
 DagNode::clearCopyPointers()
 {
@@ -644,8 +661,13 @@ DagNode::insertVariables(NatSet& occurs)
 inline bool
 DagNode::indexVariables(NarrowingVariableInfo& indices, int baseIndex)
 {
-  if (isGround())
-    return true;  // no variables below us to index
+  //
+  //	We can't trust the ground flag because we could have in-place reduction below
+  //	us that removed ground flags below us and these need to be replaced for
+  //	safe unification.
+  //
+  //if (isGround())
+  //  return true;  // no variables below us to index
   bool ground = indexVariables2(indices, baseIndex);
   if (ground)
     setGround();

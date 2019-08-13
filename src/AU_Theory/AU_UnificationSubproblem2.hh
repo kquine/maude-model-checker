@@ -2,7 +2,7 @@
 
     This file is part of the Maude 2 interpreter.
 
-    Copyright 1997-2014 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2015 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@
 //
 //      Class for unification subproblems in the A theory.
 //
-#ifndef _AU_UnificationSubproblem_hh_
-#define _AU_UnificationSubproblem_hh_
+#ifndef _AU_UnificationSubproblem2_hh_
+#define _AU_UnificationSubproblem2_hh_
 #include <list>
 #include "unificationSubproblem.hh"
 #include "simpleRootContainer.hh"
@@ -32,40 +32,49 @@
 #include "dagNode.hh"
 #include "substitution.hh"
 #include "pendingUnificationStack.hh"
-#include "sequenceAssignment.hh"
+#include "wordSystem.hh"
 
-class AU_UnificationSubproblem : public UnificationSubproblem, private SimpleRootContainer
+class AU_UnificationSubproblem2 : public UnificationSubproblem, private SimpleRootContainer
 {
-  NO_COPYING(AU_UnificationSubproblem);
+  NO_COPYING(AU_UnificationSubproblem2);
 
 public:
-  AU_UnificationSubproblem(AU_Symbol* topSymbol);
-  ~AU_UnificationSubproblem();
+  AU_UnificationSubproblem2(AU_Symbol* topSymbol);
+  ~AU_UnificationSubproblem2();
 
   void addUnification(DagNode* lhs, DagNode* rhs, bool marked, UnificationContext& solution);
   bool solve(bool findFirst, UnificationContext& solution, PendingUnificationStack& pending);
 
+
+
 private:
+  struct Assignment
+  {
+    int variable;
+    WordSystem::Word value;
+  };
+
   struct Unification
   {
-    DagNode* lhs;
-    DagNode* rhs;
-    SequenceAssignment* problem;
+    WordSystem::Word lhs;
+    WordSystem::Word rhs;
   };
 
   void markReachableNodes();
-  bool checkAndInsertVariable(VariableDagNode* variable, UnificationContext& solution, NatSet& seenVariableIndices);
-  bool checkArgumentList(AU_DagNode* dagNode, UnificationContext& solution, NatSet& seenVariableIndices);
-  bool checkForCollapseAndNonLinearVariables(UnificationContext& solution);
 
-  int findUpperBound(DagNode* d, UnificationContext& solution);
-  bool findNextSolution(bool findFirst);
+  int dagToAbstract(DagNode* dagNode, UnificationContext& solution);
+  void assocToAbstract(DagNode* dagNode, WordSystem::Word& word, UnificationContext& solution);
+  void makeWordSystem(UnificationContext& solution);
+  void unsolve(int index, UnificationContext& solution);
+  DagNode* abstractToFreshVariable(int variableIndex, UnificationContext& solution);
   bool buildSolution(UnificationContext& solution, PendingUnificationStack& pending);
-  bool buildSolution(const Unification& unification, UnificationContext& solution, PendingUnificationStack& pending);
-  bool resolve(DagNode* subterm, const Vector<DagNode*>& freshVariables, UnificationContext& solution, PendingUnificationStack& pending);
-
+ 
   AU_Symbol* const topSymbol;
-  Vector<Unification> unifications;
+  Vector<DagNode*> subterms;
+  list<Assignment> assignments;
+  list<Unification> unifications;
+  WordSystem* wordSystem;
+  Vector<DagNode*> freshVariables;
   //
   //	For backtracking.
   //

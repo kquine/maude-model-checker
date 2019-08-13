@@ -1,3 +1,196 @@
+2017-08-08  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: fmod LEXICAL: print -> printTokens to
+	avoid confusion with print attribute in META-LEVEL
+
+2017-08-04  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: added fmod LEXICAL
+
+2017-08-01  Steven Eker  <eker@install.csl.sri.com>
+
+	* main.cc (main): call setUsePromptsAnyway() if our input
+	is from a terminal
+
+	* file.maude: deleted stdin, stdout, stderr from mod FILE
+
+2017-07-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* file.maude: don't use BOUND, added mod COMMON-MESSAGES
+	added mod STD-STREAM
+
+2017-07-26  Steven Eker  <eker@install.csl.sri.com>
+
+	* file.maude: added op-hooks for stdin, stdout, stderr
+
+2017-07-25  Steven Eker  <eker@install.csl.sri.com>
+
+	* file.maude: added op-hooks for start, current, end,
+	minusSymbol
+
+2017-07-19  Steven Eker  <eker@install.csl.sri.com>
+
+	* file.maude: created
+
+2017-07-17  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: added fmod BOUND; use it in fmod META-LEVEL
+
+===================================Maude115===========================================
+
+2017-06-27  Steven Eker  <eker@install.csl.sri.com>
+
+	* smt.maude: removed comment about _divisible_ breaking CVC4
+	now we've made it bulletproof
+
+2017-06-23  Steven Eker  <eker@install.csl.sri.com>
+
+	* Makefile.am (maude_LDADD): move $(YICES2_LIB) before tecla in
+	the hope that tecla won't be able to access its symbols
+
+2017-06-22  Steven Eker  <eker@install.csl.sri.com>
+
+	* Makefile.am (maude_LDADD): delete $(DLMALLOC_LIB) form link line;
+	move $(YICES2_LIB) to the end
+
+2017-06-20  Steven Eker  <eker@install.csl.sri.com>
+
+	* Makefile.am (maude_LDADD): added YICE2_LIB
+
+===================================Maude114===========================================
+
+2017-05-25  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: update syntax for metaNarrowingApply() return values;
+	reverted to {} for results; updated formatting; added projection
+	functions for new constructors
+
+2017-05-24  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: updated format attribute for assignment, and narrowing
+	results
+
+2017-05-22  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: added 6 operators and 4 sorts to support narrowing
+	search path results; added metaNarrowingSearchPath() descent function
+
+2017-05-19  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: updated decl for metaNarrowingSearch(),
+	NarrowingSearchResult ctor
+
+2017-05-02  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: remove the 1st Qid argument from metaNarrowingApply()
+
+2017-04-26  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: added narrowing attribute to META-LEVEL
+
+===================================Maude113===========================================
+
+2017-03-14  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: changed order of parameters in NarrowingSearchResult
+	ctor to avoid ambiguity
+
+2017-03-10  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: added projection functions for NarrowingSearchResult
+
+2017-02-06  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: revert to NarrowingSearchResult, but this time use a
+	5 tuple to avoid a kind clash
+
+2017-02-03  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: added sorts NarrowingSearchResult, NarrowingSearchResult?;
+	ctors {_,_,_,_}, failure, failureIncomplete, descent function
+	metaNarrowingSearch()
+	Use Result4Tuple in place of NarrowingSearchResult
+
+===================================Maude111b===========================================
+
+2016-12-13  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: added projection functions for NarrowingResult
+
+2016-12-12  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: added failureIncomplete for ResultTriple?
+
+2016-12-09  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: switched args for NarrowingResult ctor
+	added format for {_,_,_,_,_,_}
+
+2016-11-23  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: added decls for metaNarrowingApply(); sorts NarrowingResult
+	and NarrowingResult?, ctors failure, failureIncomplete and {_,_,_,_,_,_}
+
+2016-10-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* smt.maude: don't set include BOOLEAN on because it
+	causes problems for modules that aren't expecting it.
+
+===================================Maude111===========================================
+
+2016-04-27  Steven Eker  <eker@install.csl.sri.com>
+
+	* main.cc (main): added -print-to-stderr flag
+	(printHelp): fix format in -always-advise line
+
+===================================Maude110===========================================
+
+2016-01-29  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: update variant ctor; added Parent sort with
+	none ctor
+
+===================================Maude109===========================================
+
+2015-12-23  Steven Eker  <eker@ape.csl.sri.com>
+
+	* main.cc (main): add a tie between cout and cerr so streams don't
+	get out of sync on orion
+
+===================================Maude108a===========================================
+
+2015-08-14  Steven Eker  <eker@ape.csl.sri.com>
+
+	* prelude.maude: added constant noVariantIncomplete
+
+2015-07-23  Steven Eker  <eker@ape.csl.sri.com>
+
+	* prelude.maude: added two constants noUnifierIncomplete
+
+===================================Maude108===========================================
+
+2014-10-28  Steven Eker  <eker@ape.csl.sri.com>
+
+	* prelude.maude: updated decls for metaSmtSearch() and SmtResult ctor
+
+===================================Maude105===========================================
+
+2014-09-22  Steven Eker  <eker@ape.csl.sri.com>
+
+	* prelude.maude: added syntax for metaSmtSearch and its constructors
+
+2014-08-15  Steven Eker  <eker@ape.csl.sri.com>
+
+	* smt.maude: updated =/== and === hook syntax; commented out
+	divisible breaks of CVC4 breakage
+
+2014-08-14  Steven Eker  <eker@ape.csl.sri.com>
+
+	* smt.maude: don't include BOOL; include BOOLEAN; use === and =/==
+	in place of = and !=; use true and false in place of tt and ff
+
+===================================Maude104===========================================
+
 2014-05-20  Steven Eker  <eker@ape.csl.sri.com>
 
 	* prelude.maude: added metaCheck()

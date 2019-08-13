@@ -67,7 +67,7 @@ public:
 			  const VariableInfo& variableInfo,
 			  MixfixModule* m);
   DagNode* upFailurePair();
-  DagNode* upFailureTriple();
+  DagNode* upFailureTriple(bool incomplete = false);
   DagNode* upResult4Tuple(DagNode* dagNode,
 			  const Substitution& substitution,
 			  const VariableInfo& variableInfo,
@@ -87,8 +87,10 @@ public:
   DagNode* upVariant(const Vector<DagNode*>& variant, 
 		     const NarrowingVariableInfo& variableInfo,
 		     const mpz_class& variableIndex,
+		     const mpz_class& parentIndex,
+		     bool moreInLayer,
 		     MixfixModule* m);
-  DagNode* upNoVariant();
+  DagNode* upNoVariant(bool incomplete);
 
   DagNode* upUnificationPair(const Vector<DagNode*>& unifier,
 			     const NarrowingVariableInfo& variableInfo,
@@ -112,8 +114,8 @@ public:
 			  MixfixModule* m,
 			  PointerMap& qidMap,
 			  PointerMap& dagNodeMap);
-  DagNode* upNoUnifierPair();
-  DagNode* upNoUnifierTriple();
+  DagNode* upNoUnifierPair(bool incomplete);
+  DagNode* upNoUnifierTriple(bool incomplete);
   DagNode* upNoMatchSubst();
   DagNode* upNoMatchPair();
   DagNode* upMatchPair(const Substitution& substitution,
@@ -121,6 +123,65 @@ public:
 		       DagNode* dagNode,
 		       DagNode* hole,
 		       MixfixModule* m);
+
+  DagNode* upSmtResult(DagNode* state,
+		       const Substitution& substitution,
+		       const VariableInfo& variableInfo,
+		       const NatSet& smtVariables,
+		       DagNode* constraint,
+		       const mpz_class& variableNumber,
+		       MixfixModule* m);
+  DagNode* upSmtFailure();
+
+  DagNode* upNarrowingApplyResult(DagNode* dagNode,
+				  DagNode* metaContext,
+				  const Substitution&  unifier,
+				  Rule* rule,
+				  const NarrowingVariableInfo& narrowingVariableInfo,
+				  int variableFamilyName,
+				  MixfixModule* m);
+  DagNode* upNarrowingApplyFailure(bool incomplete);
+
+  DagNode* upNarrowingSearchResult(DagNode* dagNode,
+				   const Substitution& accumulatedSubstitution,
+				   const NarrowingVariableInfo& initialVariableInfo,
+				   int stateVariableFamilyName,
+				   const Vector<DagNode*>& unifier,
+				   const NarrowingVariableInfo& unifierVariableInfo,
+				   int unifierVariableFamilyName,
+				   MixfixModule* m);
+  DagNode* upNarrowingSearchFailure(bool incomplete);
+
+  DagNode* upCompoundSubstitution(const Substitution& substitution,
+				  const VariableInfo& variableInfo,
+				  const NarrowingVariableInfo& narrowingVariableInfo,
+				  MixfixModule* m,
+				  PointerMap& qidMap,
+				  PointerMap& dagNodeMap);
+
+  DagNode* upNarrowingStep(DagNode* dagNode,
+			   DagNode* hole,
+			   Rule* rule,
+			   const Substitution& unifier,
+			   const NarrowingVariableInfo& unifierVariableInfo,
+			   int unifierVariableFamilyName,
+			   DagNode* newDag,
+			   const Substitution& accumulatedSubstitution,
+			   const NarrowingVariableInfo& initialVariableInfo,
+			   MixfixModule* m,
+			   PointerMap& qidMap,
+			   PointerMap& dagNodeMap);
+  DagNode* upNarrowingSearchPathResult(DagNode* initialDag,
+				       const Substitution& initialRenaming,
+				       const NarrowingVariableInfo& initialVariableInfo,
+				       const Vector<DagNode*>& narrowingTrace,
+				       const Vector<DagNode*>& unifier,
+				       const NarrowingVariableInfo& unifierVariableInfo,
+				       int unifierVariableFamilyName,
+				       MixfixModule* m,
+				       PointerMap& qidMap,
+				       PointerMap& dagNodeMap);
+  DagNode* upNarrowingSearchPathFailure(bool incomplete);
 
   DagNode* upView(View* view, PointerMap& qidMap);
   DagNode* upModule(bool flat, PreModule* pm, PointerMap& qidMap);
@@ -209,7 +270,8 @@ private:
     NONEXEC = 1,
     OWISE = 2,
     PRINT = 4,
-    VARIANT = 8
+    VARIANT = 8,
+    NARROWING = 16
   };
 
   struct AttributeInfo
@@ -345,6 +407,23 @@ private:
 			       PointerMap& dagNodeMap,
 			       DagNode*& left,
 			       DagNode*& right);
+
+  DagNode* upSmtSubstitution(const Substitution& substitution,
+			     const VariableInfo& variableInfo,
+			     const NatSet& smtVariables,
+			     MixfixModule* m,
+			     PointerMap& qidMap,
+			     PointerMap& dagNodeMap);
+  DagNode* upSubstitution(const Substitution& substitution,
+			  const NarrowingVariableInfo& narrowingVariableInfo,
+			  MixfixModule* m,
+			  PointerMap& qidMap,
+			  PointerMap& dagNodeMap);
+  DagNode* upPartialSubstitution(const Substitution& substitution,
+				 const NarrowingVariableInfo& narrowingVariableInfo,
+				 MixfixModule* m,
+				 PointerMap& qidMap,
+				 PointerMap& dagNodeMap);
 
   bool downHeader(DagNode* metaHeader, int& id, DagNode*& metaParameterDeclList);
   bool downParameterDeclList(DagNode* metaParameterDeclList, ImportModule* m);

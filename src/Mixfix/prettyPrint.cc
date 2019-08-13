@@ -77,6 +77,11 @@ operator<<(ostream& s, const Term* term)
 ostream&
 operator<<(ostream& s, DagNode* dagNode)
 {
+  if (dagNode == 0)
+    {
+      s << "(null DagNode*)";
+      return s;
+    }
   MixfixModule::globalIndent = 0;
   MixfixModule* module = static_cast<MixfixModule*>(dagNode->symbol()->getModule());
   if (interpreter.getPrintFlag(Interpreter::PRINT_GRAPH))
@@ -109,13 +114,15 @@ MixfixModule::printAttributes(ostream& s, const PreEquation* pe, ItemType itemTy
   const Label& l = pe->getLabel();
   int id = l.id();
   const Equation* eq = dynamic_cast<const Equation*>(pe);
+  const Rule* rl = dynamic_cast<const Rule*>(pe);
   bool owise = eq != 0 && eq->isOwise();
   bool variant = eq != 0 && eq->isVariant();
+  bool narrowing = rl != 0 && rl->isNarrowing();
   bool nonexec = pe->isNonexec();
   int metadata = getMetadata(itemType, pe);
   const PrintAttribute* printAttribute = getPrintAttribute(itemType, pe);
 
-  if (!nonexec && !owise && !variant && id == NONE && metadata == NONE && printAttribute == 0)
+  if (!nonexec && !owise && !variant && !narrowing && id == NONE && metadata == NONE && printAttribute == 0)
     return;
   s << " [";
   const char *space = "";
@@ -132,6 +139,11 @@ MixfixModule::printAttributes(ostream& s, const PreEquation* pe, ItemType itemTy
   if (variant)
     {
       s << space << "variant";
+      space = " ";
+    }
+  if (narrowing)
+    {
+      s << space << "narrowing";
       space = " ";
     }
   if (id != NONE)

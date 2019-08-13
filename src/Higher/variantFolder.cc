@@ -71,7 +71,7 @@ VariantFolder::markReachableNodes()
 }
 
 bool
-VariantFolder::insertVariant(const Vector<DagNode*>& variant, int index, int parentIndex)
+VariantFolder::insertVariant(const Vector<DagNode*>& variant, int index, int parentIndex, int variableFamily)
 {
   //cerr << " i" << index << "p" << parentIndex;
   //
@@ -159,24 +159,82 @@ VariantFolder::insertVariant(const Vector<DagNode*>& variant, int index, int par
   //
   //cerr << "*";
   newVariant->parentIndex = parentIndex;
+  newVariant->variableFamily = variableFamily;
+  newVariant->layerNumber = 0;
+  if (parentIndex != NONE)
+    {
+      RetainedVariantMap::iterator parentVariant = mostGeneralSoFar.find(parentIndex);
+      Assert(parentVariant != mostGeneralSoFar.end(), "parent " << parentIndex << " of variant " << index << " has been deleted");
+      newVariant->layerNumber = parentVariant->second->layerNumber + 1;
+    }
+
   mostGeneralSoFar.insert(RetainedVariantMap::value_type(index, newVariant));
   return true;
 }
 
-const Vector<DagNode*>* 
-VariantFolder::getNextSurvivingVariant(int& nrFreeVariables)
+const Vector<DagNode*>*
+VariantFolder::getNextSurvivingVariant(int& nrFreeVariables,
+				       int& variableFamily,
+				       int* variantNumber,
+				       int* parentNumber,
+				       bool* moreInLayer)
 {
-  //
-  //	We allow variants to be extracted, even though we may not be finished inserting new variants.
-  //	This means that some of the variant we return may later be evicted by a subsequent insert().
-  //
   RetainedVariantMap::const_iterator nextVariant = mostGeneralSoFar.upper_bound(currentVariantIndex);
   if (nextVariant == mostGeneralSoFar.end())
     return 0;  // no variants available so change nothing
 
   currentVariantIndex = nextVariant->first;
   nrFreeVariables = nextVariant->second->nrFreeVariables;
+  //
+  //	Optional information - non-null pointers means caller wants this information
+  //	returned.
+  //
+  variableFamily = nextVariant->second->variableFamily;
+  if (variantNumber)
+    *variantNumber = currentVariantIndex;  // internal number for current variant
+  if (parentNumber)
+    *parentNumber = nextVariant->second->parentIndex;  // internal number for variant's parent (or NONE if root)
+  if (moreInLayer)
+    {
+      //
+      //	Flag to indicate whether next call to getNextSurvivingVariant()
+      //	will return another variant in the same layer.
+      //
+      *moreInLayer = false;
+      RetainedVariantMap::const_iterator nextNextVariant = mostGeneralSoFar.upper_bound(currentVariantIndex);
+      if (nextNextVariant != mostGeneralSoFar.end() &&
+	  nextNextVariant->second->layerNumber == nextVariant->second->layerNumber)
+	*moreInLayer = true;
+    }
+
   return &(nextVariant->second->variant);
+}
+
+const Vector<DagNode*>*
+VariantFolder::getLastReturnedVariant(int& nrFreeVariables, int* parentNumber, bool* moreInLayer)
+{
+  RetainedVariantMap::const_iterator currentVariant = mostGeneralSoFar.find(currentVariantIndex);
+  Assert(currentVariant != mostGeneralSoFar.end(), "current variant purged");
+  nrFreeVariables = currentVariant->second->nrFreeVariables;
+  //
+  //	Optional information - non-null pointers means caller wants this information
+  //	returned.
+  //
+  if (parentNumber)
+    *parentNumber = currentVariant->second->parentIndex;  // internal number for variant's parent (or NONE if root)
+  if (moreInLayer)
+    {
+      //
+      //	Flag to indicate whether next call to getNextSurvivingVariant()
+      //	will return another variant in the same layer.
+      //
+      *moreInLayer = false;
+      RetainedVariantMap::const_iterator nextVariant = mostGeneralSoFar.upper_bound(currentVariantIndex);
+      if (nextVariant != mostGeneralSoFar.end() &&
+	  nextVariant->second->layerNumber == currentVariant->second->layerNumber)
+	*moreInLayer = true;
+    }
+  return &(currentVariant->second->variant);
 }
 
 bool
@@ -192,9 +250,10 @@ VariantFolder::subsumes(const RetainedVariant* retainedVariant, const Vector<Dag
   //	We check if retained variant is at least as general as a new variant.
   //
   int nrVariablesToUse = retainedVariant->nrVariables;
-  if (nrVariablesToUse == 0)
-    nrVariablesToUse = 1;  // substitutions always expect to have at least one variable
-  RewritingContext matcher(nrVariablesToUse);
+  int nrSlotsToAllocate = nrVariablesToUse;
+  if (nrSlotsToAllocate == 0)
+    nrSlotsToAllocate = 1;  // substitutions subject to clear() must always have at least one slot
+  RewritingContext matcher(nrSlotsToAllocate);
   matcher.clear(nrVariablesToUse);
   SubproblemAccumulator subproblems;
 

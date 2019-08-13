@@ -33,5 +33,10 @@ class SMT_NumberSymbol;
 class SMT_NumberTerm;
 class SMT_NumberDagNode;
 
-#endif
+class SMT_Info;
+class SMT_EngineWrapper;
 
+class SMT_RewriteSearchState;
+class SMT_RewriteSequenceSearch;
+
+#endif

@@ -1,3 +1,58 @@
+2017-04-14  Steven Eker  <eker@install.csl.sri.com>
+
+	* associativeSymbol.hh (BinarySymbol): added a comment explaining the
+	intuitions behind LIMIT_SORT and PURE_SORT.
+
+===================================Maude112a===========================================
+
+2017-02-21  Steven Eker  <eker@install.csl.sri.com>
+
+	* dagNode.hh (D): updated decl for instantiateWithReplacement()
+
+2017-02-17  Steven Eker  <eker@install.csl.sri.com>
+
+	* dagNode.hh (D): deleted virtual function stackArguments()
+
+	* symbol.cc (stackArguments): added
+	(termify): deleted commented out function
+
+	* symbol.hh (MemoTable): added respectFrozen and eagerContext flags to
+	stackArguments()
+
+===================================Maude111b===========================================
+
+2017-02-13  Steven Eker  <eker@install.csl.sri.com>
+
+	* dagNode.hh (indexVariables): don't trust ground flag because reduction
+	may have gone on below.
+
+2016-11-10  Steven Eker  <eker@install.csl.sri.com>
+
+	* dagNode.hh (D): added decl for copyAll2()
+	(copyAll): added
+
+===================================Maude111===========================================
+
+2016-03-25  Steven Eker  <eker@install.csl.sri.com>
+
+	* dagNode.cc (computeGeneralizedSort2): use theory specific
+	computeGeneralizedSort2() not computeGeneralizedSort()
+
+2016-03-17  Steven Eker  <eker@install.csl.sri.com>
+
+	* dagNode.cc (computeGeneralizedSort2): added
+
+	* dagNode.hh (D): added decl for computeGeneralizedSort2()
+
+===================================Maude110===========================================
+
+2015-08-06  Steven Eker  <eker@ape.csl.sri.com>
+
+	* dagNode.cc (computeSolvedForm2): use flagAsUnimplemented()
+	(hash): deleted ifdef'd out code
+	(computeSolvedForm2): don't use flagAsUnimplemented() after all;
+	instead use CantHappen()
+
 2014-02-18  Steven Eker  <eker@ape.csl.sri.com>
 
 	* symbol.hh (MemoTable): deleted inline stubs for

@@ -51,15 +51,22 @@ public:
   void normalizeAndComputeTrueSort(DagNode* subject, RewritingContext& context);
   void stackArguments(DagNode* subject,
 		      Vector<RedexPosition>& stack,
-		      int parentIndex);
+		      int parentIndex,
+		      bool respectFrozen,
+		      bool eagerContext);
   Term* termify(DagNode* dagNode);
   //
   //	Unification stuff.
   //
+  int unificationPriority() const;
   void computeGeneralizedSort(const SortBdds& sortBdds,
 			      const Vector<int>& realToBdd,
 			      DagNode* subject,
 			      Vector<Bdd>& generalizedSort);
+  void computeGeneralizedSort2(const SortBdds& sortBdds,
+			       const Vector<int>& realToBdd,
+			       DagNode* subject,
+			       Vector<Bdd>& outputBdds);
   bool isStable() const;
   //
   //	Hash cons stuff.

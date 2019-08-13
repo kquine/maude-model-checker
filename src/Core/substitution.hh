@@ -82,10 +82,11 @@ Substitution::Substitution(int size, int cSize) : values(size)
   copySize = cSize;
 }
 
-
 inline void
 Substitution::clear(long size)
 {
+  //cout << "Substitution::clear() values.size() = " << values.size() <<
+  //  "  copySize " << copySize << endl;
   //
   //	Take a long argument to avoid the need for an explicit extension instruction on x86-64.
   //
@@ -141,6 +142,8 @@ Substitution::finished()
 inline void
 Substitution::copy(const Substitution& original)
 {
+  //cout << "Substitution::copy() values.size() = " << values.size() <<
+  //  "  copySize " << copySize << "  original.copySize = " << original.copySize << endl;
   Assert(copySize == original.copySize, "size mismatch (" << copySize <<
 	 " vs " << original.copySize << ')');
   if (copySize > 0)

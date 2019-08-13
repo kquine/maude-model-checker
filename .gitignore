@@ -1,0 +1,15 @@
+*~
+.*.swp
+.dep
+*.o
+*.a
+.DS_Store
+autom4te.cache/
+.deps/
+/config.h
+/config.log
+/config.status
+/stamp-h1
+Makefile
+Makefile.in
+src/Main/maude

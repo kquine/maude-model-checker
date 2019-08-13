@@ -21,38 +21,8 @@
 */
 
 //
-//	Code for metaNarrow descent function.
+//	Code for metaNarrow() descent functions.
 //
-
-local_inline bool
-MetaLevelOpSymbol::getCachedNarrowingSequenceSearch(MetaModule* m,
-						    FreeDagNode* subject,
-						    RewritingContext& context,
-						    Int64 solutionNr,
-						    NarrowingSequenceSearch*& search,
-						    Int64& lastSolutionNr)
-{
-  if (solutionNr > 0)
-    {
-      CacheableState* cachedState;
-      if (m->remove(subject, cachedState, lastSolutionNr))
-	{
-	  if (lastSolutionNr <= solutionNr)
-	    {
-	      search = safeCast(NarrowingSequenceSearch*, cachedState);
-	      //
-	      //	The parent context pointer of the root context in the
-	      //	NarrowingSequenceSearch is possibly stale.
-	      //
-	      safeCast(UserLevelRewritingContext*, search->getContext())->
-		beAdoptedBy(safeCast(UserLevelRewritingContext*, &context));
-	      return true;
-	    }
-	  delete cachedState;
-	}
-    }
-  return false;
-}
 
 NarrowingSequenceSearch*
 MetaLevelOpSymbol::makeNarrowingSequenceSearch(MetaModule* m,
@@ -69,8 +39,8 @@ MetaLevelOpSymbol::makeNarrowingSequenceSearch(MetaModule* m,
       if (metaLevel->downTermPair(subject->getArgument(1), subject->getArgument(2), s, g, m))
 	{
 	  m->protect();
-	  Pattern* goal = new Pattern(g, false);
-	  RewritingContext* subjectContext = term2RewritingContext(s, context);
+	  Pattern* goal = new Pattern(g, false);  // takes care of destructing g
+	  RewritingContext* subjectContext = term2RewritingContext(s, context);  // takes care of destructing s
 	  context.addInCount(*subjectContext);
 	  return new NarrowingSequenceSearch(subjectContext,
 					     searchType,
@@ -78,9 +48,6 @@ MetaLevelOpSymbol::makeNarrowingSequenceSearch(MetaModule* m,
 					     maxDepth,
 					     NarrowingSearchState::ALLOW_NONEXEC,
 					     new FreshVariableSource(m, 0));
-	  // not needed unless we support conditions
-	  //g->deepSelfDestruct();
-	  //s->deepSelfDestruct();
 	}
     }
   return 0;
@@ -100,7 +67,7 @@ MetaLevelOpSymbol::metaNarrow(FreeDagNode* subject, RewritingContext& context)
 	{
 	  NarrowingSequenceSearch* state;
 	  Int64 lastSolutionNr;
-	  if (getCachedNarrowingSequenceSearch(m, subject, context, solutionNr, state, lastSolutionNr))
+	  if (getCachedStateObject(m, subject, context, solutionNr, state, lastSolutionNr))
 	    m->protect();  // Use cached state
 	  else if ((state = makeNarrowingSequenceSearch(m, subject, context)))
 	    lastSolutionNr = -1;
@@ -111,11 +78,11 @@ MetaLevelOpSymbol::metaNarrow(FreeDagNode* subject, RewritingContext& context)
 	  while (lastSolutionNr < solutionNr)
 	    {
 	      bool success = state->findNextMatch();
-	      //state->transferCount(context);
+	      context.transferCount(*(state->getContext()));
 	      if (!success)
 		{
+		  result = metaLevel->upFailureTriple(state->isIncomplete());
 		  delete state;
-		  result = metaLevel->upFailureTriple();
 		  goto fail;
 		}
 	      ++lastSolutionNr;
@@ -136,7 +103,7 @@ MetaLevelOpSymbol::metaNarrow(FreeDagNode* subject, RewritingContext& context)
 }
 
 NarrowingSequenceSearch*
-MetaLevelOpSymbol::makeNarrowingSequenceSearch2(MetaModule* m,
+MetaLevelOpSymbol::makeNarrowingSequenceSearchAlt(MetaModule* m,
 						FreeDagNode* subject,
 						RewritingContext& context) const
 {
@@ -179,9 +146,9 @@ MetaLevelOpSymbol::metaNarrow2(FreeDagNode* subject, RewritingContext& context)
 	{
 	  NarrowingSequenceSearch* state;
 	  Int64 lastSolutionNr;
-	  if (getCachedNarrowingSequenceSearch(m, subject, context, solutionNr, state, lastSolutionNr))
+	  if (getCachedStateObject(m, subject, context, solutionNr, state, lastSolutionNr))
 	    m->protect();  // Use cached state
-	  else if ((state = makeNarrowingSequenceSearch2(m, subject, context)))
+	  else if ((state = makeNarrowingSequenceSearchAlt(m, subject, context)))
 	    lastSolutionNr = -1;
 	  else
 	    return false;
@@ -190,7 +157,7 @@ MetaLevelOpSymbol::metaNarrow2(FreeDagNode* subject, RewritingContext& context)
 	  while (lastSolutionNr < solutionNr)
 	    {
 	      bool success = state->findNextMatch();
-	      //state->transferCount(context);
+	      context.transferCount(*(state->getContext()));
 	      if (!success)
 		{
 		  delete state;

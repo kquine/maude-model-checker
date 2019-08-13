@@ -48,6 +48,7 @@ public:
 
   bool isOwise() const;
   void setVariant();
+  void clearVariant();
   bool isVariant() const;
 
   void stackMachineCompile();
@@ -75,7 +76,7 @@ private:
   //	For stack based execution.
   //
   Instruction* instructionSequence;
-  int nrSlots;
+  // int nrSlots;
 };
 
 inline bool
@@ -94,6 +95,12 @@ inline void
 Equation::setVariant()
 {
   setFlags(VARIANT);
+}
+
+inline void
+Equation::clearVariant()
+{
+  clearFlags(VARIANT);
 }
 
 inline long

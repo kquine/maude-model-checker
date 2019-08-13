@@ -39,9 +39,6 @@ public:
   bool eqRewrite(DagNode* subject, RewritingContext& context);
   void computeBaseSort(DagNode* subject);
   void normalizeAndComputeTrueSort(DagNode* subject, RewritingContext& context);
-  void stackArguments(DagNode* subject,
-		      Vector<RedexPosition>& stack,
-		      int parentIndex);
   Term* termify(DagNode* dagNode);
   //
   //	Unification stuff.
@@ -50,6 +47,11 @@ public:
 			      const Vector<int>& realToBdd,
 			      DagNode* subject,
 			      Vector<Bdd>& generalizedSort);
+  void computeGeneralizedSort2(const SortBdds& sortBdds,
+			       const Vector<int>& realToBdd,
+			       DagNode* subject,
+			       Vector<Bdd>& outputBdds);
+
   bool isStable() const;
   //
   //	Hash cons stuff.

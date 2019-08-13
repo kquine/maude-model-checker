@@ -535,7 +535,10 @@ fmod TLR-CONTEXT-EXPR is
   pr EVALUATION . 
   pr MOD-EXP-PARSING .
   inc MOD-EXPR .
-  pr MODULE-HANDLING .
+  pr MODULE-HANDLING  * (op addOps to addOpsSE, 
+                         op addEqs to addEqsSE, 
+                         op addSorts to addSortsSE,
+                         op _in_ : Attr AttrSet -> Bool to _inSE_) .
   pr TLR-CONTEXT-DECL-GENERATE .
 
   op CONTEXT`[_`] : ModuleExpression -> ModuleExpression .
@@ -609,11 +612,13 @@ endfm
 ***        Extending Full Maude
 ******************************************************************************
 
+set show advisories off .
+
 --- REDEFINED
 fmod BANNER is
   pr STRING .
   op banner : -> String .
-  eq banner = "LTLR Fairness Model Checker December 10th 2011" .
+  eq banner = "LTLR Fairness Model Checker Interface" .
 endfm
 
 
@@ -629,7 +634,8 @@ endfm
 
 
 --- REDEFINED: frequently used as meta functions in many cases.
-fmod MOD-EXPRS is
+--- NOTE: MOD-EXPRS is not used for parsing module expressions.
+fmod FM-MOD-EXPRS is
   including OPERATOR-ATTRIBUTES .
   including EXTENDED-SORTS .
 
@@ -936,7 +942,6 @@ set trace off .
 set break off .
 set profile off .
 
---- set show advisories on .
-
 loop init .
 
+set show advisories on .

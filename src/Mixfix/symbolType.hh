@@ -79,6 +79,8 @@ public:
     INTERPRETER_MANAGER_SYMBOL,
     SMT_SYMBOL,
     SMT_NUMBER_SYMBOL,
+    FILE_MANAGER_SYMBOL,
+    STREAM_MANAGER_SYMBOL,
 
     LTLR_FAIRCHECKER_SYMBOL,
     SYMBOLIC_MODEL_CHECKER_SYMBOL,
@@ -126,6 +128,7 @@ public:
     //	Conjunctions.
     //
     AXIOMS = ASSOC | COMM | LEFT_ID | RIGHT_ID | IDEM,
+    COLLAPSE = LEFT_ID | RIGHT_ID | IDEM,
     SIMPLE_ATTRIBUTES = ASSOC | COMM | IDEM | MEMO | CTOR | CONFIG | OBJECT | MESSAGE,
     ATTRIBUTES = PREC | GATHER | FORMAT | LATEX | STRAT | MEMO | FROZEN |
     CONFIG | OBJECT | MESSAGE | AXIOMS | ITER
@@ -143,6 +146,7 @@ public:
 
   bool hasFlag(int flag) const;
   bool hasAllFlags(int flags) const;
+  bool hasAtLeastOneFlag(int flags) const;
   //  bool hasAxioms() const;
   bool hasAttachments() const;
   bool hasSpecial() const;
@@ -219,6 +223,12 @@ inline bool
 SymbolType::hasAllFlags(int flags) const
 {
   return (getFlags() & flags) == flags;
+}
+
+inline bool
+SymbolType::hasAtLeastOneFlag(int flags) const
+{
+  return (getFlags() & flags);
 }
 
 inline bool

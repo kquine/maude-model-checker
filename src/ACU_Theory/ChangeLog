@@ -1,3 +1,148 @@
+2017-04-20  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_Matcher.cc (buildBipartiteGraph): fixed symmetric bug
+	(eliminateGroundedOutAliens): fixed symmetric bug
+	(aliensOnlyMatch): fixed symmetric bug
+
+	* ACU_GreedyMatcher.cc (greedyMatch): fixed symmetric bug
+
+	* ACU_NGA_LhsAutomaton.cc (match): fixed two symmetric bugs
+
+	* ACU_TreeMatcher.cc (eliminateGroundedOutAliens): fixed bug where we had
+	the test for going past the last potential match the wrong way around
+	(greedyMatch): fixed symmetric bug
+
+	* ACU_DagOperations.cc (findFirstPotentialMatch): added comments
+
+	* ACU_LazySubproblem.cc (solve): fix bug where we had the test for going
+	pass last potential match the wrong way around
+
+2017-04-19  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_LazySubproblem.cc (solve): added comments; end search early, as soon
+	as stripperTerm is definitely greater than subject on current path
+
+	* ACU_TreeMatcher.cc (treeMatch): added comment
+	(treeMatch): changed comments "could be smarter" to explanations
+	of why it's not worth being smarter (3 places)
+
+	* ACU_CollectorLhsAutomaton.cc (collect): added comments
+
+2017-04-17  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_LhsCompiler0.cc (tryToMakeCollectorLhsAutomaton): added support
+	for ACU_BndVarLhsAutomaton
+
+	* ACU_DagNode.hh (ACU_BaseDagNode): added friend class
+	ACU_BndVarLhsAutomaton
+
+	* ACU_Theory.hh: added class ACU_BndVarLhsAutomaton
+
+	* ACU_BndVarLhsAutomaton.cc: created
+
+	* ACU_BndVarLhsAutomaton.hh: created
+
+2017-04-14  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_VarLhsAutomaton.cc (match): updated comments
+
+===================================Maude112a===========================================
+
+2017-02-23  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_DagNode.cc (instantiateWithCopies2): ifdef'd out normal form, sort and
+	ground flag computation and added comment to explain why
+
+2017-02-21  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_DagNode.hh (ACU_BaseDagNode): updated decl for
+	instantiateWithReplacement()
+
+	* ACU_DagNode.cc (instantiateWithReplacement): handle lazy contexts
+
+2017-02-17  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_TreeDagNode.hh (ACU_BaseDagNode): deleted decl for stackArguments()
+
+	* ACU_TreeDagNode.cc (stackArguments): deleted
+
+	* ACU_DagNode.cc (stackArguments): deleted
+
+	* ACU_DagNode.hh (ACU_BaseDagNode): deleted decl for stackArguments()
+
+	* ACU_Symbol.hh (AssociativeSymbol): updated decl for stackArguments()
+
+	* ACU_Symbol.cc (stackArguments): handle respectFrozen and
+	eagerContext arguments
+
+===================================Maude111b===========================================
+
+2016-12-20  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_TreeDagNode.cc (copyAll2): added missing return statement
+
+2016-11-10  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_TreeDagNode.hh (ACU_BaseDagNode): added decl for copyAll2()
+
+	* ACU_TreeDagNode.cc (copyAll2): added
+
+	* ACU_DagNode.hh (ACU_BaseDagNode): added decl for copyAll2()
+
+	* ACU_DagNode.cc (copyAll2): added
+
+===================================Maude111===========================================
+
+2016-05-18  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_UnificationSubproblem2.cc (addUnification): check for subtermIndex
+	!= NONE
+	(setMultiplicity): check for variable bound to identity; this fixes
+	a bug introduced in Maude108 where classify assumes such things
+	have already canceled
+
+===================================Maude110===========================================
+
+2016-05-17  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_Symbol.cc (computeGeneralizedSort2): fixed nasty FMR bug
+	where we were appending a reference to the same Vector which
+	became stale if the append forced reallocation
+
+2016-03-24  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_Symbol.cc (computeGeneralizedSort2): rewritten
+
+2016-03-18  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_Symbol.cc (computeGeneralizedSort2): added
+
+===================================Maude109===========================================
+
+2015-08-07  Steven Eker  <eker@ape.csl.sri.com>
+
+	* ACU_Symbol.cc (unificationPriority): make ACU have a lower
+	priority than AC
+
+2015-07-31  Steven Eker  <eker@ape.csl.sri.com>
+
+	* ACU_UnificationSubproblem2.cc (classify): handle ground aliens
+	specially
+
+2015-07-30  Steven Eker  <eker@ape.csl.sri.com>
+
+	* ACU_DagNode.cc (computeBaseSortForGroundSubterms): call
+	setGround() in the ground case
+
+===================================Maude108===========================================
+
+2014-06-20  Steven Eker  <eker@ape.csl.sri.com>
+
+	* ACU_UnificationSubproblem2.cc (solve): added comment with new
+	insight into why solved forms must be unsolved
+
+===================================Maude104===========================================
+
 2013-02-28  Steven Eker  <eker@ape.csl.sri.com>
 
 	* ACU_UnificationSubproblem2.cc (addUnification): call killCancelledSubterms()

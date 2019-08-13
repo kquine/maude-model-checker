@@ -2,7 +2,7 @@
 
     This file is part of the Maude 2 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2017 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,16 +30,8 @@
 void
 Interpreter::clearContinueInfo()
 {
-  delete savedContext;
-  delete savedMatchSearchState;
-  delete savedUnificationProblem;
-  delete savedRewriteSequenceSearch;
-  delete savedStrategicSearch;
-  savedContext = 0;
-  savedMatchSearchState = 0;
-  savedUnificationProblem = 0;
-  savedRewriteSequenceSearch = 0;
-  savedStrategicSearch = 0;
+  delete savedState;
+  savedState = 0;
   continueFunc = 0;
   if (savedModule != 0)
     {
@@ -93,7 +85,7 @@ Interpreter::beginRewriting(bool debug)
 void
 Interpreter::printModifiers(Int64 number, Int64 number2)
 {
-  if (number2 != NONE || number2 != NONE)
+  if (number != NONE || number2 != NONE)
     {
       cout << '[';
       if (number != NONE)
@@ -139,7 +131,7 @@ Interpreter::printStats(const Timer& timer, RewritingContext& context, bool timi
 
 void
 Interpreter::endRewriting(Timer& timer,
-			  UserLevelRewritingContext* context,
+			  CacheableRewritingContext* context,
 			  VisibleModule* module,
 			  ContinueFuncPtr cf)
 {
@@ -176,7 +168,7 @@ Interpreter::endRewriting(Timer& timer,
 	}
       else
 	{
-	  savedContext = context;
+	  savedState = context;
 	  savedModule = module;
 	  continueFunc = cf;
 	}
@@ -193,7 +185,7 @@ Interpreter::reduce(const Vector<Token>& subject, bool debug)
 {
   if (DagNode* d = makeDag(subject))
     {
-      UserLevelRewritingContext* context = new UserLevelRewritingContext(d);
+      CacheableRewritingContext* context = new CacheableRewritingContext(d);
       if (getFlag(SHOW_COMMAND))
 	{
 	  UserLevelRewritingContext::beginCommand();
@@ -227,7 +219,7 @@ Interpreter::reduce(const Vector<Token>& subject, bool debug)
 		  cout << "CONVERT_THRESHOLD = " << CONVERT_THRESHOLD <<
 		    "\tMERGE_THRESHOLD = " << MERGE_THRESHOLD << endl;
 		  DagNode* d = makeDag(subject);
-		  UserLevelRewritingContext* context = new UserLevelRewritingContext(d);
+		  CacheableRewritingContext* context = new CacheableRewritingContext(d);
 		  VisibleModule* fm = currentModule->getFlatModule();
 		  startUsingModule(fm);
 		  beginRewriting(debug);
@@ -257,7 +249,7 @@ Interpreter::rewrite(const Vector<Token>& subject, Int64 limit, bool debug)
 	    xmlBuffer->generateRewrite(d, limit);
 	}
       
-      UserLevelRewritingContext* context = new UserLevelRewritingContext(d);
+      CacheableRewritingContext* context = new CacheableRewritingContext(d);
       VisibleModule* fm = currentModule->getFlatModule();
 
       startUsingModule(fm);
@@ -273,9 +265,9 @@ Interpreter::rewrite(const Vector<Token>& subject, Int64 limit, bool debug)
 void
 Interpreter::rewriteCont(Int64 limit, bool debug)
 {
-  UserLevelRewritingContext* context = savedContext;
+  CacheableRewritingContext* context = safeCast(CacheableRewritingContext*, savedState);
   VisibleModule* fm = savedModule;
-  savedContext = 0;
+  savedState = 0;
   savedModule = 0;
   continueFunc = 0;
   if (xmlBuffer != 0 && getFlag(SHOW_COMMAND))
@@ -301,7 +293,7 @@ Interpreter::fRewrite(const Vector<Token>& subject, Int64 limit, Int64 gas, bool
 	  if (xmlBuffer != 0)
 	    xmlBuffer->generateFrewrite(d, limit, gas);
 	}
-      UserLevelRewritingContext* context = new UserLevelRewritingContext(d);
+      CacheableRewritingContext* context = new CacheableRewritingContext(d);
       context->setObjectMode(ObjectSystemRewritingContext::FAIR);
       VisibleModule* fm = currentModule->getFlatModule();
 
@@ -318,9 +310,9 @@ Interpreter::fRewrite(const Vector<Token>& subject, Int64 limit, Int64 gas, bool
 void
 Interpreter::fRewriteCont(Int64 limit, bool debug)
 {
-  UserLevelRewritingContext* context = savedContext;
+  CacheableRewritingContext* context = safeCast(CacheableRewritingContext*, savedState);
   VisibleModule* fm = savedModule;
-  savedContext = 0;
+  savedState = 0;
   savedModule = 0;
   continueFunc = 0;
   if (xmlBuffer != 0 && getFlag(SHOW_COMMAND))
@@ -455,19 +447,17 @@ Interpreter::sreduce(const Vector<Token>& subject)
     }
 }
 
-#include "SMT_Symbol.hh"
-#include "variableTerm.hh"
-#include "cvc4/smt/smt_engine.h"
+#include "SMT_Info.hh"
+#include "variableGenerator.hh"
 
 void
 Interpreter::check(const Vector<Token>& subject)
 {
   if (Term* term = currentModule->getFlatModule()->parseTerm(subject))
     {
-      VariableInfo variableInfo;
-      term->indexVariables(variableInfo);
+      term = term->normalize(false);
       DagNode* d = term->term2Dag();
-
+ 
       if (getFlag(SHOW_COMMAND))
 	{
 	  UserLevelRewritingContext::beginCommand();
@@ -477,83 +467,24 @@ Interpreter::check(const Vector<Token>& subject)
       VisibleModule* fm = currentModule->getFlatModule();
       startUsingModule(fm);
 
-      if (SMT_Symbol* s = dynamic_cast<SMT_Symbol*>(d->symbol()))
-	{
-	  //
-	  //	Check to see term is of a SMT Boolean sort.
-	  //
-	  SMT_Base::SortIndexToSMT_TypeMap& sortMap = fm->getSortMap();
-	  Sort* rangeSort = term->symbol()->getRangeSort();
-	  SMT_Base::SortIndexToSMT_TypeMap::const_iterator k = sortMap.find(rangeSort->getIndexWithinModule());
-	  Assert(k != sortMap.end(), "bad SMT sort");
-	  //
-	  //	Make an SMT variable for each variable occurring in dag.
-	  //
-	  if (k->second == SMT_Base::BOOLEAN)
-	    {
-	      ExprManager em;
-	      int nrVariables = variableInfo.getNrRealVariables();
-	      Vector<Expr> variables(nrVariables);
-	      for (int i = 0; i < nrVariables; ++i)
-		{
-		  VariableTerm* v = safeCast(VariableTerm*, variableInfo.index2Variable(i));
-		  const char* name = Token::name(v->id());
-		  Type t;
-		  int sortIndex = v->getSort()->getIndexWithinModule();
-		  SMT_Base::SortIndexToSMT_TypeMap::const_iterator j = sortMap.find(sortIndex);
-		  if (j == sortMap.end())
-		    {
-		      IssueWarning(*v << ": variable " << QUOTE(static_cast<Term*>(v)) << " does not belong to an SMT sort.");
-		      goto fail;
-		    }
-		  switch(j->second)
-		    {
-		    case SMT_Base::BOOLEAN:
-		      {
-			DebugAdvisory("made Boolean variable " << static_cast<Term*>(v));
-			t = em.booleanType();
-			break;
-		      }
-		    case SMT_Base::INTEGER:
-		      {
-			DebugAdvisory("made Integer variable " << static_cast<Term*>(v));
-			t = em.integerType();
-			break;
-		      }
-		    case SMT_Base::REAL:
-		      {
-			t = em.realType();
-			DebugAdvisory("made Real variable " << static_cast<Term*>(v));
-			break;
-		      }
-		    }
-		  variables[i] = em.mkVar(name, t);
-		}
-	      //
-	      //	Convert Maude dag in to SMT expression.
-	      //
-	      Expr e = s->dagToCVC4(d, variables, sortMap, em);
-	      if (!(e.isNull()))
-		{
-		  //
-		  //	Check satisfiability.
-		  //
-		  SmtEngine smt(&em);
-		  DebugAdvisory("CVC4 Expression is " << e);
-		  smt.assertFormula(e);
-		  const Result result2 = smt.checkSat(em.mkConst(true));
-		  cout << "Result from CVC4 is: " << result2 << endl;
-		}
-	      //else
-	      //  IssueWarning(*term << ": term " << QUOTE(term) << " is not a pure SMT expression.");
-	    }
-	  else
-	    IssueWarning(*term << ": term " << QUOTE(term) << " does not belong to an SMT Boolean sort.");
-	}
+      const SMT_Info& smtInfo = fm->getSMT_Info();
+      VariableGenerator vg(smtInfo);
+      VariableGenerator::Result result = vg.checkDag(d);
+      if (result == VariableGenerator::BAD_DAG)
+	IssueWarning (*term << ": term " << QUOTE(term) << " is not a valid SMT Boolean expression.");
       else
-	IssueWarning(*term << ": term " << QUOTE(term) << " is not headed by an SMT operator.");
-    fail:
+	{
+	  cout << "Result from sat solver is: " <<
+	    ((result == VariableGenerator::SAT) ? "sat" :
+	     ((result == VariableGenerator::UNSAT) ? "unsat" : "undecided")) << endl;
+	}
+
       term->deepSelfDestruct();
       fm->unprotect();
     }
+}
+
+void
+Interpreter::test(const Vector<Token>& subject)
+{
 }

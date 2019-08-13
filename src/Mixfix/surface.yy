@@ -59,8 +59,9 @@
 #define store(token)		tokenSequence.append(token)
 #define fragClear()		fragments.contractTo(0);
 #define fragStore(token)	fragments.append(token)
-#define YYPARSE_PARAM	parseResult
-#define PARSE_RESULT	(*((UserLevelRewritingContext::ParseResult*) parseResult))
+//#define YYPARSE_PARAM	parseResult
+//#define PARSE_RESULT	(*((UserLevelRewritingContext::ParseResult*) parseResult))
+#define PARSE_RESULT	(*parseResult)
 
 #define CM		interpreter.getCurrentModule()
 #define CV		interpreter.getCurrentView()
@@ -91,13 +92,14 @@ SyntaxContainer* oldSyntaxContainer = 0;
 Int64 number;
 Int64 number2;
 
-static void yyerror(char *s);
+static void yyerror(UserLevelRewritingContext::ParseResult* parseResult, char *s);
 
 void cleanUpModuleExpression();
 void cleanUpParser();
 void missingSpace(const Token& token);
 %}
-%pure_parser
+%pure-parser
+%parse-param {UserLevelRewritingContext::ParseResult* parseResult}
 
 %union
 {
@@ -138,7 +140,7 @@ int yylex(YYSTYPE* lvalp);
 %token KW_DEBUG KW_IRREDUNDANT KW_RESUME KW_ABORT KW_STEP KW_WHERE KW_CREDUCE KW_SREDUCE KW_DUMP KW_PROFILE
 %token KW_NUMBER KW_RAT KW_COLOR
 %token <yyInt64> SIMPLE_NUMBER
-%token KW_PWD KW_CD KW_PUSHD KW_POPD KW_LS KW_LOAD KW_QUIT KW_EOF
+%token KW_PWD KW_CD KW_PUSHD KW_POPD KW_LS KW_LOAD KW_QUIT KW_EOF KW_TEST KW_SMT_SEARCH KW_VU_NARROW KW_FVU_NARROW
 
 /*
  *	Start keywords: signal end of mixfix statement if following '.'.
@@ -1217,7 +1219,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			    interpreter.check(lexerBubble);
 			}
 
-		|	search
+		|	optDebug search
 			{
 			  lexerCmdMode();
 			  moduleExpr.contractTo(0);
@@ -1228,7 +1230,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			{
 			  lexerInitialMode();
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
-			    interpreter.search(lexerBubble, number, number2, $1);
+			    interpreter.search(lexerBubble, number, number2, $2, $1);
 			}
 		|	match
 			{
@@ -1282,6 +1284,22 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 		|	optDebug KW_CONTINUE optNumber '.'
 			{
 			  interpreter.cont($3, $1);
+			}
+		|	KW_TEST 
+			{
+			  //
+			  //	test is a generic command to call code with a term for development purposes.
+			  //
+			  lexerCmdMode();
+			  moduleExpr.contractTo(0);
+			}
+			moduleAndTerm
+			{
+			  lexerInitialMode();
+			  if (interpreter.setCurrentModule(moduleExpr, 1))
+			    interpreter.test(lexerBubble);
+			    //interpreter.newNarrow(lexerBubble);
+
 			}
 		|	KW_LOOP
 			{
@@ -1607,6 +1625,9 @@ conceal		:	KW_CONCEAL		{ $$ = true; }
 search		:	KW_NARROW		{ $$ = Interpreter::NARROW; }
 		|	KW_XG_NARROW		{ $$ = Interpreter::XG_NARROW; }
 		|	KW_SEARCH		{ $$ = Interpreter::SEARCH; }
+		|	KW_SMT_SEARCH		{ $$ = Interpreter::SMT_SEARCH; }
+		|	KW_VU_NARROW		{ $$ = Interpreter::VU_NARROW; }
+		|	KW_FVU_NARROW		{ $$ = Interpreter::FVU_NARROW; }
 		;
 
 match		:	KW_XMATCH		{ $$ = true; }
@@ -1878,7 +1899,7 @@ cSimpleTokenBarDot
 %%
 
 static void
-yyerror(char *s)
+yyerror(UserLevelRewritingContext::ParseResult* /*parseResult*/, char *s)
 {
   if (!(UserLevelRewritingContext::interrupted()))
     IssueWarning(LineNumber(lineNumber) << ": " << s);

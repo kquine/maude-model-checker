@@ -3,7 +3,7 @@
 #
 #	Initialize autoconf stuff.
 #
-AC_INIT(Maude, alpha103, [maude-bugs@maude.cs.uiuc.edu])
+AC_INIT(Maude, alpha115, [maude-bugs@lists.cs.illinois.edu])
 #
 #	Allow directory names that look like macros.
 #
@@ -16,8 +16,7 @@ AC_CANONICAL_HOST
 #
 #	Initialize automake stuff.
 #
-AM_INIT_AUTOMAKE(Maude, alpha103)
-AM_INIT_AUTOMAKE([subdir-objects])
+AM_INIT_AUTOMAKE
 #
 #	Cause defines to be put in a header file rather than passed as
 #	compiler flags.
@@ -74,17 +73,52 @@ if (test -z "$BUDDY_LIB") then
 fi
 AC_SUBST(BUDDY_LIB)
 #
+#	Check to see if we should use Yices2 for SMT solving.
+#
+AC_ARG_WITH(yices2,
+	    AC_HELP_STRING([--with-yices2],
+                           [use Yices2 SMT solver library [default=yes]]),
+			   [WITH_YICES2=$withval],
+			   [WITH_YICES2=yes])
+if (test $WITH_YICES2 = yes) then
+#
+#	Check if user set a particular Yices2 library to use and if
+#	not set default.
+#
+  AC_DEFINE([USE_YICES2], [], [use Yices2 SMT solver library])
+  if (test -z "$YICES2_LIB") then
+    YICES2_LIB="-lyices"
+  fi
+  AC_SUBST(YICES2_LIB)
+else
+  YICES2_LIB=""
+fi
+#
+#	Check to see if we should use CVC4 for SMT solving.
+#
+AC_ARG_WITH(cvc4,
+	    AC_HELP_STRING([--with-cvc4],
+                           [use CVC4 SMT solver library [default=no]]),
+			   [WITH_CVC4=$withval],
+			   [WITH_CVC4=no])
+if (test $WITH_CVC4 = yes) then
+#
 #	Check if user set a particular CVC4 library to use and if
 #	not set default.
 #
-if (test -z "$CVC4_LIB") then
-  CVC4_LIB="-lcvc4"
-fi
-AC_SUBST(CVC4_LIB)
+  AC_DEFINE([USE_CVC4], [], [use CVC4 SMT solver library])
+  if (test -z "$CVC4_LIB") then
+    CVC4_LIB="-lcvc4"
+  fi
+  AC_SUBST(CVC4_LIB)
+
 #
 #	CVC4 needs the clock_gettime() function from the POSIX Realtime Extensions library.
 #
-AC_CHECK_LIB(rt, clock_gettime)
+  AC_CHECK_LIB(rt, clock_gettime)
+else
+  CVC4_LIB=""
+fi
 #
 #	Check to see if we should use Tecla for command line editing.
 #
@@ -370,8 +404,8 @@ AC_CONFIG_FILES([Makefile
 		 src/MSCP10/Makefile
 		 src/StrategyLanguage/Makefile
 		 src/Mixfix/Makefile
+                 src/ModelChecker/Makefile
 		 src/SMT/Makefile
-		 src/ModelChecker/Makefile
 		 src/Main/Makefile
 		 tests/Makefile
 		 tests/BuiltIn/Makefile

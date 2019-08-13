@@ -47,7 +47,7 @@ SocketManagerSymbol::getActiveSocket(DagNode* socketArg, int& socketId, ActiveSo
       if (succSymbol->getSignedInt(idArg, socketId))
 	{
 	  SocketMap::iterator i = activeSockets.find(socketId);
-	  if (activeSockets.find(socketId) != activeSockets.end())
+	  if (i != activeSockets.end())
 	    {
 	      asp = &(i->second);
 	      return true;
@@ -58,7 +58,7 @@ SocketManagerSymbol::getActiveSocket(DagNode* socketArg, int& socketId, ActiveSo
 }
 
 bool
-SocketManagerSymbol::getText(DagNode* textArg, crope& text)
+SocketManagerSymbol::getText(DagNode* textArg, Rope& text)
 {
   if (textArg->symbol() == stringSymbol)
     {
@@ -111,8 +111,10 @@ SocketManagerSymbol::createClientTcpSocket(FreeDagNode* message, ObjectSystemRew
       //
       //	Look up the address.
       //
-      const crope& address = safeCast(StringDagNode*, addressArg)->getValue();
-      hostent* record = gethostbyname(address.c_str());  // HACK - might block
+      const Rope& address = safeCast(StringDagNode*, addressArg)->getValue();
+      char* addressStr = address.makeZeroTerminatedString();
+      hostent* record = gethostbyname(addressStr);  // HACK - might block
+      delete [] addressStr;
       if (record == 0)
 	{
 	  DebugAdvisory("unexpected gethostbyname(() error: " << strerror(errno));
@@ -228,7 +230,7 @@ SocketManagerSymbol::createServerTcpSocket(FreeDagNode* message, ObjectSystemRew
 	sockName.sin_family = AF_INET;
 	sockName.sin_port = htons(port);
 	sockName.sin_addr.s_addr = htonl(INADDR_ANY);  // HACK - what is the portable way to set this?
-	if (bind(fd, reinterpret_cast<sockaddr*>(&sockName), sizeof(sockName)) == -1)
+	if (::bind(fd, reinterpret_cast<sockaddr*>(&sockName), sizeof(sockName)) == -1)
 	  {
 	    const char* errText = strerror(errno);
 	    DebugAdvisory("unexpected bind() error with fd " << fd << ": " << errText);
@@ -314,21 +316,21 @@ SocketManagerSymbol::send(FreeDagNode* message, ObjectSystemRewritingContext& co
 {
   int socketId;
   ActiveSocket* asp;
-  crope text;
+  Rope text;
   DagNode* socketName = message->getArgument(0);
   if (getActiveSocket(socketName, socketId, asp) &&
       getText(message->getArgument(2), text) &&
-      text.size() != 0)
+      !(text.empty()))
     {
       //ActiveSocket& as = activeSockets[socketId];
       ActiveSocket& as = *asp;
       if ((as.state & ~WAITING_TO_READ) == 0)  // check that all the state bits other than WAITING_TO_READ are clear
 	{
 	  //as.text = text;
-	  as.textArray = makeZeroTerminatedString(text);
+	  as.textArray = text.makeZeroTerminatedString();
 	  //as.unsent = as.text.c_str();
 	  as.unsent = as.textArray;
-	  as.nrUnsent = text.size();  // how to deal with empty message?
+	  as.nrUnsent = text.length();  // how to deal with empty message?
 	  //
 	  //	Write some characters to the socket; we might get interrupted and have to restart.
 	  //

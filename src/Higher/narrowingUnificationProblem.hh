@@ -32,11 +32,13 @@
 //	^                ^                               ^
 //	0                #protected for rule             size of substitution for module
 //
-//	(4) Unifiers should be expressed in terms of "fresh" variables that reuse the variable name and
+//	(4) Narrowing unification allow extra variables that may not occur in the unification problem
+//	but that might occur in the larger term being narrowed. These get fresh variables in the unifiers.
+//	(5) Unifiers should be expressed in terms of "fresh" variables that reuse the variable name and
 //	substitution slot space.
-//	(5) Narrowing unification does not corrupt previously generated unifiers when making the next unifier, at
+//	(6) Narrowing unification does not corrupt previously generated unifiers when making the next unifier, at
 //	the cost of more copying if an unsorted unifier corresponds to multiple order-sorted unifiers.
-//	(6) Narrowing unification supports the idea of "odd" and "even" variables to avoid clashing variable
+//	(7) Narrowing unification supports the idea of variables families to avoid clashing variable
 //	names on successive steps of narrowing.
 //
 #ifndef _narrowingUnificationProblem_hh_
@@ -58,7 +60,7 @@ public:
 			      DagNode* target,
 			      const NarrowingVariableInfo& variableInfo,
 			      FreshVariableGenerator* freshVariableGenerator,
-			      bool odd = false);
+			      int variableFamily = 0);
   //
   //	However for variant unification, we also need to unify a pair of DagNode* arguments.
   //
@@ -66,30 +68,30 @@ public:
 			      DagNode* rhs,
 			      const NarrowingVariableInfo& variableInfo,
 			      FreshVariableGenerator* freshVariableGenerator,
-			      bool odd);
+			      int variableFamily);
 
   ~NarrowingUnificationProblem();
 
   bool findNextUnifier();
   Substitution& getSolution() const;
   int getNrFreeVariables() const;
+  bool isIncomplete() const;
 
 private:
   void markReachableNodes();
   Sort* variableIndexToSort(int index);
   void bindFreeVariables();
   bool findOrderSortedUnifiers();
-  bool extractUnifier();
-  bool explore(int index);
+  void classifyVariables();
 
   PreEquation* const preEquation;
   const int nrPreEquationVariables;
   const NarrowingVariableInfo& variableInfo;
   FreshVariableGenerator* const freshVariableGenerator;
-  const bool odd;
+  const int variableFamily;
 
-  int firstTargetSlot;
-  int substitutionSize;
+  int firstTargetSlot;			// start of slots for variables in target
+  int substitutionSize;			// initial substitution size (before any fresh variables are added)
   const SortBdds* sortBdds;		// sort computation BDDs for our module
 
   UnificationContext* unsortedSolution;	// for accumulating solved forms and constructing unsorted unifiers
@@ -99,12 +101,6 @@ private:
   NatSet sortConstrainedVariables;	// subset of the above whose sorts are constrained by their appearence in bindings of other variables
   AllSat* orderSortedUnifiers;		// satisfiability problem encoding sorts for order-sorted unifiers
   Substitution* sortedSolution;		// for construction order-sorted unifiers
-  //
-  //	Data for resolving dependencies in solved form.
-  //
-  Vector<int> order;			// we build an order in which to instantiate the solved forms
-  NatSet done;				// a variable is done when every variable it (indirectly) depends on is in the order
-  NatSet pending;			// variables on the current path though the dependency digraph
 };
 
 inline Substitution&
@@ -117,6 +113,13 @@ inline int
 NarrowingUnificationProblem::getNrFreeVariables() const
 {
   return freeVariables.size();
+}
+
+inline bool
+NarrowingUnificationProblem::isIncomplete() const
+{
+  //cout << "NarrowingUnificationProblem::isIncomplete() returned " << pendingStack.isIncomplete() << endl;
+  return pendingStack.isIncomplete();
 }
 
 #endif

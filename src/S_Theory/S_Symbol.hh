@@ -43,7 +43,9 @@ public:
   DagNode* ruleRewrite(DagNode* subject, RewritingContext& context);
   void stackArguments(DagNode* subject,
 		      Vector<RedexPosition>& stack,
-		      int parentIndex);
+		      int parentIndex,
+		      bool respectFrozen,
+		      bool eagerContext);
   Term* termify(DagNode* dagNode);
   //
   //    Member function overiding default handling.
@@ -55,11 +57,16 @@ public:
   //
   //	Unification stuff.
   //
+  int unificationPriority() const;
   void computeSortFunctionBdds(const SortBdds& sortBdds, Vector<Bdd>& sortFunctionBdds) const;
   void computeGeneralizedSort(const SortBdds& sortBdds,
 			      const Vector<int>& realToBdd,
 			      DagNode* subject,
 			      Vector<Bdd>& generalizedSort);
+  void computeGeneralizedSort2(const SortBdds& sortBdds,
+			       const Vector<int>& realToBdd,
+			       DagNode* subject,
+			       Vector<Bdd>& outputBdds);
   bool isStable() const;
   //
   //	Hash cons stuff.

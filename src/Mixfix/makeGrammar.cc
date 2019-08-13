@@ -390,6 +390,7 @@ MixfixModule::makeStrategyLanguageProductions()
     //	<strategy expression> = xmatch <term>
     //	<strategy expression> = amatch <term>
     //
+#if 1
     Vector<int> gather(3);
     Vector<int> rhs(4);
     gather[0] = STRAT_TEST_PREC;
@@ -412,6 +413,7 @@ MixfixModule::makeStrategyLanguageProductions()
     parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gather, MixfixParser::MAKE_TEST, 0);
     rhs[0] = amatch;
     parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gather, MixfixParser::MAKE_TEST, UNBOUNDED);
+#endif
   }
   {
     //
@@ -487,6 +489,9 @@ MixfixModule::makeAttributeProductions()
   rhs[0] = variant;
   parser->insertProduction(ATTRIBUTE, rhs, 0, emptyGather,
 			   MixfixParser::MAKE_VARIANT_ATTRIBUTE);
+  rhs[0] = narrowing;
+  parser->insertProduction(ATTRIBUTE, rhs, 0, emptyGather,
+			   MixfixParser::MAKE_NARROWING_ATTRIBUTE);
   //
   //	Print items.
   //
@@ -902,10 +907,9 @@ MixfixModule::makeSymbolProductions()
 	    case SymbolType::SMT_NUMBER_SYMBOL:
 	      {
 		Sort* sort = symbol->getRangeSort();
-		int sortIndexWithinModule = sort->getIndexWithinModule();
-		SMT_Base::SortIndexToSMT_TypeMap::const_iterator j = getSortMap().find(sortIndexWithinModule);
-		Assert(j != sortMap.end(), "bad SMT sort");
-		if (j->second == SMT_Base::INTEGER)
+		SMT_Info::SMT_Type t = getSMT_Info().getType(sort);
+		Assert(t != SMT_Info::NOT_SMT, "bad SMT sort " << sort);
+		if (t == SMT_Info::INTEGER)
 		  {
 		    rhs[0] = ZERO;
 		    parser->insertProduction(rangeNt, rhs, 0, gatherAny, MixfixParser::MAKE_SMT_NUMBER, i);
@@ -916,7 +920,7 @@ MixfixModule::makeSymbolProductions()
 		  }
 		else
 		  {
-		    Assert(j->second == SMT_Base::REAL, "SMT number sort expected");
+		    Assert(t == SMT_Info::REAL, "SMT number sort expected");
 		    rhs[0] = RATIONAL;
 		    parser->insertProduction(rangeNt, rhs, 0, gatherAny, MixfixParser::MAKE_SMT_NUMBER, i);
 		  }

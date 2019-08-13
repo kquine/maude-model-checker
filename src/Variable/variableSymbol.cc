@@ -82,13 +82,6 @@ VariableSymbol::normalizeAndComputeTrueSort(DagNode* subject, RewritingContext& 
   fastComputeTrueSort(subject, context);
 }
 
-void
-VariableSymbol::stackArguments(DagNode* /* subject */,
-			       Vector<RedexPosition>& /* stack */,
-			       int /* parentIndex */)
-{
-}
-
 Term*
 VariableSymbol::termify(DagNode* dagNode)
 {
@@ -106,9 +99,20 @@ VariableSymbol::computeGeneralizedSort(const SortBdds& sortBdds,
 				       DagNode* subject,
 				       Vector<Bdd>& generalizedSort)
 {
-  int firstVariable = realToBdd[safeCast(VariableDagNode*, subject)->getIndex()];
-  int nrVariables = sortBdds.getNrVariables(rangeComponent()->getIndexWithinModule());
+  int firstVariable = realToBdd[safeCast(VariableDagNode*, subject)->getIndex()];  // first BDD variable for this variable
+  int nrVariables = sortBdds.getNrVariables(rangeComponent()->getIndexWithinModule());  // number of BDD variables depends on sort
   sortBdds.makeVariableVector(firstVariable, nrVariables, generalizedSort);
+}
+
+void
+VariableSymbol::computeGeneralizedSort2(const SortBdds& sortBdds,
+					const Vector<int>& realToBdd,
+					DagNode* subject,
+					Vector<Bdd>& outputBdds)
+{
+  sortBdds.appendVariableVector(realToBdd[safeCast(VariableDagNode*, subject)->getIndex()],  // first BDD variable
+				sortBdds.getNrVariables(rangeComponent()->getIndexWithinModule()),  // # BDD variables
+				outputBdds);
 }
 
 bool

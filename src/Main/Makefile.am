@@ -58,12 +58,12 @@ maude_LDADD = \
 	../ModelChecker/libModelChecker.a \
 	$(FULL_COMPILER_LIB) \
 	../Utility/libutility.a \
-	$(BUDDY_LIB) \
 	$(CVC4_LIB) \
-	$(TECLA_LIBS) \
-	$(LIBSIGSEGV_LIB) \
+	$(YICES2_LIB) \
 	$(GMP_LIBS) \
-	$(DLMALLOC_LIB)
+	$(BUDDY_LIB) \
+	$(TECLA_LIBS) \
+	$(LIBSIGSEGV_LIB)
 
 maude_SOURCES = \
 	main.cc
@@ -76,7 +76,8 @@ data_DATA = \
 	machine-int.maude \
 	term-order.maude \
 	metaInterpreter.maude \
-	smt.maude
+	smt.maude \
+	file.maude
 
 EXTRA_DIST = \
 	prelude.maude \
@@ -86,4 +87,5 @@ EXTRA_DIST = \
 	machine-int.maude \
 	term-order.maude \
 	metaInterpreter.maude \
-	smt.maude
+	smt.maude \
+	file.maude

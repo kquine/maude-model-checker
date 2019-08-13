@@ -2,7 +2,7 @@
 
     This file is part of the Maude 2 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2017 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -84,6 +84,10 @@
      MACRO(natListSymbol, Symbol, SymbolType::ASSOC, 2)
      MACRO(unboundedSymbol, Symbol, 0, 0)
      //
+     //	Parent constructor.
+     //
+     MACRO(noParentSymbol, Symbol, 0, 0)
+     //
      //	String constructor.
      //
      MACRO(stringSymbol, StringSymbol, SymbolType::STRING, 0)
@@ -135,6 +139,7 @@
      MACRO(metadataSymbol, FreeSymbol, 0, 1)
      MACRO(owiseSymbol, Symbol, 0, 0)
      MACRO(variantAttrSymbol, Symbol, 0, 0)
+     MACRO(narrowingSymbol, Symbol, 0, 0)
      MACRO(nonexecSymbol, Symbol, 0, 0)
      MACRO(printSymbol, FreeSymbol, 0, 1)
 
@@ -222,10 +227,17 @@
      MACRO(matchPairSymbol, FreeSymbol, 0, 2)
      MACRO(unificationPairSymbol, FreeSymbol, 0, 2)
      MACRO(unificationTripleSymbol, FreeSymbol, 0, 3)
-     MACRO(variantSymbol, FreeSymbol, 0, 3)
+     MACRO(variantSymbol, FreeSymbol, 0, 5)
+     MACRO(narrowingApplyResultSymbol, FreeSymbol, 0, 7)
+     MACRO(narrowingSearchResultSymbol, FreeSymbol, 0, 6)
      MACRO(traceStepSymbol, FreeSymbol, 0, 3)
      MACRO(nilTraceSymbol, Symbol, 0, 0)
      MACRO(traceSymbol, Symbol, SymbolType::ASSOC, 2)
+     MACRO(narrowingStepSymbol, FreeSymbol, 0, 7)
+     MACRO(nilNarrowingTraceSymbol, Symbol, 0, 0)
+     MACRO(narrowingTraceSymbol, Symbol, SymbolType::ASSOC, 2)
+     MACRO(narrowingSearchPathResultSymbol, FreeSymbol, 0, 6)
+     MACRO(smtResultSymbol, FreeSymbol, 0, 4)
      //
      //	Failure constructors.
      //
@@ -233,13 +245,24 @@
      MACRO(ambiguitySymbol, Symbol, 0, 2)
      MACRO(failure2Symbol, Symbol, 0, 0)
      MACRO(failure3Symbol, Symbol, 0, 0)
+     MACRO(failureIncomplete3Symbol, Symbol, 0, 0)
      MACRO(failure4Symbol, Symbol, 0, 0)
      MACRO(noUnifierPairSymbol, Symbol, 0, 0)
      MACRO(noUnifierTripleSymbol, Symbol, 0, 0)
+     MACRO(noUnifierIncompletePairSymbol, Symbol, 0, 0)
+     MACRO(noUnifierIncompleteTripleSymbol, Symbol, 0, 0)
      MACRO(noVariantSymbol, Symbol, 0, 0)
+     MACRO(noVariantIncompleteSymbol, Symbol, 0, 0)
+     MACRO(narrowingApplyFailureSymbol, Symbol, 0, 0)
+     MACRO(narrowingApplyFailureIncompleteSymbol, Symbol, 0, 0)
+     MACRO(narrowingSearchFailureSymbol, Symbol, 0, 0)
+     MACRO(narrowingSearchFailureIncompleteSymbol, Symbol, 0, 0)
+     MACRO(narrowingSearchPathFailureSymbol, Symbol, 0, 0)
+     MACRO(narrowingSearchPathFailureIncompleteSymbol, Symbol, 0, 0)
      MACRO(noMatchSubstSymbol, Symbol, 0, 0)
      MACRO(noMatchPairSymbol, Symbol, 0, 0)
      MACRO(failureTraceSymbol, Symbol, 0, 0)
+     MACRO(smtFailureSymbol, Symbol, 0, 0)
      //
      //	Print option constructors.
      //

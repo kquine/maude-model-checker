@@ -91,6 +91,7 @@ class IntSet;
 class Indent;
 class MpzSystem;
 class IntSystem;
+class Rope;
 
 //
 //	Types for storage efficiency.
@@ -299,7 +300,7 @@ if (globalAdvisoryFlag) \
 #define \
 Verbose(output) \
 if (globalVerboseFlag) \
-(cout << output << '\n')
+  (cout << Tty(Tty::CYAN) << output << Tty(Tty::RESET) << '\n')
 
 extern bool globalAdvisoryFlag;
 extern bool globalVerboseFlag;

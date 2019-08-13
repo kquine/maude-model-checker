@@ -145,7 +145,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			    interpreter.check(lexerBubble);
 			}
 
-		|	search
+		|	optDebug search
 			{
 			  lexerCmdMode();
 			  moduleExpr.contractTo(0);
@@ -156,7 +156,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			{
 			  lexerInitialMode();
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
-			    interpreter.search(lexerBubble, number, number2, $1);
+			    interpreter.search(lexerBubble, number, number2, $2, $1);
 			}
 		|	match
 			{
@@ -210,6 +210,22 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 		|	optDebug KW_CONTINUE optNumber '.'
 			{
 			  interpreter.cont($3, $1);
+			}
+		|	KW_TEST 
+			{
+			  //
+			  //	test is a generic command to call code with a term for development purposes.
+			  //
+			  lexerCmdMode();
+			  moduleExpr.contractTo(0);
+			}
+			moduleAndTerm
+			{
+			  lexerInitialMode();
+			  if (interpreter.setCurrentModule(moduleExpr, 1))
+			    interpreter.test(lexerBubble);
+			    //interpreter.newNarrow(lexerBubble);
+
 			}
 		|	KW_LOOP
 			{
@@ -535,6 +551,9 @@ conceal		:	KW_CONCEAL		{ $$ = true; }
 search		:	KW_NARROW		{ $$ = Interpreter::NARROW; }
 		|	KW_XG_NARROW		{ $$ = Interpreter::XG_NARROW; }
 		|	KW_SEARCH		{ $$ = Interpreter::SEARCH; }
+		|	KW_SMT_SEARCH		{ $$ = Interpreter::SMT_SEARCH; }
+		|	KW_VU_NARROW		{ $$ = Interpreter::VU_NARROW; }
+		|	KW_FVU_NARROW		{ $$ = Interpreter::FVU_NARROW; }
 		;
 
 match		:	KW_XMATCH		{ $$ = true; }

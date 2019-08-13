@@ -40,9 +40,11 @@
 #include "freeTheory.hh"
 #include "S_Theory.hh"
 #include "CUI_Theory.hh"
+#include "AU_Theory.hh"
 #include "NA_Theory.hh"
 #include "builtIn.hh"
 #include "strategyLanguage.hh"
+#include "SMT.hh"
 #include "mixfix.hh"
 
 //      interface class definitions

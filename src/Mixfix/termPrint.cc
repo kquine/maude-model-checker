@@ -99,7 +99,12 @@ MixfixModule::handleIter(ostream& s,
   if (number == 1)
     return false;  // do default thing
 
-  // NEED TO FIX: disambig
+  bool needToDisambiguate;
+  bool argumentRangeKnown;
+  decideIteratedAmbiguity(rangeKnown, term->symbol(), number, needToDisambiguate, argumentRangeKnown);
+  if (needToDisambiguate)
+    s << '(';
+
   string prefixName;
   makeIterName(prefixName, term->symbol()->id(), number);
   if (color != 0)
@@ -108,8 +113,9 @@ MixfixModule::handleIter(ostream& s,
     printPrefixName(s, prefixName.c_str(), si);
   s << '(';
   prettyPrint(s, st->getArgument(),
-	      PREFIX_GATHER, UNBOUNDED, 0, UNBOUNDED, 0, rangeKnown);
+	      PREFIX_GATHER, UNBOUNDED, 0, UNBOUNDED, 0, argumentRangeKnown);
   s << ')';
+  suffix(s, term, needToDisambiguate, color);
   return true;
 }
 
@@ -236,13 +242,12 @@ MixfixModule::handleSMT_Number(ostream& s,
   //
   Symbol* symbol = term->symbol();
   Sort* sort = symbol->getRangeSort();
-  int sortIndexWithinModule = sort->getIndexWithinModule();
   //
   //	Figure out what SMT sort we correspond to.
   //
-  SMT_Base::SortIndexToSMT_TypeMap::const_iterator j = sortMap.find(sortIndexWithinModule);
-  Assert(j != sortMap.end(), "bad SMT sort");
-  if (j->second == SMT_Base::INTEGER)
+  SMT_Info::SMT_Type t = getSMT_Info().getType(sort);
+  Assert(t != SMT_Info::NOT_SMT, "bad SMT sort " << sort);
+  if (t == SMT_Info::INTEGER)
     {
       const mpz_class& integer = value.get_num();
       bool needDisambig = !rangeKnown &&
@@ -253,7 +258,7 @@ MixfixModule::handleSMT_Number(ostream& s,
     }
   else
     {
-      Assert(j->second == SMT_Base::REAL, "SMT number sort expected");
+      Assert(t == SMT_Info::REAL, "SMT number sort expected");
       pair<mpz_class, mpz_class> rat(value.get_num(), value.get_den());
       bool needDisambig = !rangeKnown &&
 	(kindsWithDivision.size() > 1 || overloadedRationals.count(rat));

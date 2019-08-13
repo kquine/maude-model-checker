@@ -48,6 +48,7 @@
 #include "meta.hh"
 #include "strategyLanguage.hh"
 #include "mixfix.hh"
+#include "SMT.hh"
 
 //      interface class definitions
 #include "symbol.hh"
@@ -110,6 +111,7 @@
 #include "counterSymbol.hh"
 
 //	SMT class definitions
+#include "SMT_Info.hh"
 #include "SMT_Symbol.hh"
 #include "SMT_NumberSymbol.hh"
 #include "SMT_NumberTerm.hh"
@@ -127,6 +129,8 @@
 //	object system class definitions
 #include "configSymbol.hh"
 #include "socketManagerSymbol.hh"
+#include "fileManagerSymbol.hh"
+#include "streamManagerSymbol.hh"
 
 //	strategy language class definitions
 #include "trivialStrategy.hh"
@@ -150,8 +154,9 @@
 #include "quotedIdentifierDagNode.hh"
 #include "loopSymbol.hh"
 #include "userLevelRewritingContext.hh"
+#include "freshVariableSource.hh"
 
-// model checkers
+//	ltlr and lmc model checkers
 #include "ltlrFairnessCheckerSymbol.hh"
 #include "SymbolicModelCheckerSymbol.hh"
 
@@ -203,6 +208,44 @@ MixfixModule::nonTerminal(const Sort* sort, NonTerminalType type)
 #include "strategyPrint.cc"
 
 void
+MixfixModule::checkFreshVariableNames()
+{
+  FreshVariableSource varSource(this);
+  {
+    const Vector<Rule*>& rules = getRules();
+    FOR_EACH_CONST(i, Vector<Rule*>, rules)
+      {
+	Rule* r = *i;
+	if (r->isNarrowing())
+	  {
+	    if (Term* t = r->variableNameConflict(varSource))
+	      {
+		IssueWarning(*r << " : fresh variable name " << QUOTE(t) <<
+			     " used in narrowing rule. Recovering by ignoring narrowing attribute.");
+		r->clearNarrowing();
+	      }
+	  }
+      }
+  }
+  {
+    const Vector<Equation*>& equations = getEquations();
+    FOR_EACH_CONST(i, Vector<Equation*>, equations)
+      {
+	Equation* e = *i;
+	if (e->isVariant())
+	  {
+	    if (Term* t = e->variableNameConflict(varSource))
+	      {
+		IssueWarning(*e << " : fresh variable name " << QUOTE(t) <<
+			     " used in variant equation. Recovering by ignoring variant attribute.");
+		e->clearVariant();
+	      }
+	  }
+      }
+  }
+}
+
+void
 MixfixModule::SymbolInfo::revertGather(Vector<int>& gatherSymbols) const
 {
   int nrElts = gather.length();
@@ -234,6 +277,7 @@ MixfixModule::MixfixModule(int name, ModuleType moduleType)
   trueSymbol = 0;
   falseSymbol = 0;
   parser = 0;
+  smtStatus = UNCHECKED;
 }
 
 MixfixModule::~MixfixModule()
@@ -818,7 +862,7 @@ MixfixModule::findFloatSymbol(const ConnectedComponent* component) const
 }
 
 SMT_NumberSymbol*
-MixfixModule::findSMT_NumberSymbol(const ConnectedComponent* component, SMT_Base::SMT_Type type)
+MixfixModule::findSMT_NumberSymbol(const ConnectedComponent* component, SMT_Info::SMT_Type type)
 {
   map<int, Symbol*>::const_iterator i =
     SMT_NumberSymbols.find(component->getIndexWithinModule());
@@ -829,11 +873,9 @@ MixfixModule::findSMT_NumberSymbol(const ConnectedComponent* component, SMT_Base
   //
   Symbol* symbol = (*i).second;
   Sort* sort = symbol->getRangeSort();
-  int sortIndexWithinModule = sort->getIndexWithinModule();
-  SMT_Base::SortIndexToSMT_TypeMap& sortMap = getSortMap();
-  SMT_Base::SortIndexToSMT_TypeMap::const_iterator j = sortMap.find(sortIndexWithinModule);
-  Assert(j != sortMap.end(), "couldn't find SMT type");
-  return (j->second == type) ? safeCast(SMT_NumberSymbol*, symbol) : 0;
+  SMT_Info::SMT_Type t = getSMT_Info().getType(sort);
+  Assert(t != SMT_Info::NOT_SMT, "bad SMT sort " << sort);
+  return (t == type) ? safeCast(SMT_NumberSymbol*, symbol) : 0;
 }
 
 void
@@ -1353,18 +1395,18 @@ MixfixModule::computePrecAndGather(int nrArgs, SymbolInfo& si, Symbol* symbol)
     }
 }
 
-SMT_Base::SortIndexToSMT_TypeMap&
-MixfixModule::getSortMap()
+const SMT_Info&
+MixfixModule::getSMT_Info()
 {
-  if (sortMap.empty())
+  if (smtInfo.getConjunctionOperator() == 0)  // HACK - we could have a problem if an SMT signature didn't have a conjunction operator
     {
       const Vector<Symbol*>& symbols = getSymbols();
       FOR_EACH_CONST(i, Vector<Symbol*>, symbols)
 	{
 	  if (SMT_Symbol* s = dynamic_cast<SMT_Symbol*>(*i))
-	    s->fillOutSortMap(sortMap);
+	    s->fillOutSMT_Info(smtInfo);
 	  else if (SMT_NumberSymbol* s = dynamic_cast<SMT_NumberSymbol*>(*i))
-	    s->fillOutSortMap(sortMap);
+	    s->fillOutSMT_Info(smtInfo);
 	}
       {
 	//
@@ -1372,73 +1414,284 @@ MixfixModule::getSortMap()
 	//	ambiguous syntax.
 	//
 	const Vector<Sort*>& sorts = getSorts();
-	FOR_EACH_CONST(i, SMT_Base::SortIndexToSMT_TypeMap, sortMap)
+	FOR_EACH_CONST(i, Vector<Sort*>, sorts)
 	  {
-	    //cerr << "sortMap " << i->first << " -> " << i->second << endl;
-
-	    switch (i->second)
+	    Sort* sort = *i;
+	    switch (smtInfo.getType(sort))
 	      {
-		case SMT_Base::INTEGER:
-		  {
-		    Sort* sort = sorts[i->first];
-		    int kindIndex = sort->component()->getIndexWithinModule();
-		    pair<set<int>::iterator, bool> p = kindsWithSucc.insert(kindIndex);
-		    if (!(p.second))
-		      {
-			IssueWarning(LineNumber(sort->getLineNumber()) <<
-				     ": multiple sets of constants that look like integers in same kind will cause pretty printing problems.");
-		      }
-		    //
-		    //	Only built-ins we care about so far that have a minus will look like integers so no need to issue
-		    //	an additional warning. But we do need to record the kind so that minus symbol disambiguation will work.
-		    //
-		    kindsWithMinus.insert(kindIndex);
-		    //
-		    //	SMT Integers have an implicit zero constant rather than an explicit zero constant, so we need to record that
-		    //	so disambiguation of zero will work correctly.
-		    //
-		    kindsWithZero.insert(kindIndex);
-		    break;
-		  }
-		case SMT_Base::REAL:
-		  {
-		    Sort* sort = sorts[i->first];
-		    int kindIndex = sort->component()->getIndexWithinModule();
-		    pair<set<int>::iterator, bool> p = kindsWithDivision.insert(kindIndex);
-		    if (!(p.second))
-		      {
-			IssueWarning(LineNumber(sort->getLineNumber()) <<
-				     ": multiple sets of constants that look like rational numbers in same kind will cause pretty printing problems.");
-		      }
-		    //
-		    //	We don't record it in kindsWithMinus at the moment since REALs are always printed with a division symbol
-		    //	and can only be confused with other things having a division symbol.
-		    //
-		    break;
-		  }
+	      case SMT_Info::INTEGER:
+		{
+		  int kindIndex = sort->component()->getIndexWithinModule();
+		  pair<set<int>::iterator, bool> p = kindsWithSucc.insert(kindIndex);
+		  if (!(p.second))
+		    {
+		      IssueWarning(LineNumber(sort->getLineNumber()) <<
+				   ": multiple sets of constants that look like integers in same kind will cause pretty printing problems.");
+		    }
+		  //
+		  //	Only built-ins we care about so far that have a minus will look like integers so no need to issue
+		  //	an additional warning. But we do need to record the kind so that minus symbol disambiguation will work.
+		  //
+		  kindsWithMinus.insert(kindIndex);
+		  //
+		  //	SMT Integers have an implicit zero constant rather than an explicit zero constant, so we need to record that
+		  //	so disambiguation of zero will work correctly.
+		  //
+		  kindsWithZero.insert(kindIndex);
+		  break;
+		}
+	      case SMT_Info::REAL:
+		{
+		  int kindIndex = sort->component()->getIndexWithinModule();
+		  pair<set<int>::iterator, bool> p = kindsWithDivision.insert(kindIndex);
+		  if (!(p.second))
+		    {
+		      IssueWarning(LineNumber(sort->getLineNumber()) <<
+				   ": multiple sets of constants that look like rational numbers in same kind will cause pretty printing problems.");
+		    }
+		  //
+		  //	We don't record it in kindsWithMinus at the moment since REALs are always printed with a division symbol
+		  //	and can only be confused with other things having a division symbol.
+		  //
+		  break;
+		}
+	      default:
+		break;
 	      }
 	  }
       }
     }
-  return sortMap;
+  return smtInfo;
 }
 
 int
 MixfixModule::getSMT_NumberToken(const mpq_class& value, Sort* sort)
 {
-  int sortIndexWithinModule = sort->getIndexWithinModule();
   //
   //	Figure out what SMT sort we correspond to.
   //
-  SMT_Base::SortIndexToSMT_TypeMap::const_iterator i = sortMap.find(sortIndexWithinModule);
-  Assert(i != sortMap.end(), "bad SMT sort");
+  SMT_Info::SMT_Type t = getSMT_Info().getType(sort);
+  Assert(t != SMT_Info::NOT_SMT, "bad SMT sort " << sort);
   string name = value.get_num().get_str();
-  if (i->second == SMT_Base::REAL)
+  if (t == SMT_Info::REAL)
     {
       name += '/';
       name += value.get_den().get_str();
     }
   else
-    Assert(i->second == SMT_Base::INTEGER, "SMT number sort expected");
+    Assert(t == SMT_Info::INTEGER, "SMT number sort expected");
   return Token::encode(name.c_str());
+}
+
+bool
+MixfixModule::validForSMT_Rewriting()
+{
+  if (smtStatus != UNCHECKED)
+    return smtStatus == GOOD;
+
+  bool ok = true;
+  if (!getEquations().empty())
+    {
+      IssueWarning(*this << ": module " << QUOTE(this) << " has equations.");
+      ok = false;
+    }
+  
+  if (!getSortConstraints().empty())
+    {
+      IssueWarning(*this << ": module " << QUOTE(this) << " has membership axioms.");
+      ok = false;
+    }
+
+  const Vector<Rule*>& rules = getRules();
+  if (rules.empty())
+    {
+      IssueWarning(*this << ": module " << QUOTE(this) << " has no rules.");
+      ok = false;
+    }
+
+  const SMT_Info& info = getSMT_Info();
+  if (info.getConjunctionOperator() == 0)
+    {
+      IssueWarning(*this << ": module " << QUOTE(this) << " has no SMT conjunction operator.");
+      ok = false;
+    }
+
+  const Vector<Symbol*>& symbols = getSymbols();
+  {
+    //
+    //	Check for regular symbols with a collapse axiom.
+    //
+    int nrSymbols = symbolInfo.size();
+    for (int i = 0; i < nrSymbols; ++i)
+      {
+	if (symbolInfo[i].symbolType.hasAtLeastOneFlag(SymbolType::COLLAPSE))
+	  {
+	    Symbol* s = symbols[i];
+	    IssueWarning(*s << ": operator " << QUOTE(s) << " has a collapse axiom.");
+	    ok = false;
+	  }
+      }
+  }
+  {
+    //
+    //	Check for polymorphic symbols with a collapse axiom.
+    //
+    int nrPolymorphs = polymorphs.size();
+    for (int i = 0; i < nrPolymorphs; ++i)
+      {
+	if (polymorphs[i].symbolInfo.symbolType.hasAtLeastOneFlag(SymbolType::COLLAPSE))
+	  {
+	    Token& name = polymorphs[i].name;
+	    IssueWarning(LineNumber(name.lineNumber()) << ": polymorphic operator " <<
+			 QUOTE(name) << " has a collapse axiom.");
+	    ok = false;
+	  }
+      }
+  }
+
+  NatSet smtSortIndices;
+  int nrSymbols = symbols.size();
+  {
+    //
+    //	Determine SMT sorts.
+    //
+    //	A sort is considered an SMT sort if any SMT operator has it in it's domain
+    //	or range, since the SMT signature is considered to be a subsignature.
+    //
+    for (int i = 0; i < nrSymbols; ++i)
+      {
+	int basicType = symbolInfo[i].symbolType.getBasicType();
+	if (basicType == SymbolType::SMT_SYMBOL || basicType == SymbolType::SMT_NUMBER_SYMBOL)
+	  {
+	    const Vector<OpDeclaration>& opDecs = symbols[i]->getOpDeclarations();
+	    FOR_EACH_CONST(j, Vector<OpDeclaration>, opDecs)
+	      {
+		const Vector<Sort*>& domainAndRange = j->getDomainAndRange();
+		FOR_EACH_CONST(k, Vector<Sort*>, domainAndRange)
+		  smtSortIndices.insert((*k)->getIndexWithinModule());
+	      }
+	  }
+      }
+  }
+  {
+    //
+    //	Check that no non-SMT operator has an SMT sort as its range.
+    //
+    for (int i = 0; i < nrSymbols; ++i)
+      {
+	int basicType = symbolInfo[i].symbolType.getBasicType();
+	if (basicType != SymbolType::SMT_SYMBOL &&
+	    basicType != SymbolType::SMT_NUMBER_SYMBOL &&
+	    basicType != SymbolType::VARIABLE)
+	  {
+	    Symbol* s = symbols[i];
+	    const Vector<OpDeclaration>& opDecs = s->getOpDeclarations();
+	    FOR_EACH_CONST(j, Vector<OpDeclaration>, opDecs)
+	      {
+		const Vector<Sort*>& domainAndRange = j->getDomainAndRange();
+		Sort* rangeSort = domainAndRange[domainAndRange.size() - 1];
+		if (smtSortIndices.contains(rangeSort->getIndexWithinModule()))
+		  {
+		    IssueWarning(*s << ": non-SMT operator " << QUOTE(s) <<
+				 " has an SMT sort " << QUOTE(rangeSort) << " as its range.");
+		    ok = false;
+		  }
+	      }
+	  }
+      }
+  }
+  {
+    //
+    //	Check each rule. The left-hand side may not contain SMT operators or nonlinear variables.
+    //
+    const Vector<Rule*>& rules = getRules();
+    FOR_EACH_CONST(i, Vector<Rule*>, rules)
+      {
+	Rule* rule = *i;
+	Term* lhs = rule->getLhs();
+	if (Symbol* s = findSMT_Symbol(lhs))
+	  {
+	    IssueWarning(*rule << ": left-hand side of rule\n  " << rule <<
+			 "\ncontains SMT symbol " << QUOTE(s) << ".");
+	    ok = false;
+	  }
+	NatSet variableIndices;
+	if (Term* v = findNonlinearVariable(lhs, variableIndices))
+	  {
+	    IssueWarning(*rule << ": left-hand side of rule\n  " << rule <<
+			 "\ncontains a nonlinear variable " << QUOTE(v) << ".");
+	    ok = false;
+	  }
+      }
+  }
+  //
+  //	Should probably check for true so we know that sort Boolean is determined. Or maybe conjunction operator should determine true sort.
+  //
+
+  //
+  //	Need to check for each rule that lhs only contains no SMT operators and condition contains only SMT operators and variables.
+  //	Should also check that each condition fragment is of the form <Boolean term> = true or a suitable SMT equality operator exists.
+  //
+
+  smtStatus = ok ? GOOD : BAD;
+
+  return ok;  // might want to cache this when computing it becomes more expensive
+}
+
+Symbol*
+MixfixModule::findSMT_Symbol(Term* term)
+{
+  Symbol* s = term->symbol();
+  int basicType = symbolInfo[s->getIndexWithinModule()].symbolType.getBasicType();
+  if (basicType == SymbolType::SMT_SYMBOL || basicType == SymbolType::SMT_NUMBER_SYMBOL)
+    return s;
+
+  for (ArgumentIterator a(*term); a.valid(); a.next())
+    {
+      if (Symbol* s = findSMT_Symbol(a.argument()))
+	return s;
+    }
+  return 0;
+}
+
+Term* 
+MixfixModule::findNonlinearVariable(Term* term, NatSet& seenIndices)
+{
+  if (VariableTerm* v = dynamic_cast<VariableTerm*>(term))
+    {
+      int index = v->getIndex();
+      if (seenIndices.contains(index))
+	return v;
+      seenIndices.insert(index);
+    }
+  else
+    {
+      for (ArgumentIterator a(*term); a.valid(); a.next())
+	{
+	  if (Term* v = findNonlinearVariable(a.argument(), seenIndices))
+	    return v;
+	}
+    }
+  return 0;
+}
+
+Term* 
+MixfixModule::findNonlinearVariable(Term* term, VariableInfo& variableInfo)
+{
+  if (VariableTerm* v = dynamic_cast<VariableTerm*>(term))
+    {
+      int nrVariables = variableInfo.getNrRealVariables();
+      (void) variableInfo.variable2Index(v);
+      if (nrVariables == variableInfo.getNrRealVariables())
+	return v;  // no increase in number of variables means v is a duplicate
+    }
+  else
+    {
+      for (ArgumentIterator a(*term); a.valid(); a.next())
+	{
+	  if (Term* v = findNonlinearVariable(a.argument(), variableInfo))
+	    return v;
+	}
+    }
+  return 0;
 }

@@ -171,6 +171,37 @@ Token::fixUp(const char* tokenString, int& lineNumber)
   lineNumber += nrBackslashNewlineCombos;
 }
 
+int
+Token::fixUp(const char* tokenString)
+{
+  //
+  //	Remove \ newline sequences.
+  //
+  int nrBackslashNewlineCombos = 0;
+  int j = 0;
+  for (int i = 0;; i++)
+    {
+      char c = tokenString[i];
+      if (c == '\\' && tokenString[i + 1] == '\n')
+	{
+	  //
+	  //	Fix up \ newline case.
+	  //
+	  ++i;
+	  ++nrBackslashNewlineCombos;
+	}
+      else
+	{
+	  bufferExpandTo(j + 1);
+	  buffer[j] = c;
+	  ++j;
+	  if (c == '\0')
+	    break;
+	}
+    } 
+  return encode(buffer);
+}
+
 void
 Token::dropChar(const Token& original)
 {
@@ -562,10 +593,10 @@ Token::doubleToCode(double d)
   return code;
 }
 
-crope
+Rope
 Token::codeToRope(int code)
 {
-  crope result;
+  Rope result;
   bool seenBackslash = false;
   for (const char* p = stringTable.name(code) + 1; *p; p++)
     {
@@ -650,7 +681,7 @@ Token::codeToRope(int code)
 	      }
 	  }
 	}
-      result.append(c);
+      result += c;
       seenBackslash = false;
     }
   CantHappen("bad end to string");
@@ -658,10 +689,10 @@ Token::codeToRope(int code)
 }
 
 void
-Token::ropeToString(const crope& r, string& result)
+Token::ropeToString(const Rope& r, string& result)
 {
   result = '"';
-  for (crope::const_iterator i = r.begin(); i != r.end(); ++i)
+  for (Rope::const_iterator i = r.begin(); i != r.end(); ++i)
     {
       char c = *i;
       if (isprint(c))
@@ -724,14 +755,26 @@ Token::ropeToString(const crope& r, string& result)
 }
 
 int
-Token::ropeToPrefixNameCode(const crope& r)
+Token::ropeToCode(const Rope& r)
+{
+  //
+  //	Might want to do the code computation directly at some point.
+  //
+  char* s = r.makeZeroTerminatedString();
+  int code = encode(s);
+  delete [] s;
+  return code;
+}
+
+int
+Token::ropeToPrefixNameCode(const Rope& r)
 {
   string result;
   bool needBQ = false;
   bool lastCharSpecial = false;
   bool stringMode = false;
   bool seenBS = false;
-  for (crope::const_iterator i = r.begin(); i != r.end(); ++i)
+  for (Rope::const_iterator i = r.begin(); i != r.end(); ++i)
     {
       char c = *i;
       if (stringMode)

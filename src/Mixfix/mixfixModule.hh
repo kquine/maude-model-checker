@@ -37,7 +37,7 @@
 #include "token.hh"
 #include "pointerSet.hh"
 #include "symbolType.hh"
-#include "SMT_Base.hh"
+#include "SMT_Info.hh"
 #include "SMT_NumberSymbol.hh"
 
 class MixfixModule : public ProfileModule, public MetadataStore, protected SharedTokens
@@ -189,7 +189,7 @@ public:
   QuotedIdentifierSymbol* findQuotedIdentifierSymbol(const ConnectedComponent* component) const;
   StringSymbol* findStringSymbol(const ConnectedComponent* component) const;
   FloatSymbol* findFloatSymbol(const ConnectedComponent* component) const;
-  SMT_NumberSymbol* findSMT_NumberSymbol(const ConnectedComponent* component, SMT_Base::SMT_Type type);
+  SMT_NumberSymbol* findSMT_NumberSymbol(const ConnectedComponent* component, SMT_Info::SMT_Type type);
   int findPolymorphIndex(int polymorphName, const Vector<Sort*>& domainAndRange) const;
   //
   //	Polymorph functions.
@@ -242,7 +242,11 @@ public:
   bool isTheory() const;
   static bool canImport(ModuleType t1, ModuleType t2);
   static bool canHaveAsParameter(ModuleType t1, ModuleType t2);
-  SMT_Base::SortIndexToSMT_TypeMap& getSortMap();
+  const SMT_Info& getSMT_Info();
+  bool validForSMT_Rewriting();
+  void checkFreshVariableNames();
+  static Term* findNonlinearVariable(Term* term, VariableInfo& variableInfo);
+  Symbol* findSMT_Symbol(Term* term);
 
 protected:
   static int findMatchingParen(const Vector<Token>& tokens, int pos);
@@ -374,6 +378,13 @@ private:
     SORT_LIST_TYPE = 4
   };
 
+  enum SMT_Status
+    {
+      UNCHECKED = -1,
+      BAD = 0,
+      GOOD = 1
+    };
+
   struct SymbolInfo
   {
     void revertGather(Vector<int>& gatherSymbols) const;
@@ -466,8 +477,11 @@ private:
   void makeBubbleProductions();
   void computePrecAndGather(int nrArgs, SymbolInfo& si, Symbol* symbol = 0);
 
+  static Term* findNonlinearVariable(Term* term, NatSet& seenIndices);
+
   void printVariable(ostream& s, int name, Sort* sort) const;
   void graphPrint(ostream& s, DagNode* dagNode);
+
   static void printPrefixName(ostream& s, const char* prefixName, SymbolInfo& si);
   static int printTokens(ostream& s,
 			 const SymbolInfo& si,
@@ -629,6 +643,18 @@ private:
 
   set<pair<int, int> > overloadedVariables;
 
+  //
+  //	We keep track of symbols whose name looks like iterated notation
+  //
+  typedef multimap<mpz_class, Symbol*> NumberToSymbolMap;
+  typedef map<int, NumberToSymbolMap> PseudoIteratedMap;
+  PseudoIteratedMap pseudoIteratedMap;
+  //
+  //	We also keep track of iterated symbols.
+  //
+  typedef multimap<int, Symbol*> IteratedMap;
+  IteratedMap iteratedMap;
+
   static bool hasSameDomain(const Vector<Sort*>& domainAndRange1,
 			    bool assoc1,
 			    const Vector<Sort*>& domainAndRange2,
@@ -638,6 +664,13 @@ private:
 
   bool ambiguous(int iflags);
   static bool rangeOfArgumentsKnown(int iflags, bool rangeKnown, bool rangeDisambiguated);
+  void decideIteratedAmbiguity(bool rangeKnown,
+			       Symbol* symbol,
+			       const mpz_class& number,
+			       bool& needToDisambiguate,
+			       bool& argumentRangeKnown);
+  int checkPseudoIterated(Symbol* symbol, const Vector<Sort*>& domainAndRange);
+  void checkIterated(Symbol* symbol, const Vector<Sort*>& domainAndRange);
   //
   //	Member functions for DagNode* -> ostream& pretty printer.
   //
@@ -746,7 +779,8 @@ private:
   typedef map<IntList, Symbol*> InternalTupleMap;
   InternalTupleMap tupleSymbols;
 
-  SMT_Base::SortIndexToSMT_TypeMap sortMap;
+  SMT_Info smtInfo;
+  SMT_Status smtStatus;
 
   friend ostream& operator<<(ostream& s, const Term* term);
   friend ostream& operator<<(ostream& s, DagNode* dagNode);
@@ -902,7 +936,7 @@ MixfixModule::canHaveAsParameter(ModuleType t1, ModuleType t2)
   //	System can be parameterized by anything; functional can only be parameterized by functional.
   //	Only theories can be parameters.
   //
-  return isTheory(t2) && ((t1 | t2) & SYSTEM)  == (t1 & SYSTEM);
+  return isTheory(t2) && (((t1 | t2) & SYSTEM) == (t1 & SYSTEM));
 }
 
 #endif
