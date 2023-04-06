@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2006 SRI International, Menlo Park, CA 94025, USA.
 
@@ -36,6 +36,10 @@ protected:
   static int Name;
 #include "specialTokens.cc"
 #undef MACRO
+  //
+  //	A helper function from the lexical analyzer that needs the codes for certain tokens.
+  //
+  friend bool analyzeEofError();
 };
 
 #endif

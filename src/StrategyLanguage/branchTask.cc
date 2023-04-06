@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2006 SRI International, Menlo Park, CA 94025, USA.
 
@@ -46,10 +46,12 @@ BranchTask::BranchTask(StrategyStackManager& strategyStackManager,
 		       BranchStrategy::Action failureAction,
 		       StrategyExpression* failureStrategy,
 		       StrategyStackManager::StackId pending,
+		       StrategyStackManager::StackId iterationCheckpoint,
 		       StrategicProcess* insertionPoint)
   : StrategicTask(sibling),
     strategyStackManager(strategyStackManager),
     startIndex(startIndex),
+    iterationCheckpoint(iterationCheckpoint),
     initialStrategy(initialStrategy),
     successAction(successAction),
     successStrategy(successStrategy),
@@ -95,6 +97,12 @@ BranchTask::executionSucceeded(int resultIndex, StrategicProcess* insertionPoint
     case BranchStrategy::ITERATE:
       {
 	//
+	//	Do not iterate if we have already iterated from this term. We check this
+	//	by looking for the stack position of e ! in the seen set of the parent task.
+	//
+	if (getOwner()->alreadySeen(resultIndex, iterationCheckpoint))
+	  return SURVIVE;
+	//
 	//	We set up another branch task on the new result and we stay alive to
 	//	process any new results.
 	//
@@ -107,6 +115,7 @@ BranchTask::executionSucceeded(int resultIndex, StrategicProcess* insertionPoint
 				failureAction,
 				failureStrategy,
 				pending,
+				iterationCheckpoint,
 				insertionPoint);
 	  break;
       }

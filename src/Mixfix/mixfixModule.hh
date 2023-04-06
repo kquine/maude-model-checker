@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@
 #include "symbolType.hh"
 #include "SMT_Info.hh"
 #include "SMT_NumberSymbol.hh"
+#include "statementTransformer.hh"
 
 class MixfixModule : public ProfileModule, public MetadataStore, protected SharedTokens
 {
@@ -47,7 +48,9 @@ class MixfixModule : public ProfileModule, public MetadataStore, protected Share
   enum Bits
   {
     SYSTEM = 1,
-    THEORY = 2
+    THEORY = 2,
+    STRATEGY = 4,
+    OBJECT_ORIENTED = 8  // a fiction for SyntacticPreModule and for us during construction
   };
 
 public:
@@ -55,8 +58,16 @@ public:
   {
     FUNCTIONAL_MODULE = 0,
     SYSTEM_MODULE = SYSTEM,
+    STRATEGY_MODULE = SYSTEM | STRATEGY,
     FUNCTIONAL_THEORY = THEORY,
-    SYSTEM_THEORY = SYSTEM | THEORY
+    SYSTEM_THEORY = SYSTEM | THEORY,
+    STRATEGY_THEORY = SYSTEM | STRATEGY | THEORY,
+    //
+    //	These types only exist during construction; once the module is finished
+    //	the object oriented flag has to be removed.
+    //
+    OBJECT_ORIENTED_MODULE = SYSTEM | OBJECT_ORIENTED,
+    OBJECT_ORIENTED_THEORY = SYSTEM | OBJECT_ORIENTED | THEORY
   };
 
   enum GatherSymbols
@@ -71,12 +82,15 @@ public:
   MixfixModule(int name, ModuleType moduleType);
   ~MixfixModule();
 
+  void closeSortSet();
   void closeSignature();
   void economize();
+  void processingComplete();
   //
   //	Functions to insert stuff.
   //
   void insertPotentialLabels(const set<int>& l);
+  void insertPotentialRuleLabels(const set<int>& rls);
   Sort* addSort(int name);
   Symbol* addOpDeclaration(Token prefixName,
 			   const Vector<Sort*>& domainAndRange,
@@ -98,6 +112,11 @@ public:
 		   const Vector<int>& gather,
 		   const Vector<int>& format,
 		   int metadata);
+  int addStrategy(Token name,
+		  const Vector<Sort*>& domainSorts,
+		  Sort* subjectSort,
+		  int metadata = NONE,
+		  bool imported = false);
   void addIdentityToPolymorph(int polymorphIndex,
 			      Term* identity);
   void addIdHookToPolymorph(int polymorphIndex,
@@ -110,6 +129,11 @@ public:
 			      int purpose,
 			      Term* term);
   //
+  //	Allow a temporary change op variable aliases for the benefit of processing
+  //	op->term mappings in views.
+  //
+  void swapVariableAliasMap(AliasMap& other, MixfixParser*& otherParser);
+  //
   //	Functions to make things.
   //
   Symbol* instantiateSortTest(Sort* sort, bool eager);
@@ -118,10 +142,12 @@ public:
   Term* makeTrueTerm();
   Term* makeBubble(int bubbleSpecIndex, const Vector<Token>& tokens, int first, int last);
   DagNode* makeUnificationProblemDag(Vector<Term*>& lhs, Vector<Term*>& rhs);
-
+  pair<DagNode*, DagNode*> makeMatchProblemDags(Vector<Term*>& lhs, Vector<Term*>& rhs);
+  
   static void printCondition(ostream& s, const Vector<ConditionFragment*>& condition);
   static void printCondition(ostream& s, const PreEquation* pe);
   void printAttributes(ostream& s, const PreEquation* pe, ItemType itemType);
+  void printStrategyTerm(ostream& s, RewriteStrategy* strat, Term* term);
   //
   //	Parsing functions.
   //
@@ -134,6 +160,13 @@ public:
 		 Term*& parse1,
 		 Term*& parse2,
 		 int& firstBad);
+  StrategyExpression* parseStrategyExpr(const Vector<Token>& bubble,
+					int begin = 0,
+					int end = DEFAULT);
+  int parseStrategyExpr2(const Vector<Token>& bubble,
+			 StrategyExpression*& parse1,
+			 StrategyExpression*& parse2,
+			 int& firstBad);
   void parseStatement(const Vector<Token>& bubble);
   bool parseSearchCommand(const Vector<Token>& bubble,
 			  Term*& initial,
@@ -157,6 +190,10 @@ public:
 				Vector<Term*>& lhs,
 				Vector<Term*>& rhs,
 				Vector<Term*>& constraints);
+  bool parseVariantMatchCommand(const Vector<Token>& bubble,
+				Vector<Term*>& lhs,
+				Vector<Term*>& rhs,
+				Vector<Term*>& constraints);
   //
   //	Get functions.
   //
@@ -164,9 +201,9 @@ public:
   static const char* moduleTypeString(ModuleType type);
   static const char* moduleEndString(ModuleType type);
   SymbolType getSymbolType(Symbol* symbol) const;
-  int getPrec(Symbol* symbol) const;
-  void getGather(Symbol* symbol, Vector<int>& gather) const;
-  const Vector<int>& getFormat(Symbol* symbol) const;
+  int getPrec(const Symbol* symbol) const;
+  void getGather(const Symbol* symbol, Vector<int>& gather) const;
+  const Vector<int>& getFormat(const Symbol* symbol) const;
   const AliasMap& getVariableAliases() const;
   void getParserStats(int& nrNonterminals, int& nrTerminals, int& nrProductions);
   void getDataAttachments(Symbol* symbol,
@@ -179,13 +216,21 @@ public:
   void getTermAttachments(Symbol* symbol,
 			  Vector<const char*>& purposes,
 			  Vector<Term*>& terms) const;
+  Sort* getStrategyRangeSort() const;
+  const NatSet& getObjectSymbols() const;
   //
   //	Find functions.
   //
   Sort* findSort(int name) const;
+  RewriteStrategy* findStrategy(int name,
+				const Vector<ConnectedComponent*>& domainComponents) const;
+  
+  Symbol* findFirstUnarySymbol(int name, const ConnectedComponent* rangeComponent) const;
+  Symbol* findNextUnarySymbol(Symbol* previous, const ConnectedComponent* rangeComponent) const;
   Symbol* findSymbol(int name,
 		     const Vector<ConnectedComponent*>& domainComponents,
 		     ConnectedComponent* rangeComponent);
+  
   QuotedIdentifierSymbol* findQuotedIdentifierSymbol(const ConnectedComponent* component) const;
   StringSymbol* findStringSymbol(const ConnectedComponent* component) const;
   FloatSymbol* findFloatSymbol(const ConnectedComponent* component) const;
@@ -231,6 +276,7 @@ public:
   //	Pretty print functions.
   //
   void bufferPrint(Vector<int>& buffer, Term* term, int printFlags);
+  void bufferPrint(Vector<int>& buffer, StrategyExpression* term, int printFlags);
   static Sort* disambiguatorSort(const Term* term);
   int getSMT_NumberToken(const mpq_class& value, Sort* sort);
   //
@@ -238,8 +284,14 @@ public:
   //
   static Sort* hookSort(Sort* sort);
   static ModuleType join(ModuleType t1, ModuleType t2);
+  static bool isObjectOriented(ModuleType t);
+  bool isObjectOriented() const;
   static bool isTheory(ModuleType t);
   bool isTheory() const;
+  static bool isStrategic(ModuleType t);
+  bool isSystem() const;
+  static bool isSystem(ModuleType t);
+  bool isStrategic() const;
   static bool canImport(ModuleType t1, ModuleType t2);
   static bool canHaveAsParameter(ModuleType t1, ModuleType t2);
   const SMT_Info& getSMT_Info();
@@ -248,9 +300,25 @@ public:
   static Term* findNonlinearVariable(Term* term, VariableInfo& variableInfo);
   Symbol* findSMT_Symbol(Term* term);
 
+  Rope serialize(DagNode* dagNode);
+  DagNode* deserialize(const Rope& encoding);
+
+  //
+  //	This functionality is to enable statements to be transformed after they
+  //	are generated by the parser, but before they are entered into the module.
+  //
+  void handleSortConstraint(SortConstraint* sortConstraint, bool dnt);
+  void handleEquation(Equation* equation, bool dnt);
+  void handleRule(Rule* rule, bool dnt);
+  void installStatementTransformer(StatementTransformer* st);
+  
 protected:
   static int findMatchingParen(const Vector<Token>& tokens, int pos);
-  
+
+  // We need to account rule labels here (before importing statements) because
+  // strategy statements can use them
+  set<int> ruleLabels;
+
 public:  // HACK
   enum Precedence
   {
@@ -262,17 +330,24 @@ public:  // HACK
     UNARY_PREC = 15,		// backward compatibility with OBJ3 defaults
     INFIX_PREC = 41,		// backward compatibility with OBJ3 defaults
     //
-    //	Precedences for strategy language.
+    //	Precedences for complex syntax
     //
     ASSIGNMENT_PREC = 75,
-    STRAT_TEST_PREC = 93,
-    STRAT_SEQ_PREC = 95,
-    STRAT_UNION_PREC = 97,
-    STRAT_ORELSE_PREC = 99,
-    STRAT_BRANCH_PREC = 101
+    //
+    //	Precedences for strategy language.
+    //
+    STRAT_BASIC_PREC = 0,
+    STRAT_TEST_PREC = 21,
+    STRAT_REW_PREC = 21,
+    STRAT_SEQ_PREC = 39,
+    STRAT_UNION_PREC = 41,
+    STRAT_ORELSE_PREC = 43,
+    STRAT_BRANCH_PREC = 55,
+    STRAT_USING_LIST_PREC = 61,
+    STRAT_USING_PREC = 21
   };
 
-private:
+private: 
   enum InternalFlags
   {
     LEFT_BARE = 0x1,		// operator name has leading argument underscore
@@ -316,29 +391,30 @@ private:
     ASSIGN_PAIR = -13,
 
     LABEL = -14,
-    CONDITION_FRAGMENT = -15,
-    RULE_CONDITION_FRAGMENT = -16,
-    CONDITION = -17,
-    RULE_CONDITION = -18,
+    RULE_LABEL = -15,
+    CONDITION_FRAGMENT = -16,
+    RULE_CONDITION_FRAGMENT = -17,
+    CONDITION = -18,
+    RULE_CONDITION = -19,
 
-    MB_BODY = -19,
-    EQ_BODY = -20,
-    RL_BODY = -21,
+    MB_BODY = -20,
+    EQ_BODY = -21,
+    RL_BODY = -22,
     
-    STATEMENT_PART = -22,
-    ATTRIBUTE_PART = -23,
-    ATTRIBUTE_LIST = -24,
-    ATTRIBUTE = -25,
-    STATEMENT = -26,
+    STATEMENT_PART = -23,
+    ATTRIBUTE_PART = -24,
+    ATTRIBUTE_LIST = -25,
+    ATTRIBUTE = -26,
+    STATEMENT = -27,
 
-    ZERO = -27,
-    RATIONAL = -28,
+    ZERO = -28,
+    RATIONAL = -29,
 
-    VARIABLE = -29,
-    PRINT_ITEM = -30,
-    PRINT_LIST = -31,
+    VARIABLE = -30,
+    PRINT_ITEM = -31,
+    PRINT_LIST = -32,
 
-    SIMPLE_BASE = -32,
+    SIMPLE_BASE = -33,
     //
     //	Extra nonterminals needed to parse complex commands.
     //
@@ -347,25 +423,34 @@ private:
     SEARCH_PAIR = SIMPLE_BASE - 2,
     SUCH_THAT = SIMPLE_BASE - 3,
     STRATEGY_EXPRESSION = SIMPLE_BASE - 4,
+    STRATEGY_CALL_EXPRESSION = SIMPLE_BASE - 5,
 
-    MATCH_COMMAND = SIMPLE_BASE - 5,
-    SEARCH_COMMAND = SIMPLE_BASE - 6,
-    STRATEGY_COMMAND = SIMPLE_BASE - 7,
+    MATCH_COMMAND = SIMPLE_BASE - 6,
+    SEARCH_COMMAND = SIMPLE_BASE - 7,
+    STRATEGY_COMMAND = SIMPLE_BASE - 8,
 
-    ASSIGNMENT = SIMPLE_BASE - 8,
-    SUBSTITUTION = SIMPLE_BASE - 9,
+    ASSIGNMENT = SIMPLE_BASE - 9,
+    SUBSTITUTION = SIMPLE_BASE - 10,
 
-    STRATEGY_LIST = SIMPLE_BASE - 10,
+    STRATEGY_LIST = SIMPLE_BASE - 11,
 
-    UNIFY_PAIR = SIMPLE_BASE - 11,
-    UNIFY_COMMAND = SIMPLE_BASE - 12,
+    UNIFY_PAIR = SIMPLE_BASE - 12,
+    UNIFY_COMMAND = SIMPLE_BASE - 13,
 
-    GET_VARIANTS_COMMAND = SIMPLE_BASE - 13,
-    TERM_LIST = SIMPLE_BASE - 14,  // for command separated list of hetrogeneous terms
+    GET_VARIANTS_COMMAND = SIMPLE_BASE - 14,
+    TERM_LIST = SIMPLE_BASE - 15,  // for command separated list of hetrogeneous terms
 
-    VARIANT_UNIFY_COMMAND = SIMPLE_BASE - 15,
+    VARIANT_UNIFY_COMMAND = SIMPLE_BASE - 16,
+    VARIANT_MATCH_COMMAND = SIMPLE_BASE - 17,
+    MULTI_MATCH_COMMAND = SIMPLE_BASE - 18,
 
-    COMPLEX_BASE = SIMPLE_BASE - 16
+    USING_PAIR = SIMPLE_BASE - 19,
+    USING_LIST = SIMPLE_BASE - 20,
+
+    SD_BODY = SIMPLE_BASE - 21,
+    STRATEGY_PAIR = SIMPLE_BASE - 22,
+
+    COMPLEX_BASE = SIMPLE_BASE - 23
   };
 
   enum NonTerminalType
@@ -392,9 +477,10 @@ private:
     Vector<int> mixfixSyntax;
     Vector<int> gather;
     Vector<int> format;
-    int prec;
+    short prec;
+    short polymorphIndex;  // for polymorphs and polymorph instances only
     SymbolType symbolType;
-    int iflags;
+    int iflags;  // internal flags; mostly information about potential overloading
     int next;
   };
 
@@ -450,7 +536,6 @@ private:
 
   int nonTerminal(int componentIndex, NonTerminalType type);
   int nonTerminal(const Sort* sort, NonTerminalType type);
-  int newNonTerminal();
 
   static int domainComponentIndex(const Symbol* symbol, int argNr);
   static int mayAssoc(Symbol* symbol, int argNr);
@@ -459,6 +544,17 @@ private:
 			 const Vector<Sort*>& domainAndRange,
 			 SymbolType symbolType,
 			 const Vector<int>& strategy);
+  Symbol* newAssociativeSymbol(int name,
+			       const Vector<Sort*>& domainAndRange,
+			       SymbolType symbolType,
+			       const Vector<int>& strategy);
+  Symbol* newAxiomSymbol(int name,
+			 const Vector<Sort*>& domainAndRange,
+			 SymbolType symbolType,
+			 const Vector<int>& strategy);
+  void validateAttributes(Token prefixName,
+			  const Vector<Sort*>& domainAndRange,
+			  SymbolType& symbolType);
 
   void makeGrammar(bool complexFlag = false);
   void makeComplexProductions();
@@ -516,7 +612,7 @@ private:
 		   bool rangeKnown,
 		   int printFlags);
 
-  static void handleVariable(Vector<int>& buffer, Term* term, int printFlags);
+  void handleVariable(Vector<int>& buffer, Term* term, int printFlags);
   bool handleIter(Vector<int>& buffer, Term* term, SymbolInfo& si, bool rangeKnown, int printFlags);
   bool handleMinus(Vector<int>& buffer, Term* term, bool rangeKnown, int printFlags);
   bool handleDivision(Vector<int>& buffer, Term* term, bool rangeKnown, int printFlags);
@@ -540,10 +636,25 @@ private:
   void printPrefixName(Vector<int>& buffer, int prefixName, SymbolInfo& si, int printFlags);
   void handleFormat(Vector<int>& buffer, int spaceToken);
 
+  //
+  //	Member functions for StrategyExpression* -> Vector<int>&  pretty printer.
+  //
+  void prettyPrint(Vector<int>& buffer,
+		   StrategyExpression* term,
+		   int requiredPrec,
+		   int printFlags);
+  void prettyPrint(Vector<int>& buffer,
+		   const Vector<ConditionFragment*>& condition,
+		   int printFlags);
+  void prettyPrint(Vector<int>& buffer,
+		   const ConditionFragment* fragment,
+		   int printFlags);
+
   static Vector<int> emptyGather;
   static Vector<int> gatherAny;
   static Vector<int> gatherAnyAny;
   static Vector<int> gatherAnyAnyAny;
+  static Vector<int> gatherAny4;
   static Vector<int> gatherPrefix;
   static Vector<int> gatherPrefixPrefix;
   static Vector<int> gatherAny0;
@@ -552,6 +663,7 @@ private:
 
   ModuleType moduleType;
   Sort* boolSort;
+  Sort* strategyRangeSort;
   FreeSymbol* trueSymbol;
   FreeSymbol* falseSymbol;
 
@@ -580,11 +692,12 @@ private:
   void makeCondition(int node, Vector<ConditionFragment*>& condition);
   ConditionFragment* makeConditionFragment(int node);
   void makeCommand(int node, Vector<Term*>& terms);
-  MixfixParser *parser;
-  bool complexParser;
-  int componentNonTerminalBase;
-  int nextNonTerminal;
-
+  MixfixParser* parser;
+ //
+  //	These two data structures are filled out during the construction
+  //	of a grammar and cleared immediately after. Thus they need not
+  //	be preserved during parser swapping.
+  //
   typedef map<int, int> IntMap;
   IntMap iterSymbols;  // maps from name code to unique nonterminals
   IntMap leadTokens;  // maps from lead tokens of structured sort to unique nonterminals
@@ -661,6 +774,8 @@ private:
 			    bool assoc2);
   static bool domainAndRangeMatch(const Vector<Sort*>& domainAndRange1,
 				  const Vector<Sort*>& domainAndRange2);
+
+  int visit(DagNode* dagNode, PointerSet& visited, Rope& accumulator);
 
   bool ambiguous(int iflags);
   static bool rangeOfArgumentsKnown(int iflags, bool rangeKnown, bool rangeDisambiguated);
@@ -766,10 +881,13 @@ private:
 		   const ConnectedComponent* rightCaptureComponent,
 		   bool rangeKnown);
 
-  static bool prettyPrint(ostream& s, StrategyExpression* strategy, int requiredPrec);
+  static bool prettyPrint(ostream& s,
+			  StrategyExpression* strategy,
+			  int requiredPrec);
 
   NatSet objectSymbols;
   NatSet messageSymbols;
+  StatementTransformer* statementTransformer = 0;
 
   //
   //	Stuff for internal tuples.
@@ -790,7 +908,8 @@ private:
 inline SymbolType
 MixfixModule::getSymbolType(Symbol* symbol) const
 {
-  Assert(symbol->getModule() == this, "symbol belongs to " << symbol->getModule() << " and not " << this);
+  Assert(symbol->getModule() == this, "symbol " << symbol <<
+	 " belongs to " << symbol->getModule() << " and not " << this);
   return symbolInfo[symbol->getIndexWithinModule()].symbolType;
 }
 
@@ -854,20 +973,26 @@ MixfixModule::getPolymorphMetadata(int index) const
   return polymorphs[index].metadata;
 }
 
+inline Sort*
+MixfixModule::getStrategyRangeSort() const
+{
+  return strategyRangeSort;
+}
+
 inline int
-MixfixModule::getPrec(Symbol* symbol) const
+MixfixModule::getPrec(const Symbol* symbol) const
 {
   return symbolInfo[symbol->getIndexWithinModule()].prec;
 }
 
 inline void
-MixfixModule::getGather(Symbol* symbol, Vector<int>& gather) const
+MixfixModule::getGather(const Symbol* symbol, Vector<int>& gather) const
 {
   symbolInfo[symbol->getIndexWithinModule()].revertGather(gather);
 }
 
 inline const Vector<int>&
-MixfixModule::getFormat(Symbol* symbol) const
+MixfixModule::getFormat(const Symbol* symbol) const
 {
   return symbolInfo[symbol->getIndexWithinModule()].format;
 }
@@ -877,16 +1002,29 @@ MixfixModule::getModuleType() const
 {
   return moduleType;
 }
+
 inline const MixfixModule::AliasMap&
 MixfixModule::getVariableAliases() const
 {
   return variableAliases;
 }
 
+inline const NatSet&
+MixfixModule::getObjectSymbols() const
+{
+  return objectSymbols;
+}
+
 inline void
 MixfixModule::insertPotentialLabels(const set<int>& l)
 {
   potentialLabels = l;
+}
+
+inline void
+MixfixModule::insertPotentialRuleLabels(const set<int>& rls)
+{
+  ruleLabels.insert(rls.begin(), rls.end());
 }
 
 inline int
@@ -920,11 +1058,48 @@ MixfixModule::isTheory() const
 }
 
 inline bool
+MixfixModule::isStrategic(ModuleType t)
+{
+  return t & STRATEGY;
+}
+
+inline bool
+MixfixModule::isStrategic() const
+{
+  return isStrategic(getModuleType());
+}
+
+inline bool
+MixfixModule::isSystem(ModuleType t)
+{
+  return t & SYSTEM;
+}
+
+inline bool
+MixfixModule::isSystem() const
+{
+  return isSystem(getModuleType());
+}
+
+inline bool
+MixfixModule::isObjectOriented(ModuleType t)
+{
+  return t & OBJECT_ORIENTED;
+}
+
+inline bool
+MixfixModule::isObjectOriented() const
+{
+  return isObjectOriented(getModuleType()); 
+}
+
+inline bool
 MixfixModule::canImport(ModuleType t1, ModuleType t2)
 {
   //
   //	System can import anything; funtional can only import functional.
   //	Theory can import anything; module can only import module.
+  //	And then, strategy can import anything; but others cannot import them.
   //
   return (t1 | t2) == t1;
 }
@@ -936,7 +1111,30 @@ MixfixModule::canHaveAsParameter(ModuleType t1, ModuleType t2)
   //	System can be parameterized by anything; functional can only be parameterized by functional.
   //	Only theories can be parameters.
   //
-  return isTheory(t2) && (((t1 | t2) & SYSTEM) == (t1 & SYSTEM));
+  return isTheory(t2) && (((t1 | t2) & (SYSTEM | STRATEGY)) == (t1 & (SYSTEM | STRATEGY)));
+}
+
+inline DagNode*
+MixfixModule::deserialize(const Rope& encoding)
+{
+  extern DagNode* deserializeRope(MixfixModule*, const Rope&);
+  
+  return deserializeRope(this, encoding);
+}
+
+inline void
+MixfixModule::processingComplete()
+{
+  //
+  //	Desugaring complete - ditch the OBJECT_ORIENTED fiction.
+  //
+  moduleType = static_cast<ModuleType>(moduleType &~OBJECT_ORIENTED);
+}
+
+inline void
+MixfixModule::installStatementTransformer(StatementTransformer* st)
+{
+  statementTransformer = st;
 }
 
 #endif

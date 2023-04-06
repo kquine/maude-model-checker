@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2015 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,9 +45,9 @@ public:
   void addUnification(DagNode* lhs, DagNode* rhs, bool marked, UnificationContext& solution);
   bool solve(bool findFirst, UnificationContext& solution, PendingUnificationStack& pending);
 
-
-
 private:
+  typedef WordSystem::Word Word;
+
   struct Assignment
   {
     int variable;
@@ -73,6 +73,7 @@ private:
   Vector<DagNode*> subterms;
   list<Assignment> assignments;
   list<Unification> unifications;
+
   WordSystem* wordSystem;
   Vector<DagNode*> freshVariables;
   //
@@ -80,8 +81,13 @@ private:
   //
   Substitution preSolveSubstitution;
   Substitution savedSubstitution;
-  PendingUnificationStack::Marker preSolveState;
+  //PendingUnificationStack::Marker preSolveState;
   PendingUnificationStack::Marker savedPendingState;
+  //
+  //	Needed for identity case.
+  //
+  list<WordSystem::Word> nullEquations;
+  NatSet markedSubterms;  // indices of subterms that have been marked
 };
 
 #endif

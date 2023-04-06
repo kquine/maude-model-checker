@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -56,22 +56,23 @@ void
 SyntacticPreModule::showModule(ostream& s)
 {
   s << MixfixModule::moduleTypeString(getModuleType()) << ' ' << this;
-  int nrParameters = parameters.size();
+  int nrParameters = getNrParameters();
   if (nrParameters > 0)
     {
-      s << '{' << parameters[0].name << " :: " << parameters[0].theory;
+      s << '{' << Token::name(getParameterName(0)) << " :: " << getParameter(0); // FIX NAME
       for (int i = 1; i < nrParameters; ++i)
-	s << ", " << parameters[i].name << " :: " << parameters[i].theory;
+	s << ", " << Token::name(getParameterName(i)) << " :: " << getParameter(i); // FIX NAME
       s << '}';
     }
   s << " is\n";
 
-  int nrImports = imports.length();
+  int nrImports = getNrImports();
   for (int i = 0; i < nrImports; i++)
     {
       if (UserLevelRewritingContext::interrupted())
 	return;
-      s << "  " << imports[i].mode << ' ' << imports[i].expr << " .\n";
+      s << "  " << ImportModule::importModeString(getImportMode(i)) <<
+	' ' << getImport(i) << " .\n";
     }
 
   int nrSortDecls = sortDecls.length();
@@ -94,20 +95,64 @@ SyntacticPreModule::showModule(ostream& s)
       s << " .\n";
     }
 
+  for (auto& cd : classDecls)
+    {
+      if (UserLevelRewritingContext::interrupted())
+	return;
+      s << "  class " << Token::sortName(cd.name.code());
+      int nrAttributes = cd.attributes.size();
+      for (int i = 0; i < nrAttributes; ++i)
+	{
+	  AttributePair& p = cd.attributes[i];
+	  s << (i == 0 ? " | " : ", ") << p.attributeName << " : " << p.type;
+	}
+      s << " .\n";
+    }
+
+  for (auto& sc : subclassDecls)
+    {
+      if (UserLevelRewritingContext::interrupted())
+	return;
+      s << "  subclasses ";
+      printSortTokenVector(s, sc);
+      s << " .\n";
+    }
+
   bool follow = false;
   int nrOpDecls = opDecls.length();
   for (int i = 0; i < nrOpDecls; i++)
     {
       OpDecl& opDecl = opDecls[i];
       int defIndex = opDecl.defIndex;
+      OpDef& opDef = opDefs[defIndex];
+      SymbolType st = opDef.symbolType;
       bool newFollow = (i + 1 < nrOpDecls) && (opDecls[i + 1].defIndex == defIndex);
       if (!follow)
 	{
-	  s << ((opDefs[defIndex].symbolType.getBasicType() == SymbolType::VARIABLE) ?
-		"  var" : "  op") <<
-	    (newFollow ? "s " : " ");
+	  if (st.getBasicType() == SymbolType::VARIABLE)
+	    s << "  var";
+	  else if (st.hasFlag(SymbolType::MSG_STATEMENT))
+	    s << "  msg";
+	  else
+	    s << "  op";
+	  s << (newFollow ? "s " : " ");
 	}
-      s << opDecls[i].prefixName << ' ';
+      if (st.getBasicType() != SymbolType::VARIABLE &&
+	  opDef.types.size() == 1 &&
+	  Token::auxProperty(opDecl.prefixName.code()) & Token::AUX_STRUCTURED_SORT)
+	{
+	  //
+	  //	Looks like a parameterized constant so use parameterized sort printing code.
+	  //
+	  if (follow || newFollow)
+	    s << '(';
+	  s << Token::sortName(opDecl.prefixName.code());
+	  if (follow || newFollow)
+	    s << ')';
+	  s << ' ';
+	}
+      else 
+	s << opDecl.prefixName << ' ';
       follow = newFollow;
       if (!follow)
 	{
@@ -115,6 +160,15 @@ SyntacticPreModule::showModule(ostream& s)
 	  if (UserLevelRewritingContext::interrupted())
 	    return;
 	}
+    }
+
+  int nrStratDecls = stratDecls.length();
+  for (int i = 0; i < nrStratDecls; i++)
+    {
+      printStratDecl(s, stratDecls[i]);
+
+      if (UserLevelRewritingContext::interrupted())
+	return;
     }
 
   int nrStatements = statements.length();
@@ -147,9 +201,40 @@ SyntacticPreModule::printOpDef(ostream&s, int defIndex)
 }
 
 void
+SyntacticPreModule::printStratDecl(ostream& s, const StratDecl& decl)
+{
+  size_t rangeIndex = decl.types.length() - 1;
+
+  s << (decl.names.length() == 1 ? "  strat " : "  strats ");
+
+  int nrNames = decl.names.length();
+  for (int i = 0; i < nrNames; i++)
+    s << decl.names[i] << ' ';
+
+  if (rangeIndex > 0)
+    {
+      s << ": ";
+
+      for (size_t i = 0; i < rangeIndex; i++)
+	s << decl.types[i] << " ";
+    }
+  s << "@ " << decl.types[rangeIndex] << ' ';
+
+  printAttributes(s, decl);
+  s << ".\n";
+}
+
+void
 SyntacticPreModule::printAttributes(ostream& s, const OpDef& opDef)
 {
-  SymbolType st = opDef.symbolType;
+  SymbolType st = opDef.symbolType;  // copy
+  if (st.hasFlag(SymbolType::MSG_STATEMENT))
+    {
+      //
+      //	msg statement implies msg and ctor so we don't want to print these attributes.
+      //
+      st.clearFlags(SymbolType::MESSAGE | SymbolType::CTOR);
+    }
   if (!(st.hasFlag(SymbolType::ATTRIBUTES | SymbolType::CTOR |
 		   SymbolType::POLY | SymbolType::DITTO)) &&
       opDef.special.empty() && opDef.metadata == NONE)
@@ -160,11 +245,11 @@ SyntacticPreModule::printAttributes(ostream& s, const OpDef& opDef)
   if (st.hasFlag(SymbolType::POLY))
     {
       s << "poly (";
-      FOR_EACH_CONST(i, NatSet, opDef.polyArgs)
+      for (int i : opDef.polyArgs)
 	{
-	  if  (*i != 0)
+	  if  (i != 0)
 	    {
-	      s << space << *i;
+	      s << space << i;
 	      space = " ";
 	    }
 	}
@@ -174,7 +259,7 @@ SyntacticPreModule::printAttributes(ostream& s, const OpDef& opDef)
 	  space = " ";
 	}
       s << ')';
-   }
+    }
   //
   //	Theory attributes.
   //
@@ -206,6 +291,11 @@ SyntacticPreModule::printAttributes(ostream& s, const OpDef& opDef)
   if (st.hasFlag(SymbolType::CONFIG))
     {
       s << space << "config";
+      space = " ";
+    }
+  if (st.hasFlag(SymbolType::PCONST))
+    {
+      s << space << "pconst";
       space = " ";
     }
   if (st.hasFlag(SymbolType::LEFT_ID | SymbolType::RIGHT_ID))
@@ -291,15 +381,15 @@ SyntacticPreModule::printAttributes(ostream& s, const OpDef& opDef)
     {
       s << space << "special (";
       space = " ";
-      FOR_EACH_CONST(i, Vector<Hook>, opDef.special)
+      for (const Hook& h : opDef.special)
 	{
 	  static const char* hookTypes[] = {
 	    "id-hook", "op-hook", "term-hook"
 	  };
-	  s << "\n    " << hookTypes[i->type] << ' ' <<
-	    Token::name(i->name);
-	  if (!(i->details.empty()))
-	    s << " (" << i->details << ')';
+	  s << "\n    " << hookTypes[h.type] << ' ' <<
+	    Token::name(h.name);
+	  if (!(h.details.empty()))
+	    s << " (" << h.details << ')';
 	}
       s << ')';
     }
@@ -335,4 +425,12 @@ SyntacticPreModule::printFormat(ostream& s, const Vector<int>& format)
   int formatLen = format.length();
   for (int i = 0; i < formatLen; i++)
     s << Token::name(format[i]) << ((i == formatLen - 1) ? ')' : ' ');
+}
+
+void
+SyntacticPreModule::printAttributes(ostream& s, const StratDecl& stratDecl)
+{
+  if (stratDecl.metadata == NONE)
+    return;
+  s << "[metadata " << Token::name(stratDecl.metadata) << ']';
 }

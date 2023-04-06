@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2017 SRI International, Menlo Park, CA 94025, USA.
 
@@ -58,7 +58,10 @@ VariableGenerator::VariableGenerator(const SMT_Info& smtInfo)
   : smtInfo(smtInfo)
 {
   exprManager = new ExprManager();
+  //cout << "created manager " << exprManager << endl;
   smtEngine = new SmtEngine(exprManager);
+  //cout << "created engine " << smtEngine << endl;
+
   smtEngine->setOption("rewrite-divk", SExpr(true));
   smtEngine->push();  // make a new context so we have a clean context to pop() back to
   pushCount = 0;
@@ -67,7 +70,9 @@ VariableGenerator::VariableGenerator(const SMT_Info& smtInfo)
 VariableGenerator::~VariableGenerator()
 {
   variableMap.clear();  // need to get rid of Expr objects before we can safely delete exprManager
+  //cout << "deleting engine " << smtEngine << endl;
   delete smtEngine;
+  //cout << "deleting manager " << exprManager << endl;
   delete exprManager;
 }
 
@@ -340,6 +345,8 @@ VariableGenerator::dagToCVC4(DagNode* dag)
 	  //
 	case SMT_Symbol::EQUALS:
 	  {
+	    return exprManager->mkExpr(kind::EQUAL, exprs[0], exprs[1]);
+	    /*
 	    //
 	    //	Bizarrely CVC4 requires the IFF be used for Boolean equality so we need to
 	    //	check the SMT type associated with our first argument sort to catch this case.
@@ -351,7 +358,8 @@ VariableGenerator::dagToCVC4(DagNode* dag)
 		IssueWarning("term " << QUOTE(dag) << " does not belong to an SMT sort.");
 		goto fail;
 	      }
-	    return exprManager->mkExpr(((smtType == SMT_Info::BOOLEAN) ? kind::IFF : kind::EQUAL), exprs[0], exprs[1]);
+	    return exprManager->mkExpr(((smtType == SMT_Info::BOOLEAN) ? kind::EQUAL : kind::EQUAL), exprs[0], exprs[1]);
+	    */
 	  }
 	case SMT_Symbol::NOT_EQUALS:
 	  {

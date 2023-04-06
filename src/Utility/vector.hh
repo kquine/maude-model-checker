@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -49,7 +49,8 @@ public:
   friend class const_iterator;
 #endif
 
-  Vector(size_type length = 0);
+  Vector();
+  Vector(size_type length);
   Vector(size_type length, size_type preallocate);
   Vector(const Vector& original);
   ~Vector();
@@ -172,6 +173,13 @@ inline size_t
 Vector<T>::bytesAllocated() const
 {
   return pv.getAllocatedBytes();
+}
+
+template<class T>
+inline
+Vector<T>::Vector()
+{
+  pv.initEmpty();
 }
 
 template<class T>

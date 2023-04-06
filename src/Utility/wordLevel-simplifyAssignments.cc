@@ -1,118 +1,78 @@
+/*
+
+    This file is part of the Maude 3 interpreter.
+
+    Copyright 1997-2021 SRI International, Menlo Park, CA 94025, USA.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+
+*/
+
 //
 //	Code for expanding the assignments in a level.
 //
 
 bool
-WordLevel::fullyExpandAssignments()
+WordLevel::handleInitialOccursCheckFailure()
 {
   //
-  //	Expand assignments to fixed-point.
+  //	We never create assignments that look like
+  //	  X |-> ... X ...
+  //	other than X |-> X which indicates X is unbound.
   //
-  for (;;)
-    {
-      Result result = expandAssignments();
-      if (result == FAIL)
-	return false;
-      if (result == DONE)
-	break;
-    }
-  return true;
-}
-
-WordLevel::Result
-WordLevel::expandAssignments()
-{
+  //	However it is possible for a user to pass in such an
+  //	assignment so we need to resolve those up front.
   //
-  //	Expand each assignment.
-  //
-  bool changed = false;
   int nrAssignments = partialSolution.size();
   for (int i = 0; i < nrAssignments; ++i)
     {
-      Result result = expandAssignment(i, partialSolution[i]);
-      if (result == FAIL)
-	return FAIL;
-      if (result == CHANGED)
-	changed = true;
+      Word& word = partialSolution[i];
+      if (word.size() > 1)
+	{
+	  for (int j : word)
+	    {
+	      if (i == j)
+		{
+		  if (resolveOccursCheckFailure(i, word))
+		    break;
+		  else
+		    return false;
+		}
+	    }
+	}
     }
-  return changed ? CHANGED : DONE;
-}
-
-WordLevel::Result
-WordLevel::expandAssignment(int var, Word& word)
-{
-  //
-  //	Check if assignment needs expansion, i.e. that a variable in
-  //	range has an assignment different from itself.
-  //
-  FOR_EACH_CONST(i, Word, word)
-    {
-      int var2 = *i;
-      if (var2 == var)
-	return word.size() == 1 ? DONE : FAIL;  // either identity mapping or occur-check failure
-
-      Word& assigned = partialSolution[var2];
-      if (!(assigned.size() == 1 && assigned[0] == var2))
-	return reallyExpandAssignment(var, word, i, assigned) ? CHANGED : FAIL;
-    }
-  return DONE;
+  return true;  
 }
 
 bool
-WordLevel::reallyExpandAssignment(int var,
-				  Word& word,
-				  Word::const_iterator firstToExpand,
-				  const Word& expansion)
+WordLevel::fullyExpandAssignments()
 {
-  //
-  //	Do the actual expansion; return false if there was an occur-check failure.
-  //
-  Word newWord;
-  //
-  //	Copy in any variables that didn't need expansion.
-  //
-  for (Word::const_iterator i = word.begin(); i != firstToExpand; ++i)
-    newWord.append(*i);
-  //
-  //	Copy in the assignment of the first variable that needed expansion.
-  //
-  if (!append(newWord, expansion, var))
-    return false;
-  //
-  //	Got through remaining variables, expanding those that are assigned non-identity values.
-  //
-  const Word::const_iterator e = word.end();
-  for (++firstToExpand; firstToExpand != e; ++firstToExpand)
-    {
-      int var2 = *firstToExpand;
-      if (var2 == var)
-	return false;  // occur-check failure
-
-      Word& assigned = partialSolution[var2];
-      if (assigned.size() == 1 && assigned[0] == var2)
-	newWord.append(var2);
-      else
-	{
-	  if (!(append(newWord, assigned, var)))
-	    return false;
-	}
-    }
-  //
-  //	Replace the range with its expansion.
-  //
-  word.swap(newWord);
-  return true;
+  if (levelType == PIGPUG)
+    return expandAssignmentsToFixedPointNormalCase();
+  return expandAssignmentsToFixedPointCollapseCase();
 }
 
 bool
 WordLevel::append(Word& newWord, const Word& word, int var)
 {
-  FOR_EACH_CONST(i, Word, word)
+  bool occursCheckFail = false;
+  for (int i : word)
     {
-      int var2 = *i;
-      if (var2 == var)
-	return false;  // occur-check failure
-      newWord.append(var2);
+      newWord.append(i);
+      if (i == var)
+	occursCheckFail = true;
     }
-  return true;
+  return occursCheckFail;
 }

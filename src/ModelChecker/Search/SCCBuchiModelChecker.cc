@@ -43,20 +43,20 @@ SCCBuchiModelChecker<PA>::findAcceptedSCC(const vector<State>& initials)
 #ifdef TDEBUG
 							cout << "    # NOT VISITED" << endl;
 #endif
-						stack.dfsPush(t.target, move(a));
+						stack.dfsPush(t.target, std::move(a));
 					}
 					else if (this->H.get(t.target) > 0)		// if on the dfs stack..
 					{
 #ifdef TDEBUG
 							cout << "    # ON DEF STACK" << endl;
 #endif
-						stack.merge(this->H.get(t.target), move(a));
+						stack.merge(this->H.get(t.target), std::move(a));
 						if ( stack.topSCC()->acc_fair->isSatisfied() )
 						{
 #ifdef TDEBUG
 								cout << "    #FIND";	stack.topSCC()->acc_fair->dump(cout);	cout << endl;
 #endif
-							return move(stack.topSCC());
+							return std::move(stack.topSCC());
 						}
 					}
 				}

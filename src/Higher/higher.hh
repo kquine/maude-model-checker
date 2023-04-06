@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -21,7 +21,7 @@
 */
 
 //
-//	Forward declarations for higher level fucntionality classes.
+//	Forward declarations for higher level functionality classes.
 //
 #ifndef _higher_hh_
 #define _higher_hh_
@@ -51,6 +51,7 @@ class ModelCheckerSymbol;
 class SatSolverSymbol;
 
 class UnificationProblem;
+class IrredundantUnificationProblem;
 
 class NarrowingUnificationProblem;
 class NarrowingSearchState;
@@ -67,5 +68,10 @@ class NarrowingSearchState2;
 class NarrowingSearchState3;
 class NarrowingSequenceSearch3;
 class NarrowingFolder;
+
+class VariantUnifierFilter;
+class FilteredVariantUnifierSearch;
+
+class VariantMatchingProblem;
 
 #endif

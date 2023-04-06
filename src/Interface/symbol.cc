@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -191,6 +191,19 @@ Symbol::stackArguments(DagNode* /* subject */,
   //
   //	Default version does nothing and can be used for symbols that have no arguments.
   //
+}
+
+void
+Symbol::stackPhysicalArguments(DagNode* subject,
+			       Vector<RedexPosition>& stack,
+			       int parentIndex,
+			       bool respectFrozen,
+			       bool eagerContext)
+{
+  //
+  //	Default version assumes that physical arguments correspond to notional arguments.
+  //
+  stackArguments(subject, stack, parentIndex, respectFrozen, eagerContext);
 }
 
 bool

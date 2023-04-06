@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 2017 SRI International, Menlo Park, CA 94025, USA.
 
@@ -80,7 +80,6 @@ VariableGenerator::assertDag(DagNode* dag)
   if (t == NULL_TERM)
     return BAD_DAG;
 
-  yices_assert_formula(smtContext, t);
   int code = yices_assert_formula(smtContext, t);
   if (code < 0)
     {
@@ -147,7 +146,7 @@ VariableGenerator::push()
 inline void
 VariableGenerator::pop()
 {
-  int32_t r = yices_pop(smtContext);
+  DebugSave(r, yices_pop(smtContext));
   Assert(r == 0, "bad pop");
 }
 
@@ -195,6 +194,7 @@ VariableGenerator::makeVariable(VariableDagNode* v)
 	break;
       }
     case SMT_Info::REAL:
+    default:  // to avoid uninitialized variable warning
       {
 	DebugAdvisory("made Real variable " << static_cast<DagNode*>(v));
 	type = yices_real_type();

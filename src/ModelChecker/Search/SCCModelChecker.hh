@@ -32,7 +32,7 @@ protected:
 
 	struct SCC	//	scc = (root index, incoming fair set, scc acceptance fair set)
 	{
-		SCC(unsigned int root, unique_ptr<FairSet>&& incoming): root(root), incoming_fair(move(incoming)) {}
+		SCC(unsigned int root, unique_ptr<FairSet>&& incoming): root(root), incoming_fair(std::move(incoming)) {}
 
 		const unsigned int root;
 		const unique_ptr<FairSet> incoming_fair;
@@ -70,7 +70,7 @@ protected:
 
 private:
 	class SCCBFSGraph;
-	class PrefixBFSGraph;
+	struct PrefixBFSGraph;
 	class CycleBFSGraph;
 	class CycleCompBFSGraph;
 };

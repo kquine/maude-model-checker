@@ -35,8 +35,17 @@
 void
 getInputFromRope(char* buf, yy_size_t& result, yy_size_t max_size);
 
-#define YY_DECL const Vector<int>& tokenizeRope(const Rope& argumentRope)
+//
+//	We return a pointer rather than a reference to avoid an issue with
+//	yyterminate()/YY_NULL, though we ensure that yyterminate() never
+//	gets called because we always pass back an EOT charater from YY_INPUT
+//	to avoid flex EOF handling.
+//
+#define YY_DECL const Vector<int>* tokenizeRope(const Rope& argumentRope)
 
+//
+//	We use safeResult to ensure a reference yy_size_t& can be passed to outlined code.
+//
 #define YY_INPUT(buf, result, max_size) \
   { yy_size_t safeResult; getInputFromRope(buf, safeResult, max_size); result = safeResult; }
 
@@ -47,6 +56,8 @@ bool endOfRope;
 %}
 
 %option noyywrap
+%option nounput
+%option noinput
 
 stringContent	([^[:cntrl:]"\\]|("\\"[^[:cntrl:]])|(\\\n))
 string		("\""{stringContent}*"\"")
@@ -65,7 +76,7 @@ maudeId		(({special}|{normalSeq})+)
 {maudeId}|[()\[\]{},]				tokenList.append(Token::fixUp(yytext));
 \004						{
 						  if (endOfRope)
-						    return tokenList;
+						    return &tokenList;
 						}
 [^\004]						;
 

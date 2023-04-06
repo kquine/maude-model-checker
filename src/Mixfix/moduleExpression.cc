@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@
 //	front end class definitions
 #include "token.hh"
 #include "renaming.hh"
+#include "viewExpression.hh"
 #include "moduleExpression.hh"
 
 ModuleExpression::ModuleExpression(Token moduleName)
@@ -71,7 +72,7 @@ ModuleExpression::ModuleExpression(ModuleExpression* module, Renaming* renaming)
 {
 }
 
-ModuleExpression::ModuleExpression(ModuleExpression* module, const Vector<Token>& arguments)
+ModuleExpression::ModuleExpression(ModuleExpression* module, const Vector<ViewExpression*>& arguments)
  : type(INSTANTIATION),
    module(module),
    arguments(arguments)
@@ -84,19 +85,26 @@ ModuleExpression::deepSelfDestruct()
   switch (type)
     {
     case RENAMING:
-      delete renaming;
-      // fall thru
+      {
+	module->deepSelfDestruct();
+	delete renaming;
+	break;
+      }
     case INSTANTIATION:
-      module->deepSelfDestruct();
-      break;
+      {
+	module->deepSelfDestruct();
+	for (ViewExpression* v : arguments)
+	  v->deepSelfDestruct();
+	break;
+      }
     case SUMMATION:
       {
-	FOR_EACH_CONST(i, list<ModuleExpression*>, modules)
-	  (*i)->deepSelfDestruct();
+	for (ModuleExpression* m : modules)
+	  m->deepSelfDestruct();
 	break;
       }
     case MODULE:
-      ;  // nothing to delete - avoid compiler warning
+      break;  // nothing to delete - avoid compiler warning
     }
   delete this;
 }
@@ -115,9 +123,9 @@ operator<<(ostream& s, const ModuleExpression* expr)
       {
 	const list<ModuleExpression*>& modules = expr->getModules();
 	const char* sep = "";
-	FOR_EACH_CONST(i, list<ModuleExpression*>, modules)
+	for (ModuleExpression* m :  modules)
 	  {
-	    s << sep << *i;
+	    s << sep << m;
 	    sep = " + ";
 	  }
 	break;
@@ -140,9 +148,9 @@ operator<<(ostream& s, const ModuleExpression* expr)
 	  s << '(' << module << "){";
 	else
 	  s << module << '{';
-	const Vector<Token>& arguments = expr->getArguments();
-	const Vector<Token>::const_iterator e = arguments.end();
-	for (Vector<Token>::const_iterator i = arguments.begin();;)
+	const Vector<ViewExpression*>& arguments = expr->getArguments();
+	const Vector<ViewExpression*>::const_iterator e = arguments.end();
+	for (Vector<ViewExpression*>::const_iterator i = arguments.begin();;)
 	  {
 	    s << *i;
 	    ++i;

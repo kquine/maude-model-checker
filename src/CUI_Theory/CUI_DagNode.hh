@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2020 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #ifndef _CUI_DagNode_hh_
 #define _CUI_DagNode_hh_
 #include "dagNode.hh"
+#include "variable.hh"
 
 class CUI_DagNode : public DagNode
 {
@@ -46,10 +47,10 @@ public:
   //
   //	Unification member functions.
   //
-  ReturnResult computeBaseSortForGroundSubterms();
+  ReturnResult computeBaseSortForGroundSubterms(bool warnAboutUnimplemented);
   bool computeSolvedForm2(DagNode* rhs,  UnificationContext& solution, PendingUnificationStack& pending);
   void insertVariables2(NatSet& occurs);
-  DagNode* instantiate2(const Substitution& substitution);
+  DagNode* instantiate2(const Substitution& substitution, bool maintainInvariants);
   //
   //	Interface for narrowing.
   //
@@ -65,6 +66,7 @@ public:
   CUI_Symbol* symbol() const;
   DagNode* getArgument(int i) const;
 
+  bool indirectOccursCheck(VariableDagNode* repVar, UnificationContext& solution);
   CUI_DagNode* makePurifiedVersion(UnificationContext& solution, PendingUnificationStack& pending);
 
 private:
@@ -83,7 +85,9 @@ private:
   //
   //	Private unification stuff.
   //
-  bool computeSolvedFormCommutativeCase(CUI_DagNode* rhs, UnificationContext& solution, PendingUnificationStack& pending);
+  bool computeSolvedFormCommutativeCase(CUI_DagNode* rhs,
+					UnificationContext& solution,
+					PendingUnificationStack& pending);
   //
   //	Arguments under CUI symbol.
   //

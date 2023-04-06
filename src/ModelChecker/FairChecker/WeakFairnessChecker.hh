@@ -21,7 +21,7 @@ public:
 	virtual unsigned int getNrFairness() const override;
 	virtual unique_ptr<FairSet> computeAllFairness(const PropSet& trueProps) override;
 	virtual unique_ptr<FairSet> computeCompactFairness(const PropSet& trueProps) override;
-	virtual unique_ptr<FairSet> unzip(const FairSet& fs) const;
+	virtual unique_ptr<FairSet> unzip(const FairSet& fs) const override;
 
 private:
 	const vector<unsigned int> weakFairIds;

@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,30 +27,44 @@
 void
 MixfixModule::makeGrammar(bool complexFlag)
 {
+  DebugInfo("module = " << this << " (" << ((void*) this) << ")" <<
+	      "  complexFlag = " << complexFlag << "  parser = " << parser);
   if (parser != 0)
     {
-      if (!complexFlag || complexParser)
-	return;
+      if (!complexFlag || parser->isComplex())
+	{
+	  DebugInfo("reusing parser; parser->isComplex() = " << parser->isComplex() <<
+		    "  complexFlag = " << complexFlag);
+	  return;
+	}
+      DebugInfo("deleting old parser; parser->isComplex() = " << parser->isComplex() <<
+		 "  complexFlag = " << complexFlag);
       delete parser;
     }
-
-  parser = new MixfixParser(*this);
-  complexParser = complexFlag;
+  else
+    DebugInfo("no existing parser");
   //
   //	NonTerminals are allocated as follows:
-  //	  fixed one-off:	-1,..., componentNonTerminalBase + 1
-  //	  per component:	componentNonTerminalBase,..., componentNonTerminalBase - NUMBER_OF_TYPES * #components + 1
-  //	  on demand:		componentNonTerminalBase - NUMBER_OF_TYPES * #components,... downwards
+  //	  fixed one-off:
+  //	    -1,..., componentNonTerminalBase + 1
+  //	  per component:
+  //	    componentNonTerminalBase,..., componentNonTerminalBase - NUMBER_OF_TYPES * #components + 1
+  //	  on demand:
+  //	    componentNonTerminalBase - NUMBER_OF_TYPES * #components,... downwards
   //
-  componentNonTerminalBase = complexParser ? COMPLEX_BASE : SIMPLE_BASE;
-  nextNonTerminal = componentNonTerminalBase - NUMBER_OF_TYPES * getConnectedComponents().length() + 1;
+  int componentNonTerminalBase = complexFlag ? COMPLEX_BASE : SIMPLE_BASE;
+  int nextNonTerminal = componentNonTerminalBase - NUMBER_OF_TYPES * getConnectedComponents().length() + 1;
+  parser = new MixfixParser(*this, complexFlag, componentNonTerminalBase, nextNonTerminal);
+  DebugInfo("new parser = " << parser << "  complexFlag = " << complexFlag <<
+	    "  componentNonTerminalBase = " << componentNonTerminalBase <<
+	    "  nextNonTerminal = " << nextNonTerminal);
+
   if (complexFlag)
     {
       makeComplexProductions();
       makeStrategyLanguageProductions();
     }
-  else
-    makeLabelProductions();
+  makeLabelProductions();
   makeStatementProductions();
   makeConditionProductions();
   makeAttributeProductions();
@@ -59,8 +73,8 @@ MixfixModule::makeGrammar(bool complexFlag)
   makeSymbolProductions();
   makeVariableProductions();
   makeBoolProductions();
-  makeSpecialProductions();
   makePolymorphProductions();
+  makeSpecialProductions();
   makeBubbleProductions();
   //
   //	These two data structures are only used for making the grammar and must be cleared in
@@ -74,9 +88,9 @@ MixfixModule::makeGrammar(bool complexFlag)
 void
 MixfixModule::makeParameterizedSortProductions()
 {
-  FOR_EACH_CONST(i, SortMap, sortNames)
+  for (const auto& i : sortNames)
     {
-      int name= i->first;
+      int name= i.first;
       if (Token::auxProperty(name) == Token::AUX_STRUCTURED_SORT)
 	{
 	  //
@@ -94,7 +108,7 @@ MixfixModule::makeParameterizedSortProductions()
 	      //	terminal and production for it so we can parse on-the-fly variables for
 	      //	for parameterized sorts starting with this token.
 	      //
-	      int nt = newNonTerminal();
+	      int nt = parser->newNonTerminal();
 	      string leadString(Token::name(lead));
 	      int t = Token::encode((leadString + " variable").c_str());
 
@@ -134,6 +148,11 @@ MixfixModule::makeComplexProductions()
 
   rhs[0] = MATCH_PAIR;
   parser->insertProduction(MATCH_COMMAND, rhs, 0, gatherAny);
+  //
+  //	<multi-match command> ::= <match pair>
+  //
+  parser->insertProduction(MULTI_MATCH_COMMAND, rhs, 0, gatherAny);
+
   rhs[0] = UNIFY_PAIR;
   parser->insertProduction(UNIFY_COMMAND, rhs, 0, gatherAny);
   rhs[0] = SEARCH_PAIR;
@@ -142,6 +161,11 @@ MixfixModule::makeComplexProductions()
   parser->insertProduction(GET_VARIANTS_COMMAND, rhs, 0, gatherAny);
   rhs[0] = UNIFY_COMMAND;
   parser->insertProduction(VARIANT_UNIFY_COMMAND, rhs, 0, gatherAny);
+  //
+  //	<variant match command> ::= <multi-match command>
+  //
+  rhs[0] = MULTI_MATCH_COMMAND;
+  parser->insertProduction(VARIANT_MATCH_COMMAND, rhs, 0, gatherAny);
 
   rhs[0] = suchThat;
   parser->insertProduction(SUCH_THAT, rhs, 0, emptyGather);
@@ -162,11 +186,20 @@ MixfixModule::makeComplexProductions()
   rhs[2] = RULE_CONDITION;
   parser->insertProduction(SEARCH_COMMAND, rhs, 0, gatherAnyAnyAny,
 			   MixfixParser::CONDITIONAL_COMMAND);
-
+  //
+  //	<unify command> ::= <unify pair> /\ <unify command>
+  //
   rhs[0] = UNIFY_PAIR;
   rhs[1] = wedge;
   rhs[2] = UNIFY_COMMAND;
-  parser->insertProduction(UNIFY_COMMAND, rhs, 0, gatherAnyAny, MixfixParser::UNIFY_LIST);
+  parser->insertProduction(UNIFY_COMMAND, rhs, 0, gatherAnyAny, MixfixParser::PAIR_LIST);
+  //
+  //	<multi-match command> ::= <match pair> /\ <multi-match command>
+  //
+  rhs[0] = MATCH_PAIR;
+  rhs[1] = wedge;
+  rhs[2] = MULTI_MATCH_COMMAND;
+  parser->insertProduction(MULTI_MATCH_COMMAND, rhs, 0, gatherAnyAny, MixfixParser::PAIR_LIST);
 
   rhs.resize(4);
   rhs[0] = TERM;
@@ -174,15 +207,27 @@ MixfixModule::makeComplexProductions()
   rhs[2] = TERM_LIST;
   rhs[3] = irreducible;
   parser->insertProduction(GET_VARIANTS_COMMAND, rhs, 0, gatherAnyAnyAny,
-			   MixfixParser::CONDITIONAL_COMMAND);
-
+			   MixfixParser::MAKE_TERM_LIST);
+  //
+  //	<variant unify command> ::= <unify command> <such that> <term list> irreducible
+  //
   rhs.resize(4);
   rhs[0] = UNIFY_COMMAND;
   rhs[1] = SUCH_THAT;
   rhs[2] = TERM_LIST;
   rhs[3] = irreducible;
   parser->insertProduction(VARIANT_UNIFY_COMMAND, rhs, 0, gatherAnyAnyAny,
-			   MixfixParser::CONDITIONAL_COMMAND);
+			   MixfixParser::MAKE_TERM_LIST);
+  //
+  //	<variant match command> ::= <multi-match command> <such that> <term list> irreducible
+  //
+  rhs.resize(4);
+  rhs[0] = MULTI_MATCH_COMMAND;
+  rhs[1] = SUCH_THAT;
+  rhs[2] = TERM_LIST;
+  rhs[3] = irreducible;
+  parser->insertProduction(VARIANT_MATCH_COMMAND, rhs, 0, gatherAnyAnyAny,
+			   MixfixParser::MAKE_TERM_LIST);
   //
   //	Hetrogeneous term lists.
   //
@@ -217,24 +262,73 @@ MixfixModule::makeStrategyLanguageProductions()
   static Vector<int> rhs(3);
   //
   //	We assume that rules have been flattened in. For each label occuring in a rule,
-  //	we add a production. NOTE: we may need to explicitly track imported labels once we
-  //	have smods.
+  //	we add a production.
   //
   rhs.resize(1);
   {
     set<int> handled;
-    FOR_EACH_CONST(i, Vector<Rule*>, getRules())
+    for (int label : ruleLabels)
       {
-	int label = (*i)->getLabel().id();
 	if (label != NONE && handled.find(label) == handled.end())
 	  {
 	    rhs[0] = label;
-	    parser->insertProduction(LABEL, rhs, 0, emptyGather, MixfixParser::NOP, label);
+	    parser->insertProduction(RULE_LABEL, rhs, 0, emptyGather, MixfixParser::NOP, label);
 	    handled.insert(label);
 	  }
       }
   }
 
+  //
+  //	Create grammar productions for each named strategy.
+  //	(as any other prefix operator)
+  //
+  {
+    const Vector<RewriteStrategy*> &strategies = getStrategies();
+    for (size_t i = 0; i < strategies.size(); i++)
+      {
+	Symbol * symbol = strategies[i]->getSymbol();
+	int nrArgs = symbol->arity();
+
+	rhs.resize(1);
+	rhs[0] = strategies[i]->id();
+
+	if (nrArgs == 0)
+	  {
+	    //
+	    // Strategy without parameters can be written <strategy name> when no rule with that name exits.
+	    //
+	    if (ruleLabels.find(rhs[0]) == ruleLabels.end())
+	      parser->insertProduction(STRATEGY_CALL_EXPRESSION, rhs, 0, emptyGather, MixfixParser::NOP, i);
+
+	    //
+	    // Strategy without parameters can be written <strategy name>()
+	    //
+	    rhs.resize(3);
+	    rhs[1] = leftParen;
+	    rhs[2] = rightParen;
+	    parser->insertProduction(STRATEGY_CALL_EXPRESSION, rhs, 0, emptyGather, MixfixParser::NOP, i);
+	  }
+	else
+	  {
+	    Vector<int> gather;
+	    //
+	    // Strategies wiht parameters are read in a prefixed form
+	    //
+	    rhs.append(leftParen);
+	    gather.resize(0);
+
+	    for (int j = 0; j < nrArgs; j++)
+	      {
+		gather.append(PREFIX_GATHER);
+		rhs.append(nonTerminal(domainComponentIndex(symbol, j), TERM_TYPE));
+		rhs.append(j == nrArgs - 1 ? rightParen : comma);
+	      }
+	    parser->insertProduction(STRATEGY_CALL_EXPRESSION, rhs, 0, gather, MixfixParser::NOP, i);
+	  }
+      }
+  }
+
+  rhs.resize(1);
   rhs[0] = fail;
   parser->insertProduction(STRATEGY_EXPRESSION, rhs, 0, emptyGather, MixfixParser::MAKE_TRIVIAL, false);
 
@@ -249,21 +343,20 @@ MixfixModule::makeStrategyLanguageProductions()
     //	<strategy expression> = <label> [ <substitution> ] { <strategy list> }
     //
     Vector<int> rhs(7);
-    rhs[0] = LABEL;
+    rhs[0] = RULE_LABEL;
     rhs[1] = leftBracket;
     rhs[2] = SUBSTITUTION;
     rhs[3] = rightBracket;
     rhs[4] = leftBrace;
     rhs[5] = STRATEGY_LIST;
     rhs[6] = rightBrace;
-    parser->insertProduction(STRATEGY_EXPRESSION, rhs, 0, gatherAnyAnyAny,
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_BASIC_PREC, gatherAnyAnyAny,
 			     MixfixParser::MAKE_APPLICATION, true, true);
-
     //
     //	<strategy expression> = <label> [ <substitution> ]
     //
     rhs.resize(4);
-    parser->insertProduction(STRATEGY_EXPRESSION, rhs, 0, gatherAnyAny,
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_BASIC_PREC, gatherAnyAny,
 			     MixfixParser::MAKE_APPLICATION, true, false);
     //
     //	<strategy expression> = <label> { <strategy list> }
@@ -271,14 +364,22 @@ MixfixModule::makeStrategyLanguageProductions()
     rhs[1] = leftBrace;
     rhs[2] = STRATEGY_LIST;
     rhs[3] = rightBrace;
-    parser->insertProduction(STRATEGY_EXPRESSION, rhs, 0, gatherAnyAny,
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_BASIC_PREC, gatherAnyAny,
 			     MixfixParser::MAKE_APPLICATION, false, true);
     //
     //	<strategy expression> = <label>
     //
     rhs.resize(1);
-    parser->insertProduction(STRATEGY_EXPRESSION, rhs, 0, gatherAny,
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_BASIC_PREC, gatherAny,
 			     MixfixParser::MAKE_APPLICATION, false, false);
+
+	//
+	// <call expression> = <strategy call expression>
+	//
+	rhs.resize(1);
+	rhs[0] = STRATEGY_CALL_EXPRESSION;
+	parser->insertProduction(STRATEGY_EXPRESSION, rhs, 0, gatherAny,
+				MixfixParser::MAKE_CALL);
   }
   {
     //
@@ -288,7 +389,7 @@ MixfixModule::makeStrategyLanguageProductions()
     rhs[0] = STRATEGY_EXPRESSION;
     rhs[1] = comma;
     rhs[2] = STRATEGY_LIST;
-    parser->insertProduction(STRATEGY_LIST, rhs, PREFIX_GATHER, gatherPrefixPrefix,
+    parser->insertProduction(STRATEGY_LIST, rhs, INFIX_PREC, gatherAnyAny,
 			     MixfixParser::MAKE_STRATEGY_LIST);
     //
     //	<strategy list> = <strategy expression>
@@ -299,6 +400,7 @@ MixfixModule::makeStrategyLanguageProductions()
   {
     //
     //	<strategy expression> = top ( <strategy expression> )
+    //	<strategy expression> = one ( <strategy expression> )
     //	<strategy expression> = not ( <strategy expression> )
     //	<strategy expression> = test ( <strategy expression> )
     //	<strategy expression> = try ( <strategy expression> )
@@ -309,6 +411,9 @@ MixfixModule::makeStrategyLanguageProductions()
     rhs[2] = STRATEGY_EXPRESSION;
     rhs[3] = rightParen;
     parser->insertProduction(STRATEGY_EXPRESSION, rhs, 0, gatherAny, MixfixParser::MAKE_TOP);
+
+    rhs[0] = one;
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, 0, gatherAny, MixfixParser::MAKE_ONE);
 
     rhs[0] = notToken;
     parser->insertProduction(STRATEGY_EXPRESSION, rhs, 0, gatherAny,
@@ -370,7 +475,7 @@ MixfixModule::makeStrategyLanguageProductions()
     //
     Vector<int> gather(3);
     Vector<int> rhs(5);
-    gather[0] = STRAT_BRANCH_PREC;
+    gather[0] = STRAT_BRANCH_PREC -1;
     gather[1] = ANY;
     gather[2] = STRAT_BRANCH_PREC;
     rhs[0] = STRATEGY_EXPRESSION;
@@ -390,30 +495,73 @@ MixfixModule::makeStrategyLanguageProductions()
     //	<strategy expression> = xmatch <term>
     //	<strategy expression> = amatch <term>
     //
-#if 1
-    Vector<int> gather(3);
     Vector<int> rhs(4);
-    gather[0] = STRAT_TEST_PREC;
-    gather[1] = ANY;
-    gather[2] = STRAT_TEST_PREC;
     rhs[0] = match;
     rhs[1] = TERM;
     rhs[2] = SUCH_THAT;
     rhs[3] = CONDITION;
-    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gather, MixfixParser::MAKE_TEST, -1);
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gatherAnyAnyAny, MixfixParser::MAKE_TEST, -1);
     rhs[0] = xmatch;
-    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gather, MixfixParser::MAKE_TEST, 0);
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gatherAnyAnyAny, MixfixParser::MAKE_TEST, 0);
     rhs[0] = amatch;
-    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gather, MixfixParser::MAKE_TEST, UNBOUNDED);
-    gather.resize(1);
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gatherAnyAnyAny, MixfixParser::MAKE_TEST, UNBOUNDED);
     rhs.resize(2);
     rhs[0] = match;
-    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gather, MixfixParser::MAKE_TEST, -1);
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gatherAny, MixfixParser::MAKE_TEST, -1);
     rhs[0] = xmatch;
-    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gather, MixfixParser::MAKE_TEST, 0);
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gatherAny, MixfixParser::MAKE_TEST, 0);
     rhs[0] = amatch;
-    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gather, MixfixParser::MAKE_TEST, UNBOUNDED);
-#endif
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_TEST_PREC, gatherAny, MixfixParser::MAKE_TEST, UNBOUNDED);
+  }
+  {
+
+    //
+    //	<using pair> = <term> using <strategy expression>
+    //	<using list> = <using pair> , <using list>
+    //	<using list> = <using pair>
+    //
+    Vector<int> rhs(3);
+    rhs[0] = TERM;
+    rhs[1] = usingToken;
+    rhs[2] = STRATEGY_EXPRESSION;
+    Vector<int> gather(2);
+    gather[0] = ANY;
+    gather[1] = STRAT_USING_PREC - 1;  // require strategy be tightly bound to avoid certain ambiguities
+    parser->insertProduction(USING_PAIR, rhs, 0, gather, MixfixParser::MAKE_USING_PAIR);
+    rhs[0] = USING_PAIR;
+    rhs[1] = comma;
+    rhs[2] = USING_LIST;
+    parser->insertProduction(USING_LIST, rhs, 0, gatherAnyAny, MixfixParser::MAKE_USING_LIST);
+    rhs.resize(1);
+    parser->insertProduction(USING_LIST, rhs, 0, gatherAny, MixfixParser::PASS_THRU);
+  }
+  {
+    //
+    //	<strategy expression> = (/x/a)matchrew <term> such that <condition> by <using list>
+    //
+    //	<strategy expression> = (/x/a)amatchrew <term> by <using list>
+    //
+    Vector<int> rhs(6);
+    rhs[0] = matchrew;
+    rhs[1] = TERM;
+    rhs[2] = SUCH_THAT;
+    rhs[3] = CONDITION;
+    rhs[4] = by;
+    rhs[5] = USING_LIST;
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_REW_PREC, gatherAny4, MixfixParser::MAKE_REW, -1);
+    rhs[0] = xmatchrew;
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_REW_PREC, gatherAny4, MixfixParser::MAKE_REW, 0);
+    rhs[0] = amatchrew;
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_REW_PREC, gatherAny4, MixfixParser::MAKE_REW, UNBOUNDED);
+    rhs.resize(4);
+    rhs[0] = matchrew;
+    rhs[2] = by;
+    rhs[3] = USING_LIST;
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_REW_PREC, gatherAnyAny, MixfixParser::MAKE_REW, -1);
+    rhs[0] = xmatchrew;
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_REW_PREC, gatherAnyAny, MixfixParser::MAKE_REW, 0);
+    rhs[0] = amatchrew;
+    parser->insertProduction(STRATEGY_EXPRESSION, rhs, STRAT_REW_PREC, gatherAnyAny, MixfixParser::MAKE_REW, UNBOUNDED);
   }
   {
     //
@@ -425,12 +573,14 @@ MixfixModule::makeStrategyLanguageProductions()
     rhs[2] = rightParen;
     parser->insertProduction(STRATEGY_EXPRESSION, rhs, 0, gatherAny, MixfixParser::PASS_THRU);
   }
-
+  //
+  //	<strategy command> = <term> using <strategy expression>
+  //
   rhs.resize(3);
   rhs[0] = TERM;
   rhs[1] = usingToken;
   rhs[2] = STRATEGY_EXPRESSION;
-  parser->insertProduction(STRATEGY_COMMAND, rhs, 0, gatherAnyAny);  // need action
+  parser->insertProduction(STRATEGY_COMMAND, rhs, 0, gatherAnyAny);
 }
 
 void
@@ -492,6 +642,9 @@ MixfixModule::makeAttributeProductions()
   rhs[0] = narrowing;
   parser->insertProduction(ATTRIBUTE, rhs, 0, emptyGather,
 			   MixfixParser::MAKE_NARROWING_ATTRIBUTE);
+  rhs[0] = dnt;
+  parser->insertProduction(ATTRIBUTE, rhs, 0, emptyGather,
+			   MixfixParser::MAKE_DNT_ATTRIBUTE);
   //
   //	Print items.
   //
@@ -542,6 +695,10 @@ MixfixModule::makeStatementProductions()
   rhs[0] = rl;
   rhs[1] = RL_BODY;
   parser->insertProduction(STATEMENT_PART, rhs, 0, gatherAny, MixfixParser::MAKE_RL);
+
+  rhs[0] = sd;
+  rhs[1] = SD_BODY;
+  parser->insertProduction(STATEMENT_PART, rhs, 0, gatherAny, MixfixParser::MAKE_SD);
   //
   //	Conditional statement parts.
   //
@@ -565,6 +722,11 @@ MixfixModule::makeStatementProductions()
   rhs[1] = RL_BODY;
   rhs[3] = RULE_CONDITION;
   parser->insertProduction(STATEMENT_PART, rhs, 0, gatherAnyAny, MixfixParser::MAKE_CRL);
+
+  rhs[0] = csd;
+  rhs[1] = SD_BODY;
+  rhs[3] = CONDITION;
+  parser->insertProduction(STATEMENT_PART, rhs, 0, gatherAnyAny, MixfixParser::MAKE_CSD);
   //
   //	Statement bodies without labels.
   //
@@ -577,10 +739,22 @@ MixfixModule::makeStatementProductions()
 
   rhs[0] = ARROW_PAIR;
   parser->insertProduction(RL_BODY, rhs, 0, gatherAny);
+
+  rhs[0] = STRATEGY_PAIR;
+  parser->insertProduction(SD_BODY, rhs, 0, gatherAny);
+
+  //
+  //	Strategy pair (can be SD_BODY directly, with some changes)
+  //	<strategy pair> ::= <strategy call expr> := <strategy expression>
+  //
+  rhs.resize(3);
+  rhs[0] = STRATEGY_CALL_EXPRESSION;
+  rhs[1] = assign;
+  rhs[2] = STRATEGY_EXPRESSION;
+  parser->insertProduction(STRATEGY_PAIR, rhs, 0, gatherAnyAny);
   //
   //	Statement bodies with labels.
   //
-  rhs.resize(1);
   rhs.expandTo(5);
   rhs[0] = leftBracket;
   rhs[1] = LABEL;
@@ -759,6 +933,7 @@ MixfixModule::makeComponentProductions()
       //
       //	Syntax for term from unknown component:
       //	<TERM> ::= <FooTerm>
+      //	We don't support this for kinds that contain bubbles.
       //
       if (bubbleComponents.find(i) == bubbleComponents.end())
 	{
@@ -778,7 +953,7 @@ MixfixModule::makeComponentProductions()
       parser->insertProduction(ASSIGN_PAIR, rhsPair, 0, gatherAnyAny);
       rhsPair[1] = arrow;
       parser->insertProduction(ARROW_PAIR, rhsPair, 0, gatherAnyAny);
-      if (complexParser)
+      if (parser->isComplex())
 	{
 	  //
 	  //	Syntax for match and search pairs, assignments:
@@ -806,11 +981,16 @@ MixfixModule::makeComponentProductions()
       rhsPair[2] = sortNt;
       rhsPair[1] = colon;
       parser->insertProduction(COLON_PAIR, rhsPair, 0, gatherAny0);
-      rhsPair[1] = colon2;
-      parser->insertProduction(COLON2_PAIR, rhsPair, 0, gatherAny0);
+      if (bubbleComponents.find(i) == bubbleComponents.end())
+	{
+	  rhsPair[1] = colon2;
+	  parser->insertProduction(COLON2_PAIR, rhsPair, 0, gatherAny0);
+	}
       //
       //	Syntax for parentheses:
       //	<FooTerm> ::= ( <FooTerm> )
+      //	We don't support this for kinds that contain bubbles to avoid
+      //	a trivial ambiguity with parentheses inside the bubble.
       //
       if (bubbleComponents.find(i) == bubbleComponents.end())
 	{
@@ -935,6 +1115,11 @@ MixfixModule::makeSymbolProductions()
 	}
       else if (si.symbolType.hasFlag(SymbolType::ASSOC))
 	{
+	  //
+	  //	Associative prefix syntax.
+	  //
+	  //	<fooTerm> ::= symbolName ( <fooAssocList> )
+	  //
 	  rhs.append(leftParen);
 	  rhs.append(nonTerminal(domainComponentIndex(symbol, 0), ASSOC_LIST_TYPE));
 	  rhs.append(rightParen);
@@ -942,6 +1127,11 @@ MixfixModule::makeSymbolProductions()
 	}
       else
 	{
+	  //
+	  //	Regular prefix syntax.
+	  //
+	  //	<fooTerm> ::= symbolName ( <barTerm> , <bazTerm> , ... , <quuxTerm> )
+	  //
 	  rhs.append(leftParen);
 	  gather.resize(0);
 	  for (int j = 0; j < nrArgs; j++)
@@ -962,18 +1152,17 @@ MixfixModule::makeSymbolProductions()
 	      //	An iter symbol with the same name may have already created a nonterminal;
 	      //	otherwise we need to create one.
 	      //
-	      pair<IntMap::iterator, bool> p = iterSymbols.insert(IntMap::value_type(symbol->id(), GARBAGE));
+	      pair<IntMap::iterator, bool> p =
+		iterSymbols.insert(IntMap::value_type(symbol->id(), GARBAGE));
 	      if (p.second)
-		p.first->second = newNonTerminal();
+		p.first->second = parser->newNonTerminal();
 	      rhs.clear();
 	      rhs.append(p.first->second);
 	      rhs.append(leftParen);
 	      rhs.append(rangeNt);
 	      rhs.append(rightParen);
-	      gather.resize(0);
-	      gather.append(PREFIX_GATHER);
-	      gather.append(PREFIX_GATHER);
-	      parser->insertProduction(rangeNt, rhs, 0, gather, MixfixParser::MAKE_ITER, i);
+	      parser->insertProduction(rangeNt, rhs, 0, gatherPrefixPrefix,
+				       MixfixParser::MAKE_ITER, i);
 	      //
 	      //	If symbol is a successor symbol, add the syntax
 	      //	<rangeTerm> ::= SMALL_NAT
@@ -1020,6 +1209,30 @@ MixfixModule::makeSymbolProductions()
 		rhs[j] = t;
 	    }
 	  parser->insertProduction(rangeNt, rhs, si.prec, si.gather, MixfixParser::MAKE_TERM, i);
+	  //
+	  //	Special syntax for objects with empty attribute set.
+	  //
+	  if (si.symbolType.getBasicType() == SymbolType::OBJECT_CONSTRUCTOR_SYMBOL)  // has the id-hook
+	    {
+	      Symbol* attributeSetSymbol = safeCast(ObjectConstructorSymbol*, symbol)->getAttributeSetSymbol();
+	      if (attributeSetSymbol)  // has the op-hook
+		{
+		  SymbolType st =  getSymbolType(attributeSetSymbol);
+		  if (st.hasAllFlags(SymbolType::ASSOC | SymbolType::COMM | SymbolType::LEFT_ID | SymbolType::RIGHT_ID))  // correct attributes
+		    {
+		      int lastUnderscoreIndex = nrItems - 1;
+		      while (si.mixfixSyntax[lastUnderscoreIndex] != underscore)
+			--lastUnderscoreIndex;
+		      for (int j = lastUnderscoreIndex + 1; j < nrItems; ++j)
+			rhs[j - 1] = si.mixfixSyntax[j];
+		      rhs.resize(nrItems - 1);
+		      Vector<int> gather(2);
+		      gather[0] = si.gather[0];
+		      gather[1] = si.gather[1];
+		      parser->insertProduction(rangeNt, rhs, si.prec, gather, MixfixParser::MAKE_OBJECT_WITH_EMPTY_ATTRIBUTE_SET, i);
+		    }
+		}
+	    }
 	}
     }
 }
@@ -1080,9 +1293,8 @@ MixfixModule::makeLabelProductions()
 #endif
 
   static Vector<int> rhs(1);
-  FOR_EACH_CONST(i, set<int>, potentialLabels)
+  for (int label : potentialLabels)
     {
-      int label = *i;
       rhs[0] = label;
       parser->insertProduction(LABEL, rhs, 0, emptyGather, MixfixParser::MAKE_LABEL, label);
     }
@@ -1242,19 +1454,21 @@ MixfixModule::makeSpecialProductions()
     rhs[0] = t;
     parser->insertProduction(ENDS_IN_COLON_NT, rhs, 0, emptyGather);
   }
-  {
-    FOR_EACH_CONST(i, IntMap, iterSymbols)
-      {
-	int iterSymbolNameCode = i->first;
-	string str("[ ");
-	str += Token::name(iterSymbolNameCode);
-	str += " ]";
-	int t = Token::encode(str.c_str());
-	parser->insertIterSymbolTerminal(iterSymbolNameCode, t);
-	rhs[0] = t;
-	parser->insertProduction(i->second, rhs, 0, emptyGather);
-      }
-  }
+  for (const auto& i : iterSymbols)
+    {
+      //
+      //	For each iter symbol f we create a special terminal
+      //	[ f ] which represents f^n for any positive interger n.
+      //
+      int iterSymbolNameCode = i.first;
+      string str("[ ");
+      str += Token::name(iterSymbolNameCode);
+      str += " ]";
+      int t = Token::encode(str.c_str());
+      parser->insertIterSymbolTerminal(iterSymbolNameCode, t);
+      rhs[0] = t;
+      parser->insertProduction(i.second, rhs, 0, emptyGather);
+    }
 }
 
 void
@@ -1264,10 +1478,11 @@ MixfixModule::makePolymorphProductions()
   cout << "<Polymorph productions>\n";
 #endif
 
-  static Vector<int> rhs;
-  static Vector<int> gather;
-  static Vector<int> mixfixRhs;
-  static Vector<int> underscores;
+  static Vector<int> rhs;  // prefix/assoc prefix syntax
+  static Vector<int> gather;  // for regular prefix syntax
+  static Vector<int> mixfixRhs;  // use user supplied gather
+  static Vector<int> underscores;  // keep track of underscores in user syntax
+  static Vector<int> iterRhs(4);  // iter syntax
 
   const Vector<ConnectedComponent*>& components = getConnectedComponents();
   int nrComponents = components.length();
@@ -1275,32 +1490,67 @@ MixfixModule::makePolymorphProductions()
   for (int i = 0; i < nrPolymorphs; i++)
     {
       Polymorph& p = polymorphs[i];
+      SymbolInfo& si = p.symbolInfo;
       //cerr << Token::name(p.name) << ' ' << p.polyArgs << endl;
       int nrArgs = p.domainAndRange.length() - 1;
-      //int type = p.symbolInfo.symbolType.getBasicType();
+      int name = p.name.code();;
       //
       //	Prefix syntax.
       //
       rhs.resize(1);
-      rhs[0] = p.name.code();
+      rhs[0] = name;
       gather.resize(nrArgs);
       if (nrArgs > 0)
 	{
-	  rhs.resize(2 + 2 * nrArgs);
-	  rhs[1] = leftParen;
-	  for (int j = 0; j < nrArgs; j++)
+	  if (si.symbolType.hasFlag(SymbolType::ASSOC))
 	    {
-	      gather[j] = PREFIX_GATHER;
-	      const Sort* s = p.domainAndRange[j];
-	      if (s != 0)
-		rhs[2 + 2 * j] = nonTerminal(s, TERM_TYPE);
-	      rhs[3 + 2 * j] = (j == nrArgs - 1) ? rightParen : comma;
+	      //
+	      //	Flattened associative syntax.
+	      //	This only makes sense if all arguments are poly.
+	      //	rhs[2] will be filled out in instantiation loop.
+	      //
+	      rhs.resize(4);
+	      rhs[1] = leftParen;
+	      rhs[3] = rightParen;
+	    }
+	  else
+	    {
+	      if (si.symbolType.hasFlag(SymbolType::ITER))
+		{
+		  //
+		  //	First we need a nonterminal for f^n if we didn't already make one.
+		  //
+		  pair<IntMap::iterator, bool> q =
+		    iterSymbols.insert(IntMap::value_type(name, GARBAGE));
+		  if (q.second)
+		    q.first->second = parser->newNonTerminal();
+		  //
+		  //	<fooTerm> ::= f^n ( <fooTerm> )
+		  //    rhs[2] will be filled out in instantiation loop.
+		  //
+		  iterRhs[0] = q.first->second;
+		  iterRhs[1] = leftParen;
+		  iterRhs[3] = rightParen;
+		}
+	      //
+	      //	Regular prefix syntax.
+	      //
+	      rhs.resize(2 + 2 * nrArgs);
+	      rhs[1] = leftParen;
+	      for (int j = 0; j < nrArgs; j++)
+		{
+		  gather[j] = PREFIX_GATHER;
+		  const Sort* s = p.domainAndRange[j];
+		  if (s != 0)
+		    rhs[2 + 2 * j] = nonTerminal(s, TERM_TYPE);
+		  rhs[3 + 2 * j] = (j == nrArgs - 1) ? rightParen : comma;
+		}
 	    }
 	}
       //
       //	Mixfix syntax.
       //
-      int nrItems = p.symbolInfo.mixfixSyntax.length();
+      int nrItems = si.mixfixSyntax.length();
       if (nrItems > 0)
 	{
 	  mixfixRhs.resize(nrItems);
@@ -1320,24 +1570,49 @@ MixfixModule::makePolymorphProductions()
 	    }
 	}
       //
-      //	Now duplicate syntax in each connected component.
+      //	Now duplicate syntax in each connected component that does not contain bubbles.
       //
-     for (int j = 0; j < nrComponents; j++)
+      for (int j = 0; j < nrComponents; j++)
 	{
 	  if (bubbleComponents.find(j) == bubbleComponents.end())
 	    {
-	      int termNt = nonTerminal(j, TERM_TYPE);
+	      int termNt = nonTerminal(j, TERM_TYPE);  // nonterminal for instantiation kind
 	      const Sort* s = p.domainAndRange[nrArgs];
 	      int rangeNt = (s == 0) ? termNt : nonTerminal(s, TERM_TYPE);
-	      for (int k = 0; k < nrArgs; k++)
+
+	      if (si.symbolType.hasFlag(SymbolType::ASSOC))
 		{
-		  if (p.domainAndRange[k] == 0)
-		    rhs[2 + 2 * k] = termNt;
+		  //
+		  //	Flattened prefix syntax.
+		  //
+		  rhs[2] = nonTerminal(j, ASSOC_LIST_TYPE);
+		  parser->insertProduction(rangeNt, rhs, 0, gatherPrefix,
+					   MixfixParser::MAKE_POLYMORPH, j, i);
 		}
-	      parser->insertProduction(rangeNt, rhs, 0, gather,
-				       MixfixParser::MAKE_POLYMORPH, j, i);
+	      else
+		{
+		  if (si.symbolType.hasFlag(SymbolType::ITER))
+		    {
+		      iterRhs[2] = rangeNt;
+		      parser->insertProduction(rangeNt, iterRhs, 0, gatherPrefixPrefix,
+					       MixfixParser::MAKE_POLYMORPH_ITER, j, i);
+		    }
+		  //
+		  //	Regular prefix syntax.
+		  //
+		  for (int k = 0; k < nrArgs; k++)
+		    {
+		      if (p.domainAndRange[k] == 0)
+			rhs[2 + 2 * k] = termNt;
+		    }
+		  parser->insertProduction(rangeNt, rhs, 0, gather,
+					   MixfixParser::MAKE_POLYMORPH, j, i);
+		}
 	      if (nrItems > 0)
 		{
+		  //
+		  //	Mixfix syntax.
+		  //
 		  for (int k = 0; k < nrArgs; k++)
 		    {
 		      if (p.domainAndRange[k] == 0)
@@ -1362,7 +1637,7 @@ MixfixModule::makeBubbleProductions()
   cout << "<Bubble productions>\n";
 #endif
 
-#ifdef BUBBLES
+  //#ifdef BUBBLES
   int nrBubbleSpecs = bubbleSpecs.length();
   for (int i = 0; i < nrBubbleSpecs; i++)
     {
@@ -1375,5 +1650,5 @@ MixfixModule::makeBubbleProductions()
 				     b.excludedTokens,
 				     i);
     }
-#endif
+  //#endif
 }

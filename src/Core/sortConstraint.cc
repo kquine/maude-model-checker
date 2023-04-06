@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -63,6 +63,9 @@ SortConstraint::check()
                    QUOTE(index2Variable(getUnboundVariables().min())) <<
                    " is used before it is bound in membership axiom:\n" <<
                    this);
+      //
+      //	No legitimate use for such sort constraints so mark it as bad.
+      //
       markAsBad();
     }
 }

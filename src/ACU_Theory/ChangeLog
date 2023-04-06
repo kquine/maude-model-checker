@@ -1,3 +1,265 @@
+2023-03-20  Steven Eker  <eker@pup>
+
+	* ACU_UnificationSubproblem2.cc
+	(ACU_UnificationSubproblem2::buildAndSolveDiophantineSystem):
+	globalAdvisoryFlag -> globalDebugFlag (2 places)
+	(ACU_UnificationSubproblem2::buildSolution): globalAdvisoryFlag ->
+	globalDebugFlag
+
+2023-03-10  Steven Eker  <eker@pup>
+
+	* ACU_ExtensionInfo.cc: initialize lastNonZero to avoid a compiler
+	warning
+
+===================================Maude143===========================================
+
+2021-09-21  Steven Eker  <eker@pup>
+
+	* ACU_ExtensionInfo.cc (ACU_ExtensionInfo::copy): take const arg
+
+	* ACU_ExtensionInfo.hh (class ACU_ExtensionInfo): updated decl for copy()
+
+===================================Maude137===========================================
+
+2021-06-02  Steven Eker  <eker2@eker10>
+
+	* ACU_UnificationSubproblem2.cc
+	(ACU_UnificationSubproblem2::solve): added comment to explain why
+	we need a separate branch for the identity case
+
+2021-05-11  Steven Eker  <eker2@eker10>
+
+	* ACU_Subproblem.cc (ACU_Subproblem::ACU_Subproblem): deleted
+	commented out print statement
+	(ACU_Symbol::~ACU_Subproblem): deleted commented out print
+	statement
+
+	* ACU_Symbol.cc (ACU_Symbol::normalize): undid previous
+	range-based for loop because iterators aren't safe here due to
+	garbage collector
+	(ACU_Symbol::copyReduceSubtermsAndNormalize): ditto
+	(ACU_Symbol::reduceArgumentsAndNormalize): ditto
+	(ACU_Symbol::eqRewrite): ditto
+	(ACU_Symbol::memoStrategy): ditto
+
+2021-04-14  Steven Eker  <eker2@eker10>
+
+	* ACU_TreeMatcher.cc (ACU_LhsAutomaton::eliminateBoundVariables):
+	use range-based for loop
+	(ACU_LhsAutomaton::eliminateGroundAliens): use range-based for
+	loop
+	(ACU_LhsAutomaton::eliminateGroundedOutAliens): use range-based
+	for loop
+	(ACU_LhsAutomaton::makeHighMultiplicityAssignment): use
+	range-based for loop
+	(ACU_LhsAutomaton::greedyPureMatch): use range-based for loop
+	(ACU_LhsAutomaton::treeMatch): use range-based for loop (2 places)
+
+	* ACU_Term.cc (ACU_Term::compileRhs2): use range-based for loop
+	(ACU_Term::ACU_Term): pre-increment (three versions)
+	(ACU_Term::deepSelfDestruct): use range-based for loop
+	(ACU_Term::normalizeAliensAndFlatten): pre-increment; pre-decrement
+	(ACU_Term::normalize): pre-increment; pre-decrement
+
+	* ACU_UnificationSubproblem2.cc
+	(ACU_UnificationSubproblem2::addUnification): use range-based for
+	loop (3 places)
+	(ACU_UnificationSubproblem2::unsolve): use range-based for loop
+	(ACU_UnificationSubproblem2::buildAndSolveDiophantineSystem): use
+	range-based for loop
+	(ACU_UnificationSubproblem2::markReachableNodes): pre-increment
+	(ACU_UnificationSubproblem2::addUnification): use range-based for
+	loop to clear multiplicities
+	(ACU_UnificationSubproblem2::unsolve): use range-based for loop to
+	clear multiplicities
+	(ACU_UnificationSubproblem2::computeLegalSelections): use
+	range-based for loop (2 places)
+
+2021-04-13  Steven Eker  <eker2@eker10>
+
+	* ACU_Matcher.cc (ACU_LhsAutomaton::handleElementVariables):
+	insert missing & in range-based for loop
+
+	* ACU_Symbol.cc (ACU_Symbol::stackArguments): use range-based for
+	loop
+	(ACU_Symbol::termify): use range-based for loop
+	(ACU_Symbol::computeGeneralizedSort): use range-based for loop
+	(ACU_Symbol::computeGeneralizedSort2): use range-based for loop
+	(ACU_Symbol::normalize): use range-based for loop
+	(ACU_Symbol::copyReduceSubtermsAndNormalize): use range-based for
+	loop
+	(ACU_Symbol::makeDagNode): pre-increment (both versions)
+	(ACU_Symbol::reduceArgumentsAndNormalize): use range-based for
+	loop
+	(ACU_Symbol::eqRewrite): use range-based for loop
+	(ACU_Symbol::memoStrategy): use range-based for loop
+	(ACU_Symbol::stackArguments): pre-decrement (2 places)
+	(ACU_Symbol::makeCanonical): pre-increment
+	(ACU_Symbol::makeCanonicalCopy): pre-increment
+	(ACU_Symbol::makeDagNode): replace ACU_DagNode::Pair with ACU_Pair
+	(2 places, both versions)
+	(ACU_Symbol::termify): replace ACU_DagNode::Pair with ACU_Pair (2
+	places)
+	(ACU_Symbol::makeCanonicalCopy): replace ACU_DagNode::Pair with
+	ACU_Pair
+
+	* ACU_Subproblem.cc (ACU_Subproblem): use range-based for loop (2
+	places)
+	(ACU_Subproblem::solveVariables): use range-based for loop
+	(ACU_Subproblem::solveVariables): pre-increment
+	(ACU_Subproblem::noVariableCase): pre-increment (4 places)
+	(ACU_Subproblem::extractDiophantineSystem): pre-increment (3
+	places)
+	(ACU_Subproblem::computeAssignment): pre-increment (2 places)
+	(ACU_Subproblem::fillOutExtensionInfo): pre-increment
+
+	* ACU_Matcher.cc (ACU_LhsAutomaton::eliminateGroundAliens): use
+	range-based for loop
+	(ACU_LhsAutomaton::eliminateGroundedOutAliens): use range-based
+	for loop
+	(ACU_LhsAutomaton::computeTotalMultiplicity): use range-based for
+	loop
+	(ACU_LhsAutomaton::match): use range-based for loop
+	(ACU_LhsAutomaton::fullMatch): use range-based for loop (2 places)
+	(ACU_LhsAutomaton::handleElementVariables): use range-based for
+	loop
+
+2021-04-12  Steven Eker  <eker2@eker10>
+
+	* ACU_LazySubproblem.cc (~ACU_LazySubproblem): use range-based for
+	loop
+
+	* ACU_ExtensionInfo.cc (ACU_ExtensionInfo::buildMatchedPortion):
+	use range-based for loop (3 places)
+	(ACU_ExtensionInfo::buildUnmatchedPortion): use range-based for
+	loop; rewrote excessively complicated first loop
+
+	* ACU_DagNode.cc (ACU_DagNode::markArguments): use range-based for
+	loop
+	(ACU_DagNode::getHashValue): use range-based for loop
+	(ACU_DagNode::clearCopyPointers2): use range-based for loop
+	(ACU_DagNode::argVecComputeBaseSort): use range-based for loop
+	(ACU_DagNode::computeBaseSortForGroundSubterms): use range-based
+	for loop
+	(ACU_DagNode::insertVariables2): use range-based for loop
+	(ACU_DagNode::indexVariables2): use range-based for loop
+	(ACU_DagNode::matchVariableWithExtension): post increment
+
+===================================Maude136===========================================
+
+2020-12-11  Steven Eker  <eker2@eker10>
+
+	* ACU_DagNode.cc (ACU_DagNode::instantiate2): take and pass
+	maintainInvariants arg; only normalize and compute sort for ground
+	dag if true
+	(ACU_DagNode::instantiate2): remove comment about computing sorts
+	in the narrowing case since now maintainInvariants will be false
+	(ACU_DagNode::instantiateWithCopies2): pass maintainInvariants =
+	false to instantiate()
+
+	* ACU_DagNode.hh (class ACU_DagNode): updated decl for
+	instantiate2()
+
+===================================Maude132===========================================
+
+2020-06-18  Steven Eker  <eker2@eker10>
+
+	* ACU_UnificationSubproblem2.cc
+	(ACU_UnificationSubproblem2::buildSolution): turn cerr into
+	DebugInfo()
+
+2020-06-06  Steven Eker  <eker2@eker10>
+
+	* ACU_UnificationSubproblem2.cc
+	(ACU_UnificationSubproblem2::buildAndSolveDiophantineSystem):
+	DebugAdvisory() -> DebugInfo()
+
+2020-06-05  Steven Eker  <eker2@eker10>
+
+	* ACU_UnificationSubproblem2.cc
+	(ACU_UnificationSubproblem2::buildSolution): don't
+	computeBaseSortForGroundSubterms for identity here
+
+	* ACU_Symbol.cc (ACU_Symbol::makeUnificationSubproblem): call
+	computeBaseSortForGroundSubterms for identity here
+
+	* ACU_UnificationSubproblem2.hh (class
+	ACU_UnificationSubproblem2): added decl for reuseVariable()
+
+	* ACU_UnificationSubproblem2.cc
+	(ACU_UnificationSubproblem2::setMultiplicity): replace variables
+	bound to aliens by their bindings
+	(ACU_UnificationSubproblem2::setMultiplicity): unmade above change
+	and added detail comment with example to explain why eager
+	replacement fails
+	(ACU_UnificationSubproblem2::reuseVariable): added
+	(ACU_UnificationSubproblem2::buildSolution): added optional code
+	to use reuseVariable() optimization
+
+2020-06-02  Steven Eker  <eker2@eker10>
+
+	* ACU_DagNode.cc (ACU_DagNode::computeSolvedForm2): added DebugEnter()
+
+2020-05-27  Steven Eker  <eker2@eker10>
+
+	* ACU_UnificationSubproblem2.cc
+	(ACU_UnificationSubproblem2::solve): added DebugInfo()s for branch
+	on hasUnequalLeftIdentityCollapse()
+
+===================================Maude128a===========================================
+
+2019-12-03  Steven Eker  <eker@mu>
+
+	* ACU_BaseDagNode.cc (getSize): use safeCastNonNull<>() (2 places)
+
+===================================Maude127===========================================
+
+2019-11-11  Steven Eker  <eker@mu>
+
+	* ACU_DagNode.cc (computeBaseSortForGroundSubterms): no early termination
+	in UNIMPLEMENTED case
+
+	* ACU_UnificationSubproblem2.cc (buildSolution): pass false to
+	warnAboutUnimplemented arg
+
+	* ACU_DagNode.hh (ACU_BaseDagNode): updated decl for
+	computeBaseSortForGroundSubterms()
+
+	* ACU_DagNode.cc (computeBaseSortForGroundSubterms): take and pass
+	warnAboutUnimplemented flag; simplified
+
+===================================Maude125===========================================
+
+2019-07-24  Steven Eker  <eker@mu>
+
+	* ACU_Term.cc (compareArguments): added comment about static analyzer
+	warning
+
+	* ACU_DagNode.cc (compareArguments): added comment about static analyzer
+	warning
+
+===================================Maude123===========================================
+
+2019-05-23  Steven Eker  <eker@mu.csl.sri.com>
+
+	* ACU_UnificationSubproblem2.cc (buildSolution): fix compiler warnings
+
+===================================Maude121===========================================
+
+2018-10-23  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_Symbol.hh (AssociativeSymbol): added decl for
+	stackPhysicalArguments()
+
+	* ACU_Symbol.cc (stackPhysicalArguments): added
+
+2018-10-18  Steven Eker  <eker@install.csl.sri.com>
+
+	* ACU_DagNode.cc (copyWithReplacement): added Assert() on
+	argIndex
+
+===================================Maude119===========================================
+
 2017-04-20  Steven Eker  <eker@install.csl.sri.com>
 
 	* ACU_Matcher.cc (buildBipartiteGraph): fixed symmetric bug

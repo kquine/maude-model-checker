@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -499,8 +499,8 @@ S_Symbol::computeGeneralizedSort2(const SortBdds& sortBdds,
   //
   //	Finally we append our result BDDs to the output BDDs.
   //
-  FOR_EACH_CONST(i, Vector<Bdd>, resultBdds)
-    outputBdds.append(*i);
+  for (const Bdd& b : resultBdds)
+    outputBdds.append(b);
 }
 
 bool

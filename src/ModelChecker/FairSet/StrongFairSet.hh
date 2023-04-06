@@ -15,7 +15,7 @@ namespace modelChecker {
 class StrongFairSet: public FairSet
 {
 public:
-	struct Goal;
+	class Goal;
 	struct Bad;
 
 	StrongFairSet() = default;

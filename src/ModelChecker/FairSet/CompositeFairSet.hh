@@ -37,7 +37,7 @@ private:
 	vector<unique_ptr<FairSet>> fairSets;	// own the fairsets!
 };
 
-class CompositeFairSet::Goal: public FairSet::Goal
+struct CompositeFairSet::Goal: public FairSet::Goal
 {
 public:
 	Goal(const CompositeFairSet& fs, const AbstractFairnessTable& table);

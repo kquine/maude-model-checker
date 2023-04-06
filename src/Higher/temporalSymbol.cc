@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -113,6 +113,14 @@ TemporalSymbol::getSymbolAttachments(Vector<const char*>& purposes,
   APPEND_SYMBOL(purposes, symbols, untilSymbol);
   APPEND_SYMBOL(purposes, symbols, releaseSymbol);
   FreeSymbol::getSymbolAttachments(purposes, symbols);
+}
+
+DagNode*
+TemporalSymbol::negate(DagNode* original) const
+{
+  static Vector<DagNode*> arg(1);
+  arg[0] = original;
+  return notSymbol->makeDagNode(arg);
 }
 
 int

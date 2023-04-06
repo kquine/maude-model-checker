@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -51,7 +51,11 @@ RewritingContext::ruleRewrite(Int64 limit)
 				" unrewritable = " << d->isUnrewritable() <<
 				" unstackable = " << d->isUnstackable());
 		  */
-		  d->symbol()->stackArguments(d, redexStack, nextToExplore);
+		  //
+		  //	Only want to try rewriting one copy of repeated arguments
+		  //	where possible.
+		  //
+		  d->symbol()->stackPhysicalArguments(d, redexStack, nextToExplore);
 		  ++nextToExplore;
 		  int len = redexStack.length();
 		  if (len > finish)
@@ -142,10 +146,10 @@ RewritingContext::fairContinue(Int64 limit)
   return;  // no more redexes 
 }
 
-
 void
-RewritingContext::fairStart(Int64 gas)
+RewritingContext::fairStart(Int64 limit, Int64 gas)
 {
+  rewriteLimit = limit;
   gasPerNode = gas;
   currentIndex = 0;
   lazyMarker = NONE;
@@ -153,15 +157,6 @@ RewritingContext::fairStart(Int64 gas)
   reduce();
   redexStack.clear();
   redexStack.append(RedexPosition(rootNode, UNDEFINED, UNDEFINED, true));
-}
-
-bool
-RewritingContext::fairTraversal(Int64& limit)
-{
-  rewriteLimit = limit;
-  (void) fairTraversal();
-  limit = rewriteLimit;
-  return progress;  // progress during current traversal - not necessarily during this call
 }
 
 bool

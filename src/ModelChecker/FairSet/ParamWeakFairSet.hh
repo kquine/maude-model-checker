@@ -15,7 +15,7 @@ namespace modelChecker {
 class ParamWeakFairSet: public WeakFairSet, public ParamRealizedSet
 {
 public:
-	struct Goal;
+	class Goal;
 
 	ParamWeakFairSet(WeakFairSet&& f);
 

@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 2004 SRI International, Menlo Park, CA 94025, USA.
 
@@ -318,8 +318,8 @@ MatrixOpSymbol::eqRewrite(DagNode* subject, RewritingContext& context)
 	    goto fail;
 
 	  row[0] = -v;
-	  FOR_EACH_CONST(j, SparseVector, r)
-	    row[j->first + 1] = j->second;
+	  for (auto& j : r)
+	    row[j.first + 1] = j.second;
 	  ds.insertEqn(row);
 	}
       for (int j = 1; j < rowSize; j++)

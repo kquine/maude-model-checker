@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -28,9 +28,8 @@ void
 MixfixModule::getParserStats(int& nrNonterminals, int& nrTerminals, int& nrProductions)
 {
   makeGrammar();
-  //int nrKinds = getConnectedComponents().length();
-  nrNonterminals = - nextNonTerminal;
-  nrTerminals = parser->getTokenSet().cardinality();
+  nrNonterminals = parser->getNrNonTerminals();
+  nrTerminals = parser->getNrTerminals();
   nrProductions = parser->getNrProductions();
 }
 
@@ -105,10 +104,53 @@ MixfixModule::parseTerm2(const Vector<Token>& bubble,
   return r;
 }
 
+StrategyExpression*
+MixfixModule::parseStrategyExpr(const Vector<Token>& bubble, int begin, int end)
+{
+  makeGrammar(true);
+
+  int r = parseSentence(bubble, STRATEGY_EXPRESSION, begin, end);
+
+  if (r <= 0)
+    {
+      IssueWarning(LineNumber(bubble[0].lineNumber()) <<
+        ": no parse for strategy expression\n" << bubble << " .");
+      return 0;
+    }
+  StrategyExpression *e1, *e2;
+  parser->makeStrategyExprs(e1, e2);
+
+  if (r > 1)
+    {
+      IssueWarning(LineNumber(bubble[0].lineNumber()) <<
+        ": multiple distinct parses for strategy expression.");
+      delete e2;
+    }
+  return e1;
+}
+
+int
+MixfixModule::parseStrategyExpr2(const Vector<Token>& bubble,
+				 StrategyExpression*& parse1,
+				 StrategyExpression*& parse2,
+				 int& firstBad)
+{
+  makeGrammar(true);
+  int r = parser->parseSentence(bubble, STRATEGY_EXPRESSION, firstBad,
+			0, bubble.length());
+
+  if (r > 0)
+    parser->makeStrategyExprs(parse1, parse2);
+  return r;
+}
+
 void
 MixfixModule::parseStatement(const Vector<Token>& bubble)
 {
-  makeGrammar();
+  // Activate strategy language productions only in strategy definitions
+  bool complexFlag = bubble[0].code() == sd || bubble[0].code() == csd;
+  makeGrammar(complexFlag);
+
   int r = parseSentence(bubble, STATEMENT);
   if (r <= 0)
     {
@@ -234,7 +276,30 @@ MixfixModule::parseVariantUnifyCommand(const Vector<Token>& bubble,
       IssueWarning(LineNumber(bubble[0].lineNumber()) <<
 		   ": multiple distinct parses for command.");
     }
-  parser->makeVariantUnifyCommand(lhs, rhs, constraints);
+  parser->makeVariantUnifyOrMatchCommand(lhs, rhs, constraints);
+  return true;
+}
+
+bool
+MixfixModule::parseVariantMatchCommand(const Vector<Token>& bubble,
+				       Vector<Term*>& lhs,
+				       Vector<Term*>& rhs,
+				       Vector<Term*>& constraints)
+{
+  makeGrammar(true);
+  int r = parseSentence(bubble, VARIANT_MATCH_COMMAND);
+  if (r <= 0)
+    {
+      IssueWarning(LineNumber(bubble[0].lineNumber()) <<
+		   ": no parse for command.");
+      return false;
+    }
+  if (r > 1)
+    {
+      IssueWarning(LineNumber(bubble[0].lineNumber()) <<
+		   ": multiple distinct parses for command.");
+    }
+  parser->makeVariantUnifyOrMatchCommand(lhs, rhs, constraints);
   return true;
 }
 

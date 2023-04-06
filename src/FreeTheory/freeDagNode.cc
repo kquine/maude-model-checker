@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2020 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -283,39 +283,32 @@ FreeDagNode::copyWithReplacement(Vector<RedexPosition>& redexStack,
 //
 
 DagNode::ReturnResult
-FreeDagNode::computeBaseSortForGroundSubterms()
+FreeDagNode::computeBaseSortForGroundSubterms(bool warnAboutUnimplemented)
 {
-  bool ground = true;
+  ReturnResult result = GROUND;
   Symbol* s = symbol();
   int nrArgs = s->arity();
   DagNode** args = argArray();
   for (int i = 0; i < nrArgs; ++i)
     {
-      switch (args[i]->computeBaseSortForGroundSubterms())
-	{
-	case NONGROUND:
-	  {
-	    ground = false;
-	    break;
-	  }
-	case UNIMPLEMENTED:
-	  return UNIMPLEMENTED;
-	default:
-	  ;  // to avoid compiler warning
-	}
+      ReturnResult r = args[i]->computeBaseSortForGroundSubterms(warnAboutUnimplemented);
+      if (r > result)
+	result = r;  // NONGROUND dominates GROUND, UNIMPLEMENTED dominates NONGROUND
     }
-  if (ground)
+  if (result == GROUND)
     {
       s->computeBaseSort(this);
       setGround();
-      return GROUND;
     }
-  return NONGROUND;
+  return result;
 }
 
 bool
-FreeDagNode::computeSolvedForm2(DagNode* rhs, UnificationContext& solution, PendingUnificationStack& pending)
+FreeDagNode::computeSolvedForm2(DagNode* rhs,
+				UnificationContext& solution,
+				PendingUnificationStack& pending)
 {
+  DebugEnter(this << " vs " << rhs);
   Symbol* s = symbol();
   if (s == rhs->symbol())
     {
@@ -350,6 +343,7 @@ FreeDagNode::computeSolvedForm2(DagNode* rhs, UnificationContext& solution, Pend
 	  break;
 	}
       solution.unificationBind(r, purified);
+      DebugInfo("bound " << (DagNode*) r << " to " << purified);
       return true;
     }
   return pending.resolveTheoryClash(this, rhs);
@@ -361,6 +355,7 @@ FreeDagNode::purifyAndOccurCheck(DagNode* repVar,
 				 PendingUnificationStack& pending,
 				 FreeDagNode*& purified)
 {
+  DebugEnter("this = " << this << "  representative variable = " << repVar);
   //
   //	For the moment we allow ground terms to be impure since they can't take part in cycles.
   //
@@ -494,7 +489,7 @@ FreeDagNode::insertVariables2(NatSet& occurs)
 }
 
 DagNode*
-FreeDagNode::instantiate2(const Substitution& substitution)
+FreeDagNode::instantiate2(const Substitution& substitution, bool maintainInvariants)
 {
   //  cout << "FreeDagNode::instantiate2 enter " << this << endl;
   Symbol* s = symbol();
@@ -504,7 +499,7 @@ FreeDagNode::instantiate2(const Substitution& substitution)
   DagNode** args = argArray();
   for (int i = 0; i < nrArgs; ++i)
     {
-      if (DagNode* n = args[i]->instantiate(substitution))
+      if (DagNode* n = args[i]->instantiate(substitution, maintainInvariants))
 	{
 	  //
 	  //	Argument changed under instantiation - need to make a new
@@ -535,26 +530,25 @@ FreeDagNode::instantiate2(const Substitution& substitution)
 	  for (++i; i < nrArgs; ++i)
 	    {
 	      DagNode* a = args[i];
-	      if (DagNode* n = a->instantiate(substitution))
+	      if (DagNode* n = a->instantiate(substitution, maintainInvariants))
 		a = n;
 	      if (!(a->isGround()))
 		ground = false;
 	      args2[i] = a;
 	    }
 	  //
-	  //	Now if all the arguments of the new dagnode are ground
+	  //	Now we are maintaining invariants and if all the
+	  //	arguments of the new dagnode are ground
 	  //	we compute its base sort.
 	  //
-	  if (ground)
+	  if (maintainInvariants && ground)
 	    {
 	      s->computeBaseSort(d);
 	      d->setGround();
 	    }
-	  // cout << "FreeDagNode::instantiate2 exit " << d << endl;
 	  return d;	
 	}
     }
-  //  cout << "FreeDagNode::instantiate2 exit null" << endl;
   return 0;  // unchanged
 }
 
@@ -598,7 +592,7 @@ FreeDagNode::instantiateWithReplacement(const Substitution& substitution,
 	  n = p[i];
 	  DagNode* c = (eagerCopies != 0) && s->eagerArgument(i) ?
 	    n->instantiateWithCopies(substitution, *eagerCopies) :  // eager case - use copies of bindings
-	    n->instantiate(substitution);  // lazy case - ok to use original unifier bindings
+	    n->instantiate(substitution, false);  // lazy case - ok to use original unifier bindings
 	  if (c != 0)  // changed under substitutition
 	    n = c;
 	}
@@ -620,7 +614,7 @@ FreeDagNode::instantiateWithCopies2(const Substitution& substitution, const Vect
       DagNode* a = args[i];
       DagNode* n = s->eagerArgument(i) ?
 	a->instantiateWithCopies(substitution, eagerCopies) :
-	a->instantiate(substitution);  // lazy case - ok to use original unifier bindings since we won't evaluate them
+	a->instantiate(substitution, false);  // lazy case - ok to use original unifier bindings since we won't evaluate them
 
       if (n != 0)
 	{
@@ -655,7 +649,7 @@ FreeDagNode::instantiateWithCopies2(const Substitution& substitution, const Vect
 	      DagNode* a = args[i];
 	      DagNode* n = s->eagerArgument(i) ?
 		a->instantiateWithCopies(substitution, eagerCopies) :
-		a->instantiate(substitution);  // lazy case - ok to use original unifier bindings since we won't evaluate them
+		a->instantiate(substitution, false);  // lazy case - ok to use original unifier bindings since we won't evaluate them
 	      if (n != 0)
 		a = n;
 	      //if (!(a->isGround()))

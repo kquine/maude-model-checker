@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2006 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -55,6 +55,8 @@
   MACRO(rl, "rl")
   MACRO(crl, "crl")
   MACRO(cq, "cq")
+  MACRO(sd, "sd")
+  MACRO(csd, "csd")
   MACRO(ifToken, "if")
   MACRO(colon, ":")
   MACRO(colon2, "::")
@@ -66,11 +68,14 @@
   MACRO(owise, "owise")
   MACRO(variant, "variant")
   MACRO(narrowing, "narrowing")
+  MACRO(dnt, "dnt")
   MACRO(print, "print")
   MACRO(lessThan, "<")
   MACRO(partial, "~>")
   MACRO(th, "th")
   MACRO(fth, "fth")
+  MACRO(sth, "sth")
+  MACRO(oth, "oth")
   MACRO(mod, "mod")
   MACRO(fmod, "fmod")
   MACRO(smod, "smod")
@@ -78,6 +83,8 @@
   MACRO(obj, "obj")
   MACRO(endth, "endth")
   MACRO(endfth, "endfth")
+  MACRO(endsth, "endsth")
+  MACRO(endoth, "endoth")
   MACRO(endm, "endm")
   MACRO(endfm, "endfm")
   MACRO(endsm, "endsm")
@@ -92,10 +99,13 @@
   MACRO(including, "including")
   MACRO(us, "us")
   MACRO(usingToken, "using")
+  MACRO(gb, "gb")
+  MACRO(generatedBy, "generated-by")
   MACRO(fail, "fail")
   MACRO(idle, "idle")
   MACRO(all, "all")
   MACRO(top, "top")
+  MACRO(one, "one")
   MACRO(notToken, "not")
   MACRO(test, "test")
   MACRO(tryToken, "try")
@@ -112,6 +122,10 @@
   MACRO(match, "match")
   MACRO(xmatch, "xmatch")
   MACRO(amatch, "amatch")
+  MACRO(matchrew, "matchrew")
+  MACRO(xmatchrew, "xmatchrew")
+  MACRO(amatchrew, "amatchrew")
+  MACRO(by, "by")
   MACRO(irreducible, "irreducible")
     //
     //	Special hook identifier tokens.

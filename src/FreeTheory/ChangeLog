@@ -1,3 +1,50 @@
+2023-03-14  Steven Eker  <eker@pup>
+
+	* freeDagNode.hh (class FreeDagNode): union Word deleted; use
+	MemoryBlock::MachineWord in place of Word
+	(FreeDagNode::argArray): use needToCallDtor() rather than looking at
+	symbol()->arity()
+	(FreeDagNode::getArgument): use argArray()
+
+2023-01-30  Steven Eker  <eker@pup>
+
+	* freeTerm.hh (FreeTerm::replaceArgument): added
+
+===================================Maude139===========================================
+
+2020-12-11  Steven Eker  <eker2@eker10>
+
+	* freeDagNode.cc (FreeDagNode::instantiate2): handle
+	maintainInvariants arg
+	(FreeDagNode::instantiateWithReplacement): pass maintainInvariants
+	= false to instantiate()
+	(FreeDagNode::instantiateWithCopies2): pass maintainInvariants =
+	false to instantiate()
+
+	* freeDagNode.hh (class FreeDagNode): updated decl for instantiate2()
+
+===================================Maude132===========================================
+
+2020-05-19  Steven Eker  <eker2@eker10>
+
+	* freeDagNode.cc (FreeDagNode::computeSolvedForm2): added
+	DebugEnter() and DebugInfo()
+	(FreeDagNode::purifyAndOccurCheck): added DebugEnter()
+
+===================================Maude128a===========================================
+
+2019-11-11  Steven Eker  <eker@mu>
+
+	* freeDagNode.cc (computeBaseSortForGroundSubterms): take
+	 warnAboutUnimplemented flag; simplified
+	(computeBaseSortForGroundSubterms): no early termination in
+	UNIMPLEMENTED case
+
+	* freeDagNode.hh (DagNode): updated decl for
+	computeBaseSortForGroundSubterms()
+
+===================================Maude125===========================================
+
 2017-04-20  Steven Eker  <eker@install.csl.sri.com>
 
 	* freeTerm.cc (partialCompareArguments): use EQUAL rather 0

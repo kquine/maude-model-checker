@@ -1,3 +1,209 @@
+2023-03-21  Steven Eker  <eker@pup>
+
+	* AU_UnificationSubproblem2.hh (class AU_UnificationSubproblem2):
+	comment out PendingUnificationStack::Marker preSolveState
+
+2023-03-10  Steven Eker  <eker@pup>
+
+	* AU_FullMatcher.cc (AU_LhsAutomaton::fullMatchRigidBlock2):
+	initialize sf to avoid compiler warning
+
+	* AU_GreedyMatcher.cc (AU_LhsAutomaton::greedyMatchRigidBlock2):
+	initialize sf to avoid compiler warning
+
+===================================Maude143===========================================
+
+2021-09-21  Steven Eker  <eker@pup>
+
+	* AU_ExtensionInfo.cc (AU_ExtensionInfo::copy): take const arg
+
+	* AU_ExtensionInfo.hh (class AU_ExtensionInfo): updated decl for copy()
+
+2021-05-11  Steven Eker  <eker2@eker10>
+
+	* AU_Term.cc (AU_Term::deepSelfDestruct): use range-based for loop
+	(AU_Term::normalize): use range-based for loop
+	(AU_Term::findEagerVariables): use range-based for loop
+	(AU_Term::markEagerArguments): use range-based for loop
+	(AU_Term::analyseCollapses2): use range-based for loop (2 places)
+	(AU_Term::findAvailableTerms): use range-based for loop
+	(AU_Term::compileRhs2): added typedef IntPair; use range-based for
+	loop
+	(AU_Term::dump): use range-based for loop
+
+	* AU_UnificationSubproblem2.cc: deleted FOR_EACH() macro
+
+	* AU_Normalize.cc (AU_DagNode::normalizeAtTop): use range-based
+	for loop
+
+2021-05-10  Steven Eker  <eker2@eker10>
+
+	* AU_Symbol.cc (AU_Symbol::computeBaseSort): use range-based for
+	loop (2 places)
+	(AU_Symbol::termify): use range-based for loop
+	(AU_Symbol::computeGeneralizedSort): use range-based for loop
+
+	* AU_Matcher.cc (AU_LhsAutomaton::matchRigidPart): use range-based
+	for loop
+
+	* AU_DagNode.cc (AU_DagNode::copyEagerUptoReduced2): pre-increment
+	(AU_DagNode::copyAll2): pre-increment
+	(AU_DagNode::copyWithReplacement): pre-increment
+	(AU_DagNode::copyWithReplacement): pre-increment
+	(AU_DagNode::partialReplace): pre-increment (2 places)
+	(AU_DagNode::partialConstruct): pre-increment (3 places)
+	(AU_DagNode::computeBaseSortForGroundSubterms): use range-based
+	for loop
+	(AU_DagNode::insertVariables2): use range-based for loop
+	(AU_DagNode::indexVariables2): use range-based for loop
+	(AU_DagNode::instantiateWithReplacement): pre-increment
+
+	* AU_DequeMatcher.cc (AU_LhsAutomaton::dequeMatch): use
+	range-based for loop
+
+	* AU_DagNode.cc (AU_DagNode::getHashValue): use range-based for
+	loop
+	(AU_DagNode::compareArguments): use range-based for loop
+	(AU_DagNode::markArguments): use range-based for loop
+	(AU_DagNode::clearCopyPointers2): use range-based for loop
+
+===================================Maude136===========================================
+
+2020-12-11  Steven Eker  <eker2@eker10>
+
+	* AU_DagNode.cc (AU_DagNode::instantiate2): take and pass
+	maintainInvariants flag; only normalize and compute sorts for
+	ground dag if maintainInvariants == true
+	(AU_DagNode::instantiateWithCopies2): pass maintainInvariants =
+	false to instantiate()
+
+	* AU_DagNode.hh (class AU_DagNode): updated decl for
+	instantiate2()
+
+===================================Maude132===========================================
+
+2020-07-01  Steven Eker  <eker2@eker10>
+
+	* AU_UnificationSubproblem2.cc
+	(AU_UnificationSubproblem2::addUnification): fix bug where
+	inserting into markedSubterms wasn't conditional on the equation
+	being marked
+
+2020-06-30  Steven Eker  <eker2@eker10>
+
+	* AU_UnificationSubproblem2.cc
+	(AU_UnificationSubproblem2::addUnification): record marked
+	subterms
+	(AU_UnificationSubproblem2::makeWordSystem): require marked
+	subterms to take at most one thing
+
+	* AU_UnificationSubproblem2.hh (class AU_UnificationSubproblem2):
+	added data member markedSubterms
+
+2020-06-23  Steven Eker  <eker2@eker10>
+
+	* AU_UnificationSubproblem2.cc
+	(AU_UnificationSubproblem2::addUnification): check rhs alien in
+	case it our identity
+	(AU_UnificationSubproblem2::makeWordSystem): use range-base for
+	loops for inserting assignments and equations; added DebugInfo()s
+
+	* AU_UnificationSubproblem2.hh (class AU_UnificationSubproblem2):
+	added typedef for Word
+
+	* AU_UnificationSubproblem2.cc
+	(AU_UnificationSubproblem2::makeWordSystem): insert null equation
+
+	* AU_Symbol.cc (AU_Symbol::canResolveTheoryClash): added
+
+	* AU_Symbol.hh (class AU_Symbol): uncomment
+	canResolveTheoryClash() decl
+
+	* AU_DagNode.cc (AU_DagNode::computeSolvedForm2): added
+	DebugEnter()
+
+	* AU_UnificationSubproblem2.hh (class AU_UnificationSubproblem2):
+	added data member nullEquations
+
+	* AU_UnificationSubproblem2.cc
+	(AU_UnificationSubproblem2::dagToAbstract): return NONE for
+	variables bound to our identity
+	(AU_UnificationSubproblem2::assocToAbstract): handle NONE as
+	an index
+	(AU_UnificationSubproblem2::addUnification): rewritten to handle
+	empty abstract words and NULL abstract rhs
+
+2020-06-19  Steven Eker  <eker2@eker10>
+
+	* AU_Symbol.cc (AU_Symbol::makeUnificationSubproblem): call
+	computeBaseSortForGroundSubterms() for identity if it exists and
+	it hasn't been done yet
+
+2020-06-18  Steven Eker  <eker2@eker10>
+
+	* AU_UnificationSubproblem2.cc
+	(AU_UnificationSubproblem2::buildSolution): if we have the empty
+	word, don't fall into the general case
+	(AU_UnificationSubproblem2::buildSolution): restructure to
+	resemble ACU version; use unificationBind() for binding unbound
+	variables to identity
+
+	* AU_DagNode.cc (AU_DagNode::computeBaseSortForGroundSubterms):
+	warn about unimplemented for one-sided identity
+	(AU_DagNode::computeSolvedForm2): bail on the one-sided identity
+	case
+
+	* AU_UnificationSubproblem2.cc
+	(AU_UnificationSubproblem2::buildSolution): deal with empty
+	assignment in solution by assigning identity dag
+
+2020-06-12  Steven Eker  <eker2@eker10>
+
+	* AU_UnificationSubproblem2.cc
+	(AU_UnificationSubproblem2::makeWordSystem): call setTakeEmpty()
+	for subterms that could possibly unify with our identity
+
+2020-06-08  Steven Eker  <eker2@eker10>
+
+	* AU_UnificationSubproblem2.cc
+	(AU_UnificationSubproblem2::buildSolution): added code to reuse
+	variables that would otherwise get assigned a single fresh variable
+
+2020-06-06  Steven Eker  <eker2@eker10>
+
+	* AU_UnificationSubproblem2.cc
+	(AU_UnificationSubproblem2::dagToAbstract): added comment to
+	explain why we can't use a variables binding because it would
+	amount to eager replacement and potentially cause nontermination
+
+2020-05-29  Steven Eker  <eker2@eker10>
+
+	* AU_DagNode.cc (AU_DagNode::computeBaseSortForGroundSubterms):
+	commented out the code warning about AU unimplemented
+	(AU_DagNode::computeSolvedForm2): comment out code that bails on
+	AU case
+
+===================================Maude128a===========================================
+
+2019-09-11  Steven Eker  <eker@mu>
+
+	* AU_UnificationSubproblem2.cc (makeWordSystem): use
+	setUpperBound() and setTheoryConstraint() rather than
+	addConstraint()
+
+===================Maude124 (integrated with Maude128 on 2019-12-18)==================
+
+2019-11-11  Steven Eker  <eker@mu>
+
+	* AU_DagNode.cc (computeBaseSortForGroundSubterms): take and pass
+	warnAboutUnimplemented; simplified
+	(computeBaseSortForGroundSubterms): no early termination in UNIMPLEMENTED case
+
+	* AU_DagNode.hh (AU_BaseDagNode): updated decl for
+	computeBaseSortForGroundSubterms()
+
+===================================Maude125===========================================
+
 2017-04-25  Steven Eker  <eker@install.csl.sri.com>
 
 	* AU_DagNode.cc (instantiateWithCopies2): fixed bug where return d was

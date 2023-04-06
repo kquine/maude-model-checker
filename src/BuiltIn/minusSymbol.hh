@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -44,6 +44,7 @@ public:
   DagNode* makeNegDag(const mpz_class& integer);
   bool isNeg(const DagNode* dagNode) const;
   const mpz_class& getNeg(const DagNode* dagNode, mpz_class& result) const;
+  DagNode* makeIntDag(const mpz_class& integer);
   Term* makeIntTerm(const mpz_class& integer);
   bool isNeg(/* const */ Term* term) const;
   const mpz_class& getNeg(/* const */ Term* term, mpz_class& result) const;

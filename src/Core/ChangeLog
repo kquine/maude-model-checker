@@ -1,3 +1,421 @@
+2023-03-14  Steven Eker  <eker@pup>
+
+	* label.hh: updated comment because labels can be put on all statements
+
+===================================Maude143===========================================
+
+2023-03-10  Steven Eker  <eker@pup>
+
+	* memoryBlock.hh (class MemoryBlock): make data member filler protected
+	rather than private to avoid compiler warnings
+	(class MemoryBlock): union MachineWord moved here from /Utility/macros.hh
+	(class MemoryBlock): make union MachineWord so classes that use MemoryCell
+	can get its size
+
+===================================Maude141===========================================
+
+2023-02-20  Steven Eker  <eker@pup>
+
+	* symbolMap.hh (class SymbolMap): added pure virtual member function
+	preserveVariableIndices()
+
+2023-02-16  Steven Eker  <eker@pup>
+
+	* memoTable.hh: updated comment to explain why we need to derive from
+	ModuleItem
+
+===================================Maude141===========================================
+
+2023-01-31  Steven Eker  <eker@pup>
+
+	* module.hh (class Module): added decls for checkSortConstraint(),
+	checkEquation(), checkRule()
+
+	* module.cc (Module::checkSortConstraint): added to split off check()
+	(Module::checkEquation): added to split off check()
+	(Module::checkRule): added to split off check()
+
+===================================Maude139===========================================
+
+2023-01-19  Steven Eker  <eker@pup>
+
+	* termBag.hh (class TermBag): use Term::LessThan to define TermSet
+	(class TermBag): deleted struct LtTerm
+
+2021-03-24  Steven Eker  <eker2@eker10>
+
+	* rewritingContext.cc (RewritingContext::interruptSeen): added
+
+	* rewritingContext.hh (class RewritingContext): added decl for
+	interruptSeen()
+
+2020-12-11  Steven Eker  <eker2@eker10>
+
+	* pendingUnificationStack.cc
+	(PendingUnificationStack::makeNewSubproblem): pass
+	maintainInvariants = true to instantiate()
+
+===================================Maude132===========================================
+
+2020-09-22  Steven Eker  <eker2@eker10>
+
+	* unificationContext.cc (UnificationContext::dump): added
+
+	* unificationContext.hh (class UnificationContext): added decl for
+	dump()
+
+2020-09-21  Steven Eker  <eker2@eker10>
+
+	* compoundCycleSubproblem.cc (CompoundCycleSubproblem::solve):
+	added a comment to explain why resolving a single arc can be
+	sufficient
+	(CompoundCycleSubproblem::solve): added explanation and examples
+	to show why cyclic identities must be considered
+
+	* compoundCycleSubproblem.hh (class CompoundCycleSubproblem):
+	deleted decl for addUnification()
+
+	* compoundCycleSubproblem.cc
+	(CompoundCycleSubproblem::addUnification): deleted
+
+===================================Maude130===========================================
+
+2020-08-28  Steven Eker  <eker2@eker10>
+
+	* freshVariableGenerator.hh (class FreshVariableGenerator): added
+	decl for isFreshVariableName()
+
+2020-07-29  Steven Eker  <eker2@eker10>
+
+	* rewritingContext.cc (RewritingContext::markReachableNodes):
+	limited contexts exist across garbage collects after all because
+	UnifierFilter periodically needs to allow garbage collection to
+	avoid a huge accumulation of matching garbage
+	(RewritingContext::markReachableNodes): use range-based for loop
+	to traverse redexStack
+
+2020-07-15  Steven Eker  <eker2@eker10>
+
+	* rewritingContext.hh (class RewritingContext): set a default
+	substitutionSize of 0 for the limited context ctor
+
+	* rewritingContext.cc (RewritingContext::markReachableNodes): use
+	isLimited()
+	(RewritingContext::markReachableNodes): added CantHappen() for
+	limited contexts
+
+	* sortConstraintTable.cc
+	(SortConstraintTable::constrainToSmallerSort2): check isLimited()
+	before proceeding
+
+	* rewritingContext.hh (class RewritingContext): added a more
+	detail comment to explain the need for limited use rewriting
+	contexts
+	(RewritingContext::RewritingContext): updated comment
+	(RewritingContext::isLimited): added
+
+===================================Maude129===========================================
+
+2020-06-23  Steven Eker  <eker2@eker10>
+
+	* pendingUnificationStack.cc
+	(PendingUnificationStack::resolveTheoryClash): added DebugEnter()
+
+2020-04-14  Steven Eker  <eker2@eker9>
+
+	* rewritingContext.cc
+	(RewritingContext::blockAndHandleInterrupts): added
+
+	* rewritingContext.hh (class RewritingContext): added decl
+	for blockAndHandleInterrupts()
+
+2020-03-17  Steven Eker  <eker2@eker9>
+
+	* module.cc (Module): clean for loop
+	(Module::closeSortSet): clean for loop
+
+	* variableInfo.cc (VariableInfo::variable2Index): clean up
+	for loop (both versions)
+	(VariableInfo::computeIndexRemapping): clean up for loops;
+	use range-based for loop
+	(VariableInfo::variableNameConflict): use range-based for loop
+
+	* stackMachineRhsCompiler.cc
+	(StackMachineRhsCompiler::compileInstructionSequence):
+	use range based for loop
+	(StackMachineRhsCompiler::dump): use range based for loops
+
+	* sortTable.cc: (SortTable::kindLevelDeclarationsOnly):
+	use range based for loop
+	(SortTable::findMinSortIndex): use range based for loop
+	(SortTable::dumpSortDiagram): clean loops
+	(SortTable::compileOpDeclarations): tidy loop
+	(SortTable::computeBddVector): use range based for loop
+
+	* sortErrorAnalysis.cc (SortTable::sortErrorAnalysis):
+	clean up for loops
+
+	* sortBdds.cc (SortBdds::SortBdds): use range based
+	for loop
+	(SortBdds::operatorCompose): use range based for loop
+	* ruleTable.cc (RuleTable::resetEachRule): use range
+	based for loop
+
+	* rhsBuilder.cc (RhsBuilder::recordInfo): use range
+	based for loop
+
+2020-03-16  Steven Eker  <eker2@eker9>
+
+	* pendingUnificationStack.cc (PendingUnificationStack):
+	use range based for loop
+	(PendingUnificationStack::markReachableNodes): use
+	range based for loop
+	(PendingUnificationStack::makeNewSubproblem): use
+	range based for loop
+	(PendingUnificationStack::findCycleFrom): use range based
+	for loop
+
+	* memoTable.cc (MemoTable::memoEnter): use range based
+	for loop
+
+	* equationTable.cc (EquationTable::applyReplace): use
+	range based for loop
+	(EquationTable::applyReplaceNoOwise): use range based
+	for loop
+	(EquationTable::resetEachEquation): use range based
+	for loop
+	(EquationTable::dumpEquationTable): use range based
+	for loop
+
+2020-03-10  Rubén Rubio  <rubenrub@ucm.es>
+
+       * module.cc (closeTheory): do strategy definitions indexing here
+
+       * strategyDefinition (StrategyDefinition): strategy definition
+       indexing has been moved to Module::closeTheory not to index bad
+       definitions, since they are checked later
+       (check): ignore nonexec definitions and fixed typo
+
+===================================Maude128a===========================================
+
+2020-02-10  Steven Eker  <eker@mu>
+
+	* module.cc (indexEquations): use range-based for loops
+	(indexEquation): use range-based for loop
+	(indexSortConstraints): use use range-based for loops
+	(stackMachineCompile): use range-based for loop
+	(insertLateSymbol): use use range-based for loops
+	(closeFixUps): use use range-based for loops
+	(closeSortSet): added comment as to why using a range-based
+	for loop will fail
+	(resetRules): use range-based for loop
+	(reset): use range-based for loop
+	(Module): use range-based for loops
+
+	* preEquation.cc (preprocess): remove commented out AdvisoryCheck()
+	warning about change of operational semantics between Maude 1.0 and
+	Maude 2.0 (Maude 1.0 did not allow rewriting of terms at the error sort)
+	(PreEquation): code cleaning and more detailed comment
+
+	* sortConstraint.cc (check): added comment to exlain why we use markAsBad()
+	here
+
+	* equation.cc (compile): deleted commented out old stackMachine code
+	(check): added comment to exlain why we use markAsBad() here
+
+	* rule.cc (check): deleted commented out markAsBad() call; added
+	comment to explain why we don't call markAsBad() anymore
+
+===================================Maude128===========================================
+
+2019-12-06  Steven Eker  <eker@mu>
+
+	* ruleTable.cc (saveHiddenState, restoreHiddenState): commented out
+
+	* ruleTable.hh (R): commented out decls for saveHiddenState(),
+	restoreHiddenState()
+	(R): commented out typedef IntStack and nextRuleStack data member
+
+	* module.hh (BadFlag): commented out decls for
+	saveHiddenState()/restoreHiddenState()
+
+	* module.cc (saveHiddenState): commented out
+	(restoreHiddenState): commented out
+
+===================================Maude127a===========================================
+
+2019-12-04  Steven Eker  <eker@mu>
+
+	* termBag.cc (insertBuiltTerm): use DebugSave() to avoid warning
+	about unused variable (2 places)
+
+2019-12-03  Steven Eker  <eker@mu>
+
+	* variableInfo.cc (variableNameConflict): use safeCastNonNull<>()
+
+	* unificationContext.cc (makeFreshVariable): use safeCastNonNull<>()
+	(unificationBind): use safeCastNonNull<>() (3 places)
+
+	* sortTable.cc (buildSortDiagram): use safeCastNonNull<>()
+
+	* ctorDiagram.cc (buildCtorDiagram): use safeCastNonNull<>()
+
+	* sortErrorAnalysis.cc (sortErrorAnalysis): use safeCastNonNull<>()
+
+===================================Maude127===========================================
+
+2019-11-11  Steven Eker  <eker@mu>
+
+	* compoundCycleSubproblem.cc (solve): pass false to
+	warnAboutUnimplemented arg
+
+	* preEquation.cc (getLhsDag): pass true to warnAboutUnimplemented arg
+
+===================================Maude125===========================================
+
+2019-10-10  Rubén Rubio  <rubenrub@ucm.es>
+
+	* strategyDefinition.cc (check): removed argument to TermSet constructor
+
+	* termSet.cc: reverted the changes on 2018-03-23
+
+	* termSet.hh: reverted the changes on 2018-03-23
+
+2019-07-02  Steven Eker  <eker@mu>
+
+	* memoryCell.hh (allocateMemoryCell): rewritten
+	(MemoryBlock): slowNew() now returns MemoryCell*
+
+	* memoryCell.cc (slowNew): return MemoryCell* rather than void*
+	(slowNew): don't set nextNode before we return since caller will
+	do this
+
+	* memoryInfo.hh (clearAllExceptMarked): fix bug where we were setting
+	to MARKED rather than ANDing with MARKED
+
+2019-07-01  Steven Eker  <eker@mu>
+
+	* core.hh: added classes MemoryInfo and MemoryBlock
+
+	* memoryCell.hh: rewritten to use MemoryInfo and MemoryBlock
+
+	* memoryInfo.hh: created
+
+	* memoryBlock.hh: created
+
+===================================Maude123===========================================
+
+2019-01-30  Steven Eker  <eker@install.csl.sri.com>
+
+	* module.hh (insertSymbol): fix bad Assert() caught by
+	new compiler
+
+===================================Maude121===========================================
+
+2018-10-23  Steven Eker  <eker@install.csl.sri.com>
+
+	* run.cc (ruleRewrite): use stackPhysicalArguments()
+
+2018-09-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* rewritingContext.hh (transferCount): becomes
+	transferCountFrom()
+
+2018-09-21  Steven Eker  <eker@install.csl.sri.com>
+
+	* freshVariableGenerator.hh (F): don't have a default family for
+	getFreshVariableName()
+
+	* unificationContext.hh (SimpleRootContainer): remove default
+	value for variableFamily
+
+2018-09-19  Steven Eker  <eker@install.csl.sri.com>
+
+	* freshVariableGenerator.hh (F): updated decl for
+	variableNameConflict()
+
+===================================Maude119===========================================
+
+2018-09-17  Rubén Rubio <rubenrub@ucm.es>
+
+	* strategyDefinition.cc (check): build context specification
+
+	* strategyDefinition.hh: added contextSpec
+	(getContextSpec): added
+
+2018-06-22  Rubén Rubio  <rubenrub@ucm.es>
+
+	* rewritingContext.cc (traceStrategyCall): added
+
+	* rewritingContext.hh (traceStrategyCall, traceBeginSdTrial): added
+
+	* strategyDefinition.cc (check): fixed a bug, unbound variables in the
+	condition were ignored
+	(traceBeginTrial): call traceBeginSdTrial
+
+2018-06-11  Steven Eker  <eker@install.csl.sri.com>
+
+	* module.cc (closeTheory): converted commented out print into
+	DebugAdvisory()
+	(insertLateSymbol, closeTheory): deleted commented out calls
+	to finalizeSymbol()
+
+2018-05-29  Steven Eker  <eker@install.csl.sri.com>
+
+	* rewritingContext.cc (handleInterrupt): added
+
+	* rewritingContext.hh (SimpleRootContainer): added decl for
+	handleInterrupt();
+
+2018-05-25  Steven Eker  <eker@install.csl.sri.com>
+
+	* rewritingContext.hh (SimpleRootContainer): deleted decl for limit
+	version of fairTraversal(); make other version public
+	(SimpleRootContainer): updated decl for fairStart()
+
+	* run.cc (fairTraversal): delete limit version
+
+	* rewritingContext.hh (fairRestart): added
+
+	* run.cc (fairStart): take limit argument
+
+	* rewritingContext.hh (getProgress): added
+
+	* run.cc (fairTraversal): rewritten
+
+	* rewritingContext.hh (SimpleRootContainer): update decl for public
+	fairTraversal()
+
+===================================Maude117===========================================
+
+2018-03-23  Rubén Rubio  <rubenrub@ucm.es>
+
+	* core.hh: added classes StrategyDefinition and RewriteStrategy
+
+	* Makefile.am: added inclusion for StrategyLanguage
+
+	* module.cc (insertStrategy, insertStrategyDefinition): added
+	(~Module): delete strategies and its definitions
+	(closeTheory): compile strategy definitions
+
+	* module.hh (insertStrategy, insertStrategyDefinition, getStrategy, getStrategyDefinitions): added
+
+	* rewriteStrategy.cc: added
+
+	* rewriteStrategy.hh: added
+
+	* strategyDefinition.cc: added
+
+	* strategyDefinition.hh: added
+
+	* termSet.cc (TermSet): added. A boolean parameter to avoid comparing
+	the eager context flag when checking term equality. This is needed (at
+	least until a better solution is found) because how TermSet is used in
+	StrategyExpression::check.
+	(isEqual): the boolean parameter above is included.
+
+	* termSet.hh (TermSet): added.
+
 2017-06-12  Steven Eker  <eker@install.csl.sri.com>
 
 	* equation.hh (clearVariant): added
@@ -1880,7 +2298,7 @@
 
 	* symbolMap.hh (class SymbolMap): added decl for
 	makeTranslatedTerm()
-	
+
 ===================================Maude86b===========================================
 
 2005-01-19  Steven Eker  <eker@goo.csl.sri.com>
@@ -1949,10 +2367,10 @@
 
 2004-10-08  Steven Eker  <eker@goo.csl.sri.com>
 
-	* checkedArgVecIterator.hh (operator-, operator+, operator--) 
+	* checkedArgVecIterator.hh (operator-, operator+, operator--)
 	(operator++): added typename to pacify g++ 3.4.2
 
-	* checkedArgVecConstIterator.hh (operator++, operator--) 
+	* checkedArgVecConstIterator.hh (operator++, operator--)
 	(operator+, operator-): added typename to pacify g++ 3.4.2
 
 2004-10-07  Steven Eker  <eker@goo.csl.sri.com>
@@ -1967,14 +2385,14 @@
 	* connectedComponent.cc (findMaximalSorts): rewritten in a more
 	efficient and robust manner; pass back Vector<Sort*> rather than
 	Vector<int>
-	
+
 ===================================Maude85===========================================
 
 2004-07-29  Steven Eker  <eker@goo.csl.sri.com>
 
 	* rewritingContext.hh (class RewritingContext): made
 	markReachableNodes() protected rather than private
-	
+
 ===================================Maude84d===========================================
 
 2004-06-07  Steven Eker  <eker@goo.csl.sri.com>
@@ -1996,7 +2414,7 @@
 	* ruleTable.hh (class RuleTable): added decls for
 	saveHiddenState() and restoreHiddenState()
 	(class RuleTable): added data member nextRuleStack
-	
+
 ===================================Maude84c==================================
 
 2003-08-28  Steven Eker  <eker@goo.csl.sri.com>
@@ -2005,7 +2423,7 @@
 	applyReplaceNoOwise()
 
 	* equationTable.cc (applyReplaceNoOwise): added
-	
+
 ===================================Maude82==================================
 
 2003-07-24  Steven Eker  <eker@goo.csl.sri.com>
@@ -2019,9 +2437,9 @@
 
 	* ctorDiagram.cc (containsConstructor): fixed spelling of
 	consistency
-	
+
 ===================================Maude81==================================
-	
+
 2003-05-30  Steven Eker  <eker@goo.csl.sri.com>
 
 	* sortTable.hh (class SortTable): added decl for
@@ -2044,7 +2462,7 @@
 
 	* preEquation.cc (checkCondition): use
 	MemoryCell::okToCollectGarbage()
-	
+
 ===================================Maude80b===========================================
 
 2003-05-23  Steven Eker  <eker@goo.csl.sri.com>
@@ -2080,7 +2498,7 @@
 2003-05-13  Steven Eker  <eker@goo.csl.sri.com>
 
 	* rewritingContext.hh (copyProblemBindings): deleted
-	
+
 ===================================Maude80a===========================================
 
 2003-05-01  Steven Eker  <eker@goo.csl.sri.com>
@@ -2090,7 +2508,7 @@
 2003-04-14  Steven Eker  <eker@goo.csl.sri.com>
 
 	* sortTable.hh (class SortTable): made traverse() public
-	
+
 ===================================Maude80===========================================
 
 2003-03-27  Steven Eker  <eker@goo.csl.sri.com>
@@ -4155,7 +4573,7 @@
 
 	* module.hh (class Module): use NO_COPYING() macro
 	(class Module): added decl for closeFixUps();
-	
+
 ===================================Engine56==================================================
 
 2000-02-15  Steven Eker  <eker@goo.csl.sri.com>
@@ -4188,7 +4606,7 @@
 2000-01-31  Steven Eker  <eker@goo.csl.sri.com>
 
 	* sortTable.cc (generateSortDiagram): use struct Flags
-	
+
 ===================================Engine55==================================================
 
 2000-01-27  Steven Eker  <eker@goo.csl.sri.com>
@@ -4257,7 +4675,7 @@
 	(class MemoTable): added memo data member
 	(isMemoized): added
 	(MemoTable): take memoFlag arg
-	
+
 ===================================Engine53==================================================
 
 1999-10-26  Steven Eker  <eker@goo.csl.sri.com>
@@ -4371,7 +4789,7 @@
 	for constraintToExactSort()
 	(constrainToSmallerSort): commented out as temporary measure
 	(constrainToExactSort): added
-	
+
 ===================================Engine52=================================================
 
 1999-08-05  Steven Eker  <eker@goo.csl.sri.com>

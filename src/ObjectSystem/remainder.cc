@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -38,8 +38,8 @@ private:
 void
 ConfigSymbol::Remainder::markReachableNodes()
 {
-  FOR_EACH_CONST(i, Vector<DagNode*>, dagNodes)
-    (*i)->mark();
+  for (DagNode* d : dagNodes)
+    d->mark();
 }
 
 void

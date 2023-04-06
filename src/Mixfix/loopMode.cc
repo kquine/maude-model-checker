@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -32,25 +32,32 @@ Interpreter::loop(const Vector<Token>& subject)
       savedLoopSubject = subject;  // deep copy
       VisibleModule* fm = currentModule->getFlatModule();
       startUsingModule(fm);
-      doLoop(d, fm);
+      CacheableRewritingContext* context = new CacheableRewritingContext(d);
+      if (getFlag(EREWRITE_LOOP_MODE))
+	context->setObjectMode(ObjectSystemRewritingContext::EXTERNAL);
+      doLoop(context, fm);
     }
 }
 
 bool
 Interpreter::contLoop2(const Vector<Token>& input)
 {
-  CacheableRewritingContext* savedContext = safeCast(CacheableRewritingContext*, savedState);
+  //
+  //	We have no idea what if anything is left in savedState - could be
+  //	from a previous non loop command.
+  //
+  CacheableRewritingContext* savedContext = dynamic_cast<CacheableRewritingContext*>(savedState);
   if (savedContext != 0)
     {
       DagNode* d = savedContext->root();
       if (LoopSymbol* l = dynamic_cast<LoopSymbol*>(d->symbol()))
 	{
 	  VisibleModule* fm = savedModule;
-	  delete savedContext;
 	  savedState = 0;
 	  savedModule = 0;
 	  continueFunc = 0;
-	  doLoop(l->injectInput(d, input), fm);
+	  l->injectInput(d, input);
+	  doLoop(savedContext, fm);
 	  return true;
 	}
       else
@@ -58,6 +65,10 @@ Interpreter::contLoop2(const Vector<Token>& input)
     }
   else
     IssueWarning("no loop state.");
+  //
+  //	Clean up anything left in savedState that was unsuitable.
+  //
+  clearContinueInfo();
   return false;
 }
 
@@ -72,7 +83,10 @@ Interpreter::contLoop(const Vector<Token>& input)
 	{
 	  VisibleModule* fm = currentModule->getFlatModule();
 	  startUsingModule(fm);
-	  doLoop(d, fm);
+	  CacheableRewritingContext* context = new CacheableRewritingContext(d);
+	  if (getFlag(EREWRITE_LOOP_MODE))
+	    context->setObjectMode(ObjectSystemRewritingContext::EXTERNAL);
+	  doLoop(context, fm);
 	  if (contLoop2(savedInput))
 	    return;
 	}
@@ -81,16 +95,25 @@ Interpreter::contLoop(const Vector<Token>& input)
 }
 
 void
-Interpreter::doLoop(DagNode* d, VisibleModule* module)
+Interpreter::doLoop(CacheableRewritingContext* context, VisibleModule* module)
 {
-  CacheableRewritingContext* context = new CacheableRewritingContext(d);
   if (getFlag(AUTO_CLEAR_RULES))
     module->resetRules();
 #ifdef QUANTIFY_REWRITING
   quantify_start_recording_data();
 #endif
   Timer timer(getFlag(SHOW_LOOP_TIMING));
-  context->ruleRewrite(NONE);
+  //
+  //	Use chosen rewriting algorithm
+  //
+  if (getFlag(EREWRITE_LOOP_MODE))
+    {
+      context->fairStart(NONE, 1);
+      context->externalRewrite();
+    }
+  else
+    context->ruleRewrite(NONE);
+  
   timer.stop();
 #ifdef QUANTIFY_REWRITING
   quantify_stop_recording_data();
@@ -118,7 +141,9 @@ Interpreter::doLoop(DagNode* d, VisibleModule* module)
 
       savedState = context;
       savedModule = module;
-      continueFunc = &Interpreter::rewriteCont;
+      continueFunc = getFlag(EREWRITE_LOOP_MODE) ?
+	&Interpreter::eRewriteCont :
+	&Interpreter::rewriteCont;
     }
   UserLevelRewritingContext::clearDebug();  // even if we didn't start in debug mode
 }

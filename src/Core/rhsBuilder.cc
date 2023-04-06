@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -57,9 +57,9 @@ RhsBuilder::remapIndices(VariableInfo& variableInfo)
 bool
 RhsBuilder::recordInfo(StackMachineRhsCompiler& compiler)
 {
-  FOR_EACH_CONST(i, Vector<RhsAutomaton*>, automata)
+  for (RhsAutomaton* ra : automata)
     {
-      if (!((*i)->recordInfo(compiler)))
+      if (!(ra->recordInfo(compiler)))
 	return false;
     }
   return (lastAutomaton == 0) ? true : lastAutomaton->recordInfo(compiler);

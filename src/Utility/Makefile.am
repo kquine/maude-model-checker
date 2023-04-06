@@ -30,7 +30,8 @@ libutility_a_SOURCES = \
 	pigPug.cc \
 	wordLevel.cc \
 	wordSystem.cc \
-	rope.cc
+	rope.cc \
+	variableConstraint.cc
 
 noinst_HEADERS = \
 	bdd.hh \
@@ -67,7 +68,8 @@ noinst_HEADERS = \
 	wordLevel.hh \
 	wordSystem.hh \
 	rope.hh \
-	stack.hh
+	stack.hh \
+	variableConstraint.hh
 
 EXTRA_DIST = \
 	intContejeanDevie.cc \
@@ -75,6 +77,15 @@ EXTRA_DIST = \
 	mpzGcdInit.cc \
 	mpzGcdTrivial.cc \
 	mpzGcdBasedSolver.cc \
+	wordLevel-collapseCase.cc \
+	wordLevel-normalCase.cc \
 	wordLevel-simplifyAssignments.cc \
 	wordLevel-simplifyEquations.cc \
-	pigPug-cycleDetection.cc
+	wordLevel-null.cc \
+	wordLevel-selections.cc \
+	wordLevel-feasible.cc \
+	pigPug-cycleDetection.cc \
+	pigPug-search.cc \
+	pigPug-checks.cc \
+	pigPug-stack.cc \
+	pigPug-extract.cc

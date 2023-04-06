@@ -3,12 +3,16 @@
 #
 #	Initialize autoconf stuff.
 #
-AC_INIT(Maude, alpha115, [maude-bugs@lists.cs.illinois.edu])
+AC_INIT([Maude],[3.3],[maude-bugs@lists.cs.illinois.edu])
 #
 #	Allow directory names that look like macros.
 #
 m4_pattern_allow([AU_Persistent])
 m4_pattern_allow([AU_Theory])
+#
+#	Local macros.
+#
+AC_CONFIG_MACRO_DIRS([m4])
 #
 #	Figure out system we are building for and set $host shell variable.
 #
@@ -16,12 +20,12 @@ AC_CANONICAL_HOST
 #
 #	Initialize automake stuff.
 #
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([tar-ustar foreign])
 #
 #	Cause defines to be put in a header file rather than passed as
 #	compiler flags.
 #
-AC_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 #
 #	If the user set CFLAGS or CXXFLAGS we leave them alone.
 #	Otherwise we set them to -g -Wall to stop AC_PROG_CC and
@@ -57,12 +61,16 @@ if (test -z "$FLEX") then
 fi
 AC_SUBST(FLEX)
 #
+#	*** SYSTEM CALLS ***
+#
+AX_HAVE_PPOLL(AC_DEFINE([HAVE_PPOLL], [], [use ppoll()]))
+#
 #	*** LIBRARIES ***
 #
 #
 #	Figure out what libraries need to be linked in to use sockets.
 #
-AC_CHECK_LIB(nsl, inet_addr)
+#AC_CHECK_LIB(nsl, inet_addr)	# Adds unnecessary dependencies to the binaries in Linux
 AC_CHECK_LIB(socket, socket)
 #
 #	Check if user set particular Buddy library to use and if
@@ -76,8 +84,7 @@ AC_SUBST(BUDDY_LIB)
 #	Check to see if we should use Yices2 for SMT solving.
 #
 AC_ARG_WITH(yices2,
-	    AC_HELP_STRING([--with-yices2],
-                           [use Yices2 SMT solver library [default=yes]]),
+	    AS_HELP_STRING([--with-yices2],[use Yices2 SMT solver library [default=yes]]),
 			   [WITH_YICES2=$withval],
 			   [WITH_YICES2=yes])
 if (test $WITH_YICES2 = yes) then
@@ -97,8 +104,7 @@ fi
 #	Check to see if we should use CVC4 for SMT solving.
 #
 AC_ARG_WITH(cvc4,
-	    AC_HELP_STRING([--with-cvc4],
-                           [use CVC4 SMT solver library [default=no]]),
+	    AS_HELP_STRING([--with-cvc4],[use CVC4 SMT solver library [default=no]]),
 			   [WITH_CVC4=$withval],
 			   [WITH_CVC4=no])
 if (test $WITH_CVC4 = yes) then
@@ -123,8 +129,7 @@ fi
 #	Check to see if we should use Tecla for command line editing.
 #
 AC_ARG_WITH(tecla,
-	    AC_HELP_STRING([--with-tecla],
-                           [use Tecla command line editing library [default=yes]]),
+	    AS_HELP_STRING([--with-tecla],[use Tecla command line editing library [default=yes]]),
 			   [WITH_TECLA=$withval],
 			   [WITH_TECLA=yes])
 if (test $WITH_TECLA = yes) then
@@ -134,7 +139,12 @@ if (test $WITH_TECLA = yes) then
 #
   AC_DEFINE([USE_TECLA], [], [use Tecla command line editing library])
   if (test -z "$TECLA_LIBS") then
-    TECLA_LIBS="-ltecla -lcurses"
+#
+#	Find out where the curses functions live.
+#
+    AC_CHECK_LIB(tinfo, tputs, TECLA_LIBS="-ltecla -ltinfo",
+      [AC_CHECK_LIB(ncurses, tputs, TECLA_LIBS="-ltecla -lncurses",
+        [AC_CHECK_LIB(curses, tputs, TECLA_LIBS="-ltecla -lncurses", TECLA_LIBS="-ltecla")])])
   fi
 else
   TECLA_LIBS=""
@@ -144,8 +154,7 @@ AC_SUBST(TECLA_LIBS)
 #	Check to see if we should use libsigsegv to handle segmentation faults.
 #
 AC_ARG_WITH(libsigsegv,
-	    AC_HELP_STRING([--with-libsigsegv],
-                           [use libsigsegv to handle segmentation faults [default=yes]]),
+	    AS_HELP_STRING([--with-libsigsegv],[use libsigsegv to handle segmentation faults [default=yes]]),
 			   [WITH_LIBSIGSEGV=$withval],
 			   [WITH_LIBSIGSEGV=yes])
 if (test $WITH_LIBSIGSEGV = yes) then
@@ -181,7 +190,20 @@ AC_SUBST(GCC_LIBS)
 #	*** HEADERS ***
 #
 AC_LANG(C++)
-AC_HEADER_TIME 
+m4_warn([obsolete],
+[Update your code to rely only on HAVE_SYS_TIME_H,
+then remove this warning and the obsolete code below it.
+All current systems provide time.h; it need not be checked for.
+Not all systems provide sys/time.h, but those that do, all allow
+you to include it and time.h simultaneously.])dnl
+AC_CHECK_HEADERS_ONCE([sys/time.h])
+# Obsolete code to be removed.
+if test $ac_cv_header_sys_time_h = yes; then
+  AC_DEFINE([TIME_WITH_SYS_TIME],[1],[Define to 1 if you can safely include both <sys/time.h>
+	     and <time.h>.  This macro is obsolete.])
+fi
+# End of obsolete code.
+ 
 AC_CHECK_HEADERS(sys/time.h)
 AC_CHECK_HEADERS(math.h)
 AC_CHECK_HEADERS(ieeefp.h)
@@ -207,8 +229,7 @@ AC_CHECK_SIZEOF(void *)
 #	If we are not debugging, assume we are optimizing.
 #
 AC_ARG_ENABLE(debug,
-	      AC_HELP_STRING([--enable-debug],
-                             [no optimization, runtime checks, dump routines [default=no]]),
+	      AS_HELP_STRING([--enable-debug],[no optimization, runtime checks, dump routines [default=no]]),
 	      [DEBUGGING=$enableval],
 	      [DEBUGGING=no])
 
@@ -349,14 +370,10 @@ fi
 #
 #	Needed defines.
 #
-AC_DEFINE([SCP], [], [use MSCP10 calling conventions])
-AC_DEFINE([BUBBLES], [], [support bubbles when parsing])
-#
 #	Check to see if we should build the compiler.
 #
 AC_ARG_ENABLE(compiler,
-	      AC_HELP_STRING([--enable-compiler],
-                             [build the experimental integrated compiler [default=no]]),
+	      AS_HELP_STRING([--enable-compiler],[build the experimental integrated compiler [default=no]]),
 	      [COMPILER=$enableval],
 	      [COMPILER=no])
 if (test "$COMPILER" = yes) then
@@ -367,8 +384,7 @@ fi
 #	Check to see if we should support MOS oracles.
 #
 AC_ARG_ENABLE(mos,
-	      AC_HELP_STRING([--enable-mos],
-                             [support MOS oracles (DO NOT USE!) [default=no]]),
+	      AS_HELP_STRING([--enable-mos],[support MOS oracles (DO NOT USE!) [default=no]]),
 	      [MOS=$enableval],
 	      [MOS=no])
 if (test "$MOS" = yes) then
@@ -381,8 +397,8 @@ AM_CONDITIONAL(BUILD_COMPILER, test $COMPILER = yes)
 
 AC_CONFIG_FILES([Makefile
 	         src/Makefile
-		 src/3rdParty/Makefile
 		 src/Utility/Makefile
+		 src/Parser/Makefile
 		 src/Temporal/Makefile
 		 src/Interface/Makefile
 		 src/Core/Makefile
@@ -401,17 +417,20 @@ AC_CONFIG_FILES([Makefile
 		 src/ObjectSystem/Makefile
 		 src/Meta/Makefile
 		 src/FullCompiler/Makefile
-		 src/MSCP10/Makefile
 		 src/StrategyLanguage/Makefile
 		 src/Mixfix/Makefile
-                 src/ModelChecker/Makefile
 		 src/SMT/Makefile
+                 src/ModelChecker/Makefile
 		 src/Main/Makefile
 		 tests/Makefile
+		 tests/Corner/Makefile
 		 tests/BuiltIn/Makefile
 		 tests/Meta/Makefile
 		 tests/Misc/Makefile
 		 tests/ResolvedBugs/Makefile
+		 tests/StrategyLanguage/Makefile
+		 tests/ObjectOriented/Makefile
+		 doc/Makefile
 ])
 
 AC_OUTPUT

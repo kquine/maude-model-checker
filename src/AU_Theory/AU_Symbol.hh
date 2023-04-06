@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -82,7 +82,7 @@ public:
 
   UnificationSubproblem* makeUnificationSubproblem();
   // int unificationPriority() const;  // happy with default for the moment
-  //bool canResolveTheoryClash();  // default is false anyway
+  bool canResolveTheoryClash();
 
   //
   //	Hash cons stuff.

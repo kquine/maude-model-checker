@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -77,10 +77,10 @@ ACU_LazySubproblem::ACU_LazySubproblem(ACU_BaseDagNode* subject,
 
 ACU_LazySubproblem::~ACU_LazySubproblem()
 {
-  FOR_EACH_CONST(i, Vector<Alternative>, previous)
+  for (const Alternative& i : previous)
     {
-      delete i->difference;
-      delete i->subproblem;
+      delete i.difference;
+      delete i.subproblem;
     }
 }
 

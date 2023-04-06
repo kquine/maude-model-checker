@@ -32,7 +32,7 @@ public:
 	unique_ptr<TransitionIterator> makeTransitionIterator(const State& state) override;
 
 private:
-	friend class ProdTransitionIterator;
+	friend struct ProdTransitionIterator;
 
 	const unique_ptr<SA> systemAut;
 	const unique_ptr<PA> propertyAut;

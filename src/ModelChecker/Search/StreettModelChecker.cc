@@ -78,7 +78,7 @@ StreettModelChecker<PA>::findAcceptedSCC(queue<State>& region, FairSet::Bad* bad
 #ifdef TDEBUG
 								cout << "    #FIND";	stack.topSCC()->acc_fair->dump(cout);	cout << endl;
 #endif
-								return move(stack.topSCC());
+								return std::move(stack.topSCC());
 							}
 						}
 #ifdef TDEBUG

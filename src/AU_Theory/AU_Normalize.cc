@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -199,8 +199,8 @@ AU_DagNode::normalizeAtTop(bool dumb)
 	  if (d->symbol() == s)
 	    {
 	      ArgVec<DagNode*>& argArray2 = safeCast(AU_DagNode*, d)->argArray;
-	      FOR_EACH_CONST(j, ArgVec<DagNode*>, argArray2)
-		buffer[p++] = *j;
+	      for (DagNode* e : argArray2)
+		buffer[p++] = e;
 	    }
 	  else if (!(identity->equal(d) && disappear(s, i)))
 	    buffer[p++] = d;

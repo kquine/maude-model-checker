@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 2017 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 2017-2021 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,9 +36,13 @@
   MACRO(startSymbol, Symbol, 0)
   MACRO(currentSymbol, Symbol, 0)
   MACRO(endSymbol, Symbol, 0)
+  MACRO(hardSymbol, Symbol, 0)
+  MACRO(symbolicSymbol, Symbol, 0)
 
   MACRO(openFileMsg, FreeSymbol, 4)
   MACRO(openedFileMsg, Symbol, 3)
+  MACRO(removeFileMsg, FreeSymbol, 3)
+  MACRO(removedFileMsg, Symbol, 2)
 
   MACRO(getLineMsg, FreeSymbol, 2)
   MACRO(gotLineMsg, Symbol, 3)
@@ -56,5 +60,8 @@
   MACRO(positionGotMsg, Symbol, 3)
 
   MACRO(closeFileMsg, FreeSymbol, 2)
-  MACRO(closedFileMsg, Symbol, 3)
+  MACRO(closedFileMsg, Symbol, 2)
+
+  MACRO(makeLinkMsg, FreeSymbol, 2)
+  MACRO(madeLinkMsg, Symbol, 2)
   MACRO(fileErrorMsg, Symbol, 3)

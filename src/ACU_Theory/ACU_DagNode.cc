@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2021 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -86,9 +86,8 @@ size_t
 ACU_DagNode::getHashValue()
 {
   size_t hashValue = symbol()->getHashValue();
-  int nrArgs = argArray.length();
-  for (int i = 0; i < nrArgs; i++)  // user iterators?
-    hashValue = hash(hashValue, argArray[i].dagNode->getHashValue(), argArray[i].multiplicity);
+  for (const Pair& p : argArray)
+    hashValue = hash(hashValue, p.dagNode->getHashValue(), p.multiplicity);
   return hashValue;
 }
 
@@ -103,6 +102,12 @@ ACU_DagNode::compareArguments(const DagNode* other) const
       int r = len - d2->getTree().getSize();
       if (r != 0)
 	return r;
+      //
+      //	Because the lengths compare equal, we will iterate over
+      //	both the red-black tree and the ArgVec, only checking for
+      //	the end of the ArgVec, and not checking j.valid()
+      //	This will confuse static analyzers.
+      //
       ACU_FastIter j(d2->getTree());
       ArgVec<Pair>::const_iterator i = argArray.begin();
       const ArgVec<Pair>::const_iterator e = argArray.end();
@@ -118,7 +123,7 @@ ACU_DagNode::compareArguments(const DagNode* other) const
 	  ++i;
 	}
       while (i != e);
-      Assert(!j.valid(), "iterator problem");
+      Assert(!j.valid(), "iterator problem - didn't exhaust tree");
     }
   else
     {
@@ -157,9 +162,9 @@ ACU_DagNode::markArguments()
   //
   Symbol* s = symbol();
   DagNode* r = 0;
-  FOR_EACH_CONST(i, ArgVec<Pair>, argArray)
+  for (const Pair& p : argArray)
     {
-      DagNode* d = i->dagNode;
+      DagNode* d = p.dagNode;
       if (r == 0 && d->symbol() == s)
 	r = d;
       else
@@ -210,9 +215,8 @@ ACU_DagNode::clearCopyPointers2()
 {
   if (symbol()->getPermuteStrategy() == BinarySymbol::EAGER)
     {
-      int nrArgs = argArray.length();
-      for (int i = 0; i < nrArgs; i++)
-	argArray[i].dagNode->clearCopyPointers();
+      for (const Pair& p : argArray)
+	p.dagNode->clearCopyPointers();
     }
 }
 
@@ -243,6 +247,7 @@ DagNode*
 ACU_DagNode::copyWithReplacement(int argIndex, DagNode* replacement)
 {
   int nrArgs = argArray.length();
+  Assert(argIndex < nrArgs, "bad argIndex = " << argIndex << " when nrArgs = " << nrArgs);
   ACU_Symbol* s = symbol();
   ACU_DagNode* n = new ACU_DagNode(s, nrArgs);
   ArgVec<ACU_DagNode::Pair>& args2 = n->argArray;
@@ -408,7 +413,7 @@ ACU_DagNode::matchVariableWithExtension(int index,
   int totalSubjectMultiplicity = 0;
   int nrArgs = argArray.length();
   Vector<int> currentMultiplicity(nrArgs);
-  for (int i = 0; i < nrArgs; i++)
+  for (int i = 0; i < nrArgs; ++i)
     {
       int m = argArray[i].multiplicity;
       currentMultiplicity[i] = m;
@@ -436,10 +441,9 @@ ACU_DagNode::argVecComputeBaseSort() const
       if (!(uniSort->component()->errorFree()))
 	{
 	  int lastIndex = Sort::SORT_UNKNOWN;
-	  const ArgVec<Pair>::const_iterator e = argArray.end();
-	  for (ArgVec<Pair>::const_iterator i = argArray.begin(); i != e; ++i)
+	  for (const Pair& p : argArray)
 	    {
-	      int index = i->dagNode->getSortIndex();
+	      int index = p.dagNode->getSortIndex();
 	      Assert(index >= Sort::ERROR_SORT, "bad sort index");
 	      if (index != lastIndex)
 		{
@@ -476,38 +480,29 @@ ACU_DagNode::argVecComputeBaseSort() const
 //
 
 DagNode::ReturnResult
-ACU_DagNode::computeBaseSortForGroundSubterms()
+ACU_DagNode::computeBaseSortForGroundSubterms(bool warnAboutUnimplemented)
 {
-  ACU_Symbol* s = symbol();
-  bool ground = true;
-  int nrArgs = argArray.length();
-  for (int i = 0; i < nrArgs; ++i)
+  ReturnResult result = GROUND;
+  for (const Pair& p : argArray)
     {
-      switch (argArray[i].dagNode->computeBaseSortForGroundSubterms())
-	{
-	case NONGROUND:
-	  {
-	    ground = false;
-	    break;
-	  }
-	case UNIMPLEMENTED:
-	  return UNIMPLEMENTED;
-	default:
-	  ;  // to avoid compiler warning
-	}
+      ReturnResult r = p.dagNode->computeBaseSortForGroundSubterms(warnAboutUnimplemented);
+      if (r > result)
+	result = r;  // NONGROUND dominates GROUND, UNIMPLEMENTED dominates NONGROUND
     }
-  if (ground)
+  if (result == GROUND)
     {
-      s->computeBaseSort(this);
+      symbol()->computeBaseSort(this);
       setGround();
-      return GROUND;
     }
-  return NONGROUND;
+  return result;
 }
 
 bool
-ACU_DagNode::computeSolvedForm2(DagNode* rhs, UnificationContext& solution, PendingUnificationStack& pending)
+ACU_DagNode::computeSolvedForm2(DagNode* rhs,
+				UnificationContext& solution,
+				PendingUnificationStack& pending)
 {
+  DebugEnter(this << " =? " << rhs);
   if (symbol() == rhs->symbol())
     {
       //
@@ -537,19 +532,18 @@ ACU_DagNode::computeSolvedForm2(DagNode* rhs, UnificationContext& solution, Pend
 void
 ACU_DagNode::insertVariables2(NatSet& occurs)
 {
-  int nrArgs = argArray.length();
-  for (int i = 0; i < nrArgs; i++)
-    argArray[i].dagNode->insertVariables(occurs);
+  for (const Pair& p : argArray)
+    p.dagNode->insertVariables(occurs);
 }
 
 DagNode*
-ACU_DagNode::instantiate2(const Substitution& substitution)
+ACU_DagNode::instantiate2(const Substitution& substitution, bool maintainInvariants)
 {
   ACU_Symbol* s = symbol();
   int nrArgs = argArray.length();
   for (int i = 0; i < nrArgs; ++i)
     {
-      if (DagNode* n = argArray[i].dagNode->instantiate(substitution))
+      if (DagNode* n = argArray[i].dagNode->instantiate(substitution, maintainInvariants))
 	{
 	  //
 	  //	Argument changed under instantiation - need to make a new
@@ -579,23 +573,31 @@ ACU_DagNode::instantiate2(const Substitution& substitution)
 	  for (++i; i < nrArgs; ++i)
 	    {
 	      DagNode* a = argArray[i].dagNode;
-	      if (DagNode* n = a->instantiate(substitution))
+	      if (DagNode* n = a->instantiate(substitution, maintainInvariants))
 		a = n;
 	      if (!(a->isGround()))
 		ground = false;
 	      d->argArray[i].dagNode = a;
 	      d->argArray[i].multiplicity = argArray[i].multiplicity;
 	    }
-	  //
-	  //	Normalize the new dagnode; if it doesn't collapse and
-	  //	all its arguments are ground we compute its base sort.
-	  //
-	  if (!(d->dumbNormalizeAtTop()) && ground)
+	  if (maintainInvariants)
 	    {
-	      s->computeBaseSort(d);  // FIXME: is this a good idea in the narrowing sense?
-	      d->setGround();
+	      //
+	      //	Normalize the new dagnode; if it doesn't collapse and
+	      //	all its arguments are ground we compute its base sort.
+	      //
+	      if (!(d->dumbNormalizeAtTop()) && ground)
+		{
+		  s->computeBaseSort(d);
+		  d->setGround();
+		}
+	      Assert(d->isTree() == false, "Oops we got a tree! " << d);
 	    }
-	  Assert(d->isTree() == false, "Oops we got a tree! " << d);
+	  else
+	    {
+	      if (ground)
+		d->setGround();
+	    }
 	  return d;	
 	}
     }
@@ -609,11 +611,10 @@ ACU_DagNode::instantiate2(const Substitution& substitution)
 bool
 ACU_DagNode::indexVariables2(NarrowingVariableInfo& indices, int baseIndex)
 {
-  int nrArgs = argArray.length();
   bool ground = true;
-  for (int i = 0; i < nrArgs; i++)
+  for (const Pair& p : argArray)
     {   
-      if (!(argArray[i].dagNode->indexVariables(indices, baseIndex)))
+      if (!(p.dagNode->indexVariables(indices, baseIndex)))
 	ground = false;
     }
   return ground;
@@ -666,7 +667,7 @@ ACU_DagNode::instantiateWithCopies2(const Substitution& substitution, const Vect
       DagNode* a = argArray[i].dagNode;
       DagNode* n = eager ?
 	a->instantiateWithCopies(substitution, eagerCopies) :
-	a->instantiate(substitution);
+	a->instantiate(substitution, false);
       if (n != 0)
 	{
 	  //

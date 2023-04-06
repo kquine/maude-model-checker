@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,31 +23,36 @@
 %%
 
 static void
-yyerror(UserLevelRewritingContext::ParseResult* /*parseResult*/, char *s)
+yyerror(UserLevelRewritingContext::ParseResult* /*parseResult*/, const char *s)
 {
-  if (!(UserLevelRewritingContext::interrupted()))
+  if (!suppressParserErrorMessage)
     IssueWarning(LineNumber(lineNumber) << ": " << s);
 }
 
 void
 cleanUpModuleExpression()
 {
+  //cout << "cleanUpModuleExpression() called" << endl;
   //
   //	Delete pieces of a partly built module expression.
   //
   delete currentRenaming;
   currentRenaming = 0;
-  while (!moduleExpressions.empty())
-    {
-      moduleExpressions.top()->deepSelfDestruct();
-      moduleExpressions.pop();
-    }
 }
 
 void
 cleanUpParser()
 {
+  suppressParserErrorMessage = false;
   interpreter.makeClean(lineNumber);
+}
+
+void
+deepSelfDestructViewExpressionVector(Vector<ViewExpression*>* viewExpressions)
+{
+  for (ViewExpression* v : *viewExpressions)
+    v->deepSelfDestruct();
+  delete viewExpressions;
 }
 
 void

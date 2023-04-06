@@ -31,7 +31,7 @@ namespace modelChecker {
 template <typename PL>
 StateSystemGraph<PL>::StateSystemGraph(unique_ptr<PL>&& pl, RewritingContext& initial,
 		const ProofTermGenerator& ptg, const PropositionTable& propTable):
-			Super(initial,propTable), RuleTransitionGraph(ptg), Traits(move(pl)) {}
+			Super(initial,propTable), RuleTransitionGraph(ptg), Traits(std::move(pl)) {}
 
 template <typename PL>
 template <typename STATE> bool

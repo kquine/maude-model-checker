@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2017 SRI International, Menlo Park, CA 94025, USA.
 
@@ -75,8 +75,11 @@ Interpreter::startUsingModule(VisibleModule* module)
 void
 Interpreter::beginRewriting(bool debug)
 {
+  UserLevelRewritingContext::clearInfo();
   if (debug)
     UserLevelRewritingContext::setDebug();
+  else
+    RewritingContext::setTraceStatus(flags & EXCEPTION_FLAGS);  // in case traceFlag was set by SIGINFO
 #ifdef QUANTIFY_REWRITING
   quantify_start_recording_data();
 #endif
@@ -151,6 +154,20 @@ Interpreter::endRewriting(Timer& timer,
 	printStats(timer, *context, getFlag(SHOW_TIMING));
       DagNode* r = context->root();
       cout << "result " << r->getSort() << ": " << r << '\n';
+      // SERIALIZATION
+      // TEST
+      // CODE
+      /*
+      Rope ser = module->serialize(r);
+      cout << module->serialize(r) << endl;
+      string mess;
+      Token::ropeToString(ser, mess);
+      cout << "string: " << mess << endl;
+
+      DagNode* d = module->deserialize(ser);
+      cout << "read back: " << d << endl;
+            */
+
       cout.flush();
       if (xmlBuffer != 0)
 	{

@@ -55,7 +55,7 @@ template <typename PA> void
 SCCModelChecker<PA>::SCCStack::dfsPush(const State& s, unique_ptr<FairSet>&& a)
 {
 	mc.H.set(s, ++mc.max);
-	sccStack.emplace(new SCC(mc.max, move(a)));
+	sccStack.emplace(new SCC(mc.max, std::move(a)));
 	dfsStack.emplace(mc.graph.makeTransitionIterator(s));
 }
 

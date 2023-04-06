@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -48,6 +48,14 @@ public:
   //	allocated to an external object.
   //
   virtual void cleanUp(DagNode* objectId) = 0;
+  //
+  //	This member function is used to quietly free up any resources
+  //	that are associated with a ObjectSystemRewritingContext that is in
+  //	the process of being destructed. This is a much less common case
+  //	where the resources are not associated with some ephemeral external
+  //	object, but are directly controlled by the manager object.
+  //
+  virtual void cleanUpManager(ObjectSystemRewritingContext& context);
 
   void trivialReply(Symbol* replySymbol, 
 		    FreeDagNode* originalMessage,

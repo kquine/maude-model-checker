@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -74,7 +74,11 @@ PositionState::exploreNextPosition()
 	return false;
       const RedexPosition& rp = positionQueue[nextToExplore];
       DagNode* d = rp.node();
-      d->symbol()->stackArguments(d, positionQueue, nextToExplore, flags & RESPECT_FROZEN, rp.isEager());
+      //
+      //	We only consider repeated arguments once, where supported by
+      //	theory.
+      //
+      d->symbol()->stackPhysicalArguments(d, positionQueue, nextToExplore, flags & RESPECT_FROZEN, rp.isEager());
       int newFinish = positionQueue.length();
       if (finish < newFinish)
 	{
@@ -170,6 +174,7 @@ PositionState::rebuildAndInstantiateDag(DagNode* replacement,
       //	Make eager copies of bindings we will use to avoid sharing dags that
       //	might rewrite between eager and lazy positions.
       //
+      DebugInfo("firstVariable = " << firstVariable << "  lastVariable = " << lastVariable);
       Vector<DagNode*> eagerCopies(lastVariable + 1);
       for (int j = firstVariable; j <= lastVariable; ++j)
 	eagerCopies[j] = substitution.value(j)->copyEagerUptoReduced();
@@ -180,6 +185,8 @@ PositionState::rebuildAndInstantiateDag(DagNode* replacement,
 	 {
 	   const RedexPosition& rp = positionQueue[i];
 	   const Vector<DagNode*>* bindings = rp.isEager() ? &eagerCopies : 0;
+	   DebugInfo("calling instantiateWithReplacement() on " << rp.node() <<
+		       " argIndex = " << argIndex << " newDag = " << newDag);
 	   newDag = rp.node()->instantiateWithReplacement(substitution, bindings, argIndex, newDag);
 	   argIndex = rp.argIndex();
 	   i = rp.parentIndex();

@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2007 SRI International, Menlo Park, CA 94025, USA.
 
@@ -25,6 +25,7 @@
 //
 #ifndef _narrowingVariableInfo_hh_
 #define _narrowingVariableInfo_hh_
+#include "variable.hh"
 
 class NarrowingVariableInfo
 {

@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -31,7 +31,8 @@
 #include "vector.hh"
 #include "pointerSet.hh"
 #include "bddUser.hh"
- 
+#include "timeStuff.hh"
+
 //      forward declarations
 #include "interface.hh"
 #include "core.hh"
@@ -43,6 +44,7 @@
 #include "symbol.hh"
 #include "dagNode.hh"
 #include "higher.hh"
+#include "rawDagArgumentIterator.hh"
  
 //      core class definitions
 #include "redexPosition.hh"
@@ -53,6 +55,7 @@
 #include "equation.hh"
 #include "rule.hh"
 #include "narrowingVariableInfo.hh"
+#include "strategyDefinition.hh"
 
 //      variable class definitions
 #include "variableTerm.hh"
@@ -66,6 +69,7 @@
 
 #include "interpreter.hh"  // HACK
 #include "global.hh"  // HACK shouldn't be accessing global variables
+
 
 //	our stuff
 #include "interact.cc"
@@ -135,6 +139,22 @@ UserLevelRewritingContext::tracePreEqRewrite(DagNode* redex,
 					     const Equation* equation,
 					     int type)
 {
+  //
+  //	All unusual situations during an equational rewrite are funneled
+  //	through this function, by setting the traceFlag in class Module.
+  //	This is so that rewriting only has to test a single flag
+  //	to get off the fast case, and into the (slow) exception case.
+  //
+  //	Possible unusual situations:
+  //	(1) Profiling is enabled
+  //	(2) Statement print attributes are enabled
+  //	(3) Aborting the computation
+  //	(4) Single stepping in debugger
+  //	(5) Breakpoints are enabled
+  //	(6) ^C interrupt
+  //	(7) Info interrupt
+  //	(8) Tracing is enabled
+  //
   if (interpreter.getFlag(Interpreter::PROFILE))
     {
       safeCast(ProfileModule*, root()->symbol()->getModule())->
@@ -142,7 +162,11 @@ UserLevelRewritingContext::tracePreEqRewrite(DagNode* redex,
     }
   if (interpreter.getFlag(Interpreter::PRINT_ATTRIBUTE))
     checkForPrintAttribute(MetadataStore::EQUATION, equation);
-
+  //
+  //	handeDebug() takes care of abort, single stepping, breakpoints,
+  //	^C interrupts and info interrupts, single these are common to
+  //	all rewrite types.
+  //
   if (handleDebug(redex, equation) ||
       !localTraceFlag ||
       !(interpreter.getFlag(Interpreter::TRACE_EQ)) ||
@@ -203,6 +227,17 @@ UserLevelRewritingContext::tracePostEqRewrite(DagNode* replacement)
 void
 UserLevelRewritingContext::tracePreRuleRewrite(DagNode* redex, const Rule* rule)
 {
+  if (redex == 0)
+    {
+      //
+      //	Dummy rewrite; need to ignore the following
+      //	tracePostRuleRewrite() call.
+      //	This capability is used by ConfigSymbol.
+      //
+      tracePostFlag = false;
+      return;
+    }
+
   if (interpreter.getFlag(Interpreter::PROFILE))
     {
       safeCast(ProfileModule*, root()->symbol()->getModule())->
@@ -375,6 +410,60 @@ UserLevelRewritingContext::traceVariantNarrowingStep(Equation* equation,
       cout << "\nNew variant: " << newState << '\n';
       printSubstitution(newVariantSubstitution, originalVariables);
       cout << '\n';
+    }
+}
+
+void
+UserLevelRewritingContext::traceStrategyCall(StrategyDefinition* sdef,
+					     DagNode* callDag,
+					     DagNode* subject,
+					     const Substitution* substitution)
+{
+  if (interpreter.getFlag(Interpreter::PROFILE))
+    {
+      safeCast(ProfileModule*, root()->symbol()->getModule())->profileSdRewrite(subject, sdef);
+    }
+  if (interpreter.getFlag(Interpreter::PRINT_ATTRIBUTE))
+    checkForPrintAttribute(MetadataStore::STRAT_DEF, sdef);
+
+  if (handleDebug(callDag, sdef) ||
+      !localTraceFlag ||
+      !(interpreter.getFlag(Interpreter::TRACE_SD)) ||
+      dontTrace(callDag, sdef))
+    return;
+
+  if (interpreter.getFlag(Interpreter::TRACE_BODY))
+    {
+      cout << header << "strategy call\n";
+      cout << sdef << '\n';
+      // callDags uses the auxiliary symbol we should print it readable
+      if (callDag->symbol()->arity() > 0)
+	{
+	  cout << "call term --> " << Token::name(sdef->getStrategy()->id()) << "(";
+	  RawDagArgumentIterator* arg = callDag->arguments();
+	  while (arg->valid())
+	    {
+	      cout << arg->argument();
+	      arg->next();
+
+	      if (arg->valid()) cout << ", ";
+	    }
+	  cout << ")" << endl;
+	  delete arg;
+	}
+      if (interpreter.getFlag(Interpreter::TRACE_WHOLE))
+	cout << "subject --> " << subject << endl;
+      if (interpreter.getFlag(Interpreter::TRACE_SUBSTITUTION))
+	printSubstitution(*substitution, *sdef);
+    }
+  else
+    {
+      const Label& label = sdef->getLabel();
+      int stratId = sdef->getStrategy()->id();
+      if (label.id() == NONE)
+	cout << Token::name(stratId) << " (unlabeled definition)\n";
+      else
+	cout << &label << '\n';
     }
 }
 

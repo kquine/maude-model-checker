@@ -1,8 +1,9 @@
+
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2010 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2021 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -94,6 +95,7 @@ string fileName;
 //int terminationCondition;
 int minLength;
 extern Vector<Token> lexerBubble;
+extern bool suppressParserErrorMessage;
 %}
 
 stringContent	([^[:cntrl:]"\\]|("\\"[^[:cntrl:]])|(\\\n)|\t)
@@ -115,6 +117,8 @@ maudeId		(({special}|{normalSeq})+)
 %x LATEX_MODE
 %option stack
 %option noyywrap
+%option nounput
+%option noyy_top_state
 
 %%
 	if (UserLevelRewritingContext::interrupted())
@@ -139,15 +143,17 @@ in					RETURN(KW_IN)
 }
 
 <INITIAL>{
-th|fth|mod|fmod|smod|obj		RETURN(KW_MOD)  // need to know which one we saw
-omod					RETURN(KW_OMOD)
-view					RETURN(KW_VIEW);
+th|fth|sth|oth|mod|fmod|smod|omod|obj	RETURN(KW_MOD)  // need to know which one we saw
+view					RETURN(KW_VIEW)  // needed for line number handling
+oo					return KW_OO;
 load					return KW_LOAD;
+sload					return KW_SLOAD;
 pwd					return KW_PWD;
 cd					return KW_CD;
 pushd					return KW_PUSHD;
 popd					return KW_POPD;
 ls					return KW_LS;
+ll					return KW_LL;
 quit|q					return KW_QUIT;
 eof					return KW_EOF;
 parse					return KW_PARSE;
@@ -159,6 +165,7 @@ rew|rewrite				return KW_REWRITE;
 erew|erewrite				return KW_EREWRITE;
 frew|frewrite				return KW_FREWRITE;
 srew|srewrite				return KW_SREWRITE;
+dsrew|dsrewrite				return KW_DSREWRITE;
 check					return KW_CHECK;
 loop					return KW_LOOP;
 cont|continue				return KW_CONTINUE;
@@ -199,6 +206,7 @@ flat|flattened				return KW_FLAT;
 with					return KW_WITH;
 paren|parens|parentheses		return KW_PARENS;
 alias|aliases				return KW_ALIASES;
+const|constant|constants		return KW_CONST;
 gc					return KW_GC;
 time					return KW_TIME;
 stats					return KW_STATS;
@@ -214,16 +222,20 @@ var|vars				return KW_VARS;
 mb|mbs					return KW_MBS;
 eq|eqs					return KW_EQS;
 rl|rls|rule|rules			return KW_RLS;
+strat|strats				return KW_STRATS;
+sd|sds					return KW_SDS;
 summary					return KW_SUMMARY;
 kinds|components			return KW_KINDS;
 compile|compiler			return KW_COMPILE;
 count					return KW_COUNT;
 protect					return KW_PROTECT;
+"generate-by"				return KW_GENERATE_BY;
 extend					return KW_EXTEND;
 include					return KW_INCLUDE;
 exclude					return KW_EXCLUDE;
 debug					return KW_DEBUG;
-irredundant				return KW_IRREDUNDANT;
+irredundant|irred			return KW_IRREDUNDANT;
+filtered				return KW_FILTERED;
 resume					return KW_RESUME;
 abort					return KW_ABORT;
 step					return KW_STEP;
@@ -232,6 +244,7 @@ dump					return KW_DUMP;
 break					return KW_BREAK;
 breakdown				return KW_BREAKDOWN;
 path					return KW_PATH;
+state|states				return KW_STATE;
 label|labels				return KW_LABEL;
 profile					return KW_PROFILE;
 number					return KW_NUMBER;
@@ -240,22 +253,31 @@ test					return KW_TEST;
 smt-search				return KW_SMT_SEARCH;
 vu-narrow				return KW_VU_NARROW;
 fvu-narrow				return KW_FVU_NARROW;
-[.\[\]()]				return *yytext;
+fold					return KW_FOLD;
+desugared				return KW_DESUGARED;
+processed				return KW_PROCESSED;
+[.\[\](){}]				return *yytext;
 0|([1-9][0-9]*)				{
 					  bool dummy;
 					  lvalp->yyInt64 = stringToInt64(yytext, dummy, 10);
 					  return SIMPLE_NUMBER;
 					}
-{maudeId}|[{},]				{
+{maudeId}|,				{
 					  IssueWarning(LineNumber(lineNumber) <<
 					    ": skipped unexpected token: " <<
 					    QUOTE(yytext));
+					}
+\n\n					{
+					  ++lineNumber;
+					  yyless(1);  // only absorb one newline
+					  if (generateImpliedStep())
+					    return KW_IMPLIED_STEP;
 					}
 }
 
  /*
   *	In command mode we only recognize special tokens
-  *	"in" "(" ")" "[" "]" ":" "." "," and non-negative numbers.
+  *	"in" "{" "}" "(" ")" "[" "]" ":" "." "," and non-negative numbers.
   *	Everything else is an identifier. Furthermore "." is only recognized
   *	at the end of a line or before a comment (ignoring white space).
   */
@@ -264,7 +286,9 @@ fvu-narrow				return KW_FVU_NARROW;
                                           yyless(1);
                                           RETURN('.')
                                         }
-[:,()\[\]]				RETURN(*yytext)
+[:,()\[\]{}]				RETURN(*yytext)
+filter					RETURN(KW_FILTER)
+delay					RETURN(KW_DELAY)
 [1-9][0-9]*				RETURN(NUMERIC_ID)
 [.{}]					RETURN(IDENTIFIER)
 {maudeId}"."				{
@@ -295,6 +319,7 @@ fvu-narrow				return KW_FVU_NARROW;
 to					RETURN(KW_TO)
 from					RETURN(KW_FROM)
 label					RETURN(KW_LABEL)
+attr					RETURN(KW_ATTR)
 assoc|associative			RETURN(KW_ASSOC)
 comm|commutative			RETURN(KW_COMM)
 id:|identity:				RETURN(KW_ID)
@@ -305,7 +330,9 @@ right					RETURN(KW_RIGHT)
 prec|precedence				RETURN(KW_PREC)
 gather					RETURN(KW_GATHER)
 metadata				RETURN(KW_METADATA)
-strat|strategy				RETURN(KW_STRAT)
+strat					RETURN(KW_STRAT)		// both strategy attribute and declaration
+strategy				RETURN(KW_ASTRAT)		// strategy attribute only
+strats					RETURN(KW_DSTRAT)		// declaration of a strategy only
 frozen					RETURN(KW_FROZEN)
 poly|polymorphic			RETURN(KW_POLY)
 ctor|constructor			RETURN(KW_CTOR)
@@ -318,9 +345,10 @@ ditto					RETURN(KW_DITTO)
 id-hook					RETURN(KW_ID_HOOK)
 op-hook					RETURN(KW_OP_HOOK)
 term-hook				RETURN(KW_TERM_HOOK)
+pconst					RETURN(KW_PCONST)
 is					RETURN(KW_IS)
 if					RETURN(KW_IF)
-pr|protecting|ex|extending|us|using|inc|including	RETURN(KW_IMPORT)
+pr|protecting|ex|extending|us|using|inc|including|gb|generated-by	RETURN(KW_IMPORT)
 sort|sorts				RETURN(KW_SORT)
 subsort|subsorts			RETURN(KW_SUBSORT)
 class					RETURN(KW_CLASS)
@@ -335,13 +363,16 @@ eq					RETURN(KW_EQ)
 ceq|cq					RETURN(KW_CEQ)
 rl					RETURN(KW_RL)
 crl					RETURN(KW_CRL)
-end(th|fth|m|fm|sm|om|o)|jbo		RETURN(KW_ENDM)
+sd					RETURN(KW_SD)
+csd					RETURN(KW_CSD)
+end(th|fth|sth|m|fm|sm|om|o|oth)|jbo	RETURN(KW_ENDM)
 endv					RETURN(KW_ENDV)
 "->"					RETURN(KW_ARROW)
 "=>"					RETURN(KW_ARROW2)
 "~>"					RETURN(KW_PARTIAL)
 "::"					RETURN(KW_COLON2)
-[:()\[\]{}.,<=|+*]			RETURN(*yytext)
+":="					RETURN(KW_ASSIGN)
+[:()\[\]{}.,<=|+*@]			RETURN(*yytext)
 {maudeId}"."				RETURN_FIX_UP(ENDS_IN_DOT)
 {maudeId}				RETURN_FIX_UP(IDENTIFIER)
 }
@@ -386,6 +417,12 @@ endv					RETURN(KW_ENDV)
 					  else
 					    STORE
 					}
+:=					{
+					  if (parenCount == 0 && (terminationSet & BAR_ASSIGN) && lexerBubble.length() >= minLength)
+					    EXIT(KW_ASSIGN)
+					  else
+					    STORE
+					}
 to					{
 					  if (parenCount == 0 && (terminationSet & BAR_TO) && lexerBubble.length() >= minLength)
 					    EXIT(KW_TO)
@@ -398,7 +435,7 @@ if					{
 					  else
 					    STORE
 					}
-assoc|associative|comm|commutative|id:|identity:|idem|idempotent|iter|iterated|left|right|prec|precedence|gather|metadata|strat|strategy|frozen|poly|polymorphic|ctor|constructor|latex|special|config|configuration|obj|object|msg|message|ditto|format|memo	{
+assoc|associative|comm|commutative|id:|identity:|idem|idempotent|iter|iterated|left|right|prec|precedence|gather|metadata|strat|strategy|frozen|poly|polymorphic|ctor|constructor|latex|special|config|configuration|obj|object|msg|message|ditto|format|memo|pconst	{
 					  if (parenCount == 0 && (terminationSet & BAR_OP_ATTRIBUTE) && lexerBubble.length() >= minLength)
 					    {
 					      yyless(0);  // need to re-lex it to get the correct return value
@@ -446,6 +483,14 @@ assoc|associative|comm|commutative|id:|identity:|idem|idempotent|iter|iterated|l
 					    STORE_FIX_UP
 					}
 {maudeId}				STORE_FIX_UP
+<<EOF>>					{
+					  //
+					  //	An EOF in the middle of a bubble is always an error that drops us
+					  //	out of the parser and does a full clean up.
+					  //
+					  bubbleEofError();
+					  yyterminate();
+					}
 }
 
  /*
@@ -454,7 +499,7 @@ assoc|associative|comm|commutative|id:|identity:|idem|idempotent|iter|iterated|l
   *	on to the input stream to be re-lexed in a new mode.
   */
 <END_STATEMENT_MODE>{
-pr|protecting|ex|extending|us|using|inc|including|sort|sorts|subsort|subsorts|op|ops|var|vars|mb|cmb|eq|cq|ceq|rl|crl|end(th|fth|m|fm|sm|om|o|v)|jbo|msg|msgs|class|classes|subclass|subclasses		{
+pr|protecting|ex|extending|us|using|inc|including|gb|generated-by|sort|sorts|subsort|subsorts|op|ops|var|vars|mb|cmb|eq|cq|ceq|rl|crl|sd|csd|strat|strats|end(th|oth|fth|sth|m|fm|sm|om|o|v|sv)|jbo|msg|msgs|class|subclass|subclasses		{
 					  yyless(0);  // BUG - need to deal with white space and comments after the .
 					  yy_pop_state();
 					  RETURN_SAVED(savedReturn)
@@ -585,9 +630,15 @@ pr|protecting|ex|extending|us|using|inc|including|sort|sorts|subsort|subsorts|op
 }
 
 <<EOF>>					{
-					  if (UserLevelRewritingContext::interrupted() ||
-					      !handleEof())
-					    yyterminate();
+					  //
+					  //	An EOF could be a benign change of file, an error in the middle
+					  //	of a command/module/view or a ^C interrupt or a ^D quit.
+					  //	In all cases we want to avoid any yyerror() message.
+					  //
+					  suppressParserErrorMessage = true;
+					  if (UserLevelRewritingContext::interrupted())
+					    yyterminate();  // return an end-of-file condition to the parser
+					  return handleEof() ? CHANGE_FILE : END_OF_INPUT;
 					}
 
 [ \t\r]*				;

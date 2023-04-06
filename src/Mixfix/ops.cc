@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ SyntacticPreModule::addVarDecl(Token varName)
       int nrOpDefs = opDefs.length();
       opDefs.expandBy(1);
       opDefs[nrOpDefs].symbolType.setBasicType(SymbolType::VARIABLE);
+      isStrategy = false;
     }
   int nrOpDecls = opDecls.length();
   opDecls.expandBy(1);
@@ -41,7 +42,10 @@ void
 SyntacticPreModule::addOpDecl(const Vector<Token>& opName)
 {
   if (!lastSawOpDecl)
-    opDefs.expandBy(1);
+    {
+      opDefs.expandBy(1);
+      isStrategy = false;
+    }
 
   int nrOpDecls = opDecls.length();
   opDecls.expandBy(1);
@@ -51,11 +55,33 @@ SyntacticPreModule::addOpDecl(const Vector<Token>& opName)
 }
 
 void
+SyntacticPreModule::addStratDecl(Token stratName)
+{
+  if (!lastSawOpDecl)
+    {
+      if (!MixfixModule::isStrategic(getModuleType()))
+	// Now a message is shown and they will be ignored later
+	IssueWarning(LineNumber(stratName.lineNumber()) <<
+	  ": strategy declaration only allowed in a strategy module or theory.");
+
+      stratDecls.expandBy(1);
+      isStrategy = true;
+    }
+
+  StratDecl& decl = stratDecls[stratDecls.length() - 1];
+  decl.names.append(stratName);
+  lastSawOpDecl = true;
+}
+
+void
 SyntacticPreModule::addType(bool kind, const Vector<Token>& tokens)
 {
-  OpDef& opDef = opDefs[opDefs.length() - 1];
-  opDef.types.expandBy(1);
-  Type& type = opDef.types[opDef.types.length() - 1];
+  // Used to avoid repeating the common code
+  Vector<Type>& types = isStrategy ? stratDecls[stratDecls.length() - 1].types
+				   : opDefs[opDefs.length() - 1].types;
+  types.expandBy(1);
+
+  Type& type = types[types.length() - 1];
   type.kind = kind;
   type.tokens = tokens;  // deep copy
   lastSawOpDecl = false;
@@ -100,6 +126,36 @@ SyntacticPreModule::setFlag(int flag)
     }
   else
     opDef.symbolType.setFlags(flag);
+}
+
+void
+SyntacticPreModule::endMsg()
+{
+  if (MixfixModule::isObjectOriented(getModuleType()))
+    {
+      OpDef& opDef = opDefs[opDefs.length() - 1];
+      opDef.symbolType.setFlags(SymbolType::MESSAGE | SymbolType::MSG_STATEMENT | SymbolType::CTOR);
+    }
+  else
+    {
+      //
+      //	We accepted the msg(s) and converted them to op(s). Now we need to
+      //	removed them, since they weren't allowed.
+      //
+      int defIndex = opDefs.size() - 1;
+      opDefs.resize(defIndex);  // delete definition
+      int opIndex = opDecls.size() - 1;
+      int lineNumber;
+      do
+	{
+	  lineNumber = opDecls[opIndex].prefixName.lineNumber();  // want line number of name first declaration
+	  --opIndex;
+	}
+      while (opIndex >= 0 && opDecls[opIndex].defIndex == defIndex);
+      opDecls.resize(opIndex + 1);  // delete declarations that depend on index
+      IssueWarning(LineNumber(lineNumber) <<
+		   ": message declaration only allowed in object-oriented modules and theories.");
+    }
 }
 
 void
@@ -170,14 +226,20 @@ SyntacticPreModule::setGather(const Vector<Token>& gather)
 void
 SyntacticPreModule::setMetadata(Token metaDataTok)
 {
+  int& metadata = isStrategy ? stratDecls[stratDecls.length() - 1].metadata
+			     : opDefs[opDefs.length() - 1].metadata;
+
   if (metaDataTok.specialProperty() == Token::STRING)
     {
-      OpDef& opDef = opDefs[opDefs.length() - 1];
-      if (opDef.metadata == NONE)
-	opDef.metadata = metaDataTok.code();
+      if (metadata == NONE)
+	metadata = metaDataTok.code();
       else
-	IssueWarning(LINE_NUMBER << ": multiple metadata attributes.");
-      //opDef.symbolType.setFlags(SymbolType::METADATA);
+	{
+	  const Type& anchor = isStrategy ? stratDecls[stratDecls.length() - 1].types[0]
+					  : opDefs[opDefs.length() - 1].types[0];
+
+	  IssueWarning(anchor.tokens[0].lineNumber() << ": multiple metadata attributes.");
+	}
     }
   else
     {
@@ -390,27 +452,39 @@ SyntacticPreModule::addHook(HookType type, Token name, const Vector<Token>& deta
 }
 
 void
-SyntacticPreModule::makeOpDeclsConsistent()
+SyntacticPreModule::makeDeclsConsistent()
 {
   //
   //	Call if we encounter a syntax error while parsing module to make sure
   //	opDefs/opDecls are left in a good state.
   //
   int nrOpDefs = opDefs.length();
-  if (nrOpDefs == 0)
-    return;
-  int lastDefIndex = nrOpDefs - 1;
-  if(opDefs[lastDefIndex].types.length() == 0)
+  if (nrOpDefs != 0)
     {
-      //
-      //	Problem: we have op decls for which op def has not been
-      //	properly filled in; quietly delete them and reset
-      //	lastSawOpDecl flag
-      //
-      int m = opDecls.length();
-      while (m > 0 && opDecls[m - 1].defIndex == lastDefIndex)
-	--m;
-      opDecls.contractTo(m);
+      int lastDefIndex = nrOpDefs - 1;
+      if(opDefs[lastDefIndex].types.length() == 0)
+	{
+	  //
+	  //	Problem: we have op decls for which op def has not been
+	  //	properly filled in; quietly delete them and reset
+	  //	lastSawOpDecl flag
+	  //
+	  int m = opDecls.length();
+	  while (m > 0 && opDecls[m - 1].defIndex == lastDefIndex)
+	    --m;
+	  opDecls.contractTo(m);
+	  lastSawOpDecl = false;
+	}
+    }
+  //
+  //	Strategy declarations are handled in the same way.
+  //
+  int nrStratDecls = stratDecls.length();
+  if (nrStratDecls == 0)
+    return;
+  if (stratDecls[nrStratDecls - 1].types.length() == 0)
+    {
+      stratDecls.contractTo(nrStratDecls - 1);
       lastSawOpDecl = false;
     }
 }

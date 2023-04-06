@@ -19,7 +19,7 @@
 
 namespace modelChecker {
 
-ParamWeakFairSet::ParamWeakFairSet(WeakFairSet&& f): WeakFairSet(move(f)) {}
+ParamWeakFairSet::ParamWeakFairSet(WeakFairSet&& f): WeakFairSet(std::move(f)) {}
 
 void
 ParamWeakFairSet::paste(const FairSet& f)

@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -31,6 +31,7 @@
 //
 #ifndef _rewritingContext_hh_
 #define _rewritingContext_hh_
+//#include <signal.h>
 #include "substitution.hh"
 #include "simpleRootContainer.hh"
 #include "dagNode.hh"
@@ -54,13 +55,25 @@ public:
   };
 
   RewritingContext(DagNode* root);
-  RewritingContext(int substitutionSize);  // limited use RewritingContext for matching
+  //
+  //	Sometimes we need a rewriting context to do sort computations or matching
+  //	and don't have one to hand; for example in UnifierFilter, VariantFolder and
+  //	IrredundantUnificationProblem. For these use cases we have a special ctor
+  //	for limited use rewriting contexts that don't have a root dag.
+  //
+  //	With a substitution size of 0, a RewritingContext is just a dummy that allows
+  //	functions that take a RewritingContext& argument to be called as long as they
+  //	don't need to use it. This hints that we might have been better passing
+  //	pointers rather than references so we could use a null pointer instead.
+  //
+  RewritingContext(int substitutionSize = 0);
   virtual ~RewritingContext();
 
   static bool getTraceStatus();
   static void setTraceStatus(bool state);
 
   DagNode* root();
+  bool isLimited() const;
   void incrementMbCount(Int64 i = 1);
   void incrementEqCount(Int64 i = 1);
   void incrementRlCount(Int64 i = 1);
@@ -69,7 +82,7 @@ public:
 
   void clearCount();
   void addInCount(const RewritingContext& other);
-  void transferCount(RewritingContext& other);
+  void transferCountFrom(RewritingContext& other);
   Int64 getTotalCount() const;
   Int64 getMbCount() const;
   Int64 getEqCount() const;
@@ -80,14 +93,19 @@ public:
   void ruleRewrite(Int64 limit = NONE);
   void fairRewrite(Int64 limit = NONE, Int64 gas = 1);
   void fairContinue(Int64 limit = NONE);
-  void fairStart(Int64 gas);
-  bool fairTraversal(Int64& limit);
+
+  void fairStart(Int64 limit, Int64 gas);
+  void fairRestart(Int64 limit);
+  bool fairTraversal();
+  bool getProgress();
+
   bool builtInReplace(DagNode* old, DagNode* replacement);
 
   virtual RewritingContext* makeSubcontext(DagNode* root, int purpose = OTHER);
   virtual int traceBeginEqTrial(DagNode* subject, const Equation* equation);
   virtual int traceBeginRuleTrial(DagNode* subject, const Rule* rule);
   virtual int traceBeginScTrial(DagNode* subject, const SortConstraint* sc);
+  virtual int traceBeginSdTrial(DagNode* subject, const StrategyDefinition* sc);
   virtual void traceEndTrial(int trialRef, bool success);
   virtual void traceExhausted(int trialRef);
 
@@ -124,6 +142,32 @@ public:
 					 DagNode* newState,
 					 const Vector<DagNode*>& newVariantSubstitution,
 					 const NarrowingVariableInfo& originalVariables);
+  //
+  //	This exists so we can handle an interrupt that causes a blocking call to return early.
+  //	If it returns true, the caller assumes it can continue; otherwise the caller should return.
+  //
+  virtual bool handleInterrupt();
+  //
+  //	This exists so we block signals we are interested in, handle any that have already
+  //	been delivered and let the caller know what the normal signal set looks like.
+  //	The reason for blocking signals is if they are delivered after we last checked
+  //	for them but before the blocking call they could get lost since they won't cause
+  //	the blocking call to return early. If it returns true, the call assumes it can
+  //	continue with the blocking call, using the normalSet as signals that should abort
+  //	the blocking call. If it returns false, the caller returns without making the blocking
+  //	call.
+  //
+  virtual bool blockAndHandleInterrupts(sigset_t *normalSet);
+  //
+  //	This exists so that we can find out if an interrupt has been recorded
+  //	but not yet processed (we haven't reached a suitable point in the code).
+  //
+  virtual bool interruptSeen();
+
+  virtual void traceStrategyCall(StrategyDefinition* sdef,
+				 DagNode* callDag,
+				 DagNode* subject,
+				 const Substitution* substitution);
 
 #ifdef DUMP
   static void dumpStack(ostream& s, const Vector<RedexPosition>& stack);
@@ -147,7 +191,6 @@ private:
   bool ascend();
   void descend();
   bool doRewriting(bool argsUnstackable);
-  bool fairTraversal();
 
   static bool traceFlag;
 
@@ -194,8 +237,9 @@ RewritingContext::RewritingContext(int substitutionSize)
     rootNode(0)
 {
   //
-  //	This constructor exists so we can build RewritingContexts for use in the solve() phase of matching where
-  //	we don't otherwise have a RewritingContext to hand.
+  //	This constructor exists so we can build RewritingContexts for use sort computations
+  //	and in the solve() phase of matching where we don't otherwise have a RewritingContext
+  //	to hand.
   //
 }
 
@@ -216,6 +260,24 @@ RewritingContext::root()
   if (staleMarker != ROOT_OK)
     rebuildUptoRoot();
   return rootNode;
+}
+
+inline bool
+RewritingContext::isLimited() const
+{
+  //
+  //	A limited RewritingContext:
+  //	(1) Does not have a rootNode.
+  //	(2) Need not have a substitution large enough to apply sort constraints.
+  //	(3) Does not protect its substitution from garbage collection.
+  //	(4) Does not protect its redex stack from garbage collection.
+  //	It exists so that certain functions that expect a RewritingContext,
+  //	ultimately to compute true sorts by applying sort constraints can be
+  //	called by unification code when a general purpose RewritingContext
+  //	not available. Sort constraints are not supported by unification and
+  //	are thus ignored if the supplied RewritingContext is limited.
+  //
+  return rootNode == 0;
 }
 
 inline bool
@@ -318,7 +380,7 @@ RewritingContext::addInCount(const RewritingContext& other)
 }
 
 inline void
-RewritingContext::transferCount(RewritingContext& other)
+RewritingContext::transferCountFrom(RewritingContext& other)
 {
   mbCount += other.mbCount;
   other.mbCount = 0;
@@ -348,6 +410,18 @@ RewritingContext::builtInReplace(DagNode* old, DagNode* replacement)
    if (trace)
      tracePostEqRewrite(old);
    return true;
+}
+
+inline bool
+RewritingContext::getProgress()
+{
+  return progress;
+}
+
+inline void
+RewritingContext::fairRestart(Int64 limit)
+{
+  rewriteLimit = limit;
 }
 
 #endif

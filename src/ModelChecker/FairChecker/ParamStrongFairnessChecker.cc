@@ -74,7 +74,7 @@ unique_ptr<FairSet>
 ParamStrongFairnessChecker::unzip(const FairSet& fs) const
 {
 	auto& pss = static_cast<const ParamStrongFairSet&>(fs);
-	auto result = new ParamStrongFairSet(move(static_cast<StrongFairSet&>(*StrongFairnessChecker::unzip(fs))));
+	auto result = new ParamStrongFairSet(std::move(static_cast<StrongFairSet&>(*StrongFairnessChecker::unzip(fs))));
 
 	// store an expanded version
 	for (unsigned int sn = StrongFairnessChecker::getNrFairness(), i = 0; i < compactIndices.size(); ++i)

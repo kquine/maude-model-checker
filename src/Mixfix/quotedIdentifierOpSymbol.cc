@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -232,22 +232,23 @@ QuotedIdentifierOpSymbol::eqRewrite(DagNode* subject, RewritingContext& context)
       {
 	if (a1->symbol() == stringSymbol)
 	  {
-	    extern const Vector<int>& tokenizeRope(const Rope& argumentRope);
+	    extern const Vector<int>* tokenizeRope(const Rope& argumentRope);
 
 	    const Rope& r = static_cast<StringDagNode*>(a1)->getValue();
-	    const Vector<int>& ids = tokenizeRope(r);
+	    const Vector<int>* ids = tokenizeRope(r);
+	    Assert(ids != 0, "should never return YY_NULL");
 
-	    int nrIds = ids.length();
+	    int nrIds = ids->length();
 	    if (nrIds == 0)
 	      return context.builtInReplace(subject, nilQidListSymbol->makeDagNode());
 
 	    PointerMap qidMap;
 	    if (nrIds == 1)
-	      return context.builtInReplace(subject, makeQid(ids[0], qidMap));
+	      return context.builtInReplace(subject, makeQid((*ids)[0], qidMap));
 
 	    Vector<DagNode*> args(nrIds);
 	    for (int i = 0; i < nrIds; i++)
-	      args[i] = makeQid(ids[i], qidMap);
+	      args[i] = makeQid((*ids)[i], qidMap);
 	    DagNode* result = qidListSymbol->makeDagNode(args);
 	    return context.builtInReplace(subject, result);
 	  }

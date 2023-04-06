@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2006 SRI International, Menlo Park, CA 94025, USA.
 
@@ -64,9 +64,35 @@ BranchStrategy::~BranchStrategy()
   delete failureStrategy;
 }
 
+bool
+BranchStrategy::check(VariableInfo& indices, const TermSet& boundVars)
+{
+  return initialStrategy->check(indices, boundVars)
+    && (!successStrategy || successStrategy->check(indices, boundVars))
+    && (!failureStrategy || failureStrategy->check(indices, boundVars));
+}
+
+void
+BranchStrategy::process()
+{
+  initialStrategy->process();
+  if (successStrategy) successStrategy->process();
+  if (failureStrategy) failureStrategy->process();
+}
+
 StrategicExecution::Survival
 BranchStrategy::decompose(StrategicSearch& searchObject, DecompositionProcess* remainder)
 {
+  //
+  //	In order to detect cycles when executing the normalization operator, e !,
+  //	which is recursively equivalent to e ? e ! : idle, BranchTask needs the
+  //	stack index where e ! is pending. This strategy has just been popped by
+  //	the DecompositionProcess, but the index can be recovered with push.
+  //
+  int iterationCheckpoint = successAction == ITERATE
+			      ? searchObject.push(remainder->getPending(), this)
+			      : 0;
+
   (void) new BranchTask(searchObject,
 			remainder,
 			remainder->getDagIndex(),
@@ -76,6 +102,7 @@ BranchStrategy::decompose(StrategicSearch& searchObject, DecompositionProcess* r
 			failureAction,
 			failureStrategy,
 			remainder->getPending(),
+			iterationCheckpoint,
 			remainder);
   return StrategicExecution::DIE;  //  request deletion of DecompositionProcess
 }

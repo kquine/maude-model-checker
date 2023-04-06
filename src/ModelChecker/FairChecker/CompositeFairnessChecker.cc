@@ -24,7 +24,7 @@ namespace modelChecker {
 void
 CompositeFairnessChecker::addComponent(unique_ptr<FairnessChecker>&& checker)
 {
-	fairCheckers.push_back(move(checker));
+	fairCheckers.push_back(std::move(checker));
 }
 
 /**

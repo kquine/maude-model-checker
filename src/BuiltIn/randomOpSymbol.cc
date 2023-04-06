@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 2004 SRI International, Menlo Park, CA 94025, USA.
 
@@ -47,14 +47,14 @@
 #include "succSymbol.hh"
 #include "randomOpSymbol.hh"
 
-MTRand::uint32 RandomOpSymbol::globalSeed = 0;
+mt19937::result_type RandomOpSymbol::globalSeed = 0;
 
 RandomOpSymbol::RandomOpSymbol(int id)
   : NumberOpSymbol(id, 1),
     currentIndex(0),
     currentState(globalSeed)
 {
-  randomNumber = currentState.randInt();
+  randomNumber = currentState();
 }
 
 bool
@@ -95,12 +95,12 @@ RandomOpSymbol::eqRewrite(DagNode* subject, RewritingContext& context)
 	{
 	  currentIndex = 0;
 	  currentState.seed(globalSeed);
-	  randomNumber = currentState.randInt();
+	  randomNumber = currentState();
 	}
       while (currentIndex < wantedIndex)
 	{
 	  ++currentIndex;
-	  randomNumber = currentState.randInt();
+	  randomNumber = currentState();
 	}
       return succSymbol->rewriteToNat(subject, context, randomNumber);
     }

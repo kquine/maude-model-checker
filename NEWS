@@ -1,6 +1,382 @@
+Overview of Changes in Maude 3.3 (alpha143) (2023-03-22)
+========================================================
+* overparsing for omiting -> in constant mapping removed due
+to ambiguity
+* various gcc/clang warnings fixed
+* show path states command now shows rule labels
+* fixed a subtle bug with narrowing with variant unification in
+the presence of irreducibility constraints
+* fixed a bug where certain debugging information was printing
+in the debug build even without the -debug flag
+* added set generate-by command
+* optimization for free theory dag nodes
+
+Overview of Changes in Maude 3.3 beta (alpha142) (2023-03-03)
+=============================================================
+* show path states command
+* fixed bug where generated-by was not recognized as the and of the
+previous mixfix statement
+* fixed bug where orphaned view instantiations were not being purged
+* fixed bug where replacing a view did not immediately purged an
+modules that became orphaned as a result
+* heurstics for giving detailed explanations of runaway statements
+* fixed bug where parameterized constants were printed without
+parentheses in an ops declaration
+* more overparsing
+
+Overview of Changes in alpha141 (2023-02-24)
+============================================
+* fixed bug in parsing of oths
+* fixed statement transformation depending on memory allocator issue
+* -debug flag for debug build
+* fixed bad printing of renamings in module names
+* fixed op to term mapping in theory-view crash
+* support pconst in op to term mappings
+* sanity checks for class attributes
+* fixed bug where auto OO includes were ignored by upModule()
+* modules/views/commands cannot span files
+
+Overview of Changes in alpha140 (2023-02-14)
+============================================
+* fixed bug where no warning was given for duplicate iter attribute
+* pconst attribute for constants
+* parameterized constants
+* generated-by importation mode
+* show processed view command
+* classes can be parameterized
+* object-oriented theories
+* object-oriented mappings in views
+* fixed bug where []s around bound parameter were shown in imported
+module name with show desugared
+
+Overview of Changes in alpha139 (2023-02-02)
+============================================
+* syntactic sugar for empty attribute set in object constructor
+* changed reporting of syntax errors in sort and subset declarations
+* fixed bug where automatic imports were included in meta-theories
+* getClass() added to CONFIGURATION
+* allow "from" as a sort name
+* fixed spurious advisory where a specific renaming did not capture
+an operator from a parameter
+* identity sort/op mappings quietly dropped during renaming
+canonicalization
+* advisory if all the variables in the pattern of a := condition
+fragment are bound before matching
+* fixed bug where advisory about a specific strat renaming affecting
+a theory parameter printed 0 rather than the strat name
+* prettier printing of _,_ for attribute sets
+* first attempt at supporting omods and OO mappings in renamings
+* fixed bug where a view from T importing M to M was not allowed
+* fixed a related bug where a misleading warning was given for
+  theory-views that implicitly mapped a sort from module to the
+  target theory
+
+Overview of Changes in 3.2.2 (alpha138) (2022-12-22)
+====================================================
+* fixed bug where multiple instantiations (say via a theory-view)
+was generating bad internal names for sorts
+* fixed bug where the first sort in a kind printed by show mod
+was including backquotes
+* show desugared is now a documented feature
+* desugar omod to mod, oth to th
+* fixed bug where filtered variant unify crashed in the degenerate
+case where there were no variables
+* fixed issue where SIGSTKSZ is no longer guaranteed to be a
+compile-time constant in glibc
+* fixed issue with fileTest failing in environments when first
+user file handle is something other than 3
+
+Overview of Changes in Maude 3.2.1 (alpha137b) (2022-02-21)
+===========================================================
+* use filtered variant unification for unifying with goal when filter
+  flag is passed to vu-narrow
+
+Overview of Changes in Maude 3.2 (alpha137a) (2022-02-07)
+=========================================================
+* updated comments to 3.2
+
+Overview of Changes in Maude 3.2 beta (alpha137) (2022-01-28)
+=============================================================
+* fixed bug in the Yices bindings where constraints were being
+  asserted twice
+* fixed bug in the prelude where projection functions didn't work for
+  parameterized meta-modules
+* fixed bug in the handling of extension information for iter symbols
+* fixed bug in loop mode where it would try to continue using state left
+  over from some incompatible command
+
+Overview of Changes in alpha136 (2021-06-08)
+============================================
+* file API supports makeLink() message
+* experimental directory API
+* -assoc-unif-depth= to control A/AU unification search
+
+Overview of Changes in alpha135 (2021-04-09)
+============================================
+* second control-C within a second now returns to command line
+* fixed bug in deleteTimer() which would cause a later crash
+* empty line is treated as implicit step command in debugger
+* getLine() is now nonblocking
+* changed semantics of stopTimer()
+* standard streams now accept bad messages and return streamError()
+
+Overview of Changes in alpha134 (2021-03-08)
+============================================
+* experimental time API
+
+Overview of Changes in alpha133 (2021-02-25)
+============================================
+* fixed bugs in the processing of strategies in parameterized views
+* fixed bug where irredundant prefix was echoed
+* fixed bug where waiting on multiple file descriptors could ignore
+some of them on platforms using pselect() such as Mac
+* constraint propagation gets more A/AU unification cases
+* two optimizations to reduce the number of redundant AU-unifiers
+* meta-interpreters running in the orginal process now have the
+same error semantics as meta-interpreters running in new processes
+* file API has new error semantics
+* missing start op-hook added to file.maude
+* removeFile() message added to file.maude
+* fixed a bug where irredundant unification was ignoring the
+  last variable in each subsumption check
+* removed destructive generation of order-sorted unifiers because
+  it breaks irredundant unification (which assume unifiers can
+  be retained) and generates denormalized unifiers anyway
+
+Overview of Changes in alpha132-32 (2020-12-14)
+===============================================
+* fixed GMP/long long int issue on 32-bit machines
+
+Overview of Changes in alpha132 (2020-12-11)
+============================================
+* fixed bugs where non-unary iter symbols caused breakage
+in regular and polymorphic cases
+* fixed bugs where bad sorts for iter symbols caused breakage
+in regular and polymorphics cases
+* fixed bug where comm, idem and id: attributes were ignored
+if iter attribute seen
+* fixed bug where flattened prefix syntax wasn't accepted
+for polymorphic associative operators
+* fixed bug where f^n(...) syntax wasn't accepted for
+polymorphic iter operators
+* fixed bug for ! strategy
+* support meta-interpreters in separate processes
+* new options for vu-narrow
+
+Overview of Changes in Maude 3.1 (alpha131a) (2020-10-12)
+=========================================================
+* changed messages for ^C seen during suspension
+* some clang warnings fixed
+
+Overview of Changes in Maude 3.1 beta (alpha131) (2020-10-05)
+=============================================================
+* fixed occurs-check bug in unification modulo U and CU
+* optimizations for unification modulo U and CU
+* fixed memory leak when trying to use file handle while
+file handling is disabled
+* optimization for merging variables during unification which
+merges towards the smaller sort
+* two control-C events without intervening rewrites to abort
+while suspended on external event
+* variant narrowing based commands no longer report number of
+rewrites and no unifiers/variants/matchers if there is a problem
+
+Overview of Changes in alpha130 (2020-09-22)
+============================================
+* fixed memory leak in filtered variant unify
+* fixed variable check bug in filtered variant unify
+* fixed bug in the meta-printing of strategies
+* support VariantOptionsSet for descent functions and
+meta-interpreter messages that use variant unification
+* fixed a bug in unification modulo identity where the theory
+purification code assumed the operator was also commutative
+
+Overview of Changes in alpha129 (2020-09-09)
+============================================
+* verbose mode now flags sort decreasing axioms
+* command line options for enabling dangerous feautures
+* added irredundant unification
+* receiving on a socket which closed for writing at the other
+end returns the empty string the first time rather than closing
+the socket
+* irred is an abreviation for irredundant on the command line
+* fixed stray space when echoing variant unify command
+* fixed memory leak affecting erroneous case of unification
+descent functions
+* added filtered variant unification
+* added variant matching
+
+Overview of Changes in alpha128a (2020-07-06)
+=============================================
+* strategy definitions now support nonexec attribute
+* fixed bug in metaParseStrategy() and all operator declaration
+* fixed bug where simple and complex parsers could get
+out of sync with the auxiliary information leading to crashes
+* experimental support for processes as external objects
+* fixed bug where signals such as ^C could be ignored when sockets
+were used due to a race condition
+* fixed bug where sockets only supported half duplex operation
+* fixed bug where Maude could be terminated by SIGPIPE
+* -no-execute command line option
+* write half of a socket can now be shutdown
+* fixed error in -help message
+* fixed bug in C/U/Ul/Ur unification code that overwrote
+previous variable -> variable binds and produced non-unifiers
+* fixed bug where a collapse-up situation was not being
+warned about because the declaration used a kind
+* fixed bug in the sort analysis phase which could cause lost
+ACU unifiers
+* fixed bug in unifier subsumption check that causes silent
+memory corruption
+* fixed symmetric bug in variant subsumption check
+* handling of order-sorting in elementary A unification now
+takes systems of equations into account
+* experimental support for associative-identity unification
+
+Overview of Changes in alpha128 (2020-03-09)
+============================================
+* fixed bug where ascent functions were allowed to proceed
+on bad modules, resulting in an internal error
+* fixed bug where illegal use of built-in variable names
+in variant equations and narrowing rules wasn't being
+detecting in the functional metalevel
+* more sophisticated handling of order-sorting in
+elementary A unification
+* cleaner handling of ^C in unify and match commands
+* do clear memo command now takes an optional module
+* extra functions defined in META-LEVEL
+* fixed socket close bug
+
+Overview of Changes in Maude 3.0 (alpha127a)
+============================================
+* commented out unused code/data structures
+* increase default number of BDD variables to 100
+* updated comments
+
+Overview of Changes in Maude 3.0 beta 1 (alpha127)
+==================================================
+* fixed memory leak in file writing code
+* support ll as alias for ls -l
+* many compiler warnings fixed
+
+Overview of Changes in alpha126
+===============================
+* fixed memory leak in failed view instantiation
+* fixed bug in profiling of condition fragments
+* fixed bug when comment ended by EOF
+* Rubén Rafael Rubio Cuéllar's extensions to the strategy
+  language and fuctional reflection of the strategy language
+  integrated
+* Strategy language supported by meta-interpreter
+* -erewrite-loop-mode command line option
+* set print constants with sorts option
+* bubbles only disallow excluded tokens outside of parens
+* new variable family based descent functions
+* metaParse()/metaPretty() support variable aliases
+* symmetric change in meta-interpreter
+
+Overview of Changes in alpha123
+===============================
+* fixed a bug in module instantiation introduced by the
+  redesigned module system
+* kludged around a bug in BuDDy
+
+Overview of Changes in alpha121
+===============================
+* fixed a bug where module sums were commuted
+* fixed a memory leak with module expression syntax errors
+* fixed a bug where number of sorts from a parameter theory
+  was incorrectly recorded if the module had no regular imports
+* fixed symmetric bug with operators from a parameter theory
+* fixed symmetric bug with polymorphic operators from a parameter theory
+* fixed bug where user declared sort with parameter sort name
+could confuse module system
+* summing modules with bound parameters is now supported
+* parameterization of views is now supported
+* weird situation with overloaded polymorphic operators that
+  could cause crash now disallowed
+* fixed recursive view bug
+
+Overview of Changes in alpha120
+===============================
+* fixed memory leak in normalizeTerm() message
+* fixed double counting of initial eq rewrites and mb
+  application in metaApply()/metaXapply()
+* added rule application to the meta-interpreter
+* added single step narrowing with variant unification
+  to the meta-interpreter
+* added narrowing search with variant unification, with
+  and without path, to the meta-interpreter
+
+* Overview of Changes in alpha119
+================================
+* smart load "sload" directive
+* more sort computation messages added to the meta-interpreter
+* unification and disjoint unification added to the meta-interpreter
+* fixed fake rewrites from object-message rewriting that
+  were visible in trace/break/profile
+* variant generation added to the meta-interpreter
+* fixed mb/eq double counting bugs in metaMatch()/metaXmatch()
+  and getMatch()/getXmatch()
+* variant unifier generation added to the meta-interpreter
+* fixed memory leak in metaGetVariant()
+* pretty printing added to the meta-interpreter
+* parsing added to the meta-interpreter
+* fixed physical vs nominal argument index stacking bugs
+
+Overview of Changes in alpha118
+===============================
+* getSearchResult()/getSearchResultAndPath() messages added to
+  meta-interpreter
+* -show-pid command line option
+* SIGINFO (SIGUSR1 on Linux) now works immediately when blocked
+  on sockets rather then waiting for next rewrite
+* fixed memory leaks in metaXmatch()
+* getMatch()/getXmatch() messages added to meta-interpreter
+* upperCase()/lowerCase()  functions added to fmod STRING
+* sort computation messages added to the meta-interpreter
+
+Overview of Changes in alpha117
+===============================
+* fixed syntax error location bug in new parser
+* fixed show view bug
+* fixed symmetric upView() bug
+* fixed showModule bug in the meta-interpreter where imports
+  and parameters were omitted
+* fixed hang when doing an abort from erewrite
+* fixed crash caused by object-message rewriting with the
+  set clear rules off command
+* fixed bug where rewriteTerm()/frewriteTerm() in the
+  meta-interpreter did not reset next rule pointers
+* fixed a bug where modules cached by the metalevel functional
+  metalevel would be incorrectly used by by the meta-interpreter
+* fixed bug where using the functional metalevel from within
+  the meta-interpreter would pull imports from object level
+  interpreter
+* fixed bug where using the ascent functions from within
+  the meta-interpreter would pull modules from object level
+  interpreter
+* added insertView and showView messages to meta-interpreter
+* meta-interpreter now supports erewriteTerm message
+* erewrite will check for external events even when internal
+  rewrites are possible
+* fixed memory leak triggered by bad unify command
+* loop-mode/pipe edge case reverted to old behavior for IOP
+* status report in response to SIGINFO (SIGUSR1 on Linux)
+
+Overview of Changes in alpha116
+===============================
+* fixed bug in ctor calculations for associative operators;
+  enforce new ctor consistancy for such operators
+* fixed related bugs in unifier filtering, variant folding
+  and narrowing folding wrt the handing of abstraction
+  variables
+* new mixfix parser based on Leo's algorithm fixes many
+  bubble related bugs
+
 Overview of Changes in alpha115
 ===============================
-* fixed bug show mod command output empty parentheses
+* fixed bug where show mod command output empty parentheses
 * fixed bug where maude wouldn't compile without SMT support
 * support for file i/o
 * support for standard streams

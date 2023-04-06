@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -83,7 +83,7 @@ RewriteSequenceSearch::findNextMatch()
 					MatchSearchState::GC_CONTEXT);
     tryMatch:
       bool foundMatch = matchState->findNextMatch();
-      matchState->transferCount(*(getContext()));
+      matchState->transferCountTo(*(getContext()));
       if (foundMatch)
 	return true;
       delete matchState;

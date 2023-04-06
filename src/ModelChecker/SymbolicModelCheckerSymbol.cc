@@ -239,7 +239,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
     	unique_ptr<BuchiAutomaton2> propGraph(new BuchiAutomaton2(&formula->data, formula->top));
     	unique_ptr<Graph> tGraph = createSystemGraph(*sysCxt, subsume, stateProps, *spc, propTable);
     	gRef = tGraph.get();
-    	prod.reset(new Prod(move(tGraph), move(propGraph)));
+    	prod.reset(new Prod(std::move(tGraph), std::move(propGraph)));
     }
 	//
 	//  5. perform bounded model checking
@@ -252,7 +252,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 	PrettyPrinter printTrans(prettyPrintTransSymbol, &context);
 #endif
 	do {
-		auto oldSize = gRef->getNrStates();
+		int oldSize = gRef->getNrStates();
 		Verbose("SymbolicModelCheckerSymbol: examined " << oldSize << " logical state" << pluralize(oldSize)
 				<< " in bound " << gRef->getCurrLevel() << '.');
 		gRef->incrementLevel();
@@ -272,7 +272,7 @@ SymbolicModelCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& contex
 		for (auto k = bound_state; k < gRef->getNrVisitedStates(); ++k)
 			gRef->dump(cout, k, &printState, &printTrans);
 #endif
-	auto nrSysStates = gRef->getNrStates();
+	int nrSysStates = gRef->getNrStates();
 	Verbose("SymbolicModelCheckerSymbol: examined " << nrSysStates << " logical state" << pluralize(nrSysStates) << '.');
 	//
 	//  3. results
@@ -296,7 +296,7 @@ SymbolicModelCheckerSymbol::createSystemGraph(RewritingContext& sysCxt,
 	spl->setExtraFlag(false);	// set "no fairness"
 
 	// create a meta graph
-    unique_ptr<StateMetaGraph> mgraph(new StateMetaGraph(move(spl), sysCxt, propTable,
+    unique_ptr<StateMetaGraph> mgraph(new StateMetaGraph(std::move(spl), sysCxt, propTable,
     		metaStateSymbol, metaTransitionSymbol, deadlockTerm.getDag()));
     mgraph->init();
 

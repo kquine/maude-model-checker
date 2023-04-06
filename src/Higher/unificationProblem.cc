@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2006 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@
 //	interface class definitions
 #include "symbol.hh"
 #include "dagNode.hh"
+
 //	variable class definitions
 #include "variableDagNode.hh"
 #include "variableTerm.hh"
@@ -54,8 +55,11 @@
 
 UnificationProblem::UnificationProblem(Vector<Term*>& lhs,
 				       Vector<Term*>& rhs,
-				       FreshVariableGenerator* freshVariableGenerator)
-  : freshVariableGenerator(freshVariableGenerator)
+				       FreshVariableGenerator* freshVariableGenerator,
+				       int incomingVariableFamily)
+  : freshVariableGenerator(freshVariableGenerator),
+    variableFamilyToUse(incomingVariableFamily == 0)  // use 0 unless it's the incoming family,
+    						      // then use 1
 {
 #ifndef NO_ASSERT
   if (globalAdvisoryFlag)
@@ -94,7 +98,8 @@ UnificationProblem::UnificationProblem(Vector<Term*>& lhs,
   for (int i = 0; i < nrOriginalVariables; ++i)
     {
       Term* v = variableInfo.index2Variable(i);
-      if (freshVariableGenerator->variableNameConflict(safeCast(VariableTerm*, v)->id()))
+      if (freshVariableGenerator->variableNameConflict(safeCast(VariableTerm*, v)->id(),
+						       incomingVariableFamily))
 	{
 	  IssueWarning("unsafe variable name " << QUOTE(v) << " in unification problem.");
 	  return;
@@ -108,10 +113,10 @@ UnificationProblem::UnificationProblem(Vector<Term*>& lhs,
   for (int i = 0; i < nrEquations; ++i)
     {
       leftHandDags[i] = leftHandSides[i]->term2Dag();
-      if (leftHandDags[i]->computeBaseSortForGroundSubterms() == DagNode::UNIMPLEMENTED)
+      if (leftHandDags[i]->computeBaseSortForGroundSubterms(true) == DagNode::UNIMPLEMENTED)
 	return;
       rightHandDags[i] = rightHandSides[i]->term2Dag();
-      if (rightHandDags[i]->computeBaseSortForGroundSubterms() == DagNode::UNIMPLEMENTED)
+      if (rightHandDags[i]->computeBaseSortForGroundSubterms(true) == DagNode::UNIMPLEMENTED)
 	return;
     }
   problemOkay = true;
@@ -120,7 +125,9 @@ UnificationProblem::UnificationProblem(Vector<Term*>& lhs,
   //
   orderSortedUnifiers = 0;
   sortedSolution = new Substitution(nrOriginalVariables);
-  unsortedSolution = new UnificationContext(freshVariableGenerator, nrOriginalVariables);
+  unsortedSolution = new UnificationContext(freshVariableGenerator,
+					    nrOriginalVariables,
+					    variableFamilyToUse);
   for (int i = 0; i < nrOriginalVariables; ++i)
     {
       sortedSolution->bind(i, 0);  // so GC doesn't barf
@@ -227,6 +234,18 @@ UnificationProblem::findNextUnifier()
   return true;
 }
 
+const Substitution&
+UnificationProblem::getSolution() const
+{
+  return *sortedSolution;
+}
+
+int
+UnificationProblem::getNrFreeVariables() const
+{
+  return freeVariables.size();
+}
+
 void
 UnificationProblem::bindFreeVariables()
 {
@@ -236,9 +255,9 @@ UnificationProblem::bindFreeVariables()
   const Vector<Byte>& assignment = orderSortedUnifiers->getCurrentAssignment();
   int bddVar = sortBdds->getFirstAvailableVariable();
 
-  FOR_EACH_CONST(i, Vector<int>, freeVariables)
+  for (int fv : freeVariables)
     {
-      DagNode* variable = sortedSolution->value(*i);
+      DagNode* variable = sortedSolution->value(fv);
       DebugAdvisory("findNextUnifier(): finding sort of free variable " << variable);
 
       ConnectedComponent* component = variable->symbol()->rangeComponent();
@@ -247,21 +266,40 @@ UnificationProblem::bindFreeVariables()
       //	value of the BDD variables in the current satisfying assignment.
       //
       int nrBddVariables = sortBdds->getNrVariables(component->getIndexWithinModule());
-      int index = 0;
+      int newSortIndex = 0;
       for (int j = nrBddVariables - 1; j >= 0; --j)
 	{
-	  index <<= 1;
+	  newSortIndex <<= 1;
 	  if (assignment[bddVar + j])
-	    ++index;
+	    ++newSortIndex;
 	}
       bddVar += nrBddVariables;
-      DebugAdvisory("index = " << index);
       //
-      //	Replace each variable symbol in a free variable with the
-      //	variable symbol corresponding to its newly calculated sort.
+      //	We have extracted the index of the new sort for variable
+      //	from a satisfying assignment to the BDD.
       //
-      Assert(index < component->nrSorts(), "bad sort index " << index << " computed for free variable" << variable);
-      variable->replaceSymbol(freshVariableGenerator->getBaseVariableSymbol(component->sort(index)));
+      Assert(newSortIndex < component->nrSorts(), "bad sort index " << newSortIndex <<
+	     " computed for free variable" << variable);
+      Sort* newSort = component->sort(newSortIndex);
+      DebugInfo("newSortIndex = " << newSortIndex << "  newSort = " << newSort);
+
+      Symbol* baseVariableSymbol = freshVariableGenerator->getBaseVariableSymbol(newSort);
+      int variableName = safeCast(VariableDagNode*, variable)->id();
+      DagNode* newVariable = new VariableDagNode(baseVariableSymbol, variableName, fv);
+      sortedSolution->bind(fv, newVariable);
+    }
+  //
+  //	We now need to instantiate the substitution on the newly
+  //	created variables.
+  //
+  int nrOriginalVariables = variableInfo.getNrRealVariables();
+  for (int i = 0; i < nrOriginalVariables; ++i)
+    {
+      if (!(freeVariables.contains(i)))  // not a free variable
+	{
+	  if (DagNode* d2 = sortedSolution->value(i)->instantiate(*sortedSolution, true))
+	    sortedSolution->bind(i, d2);
+	}
     }
 }
 
@@ -287,8 +325,9 @@ UnificationProblem::findOrderSortedUnifiers()
       //cout << "variable with index " << i << endl;
       if (sortedSolution->value(i) == 0)
 	{
-	  DebugAdvisory("allocated BDD variables starting at " << nextBddVariable << " for variable with slot " << i);
-	  freeVariables.append(i);
+	  DebugAdvisory("allocated BDD variables starting at " << nextBddVariable <<
+			" for variable with slot " << i);
+	  freeVariables.insert(i);
 	  realToBdd[i] = nextBddVariable;
 	  Sort* sort = (i < nrOriginalVariables) ?
 	    safeCast(VariableSymbol*, variableInfo.index2Variable(i)->symbol())->getSort() :
@@ -368,17 +407,16 @@ UnificationProblem::findOrderSortedUnifiers()
   //	pushing the not inside the quantifier.
   //
   Bdd maximal = unifier;
-  int nrFreeVariables = freeVariables.size();
   int secondBase = sortBdds->getFirstAvailableVariable();
-  for (int i = 0; i < nrFreeVariables; ++i)
+  for (int fv : freeVariables)
     {
-      int fv = freeVariables[i];
       Sort* sort = (fv < nrOriginalVariables) ?
 	safeCast(VariableSymbol*, variableInfo.index2Variable(fv)->symbol())->getSort() :
 	unsortedSolution->getFreshVariableSort(fv);
       int nrBddVariables = sortBdds->getNrVariables(sort->component()->getIndexWithinModule());
       //
-      //	Replace the bdd variables allocated to the real variable in unifier with 0...nrBddVariables-1.
+      //	Replace the bdd variables allocated to the real variable in unifier with
+      //	0...nrBddVariables-1.
       //	Replace the bdd variables firstAvail,..., firstAvail+nrBddVariables-1 in gtOp with the
       //	variables allocated to real variable.
       //
@@ -404,7 +442,7 @@ UnificationProblem::findOrderSortedUnifiers()
   DebugAdvisory("findOrderSortedUnifiers(): maximal = " << maximal);
   orderSortedUnifiers = new AllSat(maximal, secondBase, nextBddVariable - 1);
 
-  if (nrFreeVariables > 0)
+  if (!(freeVariables.empty()))
     {
       int freshVariableCount = 0;
       //
@@ -415,18 +453,24 @@ UnificationProblem::findOrderSortedUnifiers()
 	{
 	  if (sortedSolution->value(i) == 0)
 	    {
-	      Sort* sort = (i < nrOriginalVariables) ?
-		safeCast(VariableSymbol*, variableInfo.index2Variable(i)->symbol())->getSort() :
-		unsortedSolution->getFreshVariableSort(i);
-	      sortedSolution->bind(i, new VariableDagNode(freshVariableGenerator->getBaseVariableSymbol(sort),
-					  freshVariableGenerator->getFreshVariableName(freshVariableCount),
-					  i));
+	      //
+	      //	If we have an original variable, we take the base symbol from the original
+	      //	variable, otherwise if it is a fresh variable, we get the kind from the
+	      //	UnificationContext where it was created and look up the appropriate base
+	      //	symbol.
+	      //
+	      Symbol* baseSymbol = (i < nrOriginalVariables) ?
+		variableInfo.index2Variable(i)->symbol() :
+		freshVariableGenerator->getBaseVariableSymbol(unsortedSolution->getFreshVariableSort(i));
+	      int newVariableName =
+		freshVariableGenerator->getFreshVariableName(freshVariableCount, variableFamilyToUse);
+	      sortedSolution->bind(i, new VariableDagNode(baseSymbol, newVariableName, i));
 	      ++freshVariableCount;
 	    }
 	}
       for (int i = 0; i < nrOriginalVariables; ++i)
 	{
-	  if (DagNode* d = sortedSolution->value(i)->instantiate(*sortedSolution))
+	  if (DagNode* d = sortedSolution->value(i)->instantiate(*sortedSolution, true))
 	    sortedSolution->bind(i, d);
 	}
     }

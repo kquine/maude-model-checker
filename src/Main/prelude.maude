@@ -1,8 +1,8 @@
 ***(
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2017 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 ***
 ***	Maude interpreter standard prelude.
-***	Version alpha115
+***	Version 3.3.
 ***
 ***	Some of the overall structure is taken from the OBJ3
 ***	interpreter standard prelude.
@@ -640,28 +640,28 @@ fmod FLOAT is
         [prec 51
          special (id-hook FloatOpSymbol (<)
                   op-hook floatSymbol (<Floats> : ~> Float)
-                   term-hook trueTerm (true)
+                  term-hook trueTerm (true)
                   term-hook falseTerm (false))] .
 
   op _<=_ : Float Float -> Bool
         [prec 51
          special (id-hook FloatOpSymbol (<=)
                   op-hook floatSymbol (<Floats> : ~> Float)
-                    term-hook trueTerm (true)
+                  term-hook trueTerm (true)
                   term-hook falseTerm (false))] .
 
   op _>_ : Float Float -> Bool
         [prec 51
          special (id-hook FloatOpSymbol (>)
                   op-hook floatSymbol (<Floats> : ~> Float)
-                    term-hook trueTerm (true)
+                  term-hook trueTerm (true)
                   term-hook falseTerm (false))] .
 
   op _>=_ : Float Float -> Bool
         [prec 51
          special (id-hook FloatOpSymbol (>=)
                   op-hook floatSymbol (<Floats> : ~> Float)
-                    term-hook trueTerm (true)
+                  term-hook trueTerm (true)
                   term-hook falseTerm (false))] .
 
   op pi : -> FiniteFloat .
@@ -749,6 +749,14 @@ fmod STRING is
                   op-hook stringSymbol (<Strings> : ~> String)
                   term-hook trueTerm (true)
                   term-hook falseTerm (false))] .
+
+  op upperCase : String -> String
+        [special (id-hook StringOpSymbol (upperCase)
+                  op-hook stringSymbol (<Strings> : ~> String))] .
+
+  op lowerCase : String -> String
+        [special (id-hook StringOpSymbol (lowerCase)
+                  op-hook stringSymbol (<Strings> : ~> String))] .
 endfm
 
 fmod CONVERSION is
@@ -1047,10 +1055,15 @@ fmod LIST{X :: TRIV} is
   eq $size(E L, C) = $size(L, C + 1) .
 endfm
 
+view List{X :: TRIV} from TRIV to LIST{X} is
+  sort Elt to List{X} .
+endv
+
 fmod WEAKLY-SORTABLE-LIST{X :: STRICT-WEAK-ORDER} is
   protecting LIST{STRICT-WEAK-ORDER}{X} *
               (sort NeList{STRICT-WEAK-ORDER}{X} to NeList{X},
                sort List{STRICT-WEAK-ORDER}{X} to List{X}) .
+
   sort $Split{X} .
 
   vars E E' : X$Elt .
@@ -1084,16 +1097,25 @@ fmod WEAKLY-SORTABLE-LIST{X :: STRICT-WEAK-ORDER} is
       fi .
 endfm
 
+view WeaklySortableList{X :: STRICT-WEAK-ORDER} from TRIV to WEAKLY-SORTABLE-LIST{X} is
+  sort Elt to List{X} .
+endv
+
 fmod SORTABLE-LIST{X :: STRICT-TOTAL-ORDER} is
   protecting WEAKLY-SORTABLE-LIST{STRICT-TOTAL-ORDER}{X} *
               (sort NeList{STRICT-TOTAL-ORDER}{X} to NeList{X},
                sort List{STRICT-TOTAL-ORDER}{X} to List{X}) .
 endfm
 
+view SortableList{X :: STRICT-TOTAL-ORDER} from TRIV to SORTABLE-LIST{X} is
+  sort Elt to List{X} .
+endv
+
 fmod WEAKLY-SORTABLE-LIST'{X :: TOTAL-PREORDER} is
   protecting LIST{TOTAL-PREORDER}{X} *
               (sort NeList{TOTAL-PREORDER}{X} to NeList{X},
                sort List{TOTAL-PREORDER}{X} to List{X}) .
+
   sort $Split{X} .
 
   vars E E' : X$Elt .
@@ -1127,11 +1149,19 @@ fmod WEAKLY-SORTABLE-LIST'{X :: TOTAL-PREORDER} is
       fi .
 endfm
 
+view WeaklySortableList'{X :: TOTAL-PREORDER} from TRIV to WEAKLY-SORTABLE-LIST'{X} is
+  sort Elt to List{X} .
+endv
+
 fmod SORTABLE-LIST'{X :: TOTAL-ORDER} is
   protecting WEAKLY-SORTABLE-LIST'{TOTAL-ORDER}{X} *
               (sort NeList{TOTAL-ORDER}{X} to NeList{X},
                sort List{TOTAL-ORDER}{X} to List{X}) .
 endfm
+
+view SortableList'{X :: TOTAL-ORDER} from TRIV to SORTABLE-LIST'{X} is
+  sort Elt to List{X} .
+endv
 
 fmod SET{X :: TRIV} is
   protecting EXT-BOOL .
@@ -1199,6 +1229,10 @@ fmod SET{X :: TRIV} is
   eq S psubset S' = S =/= S' and-then S subset S' .
 endfm
 
+view Set{X :: TRIV} from TRIV to SET{X} is
+  sort Elt to Set{X} .
+endv
+
 fmod LIST-AND-SET{X :: TRIV} is
   protecting LIST{X} .
   protecting SET{X} .
@@ -1246,7 +1280,7 @@ fmod SORTABLE-LIST-AND-SET{X :: STRICT-TOTAL-ORDER} is
                sort List{STRICT-TOTAL-ORDER}{X} to List{X},
 	       sort NeSet{STRICT-WEAK-ORDER}{STRICT-TOTAL-ORDER}{X} to NeSet{X},
                sort Set{STRICT-WEAK-ORDER}{STRICT-TOTAL-ORDER}{X} to Set{X}) .
-  
+
   var E : X$Elt .
   var L : List{X} .
   var S : Set{X} .
@@ -1275,7 +1309,7 @@ fmod SORTABLE-LIST-AND-SET'{X :: TOTAL-ORDER} is
                sort List{TOTAL-ORDER}{X} to List{X},
 	       sort NeSet{TOTAL-PREORDER}{TOTAL-ORDER}{X} to NeSet{X},
                sort Set{TOTAL-PREORDER}{TOTAL-ORDER}{X} to Set{X}) .
-  
+
   var E : X$Elt .
   var L : List{X} .
   var S : Set{X} .
@@ -1354,6 +1388,10 @@ fmod LIST*{X :: TRIV} is
   eq $size(E, C) = C + 1 .
   eq $size(E P, C) = $size(P, C + 1) .
 endfm
+
+view List*{X :: TRIV} from TRIV to LIST*{X} is
+  sort Elt to List{X} .
+endv
 
 fmod SET*{X :: TRIV} is
   protecting EXT-BOOL .
@@ -1442,6 +1480,10 @@ fmod SET*{X :: TRIV} is
   eq A psubset S = A =/= S and-then A subset S .
 endfm
 
+view Set*{X :: TRIV} from TRIV to SET*{X} is
+  sort Elt to Set{X} .
+endv
+
 fmod MAP{X :: TRIV, Y :: TRIV} is
   protecting BOOL .
   sorts Entry{X,Y} Map{X,Y} .
@@ -1475,6 +1517,10 @@ fmod MAP{X :: TRIV, Y :: TRIV} is
   eq $hasMapping(M, D) = false [owise] .
 endfm
 
+view Map{X :: TRIV, Y :: TRIV} from TRIV to MAP{X, Y} is
+  sort Elt to Map{X,Y} .
+endv
+
 fmod ARRAY{X :: TRIV, Y :: DEFAULT} is
   protecting BOOL .
   sorts Entry{X,Y} Array{X,Y} .
@@ -1507,6 +1553,10 @@ fmod ARRAY{X :: TRIV, Y :: DEFAULT} is
   eq $hasMapping((A ; D |-> R), D) = true .
   eq $hasMapping(A, D) = false [owise] .
 endfm
+
+view Array{X :: TRIV, Y :: DEFAULT} from TRIV to ARRAY{X, Y} is
+  sort Elt to Array{X,Y} .
+endv
 
 ***
 ***	Container instantiations on builtin data types needed by the metalevel.
@@ -1596,8 +1646,67 @@ fmod META-TERM is
   op _[_] : Qid NeCTermList -> Context [ctor] .
 endfm
 
+fmod META-CONDITION is
+  protecting META-TERM .
+
+*** conditions
+  sorts EqCondition Condition .
+  subsort EqCondition < Condition .
+  op nil : -> EqCondition [ctor] .
+  op _=_ : Term Term -> EqCondition [ctor prec 71] .
+  op _:_ : Term Sort -> EqCondition [ctor prec 71] .
+  op _:=_ : Term Term -> EqCondition [ctor prec 71] .
+  op _=>_ : Term Term -> Condition [ctor prec 71] .
+  op _/\_ : EqCondition EqCondition -> EqCondition [ctor assoc id: nil prec 73] .
+  op _/\_ : Condition Condition -> Condition [ctor assoc id: nil prec 73] .
+endfm
+
+fmod META-STRATEGY is
+  protecting META-CONDITION .
+
+*** strategies
+  sorts UsingPair UsingPairSet .
+  subsort UsingPair < UsingPairSet .
+  sorts RuleApplication CallStrategy Strategy StrategyList .
+  subsort RuleApplication CallStrategy < Strategy < StrategyList .
+
+*** basic operators
+  ops fail idle : -> Strategy [ctor] .
+  op all : -> RuleApplication [ctor] .
+  op _[_]{_} : Qid Substitution StrategyList -> RuleApplication [ctor prec 21] .
+  op top : RuleApplication -> Strategy [ctor] .
+  op match_s.t._ : Term EqCondition -> Strategy [ctor prec 21] .
+  op xmatch_s.t._ : Term EqCondition -> Strategy [ctor prec 21] .
+  op amatch_s.t._ : Term EqCondition -> Strategy [ctor prec 21] .
+  op _|_ : Strategy Strategy -> Strategy [ctor assoc comm id: fail prec 41 gather (e E)] .
+  op _;_ : Strategy Strategy -> Strategy [ctor assoc id: idle prec 39 gather (e E)] .
+  op _or-else_ : Strategy Strategy -> Strategy [ctor assoc prec 43 gather (e E)] .
+  op _+ : Strategy -> Strategy [ctor] .
+  op _?_:_ : Strategy Strategy Strategy -> Strategy [ctor prec 55] .
+  op matchrew_s.t._by_ : Term EqCondition UsingPairSet -> Strategy [ctor] .
+  op xmatchrew_s.t._by_ : Term EqCondition UsingPairSet -> Strategy [ctor] .
+  op amatchrew_s.t._by_ : Term EqCondition UsingPairSet -> Strategy [ctor] .
+  op _[[_]] : Qid TermList -> CallStrategy [ctor prec 21] .
+  op one : Strategy -> Strategy [ctor] .
+
+*** derived operators (defined as constructors)
+  op _* : Strategy -> Strategy [ctor] .
+  op _! : Strategy -> Strategy [ctor] .
+  op not : Strategy -> Strategy [ctor] .
+  op test : Strategy -> Strategy [ctor] .
+  op try : Strategy -> Strategy [ctor] .
+
+*** lists
+  op empty : -> StrategyList [ctor] .
+  op _,_ : StrategyList StrategyList -> StrategyList [ctor assoc id: empty] .
+  op _using_ : Variable Strategy -> UsingPair [ctor prec 21] .
+  op _,_ : UsingPairSet UsingPairSet -> UsingPairSet [ctor assoc comm prec 61] .
+  eq U:UsingPair, U:UsingPair = U:UsingPair .
+endfm
+
 fmod META-MODULE is
   protecting META-TERM .
+  protecting META-STRATEGY .
   protecting NAT-LIST .
   protecting QID-LIST .
   protecting QID-SET * (op empty to none, op _,_ to _;_ [prec 43]) .
@@ -1612,19 +1721,19 @@ fmod META-MODULE is
   eq S:SubsortDecl S:SubsortDecl = S:SubsortDecl .
 
 *** sort, kind and type sets
-  sorts EmptyTypeSet NeSortSet NeKindSet NeTypeSet SortSet KindSet TypeSet .
-  subsort EmptyTypeSet < SortSet KindSet < TypeSet < QidSet .
+  sorts EmptyQidSet NeSortSet NeKindSet NeTypeSet SortSet KindSet TypeSet .
+  subsort EmptyQidSet < SortSet KindSet < TypeSet < QidSet .
   subsort Sort < NeSortSet < SortSet .
   subsort Kind < NeKindSet < KindSet .
   subsort Type NeSortSet NeKindSet < NeTypeSet < TypeSet NeQidSet .
-  op none : -> EmptyTypeSet [ctor] .
+  op none : -> EmptyQidSet [ctor] .
   op _;_ : TypeSet TypeSet -> TypeSet [ctor ditto] .
   op _;_ : NeTypeSet TypeSet -> NeTypeSet [ctor ditto] .
   op _;_ : SortSet SortSet -> SortSet [ctor ditto] .
   op _;_ : NeSortSet SortSet -> NeSortSet [ctor ditto] .
   op _;_ : KindSet KindSet -> KindSet [ctor ditto] .
   op _;_ : NeKindSet KindSet -> NeKindSet [ctor ditto] .
-  op _;_ : EmptyTypeSet EmptyTypeSet -> EmptyTypeSet [ctor ditto] .
+  op _;_ : EmptyQidSet EmptyQidSet -> EmptyQidSet [ctor ditto] .
 
 *** type lists
   sort NeTypeList TypeList .
@@ -1657,27 +1766,30 @@ fmod META-MODULE is
   op op_:_->_to_[_] : Qid TypeList Type Qid AttrSet -> Renaming
     [ctor format (d d d d d d d d s d d d)] .
   op label_to_ : Qid Qid -> Renaming [ctor] .
+  op strat_to_ : Qid Qid -> Renaming [ctor] .
+  op strat_:_@_to_ : Qid TypeList Type Qid -> Renaming [ctor] .
   op _,_ : RenamingSet RenamingSet -> RenamingSet
     [ctor assoc comm prec 43 format (d d ni d)] .
 
+*** view and module expressions
+  sort Expression ViewExpression ModuleExpression .
+  subsort Sort < Expression < ViewExpression ModuleExpression .
+  op _{_} : Expression NeParameterList -> Expression [ctor prec 37] .
+  op _{_} : ViewExpression NeParameterList -> ViewExpression [ctor ditto] .
+  op _{_} : ModuleExpression NeParameterList -> ModuleExpression [ctor ditto] .
+  op _+_ : ModuleExpression ModuleExpression -> ModuleExpression [ctor assoc comm] .
+  op _*(_) : ModuleExpression RenamingSet -> ModuleExpression
+    [ctor prec 39 format (d d s n++i n--i d)] .
+
 *** parameter lists
   sort EmptyCommaList NeParameterList ParameterList .
-  subsorts Sort < NeParameterList < ParameterList .
+  subsorts ViewExpression < NeParameterList < ParameterList .
   subsort EmptyCommaList < GroundTermList ParameterList .
   op empty : -> EmptyCommaList [ctor] .
   op _,_ : ParameterList ParameterList -> ParameterList [ctor ditto] .
   op _,_ : NeParameterList ParameterList -> NeParameterList [ctor ditto] .
   op _,_ : ParameterList NeParameterList -> NeParameterList [ctor ditto] .
   op _,_ : EmptyCommaList EmptyCommaList -> EmptyCommaList [ctor ditto] .
-
-*** module expressions
-  sort ModuleExpression .
-  subsort Qid < ModuleExpression .
-  op _+_ : ModuleExpression ModuleExpression -> ModuleExpression
-    [ctor assoc comm] .
-  op _*(_) : ModuleExpression RenamingSet -> ModuleExpression
-    [ctor prec 39 format (d d s n++i n--i d)] .
-  op _{_} : ModuleExpression ParameterList -> ModuleExpression [ctor prec 37].
 
 *** parameter declarations
   sorts ParameterDecl NeParameterDeclList ParameterDeclList .
@@ -1693,6 +1805,7 @@ fmod META-MODULE is
   subsort Import < ImportList .
   op protecting_. : ModuleExpression -> Import [ctor] .
   op extending_. : ModuleExpression -> Import [ctor] .
+  op generated-by_. : ModuleExpression -> Import [ctor] .
   op including_. : ModuleExpression -> Import [ctor] .
   op nil : -> ImportList [ctor] .
   op __ : ImportList ImportList -> ImportList
@@ -1726,6 +1839,7 @@ fmod META-MODULE is
   op config : -> Attr [ctor] .
   op object : -> Attr [ctor] .
   op msg : -> Attr [ctor] .
+  op pconst : -> Attr [ctor] .
   op frozen : NeNatList -> Attr [ctor] .
   op poly : NeNatList -> Attr [ctor] .
   op special : NeHookList -> Attr [ctor] .
@@ -1748,17 +1862,6 @@ fmod META-MODULE is
   op __ : OpDeclSet OpDeclSet -> OpDeclSet
     [ctor assoc comm id: none format (d ni d)] .
   eq O:OpDecl O:OpDecl = O:OpDecl .
-
-*** conditions
-  sorts EqCondition Condition .
-  subsort EqCondition < Condition .
-  op nil : -> EqCondition [ctor] .
-  op _=_ : Term Term -> EqCondition [ctor prec 71] .
-  op _:_ : Term Sort -> EqCondition [ctor prec 71] .
-  op _:=_ : Term Term -> EqCondition [ctor prec 71] .
-  op _=>_ : Term Term -> Condition [ctor prec 71] .
-  op _/\_ : EqCondition EqCondition -> EqCondition [ctor assoc id: nil prec 73] .
-  op _/\_ : Condition Condition -> Condition [ctor assoc id: nil prec 73] .
 
 *** membership axioms
   sorts MembAx MembAxSet .
@@ -1796,6 +1899,28 @@ fmod META-MODULE is
     [ctor assoc comm id: none format (d ni d)] .
   eq R:Rule R:Rule = R:Rule .
 
+*** strategy declarations
+  sorts StratDecl StratDeclSet .
+  subsort StratDecl < StratDeclSet .
+  op strat_:_@_[_]. : Qid TypeList Type AttrSet -> StratDecl
+    [ctor format (d d d d d d s d d s d)] .
+  op none : -> StratDeclSet [ctor] .
+  op __ : StratDeclSet StratDeclSet -> StratDeclSet
+    [ctor assoc comm id: none format (d ni d)] .
+  eq O:StratDecl O:StratDecl = O:StratDecl .
+
+*** strategy definitions
+  sorts StratDefinition StratDefSet .
+  subsort StratDefinition < StratDefSet .
+  op sd_:=_[_]. : CallStrategy Strategy AttrSet -> StratDefinition
+    [ctor format (d d d d s d d s d)] .
+  op csd_:=_if_[_]. : CallStrategy Strategy EqCondition AttrSet -> StratDefinition
+    [ctor format (d d d d d d s d d s d)] .
+  op none : -> StratDefSet [ctor] .
+  op __ : StratDefSet StratDefSet -> StratDefSet
+    [ctor assoc comm id: none format (d ni d)] .
+  eq D:StratDefinition D:StratDefinition = D:StratDefinition .
+
 *** modules
   sorts FModule SModule FTheory STheory Module .
   subsorts FModule < SModule < Module .
@@ -1818,8 +1943,21 @@ fmod META-MODULE is
     [ctor gather (& & & & & & & &)
      format (d d d n++i ni d d ni ni ni ni ni n--i d)] .
   op [_] : Qid -> Module .
-  eq [Q:Qid] = (th Q:Qid is including Q:Qid .
-                sorts none . none none none none none endth) .
+  eq [Q:Qid] = (sth Q:Qid is including Q:Qid .
+                sorts none . none none none none none none none endsth) .
+
+*** strategy modules
+  sorts StratModule StratTheory .
+  subsorts SModule < StratModule < Module .
+  subsorts STheory < StratTheory < Module .
+  op smod_is_sorts_._______endsm : Header ImportList SortSet SubsortDeclSet
+    OpDeclSet MembAxSet EquationSet RuleSet StratDeclSet StratDefSet -> StratModule
+    [ctor gather (& & & & & & & & & &)
+     format (d d s n++i ni d d ni ni ni ni ni ni ni n--i d)] .
+  op sth_is_sorts_._______endsth : Header ImportList SortSet SubsortDeclSet
+    OpDeclSet MembAxSet EquationSet RuleSet StratDeclSet StratDefSet -> StratTheory
+    [ctor gather (& & & & & & & & & &)
+     format (d d s n++i ni d d ni ni ni ni ni ni ni n--i d)] .
 
 *** projection functions
   var Q : Qid .
@@ -1833,6 +1971,8 @@ fmod META-MODULE is
   var MAS : MembAxSet .
   var EQS : EquationSet .
   var RLS : RuleSet .
+  var STDS : StratDeclSet .
+  var STDFS : StratDefSet .
 
   op getName : Module -> Qid .
   eq getName(fmod Q is IL sorts SS . SSDS OPDS MAS EQS endfm) = Q .
@@ -1841,48 +1981,81 @@ fmod META-MODULE is
   eq getName(mod Q{PDL} is IL sorts SS . SSDS OPDS MAS EQS RLS endm) = Q .
   eq getName(fth Q is IL sorts SS . SSDS OPDS MAS EQS endfth) = Q .
   eq getName(th Q is IL sorts SS . SSDS OPDS MAS EQS RLS endth) = Q .
+  eq getName(smod Q is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm) = Q .
+  eq getName(smod Q{PDL} is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm) = Q .
+  eq getName(sth Q is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsth) = Q .
 
   op getImports : Module -> ImportList .
   eq getImports(fmod H is IL sorts SS . SSDS OPDS MAS EQS endfm) = IL .
   eq getImports(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) = IL .
   eq getImports(fth Q is IL sorts SS . SSDS OPDS MAS EQS endfth) = IL .
   eq getImports(th Q is IL sorts SS . SSDS OPDS MAS EQS RLS endth) = IL .
+  eq getImports(smod H is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm) = IL .
+  eq getImports(sth Q is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsth) = IL .
 
   op getSorts : Module -> SortSet .
   eq getSorts(fmod H is IL sorts SS . SSDS OPDS MAS EQS endfm) = SS .
   eq getSorts(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) = SS .
   eq getSorts(fth Q is IL sorts SS . SSDS OPDS MAS EQS endfth) = SS .
   eq getSorts(th Q is IL sorts SS . SSDS OPDS MAS EQS RLS endth) = SS .
+  eq getSorts(smod H is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm) = SS .
+  eq getSorts(sth Q is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsth) = SS .
 
   op getSubsorts : Module -> SubsortDeclSet .
   eq getSubsorts(fmod H is IL sorts SS . SSDS OPDS MAS EQS endfm) = SSDS .
   eq getSubsorts(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) = SSDS .
   eq getSubsorts(fth Q is IL sorts SS . SSDS OPDS MAS EQS endfth) = SSDS .
   eq getSubsorts(th Q is IL sorts SS . SSDS OPDS MAS EQS RLS endth) = SSDS .
+  eq getSubsorts(smod H is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm) = SSDS .
+  eq getSubsorts(sth Q is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsth) = SSDS .
 
   op getOps : Module -> OpDeclSet .
   eq getOps(fmod H is IL sorts SS . SSDS OPDS MAS EQS endfm) = OPDS .
   eq getOps(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) = OPDS .
   eq getOps(fth Q is IL sorts SS . SSDS OPDS MAS EQS endfth) = OPDS .
   eq getOps(th Q is IL sorts SS . SSDS OPDS MAS EQS RLS endth) = OPDS .
+  eq getOps(smod H is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm) = OPDS .
+  eq getOps(sth Q is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsth) = OPDS .
 
   op getMbs : Module -> MembAxSet .
   eq getMbs(fmod H is IL sorts SS . SSDS OPDS MAS EQS endfm) = MAS .
   eq getMbs(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) = MAS .
   eq getMbs(fth Q is IL sorts SS . SSDS OPDS MAS EQS endfth) = MAS .
   eq getMbs(th Q is IL sorts SS . SSDS OPDS MAS EQS RLS endth) = MAS .
+  eq getMbs(smod H is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm) = MAS .
+  eq getMbs(sth Q is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsth) = MAS .
 
   op getEqs : Module -> EquationSet .
   eq getEqs(fmod H is IL sorts SS . SSDS OPDS MAS EQS endfm) = EQS .
   eq getEqs(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) = EQS .
   eq getEqs(fth Q is IL sorts SS . SSDS OPDS MAS EQS endfth) = EQS .
   eq getEqs(th Q is IL sorts SS . SSDS OPDS MAS EQS RLS endth) = EQS .
+  eq getEqs(smod H is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm) = EQS .
+  eq getEqs(sth Q is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsth) = EQS .
 
   op getRls : Module -> RuleSet .
   eq getRls(fmod H is IL sorts SS . SSDS OPDS MAS EQS endfm) = none .
   eq getRls(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) = RLS .
   eq getRls(fth Q is IL sorts SS . SSDS OPDS MAS EQS endfth) = none .
   eq getRls(th Q is IL sorts SS . SSDS OPDS MAS EQS RLS endth) = RLS .
+  eq getRls(smod H is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm) = RLS .
+  eq getRls(sth Q is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsth) = RLS .
+
+  op getStrats : Module -> StratDeclSet .
+  eq getStrats(fmod H is IL sorts SS . SSDS OPDS MAS EQS endfm) = none .
+  eq getStrats(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) = none .
+  eq getStrats(fth Q is IL sorts SS . SSDS OPDS MAS EQS endfth) = none .
+  eq getStrats(th Q is IL sorts SS . SSDS OPDS MAS EQS RLS endth) = none .
+  eq getStrats(smod H is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm) = STDS .
+  eq getStrats(sth Q is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsth) = STDS .
+
+  op getSds : Module -> StratDefSet .
+  eq getSds(fmod H is IL sorts SS . SSDS OPDS MAS EQS endfm) = none .
+  eq getSds(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) = none .
+  eq getSds(fth Q is IL sorts SS . SSDS OPDS MAS EQS endfth) = none .
+  eq getSds(th Q is IL sorts SS . SSDS OPDS MAS EQS RLS endth) = none .
+  eq getSds(smod H is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm) = STDFS .
+  eq getSds(sth Q is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsth) = STDFS .
 endfm
 
 fmod META-VIEW is
@@ -1910,36 +2083,63 @@ fmod META-VIEW is
     [ctor assoc comm id: none format (d ni d)] .
   eq O:OpMapping O:OpMapping = O:OpMapping .
 
+*** strat mappings
+  sorts StratMapping StratMappingSet .
+  subsort StratMapping < StratMappingSet .
+
+  op (strat_to_.) : Qid Qid -> StratMapping [ctor] .
+  op (strat_:_@_to_.) : Qid TypeList Type Qid -> StratMapping [ctor] .
+  op (strat_to expr_.) : CallStrategy Strategy -> StratMapping [ctor] .
+
+  op none : -> StratMappingSet [ctor] .
+  op __ : StratMappingSet StratMappingSet -> StratMappingSet
+    [ctor assoc comm id: none format (d ni d)] .
+  eq S:StratMapping S:StratMapping = S:StratMapping .
+
   sort View .
-  op view_from_to_is__endv : Header ModuleExpression ModuleExpression
-    SortMappingSet OpMappingSet -> View [ctor gather (& & & & &)
-     format (d d d d d d d n++i ni n--i d)] .
+  op view_from_to_is___endv : Header ModuleExpression ModuleExpression
+    SortMappingSet OpMappingSet StratMappingSet -> View [ctor gather (& & & & & &)
+     format (d d d d d d d n++i ni ni n--i d)] .
 
 *** projection functions
   var Q : Qid .
+  var PDL : ParameterDeclList .
   vars ME ME' : ModuleExpression .
   var SMS : SortMappingSet .
   var OMS : OpMappingSet .
+  var TMS : StratMappingSet .
 
   op getName : View -> Qid .
-  eq getName(view Q from ME to ME' is SMS OMS endv) = Q .
+  eq getName(view Q from ME to ME' is SMS OMS TMS endv) = Q .
+  eq getName(view Q{PDL} from ME to ME' is SMS OMS TMS endv) = Q .
 
   op getFrom : View -> ModuleExpression .
-  eq getFrom(view Q from ME to ME' is SMS OMS endv) = ME .
+  eq getFrom(view Q from ME to ME' is SMS OMS TMS endv) = ME .
 
   op getTo : View -> ModuleExpression .
-  eq getTo(view Q from ME to ME' is SMS OMS endv) = ME' .
+  eq getTo(view Q from ME to ME' is SMS OMS TMS endv) = ME' .
 
   op getSortMappings : View -> SortMappingSet .
-  eq getSortMappings(view Q from ME to ME' is SMS OMS endv) = SMS .
+  eq getSortMappings(view Q from ME to ME' is SMS OMS TMS endv) = SMS .
 
   op getOpMappings : View -> OpMappingSet .
-  eq getOpMappings(view Q from ME to ME' is SMS OMS endv) = OMS .
+  eq getOpMappings(view Q from ME to ME' is SMS OMS TMS endv) = OMS .
+
+  op getStratMappings : View -> StratMappingSet .
+  eq getStratMappings(view Q from ME to ME' is SMS OMS TMS endv) = TMS .
 endfm
 
 fmod META-LEVEL is
   protecting META-VIEW .
   protecting BOUND .
+
+*** variable sets
+  sorts NeVariableSet VariableSet .
+  subsort Variable < NeVariableSet < VariableSet < QidSet .
+  subsort NeVariableSet <  NeQidSet .
+  subsort EmptyQidSet < VariableSet .
+  op _;_ : VariableSet VariableSet -> VariableSet [ctor ditto] .
+  op _;_ : NeVariableSet VariableSet -> NeVariableSet [ctor ditto] .
 
 *** parents
   sort Parent .
@@ -1958,18 +2158,36 @@ fmod META-LEVEL is
   op none : -> PrintOptionSet [ctor] .
   op __ : PrintOptionSet PrintOptionSet -> PrintOptionSet [ctor assoc comm id: none] .
 
+*** options for various variant based functionality
+  sorts VariantOption VariantOptionSet .
+  subsort VariantOption < VariantOptionSet .
+  ops delay filter : -> VariantOption [ctor] .
+  op none : -> VariantOptionSet [ctor] .
+  op __ : VariantOptionSet VariantOptionSet -> VariantOptionSet [ctor assoc comm id: none] .
+
+*** options for metaSrewrite()
+  sort SrewriteOption .
+  ops breadthFirst depthFirst : -> SrewriteOption [ctor] .
+  
 *** unification problems
   sorts UnificandPair UnificationProblem .
   subsort UnificandPair < UnificationProblem .
   op _=?_ : Term Term -> UnificandPair [ctor prec 71] .
   op _/\_ : UnificationProblem UnificationProblem -> UnificationProblem [ctor assoc comm prec 73] .
 
+*** matching problems
+  sorts PatternSubjectPair MatchingProblem .
+  subsort PatternSubjectPair < MatchingProblem .
+  op _<=?_ : Term Term -> PatternSubjectPair [ctor prec 71] .
+  op _/\_ : MatchingProblem MatchingProblem -> MatchingProblem [ctor assoc comm prec 73] .
+
 *** success results
   sorts ResultPair ResultTriple Result4Tuple MatchPair TraceStep Trace
-    UnificationPair UnificationTriple Variant
+    UnificationPair UnificationTriple Variant MatchOrUnificationPair
     NarrowingApplyResult NarrowingSearchResult NarrowingSearchPathResult
     NarrowingStep NarrowingTrace SmtResult .
 
+  subsort MatchPair UnificationPair < MatchOrUnificationPair .
   subsort TraceStep < Trace .
   subsort NarrowingStep < NarrowingTrace .
 
@@ -1977,9 +2195,9 @@ fmod META-LEVEL is
   op {_,_,_} : Term Type Substitution -> ResultTriple [ctor] .
   op {_,_,_,_} : Term Type Substitution Context -> Result4Tuple [ctor] .
   op {_,_} : Substitution Context -> MatchPair [ctor] .
-  op {_,_} : Substitution Nat -> UnificationPair [ctor] .
-  op {_,_,_} : Substitution Substitution Nat -> UnificationTriple [ctor] .
-  op {_,_,_,_,_} : Term Substitution Nat Parent Bool -> Variant [ctor] .
+  op {_,_} : Substitution Qid -> UnificationPair [ctor] .
+  op {_,_,_} : Substitution Substitution Qid -> UnificationTriple [ctor] .
+  op {_,_,_,_,_} : Term Substitution Qid Parent Bool -> Variant [ctor] .
   op {_,_,_} : Term Type Rule -> TraceStep [ctor] .
   op nil : -> Trace [ctor] .
   op __ : Trace Trace -> Trace [ctor assoc id: nil format (d n d)] .
@@ -2001,7 +2219,8 @@ fmod META-LEVEL is
 *** failure results
   sorts ResultPair? ResultTriple? Result4Tuple? MatchPair? Substitution? Trace?
     UnificationPair? UnificationTriple? Variant?
-    NarrowingApplyResult? NarrowingSearchResult? NarrowingSearchPathResult? SmtResult? .
+    NarrowingApplyResult? NarrowingSearchResult? NarrowingSearchPathResult? SmtResult?
+    Strategy? .
   subsort ResultPair < ResultPair? .
   subsort ResultTriple < ResultTriple? .
   subsort Result4Tuple < Result4Tuple? .
@@ -2015,6 +2234,7 @@ fmod META-LEVEL is
   subsort Substitution < Substitution? .
   subsort Trace < Trace? .
   subsort SmtResult < SmtResult? .
+  subsort Strategy < Strategy? .
 
   op noParse : Nat -> ResultPair? [ctor] .
   op ambiguity : ResultPair ResultPair -> ResultPair? [ctor] .
@@ -2036,9 +2256,13 @@ fmod META-LEVEL is
   op failure : -> NarrowingSearchPathResult? [ctor] .
   op failureIncomplete : -> NarrowingSearchPathResult? [ctor] .
   op noMatch : -> Substitution? [ctor] .
+  op noMatchIncomplete : -> Substitution? [ctor] .
   op noMatch : -> MatchPair? [ctor] .
   op failure : -> Trace? [ctor] .
   op failure : -> SmtResult? [ctor] .
+
+  op noStratParse : Nat -> Strategy? [ctor] .
+  op ambiguity : Strategy Strategy -> Strategy? [ctor] .
 
 *** projection functions
   op getTerm : ResultPair -> Term .
@@ -2066,6 +2290,37 @@ fmod META-LEVEL is
   eq getSubstitution({S:Substitution, C:Context}) = S:Substitution .
   op getContext : MatchPair -> Context .
   eq getContext({S:Substitution, C:Context}) = C:Context .
+
+  op getSubstitution : UnificationPair -> Substitution .
+  eq getSubstitution({S:Substitution, V:Qid}) = S:Substitution .
+  op getVariableFamily : UnificationPair -> Qid .
+  eq getVariableFamily({S:Substitution, V:Qid}) = V:Qid .
+
+  op getLhsSubstitution : UnificationTriple -> Substitution .
+  eq getLhsSubstitution({LS:Substitution, RS:Substitution, V:Qid}) = LS:Substitution .
+  op getRhsSubstitution : UnificationTriple -> Substitution .
+  eq getRhsSubstitution({LS:Substitution, RS:Substitution, V:Qid}) = RS:Substitution .
+  op getVariableFamily : UnificationTriple -> Qid .
+  eq getVariableFamily({LS:Substitution, RS:Substitution, V:Qid}) = V:Qid .
+
+  op getTerm : Variant -> Term .
+  eq getTerm({T:Term, S:Substitution, Q:Qid, P:Parent, B:Bool}) = T:Term .
+  op getSubstitution : Variant -> Substitution .
+  eq getSubstitution({T:Term, S:Substitution, Q:Qid, P:Parent, B:Bool}) = S:Substitution .
+
+  op getVariableFamily : Variant -> Qid .
+  eq getVariableFamily({T:Term, S:Substitution, Q:Qid, P:Parent, B:Bool}) = Q:Qid .
+  op getParent : Variant -> Parent .
+  eq getParent({T:Term, S:Substitution, Q:Qid, P:Parent, B:Bool}) = P:Parent .
+  op getMoreVariantsInLayerFlag : Variant -> Bool .
+  eq getMoreVariantsInLayerFlag({T:Term, S:Substitution, Q:Qid, P:Parent, B:Bool}) = B:Bool .
+
+  op getTerm : TraceStep -> Term .
+  eq getTerm({T:Term, T:Type, R:Rule}) = T:Term .
+  op getType : TraceStep -> Type .
+  eq getType({T:Term, T:Type, R:Rule}) = T:Type .
+  op getRule : TraceStep -> Rule .
+  eq getRule({T:Term, T:Type, R:Rule}) = R:Rule .
 
   op getTerm : NarrowingApplyResult -> Term .
   eq getTerm({T:Term, T:Type, C:Context, L:Qid, TS:Substitution, RS:Substitution, V:Qid}) = T:Term .
@@ -2131,7 +2386,20 @@ fmod META-LEVEL is
   eq getType({C:Context, L:Qid, U:Substitution, UV:Qid, T:Term, T:Type, A:Substitution}) = T:Type .
   op getAccumulatedSubstitution : NarrowingStep -> Substitution .
   eq getAccumulatedSubstitution({C:Context, L:Qid, U:Substitution, UV:Qid, T:Term, T:Type, A:Substitution}) = A:Substitution .
- 
+
+*** utility function
+  op applySubstitution : Module Term Substitution -> Term .
+  eq applySubstitution(M:Module, T:Term, S:Substitution) =
+    getTerm(metaNormalize(M:Module, $applySubstitution(T:Term, S:Substitution))) .
+
+  op $applySubstitution : NeTermList Substitution -> Term .
+  eq $applySubstitution(V:Variable, (V:Variable <- T:Term ; S:Substitution)) = T:Term .
+  eq $applySubstitution(Q:Qid[TL:NeTermList], S:Substitution) =
+    Q:Qid[$applySubstitution(TL:NeTermList, S:Substitution)] .
+  eq $applySubstitution((T:Term, TL:NeTermList), S:Substitution) =
+    $applySubstitution(T:Term, S:Substitution), $applySubstitution(TL:NeTermList, S:Substitution) .
+  eq $applySubstitution(Q:Qid, S:Substitution) = Q:Qid [owise] .
+
 *** descent functions
   op metaReduce : Module Term ~> ResultPair
      [special (
@@ -2143,10 +2411,41 @@ fmod META-LEVEL is
 	op-hook emptyTermListSymbol	(empty : ~> GroundTermList)
 
         op-hook assignmentSymbol	(_<-_ : Qid Term ~> Assignment)
-        op-hook substitutionSymbol
-                (_;_ : Substitution Substitution ~> Substitution)
+        op-hook substitutionSymbol	(_;_ : Substitution Substitution ~> Substitution)
         op-hook emptySubstitutionSymbol	(none : ~> Substitution)
         op-hook holeSymbol		([] : ~> Context)
+
+	op-hook failStratSymbol		(fail : ~> Strategy)
+	op-hook idleStratSymbol		(idle : ~> Strategy)
+	op-hook allStratSymbol		(all : ~> Strategy)
+	op-hook applicationStratSymbol	(_[_]{_} : Qid Substitution StrategyList ~> RuleApplication)
+	op-hook topStratSymbol		(top : RuleApplication ~> Strategy)
+	op-hook matchStratSymbol	(match_s.t._ : Term EqCondition ~> Strategy)
+	op-hook xmatchStratSymbol	(xmatch_s.t._ : Term EqCondition ~> Strategy)
+	op-hook amatchStratSymbol	(amatch_s.t._ : Term EqCondition ~> Strategy)
+	op-hook unionStratSymbol	(_|_ : Strategy Strategy ~> Strategy)
+	op-hook concatStratSymbol	(_;_ : Strategy Strategy ~> Strategy)
+	op-hook orelseStratSymbol	(_or-else_ : Strategy Strategy ~> Strategy)
+	op-hook plusStratSymbol		(_+ : Strategy ~> Strategy)
+	op-hook conditionalStratSymbol	(_?_:_ : Strategy Strategy Strategy ~> Strategy)
+	op-hook matchrewStratSymbol
+		(matchrew_s.t._by_ : Term EqCondition UsingPairSet ~> Strategy)
+	op-hook xmatchrewStratSymbol
+		(xmatchrew_s.t._by_ : Term EqCondition UsingPairSet ~> Strategy)
+	op-hook amatchrewStratSymbol
+		(amatchrew_s.t._by_ : Term EqCondition UsingPairSet ~> Strategy)
+	op-hook callStratSymbol		(_[[_]] : Qid TermList ~> Strategy)
+	op-hook oneStratSymbol		(one : Strategy ~> Strategy)
+	op-hook starStratSymbol		(_* : Strategy ~> Strategy)
+	op-hook normalizationStratSymbol
+			(_! : Strategy ~> Strategy)
+	op-hook notStratSymbol		(not : Strategy ~> Strategy)
+	op-hook testStratSymbol		(test : Strategy ~> Strategy)
+	op-hook tryStratSymbol		(try : Strategy ~> Strategy)
+	op-hook usingStratSymbol	(_using_ : Variable Strategy ~> UsingPair)
+	op-hook usingListStratSymbol 	(_,_ : UsingPairSet UsingPairSet ~> UsingPairSet)
+	op-hook emptyStratListSymbol 	(empty : ~> StrategyList)
+	op-hook stratListSymbol		(_,_ : StrategyList StrategyList ~> StrategyList)
 
         op-hook headerSymbol		(_{_} : Qid ParameterDeclList ~> Header)
         op-hook parameterDeclSymbol	(_::_ : Sort ModuleExpression ~> ParameterDecl)
@@ -2157,21 +2456,20 @@ fmod META-LEVEL is
 
         op-hook sortRenamingSymbol	(sort_to_ : Qid Qid ~> Renaming)
         op-hook opRenamingSymbol	(op_to_[_] : Qid Qid AttrSet ~> Renaming)
-        op-hook opRenamingSymbol2
-                (op_:_->_to_[_] : Qid TypeList Type Qid AttrSet ~> Renaming)
+        op-hook opRenamingSymbol2	(op_:_->_to_[_] : Qid TypeList Type Qid AttrSet ~> Renaming)
         op-hook labelRenamingSymbol	(label_to_ : Qid Qid ~> Renaming)
+        op-hook stratRenamingSymbol	(strat_to_ : Qid Qid ~> Renaming)
+        op-hook stratRenamingSymbol2	(strat_:_@_to_ : Qid Qid TypeList Type ~> Renaming)
         op-hook renamingSetSymbol	(_,_ : RenamingSet RenamingSet ~> RenamingSet)
 
-        op-hook sumSymbol
-                (_+_ : ModuleExpression ModuleExpression ~> ModuleExpression)
-        op-hook renamingSymbol
-                (_*(_) : ModuleExpression RenamingSet ~> ModuleExpression)
-        op-hook instantiationSymbol
-                (_{_} : ModuleExpression ParameterList ~> ModuleExpression)
+        op-hook sumSymbol		(_+_ : ModuleExpression ModuleExpression ~> ModuleExpression)
+        op-hook renamingSymbol		(_*(_) : ModuleExpression RenamingSet ~> ModuleExpression)
+        op-hook instantiationSymbol	(_{_} : Expression ParameterList ~> Expression)
 
         op-hook protectingSymbol	(protecting_. : ModuleExpression ~> Import)
         op-hook extendingSymbol		(extending_. : ModuleExpression ~> Import)
         op-hook includingSymbol		(including_. : ModuleExpression ~> Import)
+        op-hook generatedBySymbol	(generated-by_. : ModuleExpression ~> Import)
         op-hook nilImportListSymbol	(nil : ~> ImportList)
         op-hook importListSymbol	(__ : ImportList ImportList ~> ImportList)
 
@@ -2180,11 +2478,13 @@ fmod META-LEVEL is
 
         op-hook subsortSymbol		(subsort_<_. : Sort Sort ~> SubsortDecl)
         op-hook emptySubsortDeclSetSymbol	(none : ~> SubsortDeclSet)
-        op-hook subsortDeclSetSymbol
-                (__ : SubsortDeclSet SubsortDeclSet ~> SubsortDeclSet)
+        op-hook subsortDeclSetSymbol	(__ : SubsortDeclSet SubsortDeclSet ~> SubsortDeclSet)
 
         op-hook nilQidListSymbol	(nil : ~> QidList)
         op-hook qidListSymbol		(__ : QidList QidList ~> QidList)
+
+        op-hook emptyQidSetSymbol	(none : ~> QidSet)
+        op-hook qidSetSymbol		(_;_ : QidSet QidSet ~> QidSet)
 
         op-hook succSymbol		(s_ : Nat ~> NzNat)
         op-hook natListSymbol		(__ : NeNatList NeNatList ~> NeNatList)
@@ -2215,6 +2515,7 @@ fmod META-LEVEL is
         op-hook configSymbol		(config : ~> Attr)
         op-hook objectSymbol		(object : ~> Attr)
         op-hook msgSymbol		(msg : ~> Attr)
+        op-hook pconstSymbol		(pconst : ~> Attr)
         op-hook specialSymbol		(special : NeHookList ~> Attr)
 
         op-hook labelSymbol		(label : Qid ~> Attr)
@@ -2225,8 +2526,7 @@ fmod META-LEVEL is
         op-hook nonexecSymbol		(nonexec : ~> Attr)
         op-hook printSymbol		(print : QidList ~> Attr)
 
-        op-hook opDeclSymbol
-                (op_:_->_[_]. : Qid TypeList Type AttrSet ~> OpDecl)
+        op-hook opDeclSymbol		(op_:_->_[_]. : Qid TypeList Type AttrSet ~> OpDecl)
         op-hook emptyOpDeclSetSymbol	(none : ~> OpDeclSet)
         op-hook opDeclSetSymbol		(__ : OpDeclSet OpDeclSet ~> OpDeclSet)
 
@@ -2238,23 +2538,29 @@ fmod META-LEVEL is
         op-hook conjunctionSymbol	(_/\_ : Condition Condition ~> Condition)
 
         op-hook mbSymbol		(mb_:_[_]. : Term Sort AttrSet ~> MembAx)
-        op-hook cmbSymbol
-                (cmb_:_if_[_]. : Term Sort EqCondition AttrSet ~> MembAx)
+        op-hook cmbSymbol		(cmb_:_if_[_]. : Term Sort EqCondition AttrSet ~> MembAx)
         op-hook emptyMembAxSetSymbol	(none : ~> MembAxSet)
         op-hook membAxSetSymbol		(__ : MembAxSet MembAxSet ~> MembAxSet)
 
         op-hook eqSymbol		(eq_=_[_]. : Term Term AttrSet ~> Equation)
-        op-hook ceqSymbol
-                (ceq_=_if_[_]. : Term Term EqCondition AttrSet ~> Equation)
+        op-hook ceqSymbol		(ceq_=_if_[_]. : Term Term EqCondition AttrSet ~> Equation)
         op-hook emptyEquationSetSymbol	(none : ~> EquationSet)
-        op-hook equationSetSymbol
-                (__ : EquationSet EquationSet ~> EquationSet)
+        op-hook equationSetSymbol	(__ : EquationSet EquationSet ~> EquationSet)
 
         op-hook rlSymbol		(rl_=>_[_]. : Term Term AttrSet ~> Rule)
-        op-hook crlSymbol
-                (crl_=>_if_[_]. : Term Term Condition AttrSet ~> Rule)
+        op-hook crlSymbol		(crl_=>_if_[_]. : Term Term Condition AttrSet ~> Rule)
         op-hook emptyRuleSetSymbol	(none : ~> RuleSet)
         op-hook ruleSetSymbol		(__ : RuleSet RuleSet ~> RuleSet)
+
+	op-hook stratDeclSymbol		(strat_:_@_[_]. : Qid TypeList Type AttrSet ~> StratDecl)
+	op-hook emptyStratDeclSetSymbol (none : ~> StratDeclSet)
+	op-hook stratDeclSetSymbol	(__ : StratDeclSet StratDeclSet ~> StratDeclSet)
+
+	op-hook sdSymbol		(sd_:=_[_]. : CallStrategy Strategy AttrSet ~> StratDefinition)
+	op-hook csdSymbol
+		(csd_:=_if_[_]. : CallStrategy Strategy Condition AttrSet ~> StratDefinition)
+	op-hook emptyStratDefSetSymbol 	(none : ~> StratDefSet)
+	op-hook stratDefSetSymbol	(__ : StratDefSet StratDefSet ~> StratDefSet)
 
         op-hook fmodSymbol
                 (fmod_is_sorts_.____endfm :
@@ -2272,23 +2578,36 @@ fmod META-LEVEL is
                 (th_is_sorts_._____endth :
                         Qid ImportList SortSet SubsortDeclSet OpDeclSet 
                         MembAxSet EquationSet RuleSet ~> Module)
+	op-hook smodSymbol
+		  (smod_is_sorts_._______endsm :
+			Qid ImportList SortSet SubsortDeclSet OpDeclSet
+			MembAxSet EquationSet RuleSet StratDeclSet StratDefSet ~> StratModule)
+	op-hook sthSymbol
+		  (sth_is_sorts_._______endsth :
+			Qid ImportList SortSet SubsortDeclSet OpDeclSet
+			MembAxSet EquationSet RuleSet StratDeclSet StratDefSet ~> StratModule)
 
         op-hook sortMappingSymbol	(sort_to_. : Sort Sort ~> SortMapping [ctor] .)
 	op-hook emptySortMappingSetSymbol	(none : ~> SortMappingSet)
-        op-hook sortMappingSetSymbol
-                (__ : SortMappingSet SortMappingSet ~> SortMappingSet)
+        op-hook sortMappingSetSymbol	(__ : SortMappingSet SortMappingSet ~> SortMappingSet)
 
         op-hook opMappingSymbol		(op_to_. : Qid Qid ~> OpMapping)
         op-hook opSpecificMappingSymbol	(op_:_->_to_. : Qid TypeList Type Qid ~> OpMapping)
         op-hook opTermMappingSymbol	(op_to`term_. : Term Term ~> OpMapping)
 
 	op-hook emptyOpMappingSetSymbol	(none : ~> OpMappingSet)
-        op-hook opMappingSetSymbol
-                (__ : OpMappingSet OpMappingSet ~> OpMappingSet)
+        op-hook opMappingSetSymbol	(__ : OpMappingSet OpMappingSet ~> OpMappingSet)
+
+	op-hook stratMappingSymbol	(strat_to_. : Qid Qid ~> StratMapping)
+        op-hook stratSpecificMappingSymbol	(strat_:_@_to_. : Qid TypeList Type Qid ~> StratMapping)
+        op-hook stratExprMappingSymbol	(strat_to expr_. : CallStrategy Strategy ~> StratMapping)
+
+        op-hook emptyStratMappingSetSymbol	(none : ~> StratMappingSet)
+        op-hook stratMappingSetSymbol	(__ : StratMappingSet StratMappingSet ~> StratMappingSet)
 
         op-hook viewSymbol
-                (view_from_to_is__endv : Header ModuleExpression ModuleExpression
-                 SortMappingSet OpMappingSet ~> View)
+                (view_from_to_is___endv : Header ModuleExpression ModuleExpression
+                 SortMappingSet OpMappingSet StratMappingSet ~> View)
 
         op-hook anyTypeSymbol		(anyType : ~> Type?)
 
@@ -2296,15 +2615,16 @@ fmod META-LEVEL is
         op-hook unificationConjunctionSymbol
                 (_/\_ : UnificationProblem UnificationProblem ~> UnificationProblem)
 
+	op-hook patternSubjectPairSymbol	(_<=?_ : Term Term ~> PatternSubjectPair)
+        op-hook matchingConjunctionSymbol
+                (_/\_ : MatchingProblem MatchingProblem ~> MatchingProblem)
+
         op-hook resultPairSymbol	({_,_} : Term Type ~> ResultPair)
-        op-hook resultTripleSymbol
-                ({_,_,_} : Term Type Substitution ~> ResultTriple)
-        op-hook result4TupleSymbol
-                ({_,_,_,_} : Term Type Substitution Context ~> Result4Tuple)
+        op-hook resultTripleSymbol	({_,_,_} : Term Type Substitution ~> ResultTriple)
+        op-hook result4TupleSymbol	({_,_,_,_} : Term Type Substitution Context ~> Result4Tuple)
         op-hook matchPairSymbol		({_,_} : Substitution Context ~> MatchPair)
-        op-hook unificationPairSymbol	({_,_} : Substitution Nat ~> UnificationPair)
-        op-hook unificationTripleSymbol	({_,_,_} : Substitution Substitution Nat ~> UnificationTriple)
-        op-hook variantSymbol		({_,_,_,_,_} : Term Substitution Nat Parent Bool ~> Variant)
+        op-hook unificationTripleSymbol	({_,_,_} : Substitution Substitution Qid ~> UnificationTriple)
+        op-hook variantSymbol		({_,_,_,_,_} : Term Substitution Qid Parent Bool ~> Variant)
         op-hook narrowingApplyResultSymbol
 		({_,_,_,_,_,_,_} : Term Type Context Qid Substitution Substitution Qid ~> NarrowingApplyResult)
         op-hook narrowingSearchResultSymbol
@@ -2342,9 +2662,12 @@ fmod META-LEVEL is
         op-hook narrowingSearchPathFailureSymbol		(failure : ~> NarrowingSearchPathResult?)
         op-hook narrowingSearchPathFailureIncompleteSymbol	(failureIncomplete : ~> NarrowingSearchPathResult?)
         op-hook noMatchSubstSymbol	(noMatch : ~> Substitution?)
+        op-hook noMatchIncompleteSubstSymbol	(noMatchIncomplete : ~> Substitution?)
         op-hook noMatchPairSymbol	(noMatch : ~> MatchPair?)
         op-hook failureTraceSymbol	(failure : ~> Trace?)
         op-hook smtFailureSymbol	(failure : ~> SmtResult?)
+        op-hook noStratParseSymbol	(noStratParse : Nat ~> Strategy?)
+        op-hook stratAmbiguitySymbol	(ambiguity : Strategy Strategy ~> Strategy?)
 
         op-hook mixfixSymbol		(mixfix : ~> PrintOption)
         op-hook withParensSymbol	(with-parens : ~> PrintOption)
@@ -2354,6 +2677,18 @@ fmod META-LEVEL is
         op-hook ratSymbol		(rat : ~> PrintOption)
         op-hook emptyPrintOptionSetSymbol	(none : ~> PrintOptionSet)
         op-hook printOptionSetSymbol	(__ : PrintOptionSet PrintOptionSet ~> PrintOptionSet)
+
+        op-hook delaySymbol		(delay : ~> VariantOption)
+        op-hook filterSymbol		(filter : ~> VariantOption)
+        op-hook emptyVariantOptionSetSymbol	(none : ~> VariantOptionSet)
+        op-hook variantOptionSetSymbol	(__ : VariantOptionSet VariantOptionSet ~> VariantOptionSet)
+
+	op-hook breadthFirstSymbol	(breadthFirst : ~>  SrewriteOption)
+	op-hook depthFirstSymbol	(depthFirst : ~>  SrewriteOption)
+
+        op-hook legacyUnificationPairSymbol	({_,_} : Substitution Nat ~> UnificationPair)
+        op-hook legacyUnificationTripleSymbol	({_,_,_} : Substitution Substitution Nat ~> UnificationTriple)
+        op-hook legacyVariantSymbol		({_,_,_,_,_} : Term Substitution Nat Parent Bool ~> Variant)
 
         term-hook trueTerm		(true)
         term-hook falseTerm		(false))] .
@@ -2393,14 +2728,24 @@ fmod META-LEVEL is
            id-hook MetaLevelOpSymbol	(metaXmatch)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-  op metaUnify : Module UnificationProblem Nat Nat ~> UnificationPair?
+  op metaUnify : Module UnificationProblem Qid Nat ~> UnificationPair?
         [special (
            id-hook MetaLevelOpSymbol	(metaUnify)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-  op metaDisjointUnify : Module UnificationProblem Nat Nat ~> UnificationTriple?
+  op metaDisjointUnify : Module UnificationProblem Qid Nat ~> UnificationTriple?
         [special (
            id-hook MetaLevelOpSymbol	(metaDisjointUnify)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
+  op metaIrredundantUnify : Module UnificationProblem Qid Nat ~> UnificationPair?
+        [special (
+           id-hook MetaLevelOpSymbol	(metaIrredundantUnify)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
+  op metaIrredundantDisjointUnify : Module UnificationProblem Qid Nat ~> UnificationTriple?
+        [special (
+           id-hook MetaLevelOpSymbol	(metaIrredundantDisjointUnify)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
   op metaSearch : Module Term Term Condition Qid Bound Nat ~> ResultTriple?
@@ -2423,40 +2768,62 @@ fmod META-LEVEL is
            id-hook MetaLevelOpSymbol	(metaNarrow2)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-  op metaGetVariant : Module Term TermList Nat Nat ~> Variant?
+  op metaGetVariant : Module Term TermList Qid Nat ~> Variant?
         [special (
            id-hook MetaLevelOpSymbol	(metaGetVariant)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-  op metaGetIrredundantVariant : Module Term TermList Nat Nat ~> Variant?
+  op metaGetIrredundantVariant : Module Term TermList Qid Nat ~> Variant?
         [special (
            id-hook MetaLevelOpSymbol	(metaGetIrredundantVariant)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-  op metaVariantUnify : Module UnificationProblem TermList Nat Nat ~> UnificationPair?
+  op metaVariantUnify : Module UnificationProblem TermList Qid VariantOptionSet Nat ~> UnificationPair?
         [special (
            id-hook MetaLevelOpSymbol	(metaVariantUnify)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-  op metaVariantDisjointUnify : Module UnificationProblem TermList Nat Nat ~> UnificationTriple?
+  op metaVariantDisjointUnify : Module UnificationProblem TermList Qid
+                                VariantOptionSet Nat ~> UnificationTriple?
         [special (
            id-hook MetaLevelOpSymbol	(metaVariantDisjointUnify)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
+  op metaVariantMatch : Module MatchingProblem TermList Qid VariantOptionSet Nat ~> Substitution?
+        [special (
+           id-hook MetaLevelOpSymbol	(metaVariantMatch)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-  op metaNarrowingApply : Module Term TermList Qid Nat -> NarrowingApplyResult?
+  op metaNarrowingApply : Module Term TermList Qid VariantOptionSet Nat -> NarrowingApplyResult?
 	[special (
 	   id-hook MetaLevelOpSymbol	(metaNarrowingApply)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-  op metaNarrowingSearch : Module Term Term Qid Bound Qid Nat -> NarrowingSearchResult?
+  op metaNarrowingSearch : Module Term Term Qid Bound Qid VariantOptionSet Nat ->
+                           NarrowingSearchResult?
 	[special (
 	   id-hook MetaLevelOpSymbol	(metaNarrowingSearch)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-  op metaNarrowingSearchPath : Module Term Term Qid Bound Qid Nat -> NarrowingSearchPathResult?
+  op metaNarrowingSearchPath : Module Term Term Qid Bound Qid VariantOptionSet Nat ->
+                               NarrowingSearchPathResult?
 	[special (
 	   id-hook MetaLevelOpSymbol	(metaNarrowingSearchPath)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
+  op metaSrewrite : Module Term Strategy SrewriteOption Nat ~> ResultPair?
+	[special (
+	   id-hook MetaLevelOpSymbol	(metaSrewrite)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
+  op metaParseStrategy : Module VariableSet QidList ~> Strategy?
+        [special (
+           id-hook MetaLevelOpSymbol	(metaParseStrategy)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
+  op metaPrettyPrintStrategy : Module VariableSet Strategy PrintOptionSet ~> QidList
+        [special (
+           id-hook MetaLevelOpSymbol	(metaPrettyPrintStrategy)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
   op sortLeq : Module Type Type ~> Bool
@@ -2489,12 +2856,12 @@ fmod META-LEVEL is
            id-hook MetaLevelOpSymbol	(metaCompleteName)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-  op metaParse : Module QidList Type? ~> ResultPair?
+  op metaParse : Module VariableSet QidList Type? ~> ResultPair?
         [special (
            id-hook MetaLevelOpSymbol	(metaParse)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-  op metaPrettyPrint : Module Term PrintOptionSet ~> QidList
+  op metaPrettyPrint : Module VariableSet Term PrintOptionSet ~> QidList
         [special (
            id-hook MetaLevelOpSymbol	(metaPrettyPrint)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
@@ -2589,6 +2956,16 @@ fmod META-LEVEL is
            id-hook MetaLevelOpSymbol	(metaUpRls)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
+  op upStratDecls : Qid Bool ~> StratDeclSet
+        [special (
+           id-hook MetaLevelOpSymbol	(metaUpStratDecls)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
+  op upSds : Qid Bool ~> StratDefSet
+        [special (
+           id-hook MetaLevelOpSymbol	(metaUpSds)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
   op upView : Qid ~> View
         [special (
            id-hook MetaLevelOpSymbol	(metaUpView)
@@ -2606,11 +2983,77 @@ fmod META-LEVEL is
            id-hook MetaLevelOpSymbol	(metaDownTerm)
            op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
 
-*** backward compatibility
-  op metaPrettyPrint : Module Term ~> QidList .
-  eq metaPrettyPrint(M:Module, T:Term) = metaPrettyPrint(M:Module, T:Term, mixfix flat format number rat) .
-endfm
+***
+***	For backward compatibility only.
+***	These operators are deprecated - do not use in new code.
+***
 
+  op {_,_} : Substitution Nat -> UnificationPair [ctor] .
+  op {_,_,_} : Substitution Substitution Nat -> UnificationTriple [ctor] .
+  op {_,_,_,_,_} : Term Substitution Nat Parent Bool -> Variant [ctor] .
+
+  op metaParse : Module QidList Type? ~> ResultPair? .
+  eq metaParse(M:Module, Q:QidList, T:Type?) =
+     metaParse(M:Module, none, Q:QidList, T:Type?) .
+
+  op metaPrettyPrint : Module Term PrintOptionSet ~> QidList .
+  eq metaPrettyPrint(M:Module, T:Term, P:PrintOptionSet) =
+     metaPrettyPrint(M:Module, none, T:Term, P:PrintOptionSet) .
+
+  op metaPrettyPrint : Module Term ~> QidList .
+  eq metaPrettyPrint(M:Module, T:Term) =
+     metaPrettyPrint(M:Module, none, T:Term, mixfix flat format number rat) .
+
+  op metaVariantUnify : Module UnificationProblem TermList Qid Nat ~> UnificationPair? .
+  eq metaVariantUnify(M:Module, U:UnificationProblem, TL:TermList, Q:Qid, N:Nat) =
+     metaVariantUnify(M:Module, U:UnificationProblem, TL:TermList, Q:Qid, none, N:Nat) .
+
+  op metaVariantDisjointUnify : Module UnificationProblem TermList Qid Nat ~> UnificationTriple? .
+  eq metaVariantDisjointUnify(M:Module, U:UnificationProblem, TL:TermList, Q:Qid, N:Nat) =
+     metaVariantDisjointUnify(M:Module, U:UnificationProblem, TL:TermList, Q:Qid, none, N:Nat) .
+
+  op metaNarrowingApply : Module Term TermList Qid Nat -> NarrowingApplyResult? .
+  eq metaNarrowingApply(M:Module, T:Term, TL:TermList, Q:Qid, N:Nat) =
+     metaNarrowingApply(M:Module, T:Term, TL:TermList, Q:Qid, none, N:Nat) .
+
+  op metaNarrowingSearch : Module Term Term Qid Bound Qid Nat -> NarrowingSearchResult? .
+  eq metaNarrowingSearch(M:Module, T:Term, T2:Term, S:Qid, B:Bound, F:Qid, N:Nat) =
+     metaNarrowingSearch(M:Module, T:Term, T2:Term, S:Qid, B:Bound, F:Qid, none, N:Nat) .
+
+  op metaNarrowingSearchPath : Module Term Term Qid Bound Qid Nat -> NarrowingSearchPathResult? .
+  eq metaNarrowingSearchPath(M:Module, T:Term, T2:Term, S:Qid, B:Bound, F:Qid, N:Nat) =
+     metaNarrowingSearchPath(M:Module, T:Term, T2:Term, S:Qid, B:Bound, F:Qid, none, N:Nat) .
+
+  op metaUnify : Module UnificationProblem Nat Nat ~> UnificationPair?
+        [special (
+           id-hook MetaLevelOpSymbol	(legacyMetaUnify)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
+  op metaDisjointUnify : Module UnificationProblem Nat Nat ~> UnificationTriple?
+        [special (
+           id-hook MetaLevelOpSymbol	(legacyMetaDisjointUnify)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
+  op metaGetVariant : Module Term TermList Nat Nat ~> Variant?
+        [special (
+           id-hook MetaLevelOpSymbol	(legacyMetaGetVariant)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
+  op metaGetIrredundantVariant : Module Term TermList Nat Nat ~> Variant?
+        [special (
+           id-hook MetaLevelOpSymbol	(legacyMetaGetIrredundantVariant)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
+  op metaVariantUnify : Module UnificationProblem TermList Nat Nat ~> UnificationPair?
+        [special (
+           id-hook MetaLevelOpSymbol	(legacyMetaVariantUnify)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+
+  op metaVariantDisjointUnify : Module UnificationProblem TermList Nat Nat ~> UnificationTriple?
+        [special (
+           id-hook MetaLevelOpSymbol	(legacyMetaVariantDisjointUnify)
+           op-hook shareWith		(metaReduce : Module Term ~> ResultPair))] .
+endfm
 
 ***
 ***	Lexical module.
@@ -2659,17 +3102,23 @@ mod CONFIGURATION is
   sorts Attribute AttributeSet .
   subsort Attribute < AttributeSet .
   op none : -> AttributeSet  [ctor] .
-  op _,_ : AttributeSet AttributeSet -> AttributeSet [ctor assoc comm id: none] .
+  op _,_ : AttributeSet AttributeSet -> AttributeSet [ctor assoc comm id: none format (d d s d)] .
 
   sorts Oid Cid Object Msg Portal Configuration .
   subsort Object Msg Portal < Configuration .
-  op <_:_|_> : Oid Cid AttributeSet -> Object [ctor object] .
+  op <_:_|_> : Oid Cid AttributeSet -> Object [ctor object
+                                               special (
+                                                 id-hook ObjectConstructorSymbol
+						 op-hook attributeSetSymbol (_,_ : AttributeSet AttributeSet ~> AttributeSet))] .
   op none : -> Configuration [ctor] .
   op __ : Configuration Configuration -> Configuration [ctor config assoc comm id: none] .
   op <> : -> Portal [ctor] .
+
+  op getClass : Object -> Cid .
+  eq getClass(< O:Oid : C:Cid | A:AttributeSet >) = C:Cid . 
 endm
 
 set include BOOL on .
-set omod include CONFIGURATION on .
+set oo include CONFIGURATION on .
 
 select CONVERSION .

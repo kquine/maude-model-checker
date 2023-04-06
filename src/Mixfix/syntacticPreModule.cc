@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 */
 
 //
-//      Implementation for class PreModule.
+//      Implementation for class SyntacticPreModule.
 //
 
 //      utility stuff
@@ -36,6 +36,7 @@
 #include "builtIn.hh"
 #include "freeTheory.hh"
 #include "AU_Theory.hh"
+#include "ACU_Theory.hh"
 #include "higher.hh"
 #include "strategyLanguage.hh"
 #include "mixfix.hh"
@@ -56,7 +57,20 @@
 #include "rewritingContext.hh"
 #include "argumentIterator.hh"
 #include "dagArgumentIterator.hh"
-//#include "dagNodeSet.hh"
+#include "rewriteStrategy.hh"
+
+//	free theory class definitions
+#include "freeSymbol.hh"
+#include "freeTerm.hh"
+
+//	ACU theory class definitions
+#include "ACU_Symbol.hh"
+
+//	higher class definitions
+#include "equalityConditionFragment.hh"
+#include "sortTestConditionFragment.hh"
+#include "assignmentConditionFragment.hh"
+#include "rewriteConditionFragment.hh"
 
 //	front end class definitions
 #include "moduleExpression.hh"
@@ -70,34 +84,45 @@
 #include "syntacticPreModule.hh"
 #include "interpreter.hh"
 #include "maudemlBuffer.hh"
-#include "global.hh"  // HACK shouldn't be accessing global variables
+#include "mixfixParser.hh"
+#include "objectConstructorSymbol.hh"
 
 #ifdef QUANTIFY_PROCESSING
 #include "quantify.h"
 #endif
 
 //	our stuff
-//#include "import.cc"
+#include "ooTransform.cc"
+#include "ooProcess.cc"
 #include "process.cc"
 #include "fixUp.cc"
 #include "ops.cc"
 #include "command.cc"
 
-SyntacticPreModule::SyntacticPreModule(Token startToken, Token moduleName)
-  : PreModule(moduleName.code(), &interpreter /* HACK */),
+SyntacticPreModule::SyntacticPreModule(Token startToken, Token moduleName, Interpreter* owner)
+  : PreModule(moduleName.code(), owner),
     LineNumber(moduleName.lineNumber()),
     startTokenCode(startToken.code())
 {
-  MixfixModule::ModuleType moduleType =  MixfixModule::FUNCTIONAL_MODULE;
+  MixfixModule::ModuleType moduleType = MixfixModule::FUNCTIONAL_MODULE;
   if (startTokenCode == th)
     moduleType = MixfixModule::SYSTEM_THEORY;
   else if (startTokenCode == fth)
     moduleType = MixfixModule::FUNCTIONAL_THEORY;
-  else if (startTokenCode == mod || startTokenCode == omod || startTokenCode == smod)
+  else if (startTokenCode == sth)
+    moduleType = MixfixModule::STRATEGY_THEORY;
+  else if (startTokenCode == oth)
+    moduleType = MixfixModule::OBJECT_ORIENTED_THEORY;
+  else if (startTokenCode == mod)
     moduleType = MixfixModule::SYSTEM_MODULE;
+  else if (startTokenCode == smod)
+    moduleType = MixfixModule::STRATEGY_MODULE;
+  else if (startTokenCode == omod)
+    moduleType = MixfixModule::OBJECT_ORIENTED_MODULE;
   setModuleType(moduleType);
 
   lastSawOpDecl = false;
+  isStrategy = false;
   isCompleteFlag = false;
   flatModule = 0;
 }
@@ -106,14 +131,6 @@ SyntacticPreModule::~SyntacticPreModule()
 {
   if (flatModule != 0)
     flatModule->deepSelfDestruct();
-  {
-    FOR_EACH_CONST(i, Vector<Import>, imports)
-      i->expr->deepSelfDestruct();
-  }
-  {
-    FOR_EACH_CONST(i, Vector<Parameter>, parameters)
-      i->theory->deepSelfDestruct();
-  }
 }
 
 void
@@ -122,7 +139,7 @@ SyntacticPreModule::regretToInform(Entity* doomedEntity)
   Assert(doomedEntity == flatModule, "module pointer error");
   flatModule = 0;
 #ifdef COMPILER
-  interpreter.invalidate(this);
+  getOwner()->invalidate(this);
 #endif
 }
 
@@ -130,26 +147,28 @@ VisibleModule*
 SyntacticPreModule::getFlatModule()
 {
   VisibleModule* m = getFlatSignature();
-  if (m->getStatus() < Module::THEORY_CLOSED)
+  //
+  //	getFlatSignature() returns a module with its bad flag
+  //	set if anything went wrong.
+  //
+  if (!(m->isBad()) && m->getStatus() < Module::THEORY_CLOSED)
     {
-      //IssueWarning("module " << *m << " with status " << m->getStatus() << " being flattened and compiled");  //HACK
       //
       //	Need to flatten in statements and compile.
       //
       m->importStatements();
-      if (m->isBad())
-	{
-	  IssueWarning(*m <<
-		       ": this module contains one or more errors that \
-could not be patched up and thus it cannot be used or imported.");
-	}
-      else
-	{
-	  //IssueWarning("calling closeTheory on  " << *m);  // HACK
-	  m->closeTheory();
-	  m->checkFreshVariableNames();
-	}
+      Assert(!(m->isBad()), "importStatements() unexpectedly set bad flag in " << *m);
       m->resetImports();
+      //
+      //	Compile  module.
+      //
+      m->closeTheory();
+      //
+      //	We don't allow reserved fresh variable names in variant
+      //	equations or narrowing rules. We can't do this until statements
+      //	have been compiled since it relied on VariableInfo being filled out.
+      //
+      m->checkFreshVariableNames();
     }
   return m;
 }
@@ -164,7 +183,10 @@ SyntacticPreModule::getFlatSignature()
       process();
     }
   else if (flatModule->getStatus() == Module::OPEN)
-    return 0;  // we must already be in the middle of processing this module
+    {
+      DebugNew("module " << this << " had flatModule status open");
+      return 0;  // we must already be in the middle of processing this module
+    }
   return flatModule;
 }
 
@@ -175,6 +197,10 @@ SyntacticPreModule::compatible(int endTokenCode)
     return endTokenCode == endth;
   if (startTokenCode == fth)
     return endTokenCode == endfth;
+  if (startTokenCode == sth)
+    return endTokenCode == endsth;
+  if (startTokenCode == oth)
+    return endTokenCode == endoth;
   if (startTokenCode == mod)
     return endTokenCode == endm;
   if (startTokenCode == fmod)
@@ -198,14 +224,60 @@ SyntacticPreModule::finishModule(Token endToken)
 		   QUOTE(Token::name(startTokenCode)) << " ends with "
 		   << QUOTE(endToken) << '.');
     }
-  autoImports = interpreter.getAutoImports(); // deep copy
+  if (!isTheory())
+    autoImports = getOwner()->getAutoImports(); // deep copy
+  if (MixfixModule::isObjectOriented(getModuleType()))
+    {
+      //
+      //	So we have fully defined behavior even if the same module is imported by
+      //	both autoImports and ooIncludes.
+      //
+      for (const auto& i : getOwner()->getOoIncludes())
+	autoImports.insert(i);
+    }
   isCompleteFlag = true;
-  interpreter.insertModule(id(), this);
+  bool displacedModule = getOwner()->insertModule(id(), this);
   process();
   //
-  //	House keeping.
+  //	If we displaced a module, modules and views constructed for the
+  //	displaced module could have been orphaned. The orphans could
+  //	have been picked up by the new module, but now the module system
+  //	is quiescent we can purge orphans from the module and view caches.
   //
-  interpreter.destructUnusedModules();
+  if (displacedModule)
+    getOwner()->cleanCaches();
+}
+
+void
+SyntacticPreModule::addParameter2(Token name, ModuleExpression* theory)
+{
+  PreModule::addParameter(name, theory);
+}
+
+void
+SyntacticPreModule::addImport(Token modeToken, ModuleExpression* expr)
+{
+  ImportModule::ImportMode mode;
+  LineNumber lineNumber(modeToken.lineNumber());
+  int code = modeToken.code();
+  if (code == pr || code == protecting)
+    mode = ImportModule::PROTECTING;
+  else if (code == ex || code == extending)
+    mode = ImportModule::EXTENDING;
+  else if (code == inc || code == including)
+    mode = ImportModule::INCLUDING;
+  else if (code == gb || code == generatedBy)
+    mode = ImportModule::GENERATED_BY;
+  else
+    {
+      Assert(code == us || code == usingToken, "unknown importation mode");
+      IssueWarning(lineNumber <<
+		   ": importation mode " << QUOTE("using") <<
+		   " not supported - treating it like " <<
+		   QUOTE("including") << '.');
+      mode = ImportModule::INCLUDING;
+    }
+  PreModule::addImport(lineNumber, mode, expr);
 }
 
 SyntacticPreModule::OpDef::OpDef()
@@ -215,53 +287,38 @@ SyntacticPreModule::OpDef::OpDef()
 }
 
 void
-SyntacticPreModule::addParameter(Token name, ModuleExpression* theory)
-{
-  if (MixfixModule::isTheory(getModuleType()))
-    {
-      IssueWarning(LineNumber(name.lineNumber()) <<
-		   ": parmaeterized theories are not supported; recovering by ignoring parameter " <<
-		   QUOTE(name) << '.');
-      delete theory;
-      return;
-    }
-  int nrParameters = parameters.length();
-  parameters.resize(nrParameters + 1);
-  parameters[nrParameters].name = name;
-  parameters[nrParameters].theory = theory;
-}
-
-void
-SyntacticPreModule::addImport(Token mode, ModuleExpression* expr)
-{
-  int nrImports = imports.length();
-  imports.resize(nrImports + 1);
-  imports[nrImports].mode = mode;
-  imports[nrImports].expr = expr;
-}
-
-void
 SyntacticPreModule::addStatement(const Vector<Token>& statement)
 {
+  //
+  // Checks if this module admits the statement and issues a warning if
+  // it does not.
+  //
   int keywordCode = statement[0].code();
-  if (keywordCode == rl || keywordCode == crl)
-    {
-      if (getModuleType() == MixfixModule::FUNCTIONAL_THEORY)
-	{
+  {
+    MixfixModule::ModuleType moduleType = getModuleType();
+    bool isStrategic = MixfixModule::isStrategic(moduleType);
+    const char* modorth = MixfixModule::isTheory(moduleType) ? "theory." : "module.";
+
+    if (keywordCode == rl || keywordCode == crl)
+      {
+	if (moduleType == MixfixModule::FUNCTIONAL_MODULE ||
+	    moduleType == MixfixModule::FUNCTIONAL_THEORY)
 	  IssueWarning(LineNumber(statement[0].lineNumber()) <<
-		       ": rule not allowed in a functional theory.");
-	}
-      else if (getModuleType() == MixfixModule::FUNCTIONAL_MODULE)
-	{
-	  IssueWarning(LineNumber(statement[0].lineNumber()) <<
-		       ": rule not allowed in a functional module.");
-	}
-    }
+		       ": rule not allowed in a functional " << modorth);
+      }
+    else if ((keywordCode == sd || keywordCode == csd) && !isStrategic)
+	IssueWarning(LineNumber(statement[0].lineNumber()) <<
+	  ": strategy definition only allowed in a strategy module or theory.");
+  }
 
   if (statement[1].code() == leftBracket &&
       statement[3].code() == rightBracket &&
       statement[4].code() == colon)
-    (void) potentialLabels.insert(statement[2].code());
+    {
+      (void) potentialLabels.insert(statement[2].code());
+      if (keywordCode == rl || keywordCode == crl)
+	(void) potentialRuleLabels.insert(statement[2].code());
+    }
 
   int i = statement.length() - 1;
   if (statement[i].code() == rightBracket)
@@ -277,10 +334,107 @@ SyntacticPreModule::addStatement(const Vector<Token>& statement)
 		break;
 	    }
 	  else if (t == label)
-	    potentialLabels.insert(statement[i+1].code());
+	    {
+	      potentialLabels.insert(statement[i+1].code());
+	      if (keywordCode == rl || keywordCode == crl)
+		(void) potentialRuleLabels.insert(statement[i+1].code());
+	    }
 	  else if (t == rightBracket)
 	    ++bracketCount;
 	}
     }
   statements.append(statement);
+}
+
+void
+SyntacticPreModule::addClassDecl(Token name)
+{
+  if (MixfixModule::isObjectOriented(getModuleType()))
+    {
+      int nrClassDecls = classDecls.size();
+      classDecls.resize(nrClassDecls + 1);
+      classDecls[nrClassDecls].name = name;
+    }
+  else
+    {
+      IssueWarning(LineNumber(name.lineNumber()) <<
+		   ": class declaration only allowed in object-oriented modules and theories.");
+    }
+}
+
+void
+SyntacticPreModule::addAttributePair(Token attributeName, bool kind, const Vector<Token>& tokens)
+{
+  //
+  //	If we're not in an omod/oth then we already reported the error and we silently
+  //	ignore the attributes.
+  //
+  if (MixfixModule::isObjectOriented(getModuleType()))
+    {
+      classDecls[classDecls.size() - 1].attributes.append({attributeName, {kind, tokens}, 0});
+    }
+}
+
+void
+SyntacticPreModule::addAttributePairNoColon(Token attributeName, bool kind, const Vector<Token>& tokens)
+{
+  //
+  //	If we're not in an omod/oth then we already reported the error and we silently
+  //	ignore the attributes.
+  //
+  if (MixfixModule::isObjectOriented(getModuleType()))
+    {
+      //
+      //	We didn't see a colon; maybe it is stuck on the end of the attribute name.
+      //
+      const char* name = attributeName.name();
+      Index len = strlen(name);
+      if (name[len - 1] == ':')
+	{
+	  string removeColon(name, len - 1);
+	  int lineNumber = attributeName.lineNumber();
+	  attributeName.tokenize(removeColon.c_str(), lineNumber);
+	  IssueWarning(LineNumber(lineNumber) << ": missing space before " << QUOTE(":") <<
+		       " in declaration of attribute " << QUOTE(attributeName) << ".");
+	}
+      else
+	{
+	  IssueWarning(LineNumber(attributeName.lineNumber()) << ": missing " << QUOTE(":") <<
+		       " in declaration of attribute " << QUOTE(attributeName) << ".");
+	}
+      classDecls[classDecls.size() - 1].attributes.append({attributeName, {kind, tokens}, 0});
+    }
+}
+
+void
+SyntacticPreModule::addSubclassDecl(const Vector<Token>& subclassDecl)
+{
+  if (MixfixModule::isObjectOriented(getModuleType()))
+    subclassDecls.append(subclassDecl);
+  else
+    {
+      IssueWarning(LineNumber(subclassDecl[0].lineNumber()) <<
+		   ": subclass declaration only allowed in object-oriented modules and theories.");
+    }
+}
+
+string
+SyntacticPreModule::stripAttributeSuffix(Symbol* attributeSymbol)
+{
+  Assert(hasAttributeSuffix(attributeSymbol), "bad suffix for " << attributeSymbol);
+  string fullName(Token::name(attributeSymbol->id()));
+  return fullName.substr(0, fullName.length() - strlen(attributeSuffix));
+}
+
+bool
+SyntacticPreModule::hasAttributeSuffix(Symbol* symbol)
+{
+  string fullName(Token::name(symbol->id()));
+  Index length = fullName.length();
+  if (length > attributeSuffixLength)
+    {
+      if (fullName.substr(length - attributeSuffixLength,  attributeSuffixLength) ==  attributeSuffix)
+	return true;
+    }
+  return false;
 }

@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2017 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2020 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,34 +24,17 @@
 //	Code for metaNarrowingSearch() and metaNarrowingSearchPath() descent functions.
 //
 
-local_inline bool
-MetaLevelOpSymbol::downFoldType(DagNode* arg, bool& foldType) const
-{
-  int qid;
-  if (metaLevel->downQid(arg, qid))
-    {
-      if (qid == Token::encode("none"))
-	foldType = false;
-      else if (qid == Token::encode("match"))
-	foldType = true;
-      else
-	return false;
-      return true;
-    }
-  return false;
-}
-
 NarrowingSequenceSearch3*
 MetaLevelOpSymbol::makeNarrowingSequenceSearch3(MetaModule* m,
 						FreeDagNode* subject,
 						RewritingContext& context,
-						bool keepHistory) const
+						int variantFlags) const
 {
   RewriteSequenceSearch::SearchType searchType;
   bool fold;
   int maxDepth;
   if (downSearchType(subject->getArgument(3), searchType) &&
-      downFoldType(subject->getArgument(5), fold) &&
+      metaLevel->downFoldType(subject->getArgument(5), fold) &&
       metaLevel->downBound(subject->getArgument(4), maxDepth))
     {
       Term* s;
@@ -59,19 +42,20 @@ MetaLevelOpSymbol::makeNarrowingSequenceSearch3(MetaModule* m,
       if (metaLevel->downTermPair(subject->getArgument(1), subject->getArgument(2), s, g, m))
 	{
 	  m->protect();
-	  
+
 	  RewritingContext* subjectContext = term2RewritingContext(s, context);
 	  g = g->normalize(true);
 	  DagNode* goal = g->term2Dag();
 	  g->deepSelfDestruct();
 
+	  if (fold)
+	    variantFlags |= NarrowingSequenceSearch3::FOLD;
 	  return new NarrowingSequenceSearch3(subjectContext,
 					      searchType,
 					      goal,
 					      maxDepth,
-					      fold,
-					      keepHistory,
-					      new FreshVariableSource(m, 0));
+					      new FreshVariableSource(m, 0),
+					      variantFlags);
 	}
     }
   return 0;
@@ -81,7 +65,8 @@ bool
 MetaLevelOpSymbol::metaNarrowingSearch(FreeDagNode* subject, RewritingContext& context)
 {
   //
-  //	op metaNarrowingSearch : Module Term Term Qid Bound Qid Nat ~> NarrowingSearchResult? .
+  //	op metaNarrowingSearch : Module Term Term Qid Bound Qid VariantOptionSet Nat ~>
+  //	                         NarrowingSearchResult? .
   //
   //	Arguments:
   //	  Module to work in
@@ -90,6 +75,7 @@ MetaLevelOpSymbol::metaNarrowingSearch(FreeDagNode* subject, RewritingContext& c
   //	  Qid giving search type
   //	  Bound on depth of search
   //	  Qid giving folding strategy
+  //	  VariantOptionSet giving options to be used for variant unification
   //	  Nat giving which of many solutions is wanted
   //
   //	A successful narrowing application yields a 6-tuple:
@@ -102,17 +88,20 @@ MetaLevelOpSymbol::metaNarrowingSearch(FreeDagNode* subject, RewritingContext& c
   //	  Unifier between narrowed term and instantiated pattern
   //	  Qid giving fresh variable family used to express unifier
   //
-  if (MetaModule* m = metaLevel->downModule(subject->getArgument(0)))
+  int variantFlags;
+  Int64 solutionNr;
+  if (metaLevel->downVariantOptionSet(subject->getArgument(6), variantFlags) &&
+      (variantFlags & ~(MetaLevel::DELAY | MetaLevel::FILTER)) == 0 &&
+      metaLevel->downSaturate64(subject->getArgument(7), solutionNr) &&
+      solutionNr >= 0)
     {
-      Int64 solutionNr;
-      if (metaLevel->downSaturate64(subject->getArgument(6), solutionNr) &&
-	  solutionNr >= 0)
+      if (MetaModule* m = metaLevel->downModule(subject->getArgument(0)))
 	{
 	  NarrowingSequenceSearch3* state;
 	  Int64 lastSolutionNr;
-	  if (getCachedStateObject(m, subject, context, solutionNr, state, lastSolutionNr))
+	  if (m->getCachedStateObject(subject, context, solutionNr, state, lastSolutionNr))
 	    m->protect(); 
-	  else if ((state = makeNarrowingSequenceSearch3(m, subject, context, false)))
+	  else if ((state = makeNarrowingSequenceSearch3(m, subject, context, variantFlags)))
 	    lastSolutionNr = -1;
 	  else
 	    return false;
@@ -121,7 +110,7 @@ MetaLevelOpSymbol::metaNarrowingSearch(FreeDagNode* subject, RewritingContext& c
 	  while (lastSolutionNr < solutionNr)
 	    {
 	      bool success = state->findNextUnifier();
-	      context.transferCount(*(state->getContext()));
+	      context.transferCountFrom(*(state->getContext()));
 	      if (!success)
 		{
 		  result = metaLevel->upNarrowingSearchFailure(state->isIncomplete());
@@ -158,7 +147,8 @@ bool
 MetaLevelOpSymbol::metaNarrowingSearchPath(FreeDagNode* subject, RewritingContext& context)
 {
   //
-  //	op metaNarrowingSearchPath : Module Term Term Qid Bound Qid Nat ~> NarrowingSearchPathResult? .
+  //	op metaNarrowingSearchPath : Module Term Term Qid Bound Qid VariantOptionSet Nat ~>
+  //	                             NarrowingSearchPathResult? .
   //
   //	Arguments:
   //	  Module to work in
@@ -167,10 +157,12 @@ MetaLevelOpSymbol::metaNarrowingSearchPath(FreeDagNode* subject, RewritingContex
   //	  Qid giving search type
   //	  Bound on depth of search
   //	  Qid giving folding strategy
+  //	  VariantOptionSet giving options to be used for variant unification
   //	  Nat giving which of many solutions is wanted
   //
   //	A successful narrowing application yields a 6-tuple:
-  //	  op [_,_,_,_,_,_] : Term Type Substitution NarrowingTrace Substitution Qid -> NarrowingSearchPathResult [ctor] .
+  //	  op [_,_,_,_,_,_] : Term Type Substitution NarrowingTrace Substitution Qid ->
+  //	                     NarrowingSearchPathResult [ctor] .
   //	where the arguments are:
   //	  Initial term after renaming and reducing
   //	  Type of term
@@ -180,7 +172,8 @@ MetaLevelOpSymbol::metaNarrowingSearchPath(FreeDagNode* subject, RewritingContex
   //	  Qid giving fresh variable family used to express unifier
   //
   //	The trace is a list of narrowing steps:
-  //	  op [_,_,_,_, _,_,_] : Context Qid Substitution Qid Term Type Substitution -> NarrowingStep [ctor] .
+  //	  op [_,_,_,_, _,_,_] : Context Qid Substitution Qid Term Type Substitution ->
+  //	                        NarrowingStep [ctor] .
   //	where the arguments are:
   //	  Context where narrowing happens
   //	  Label of rule used for narrowing
@@ -190,17 +183,24 @@ MetaLevelOpSymbol::metaNarrowingSearchPath(FreeDagNode* subject, RewritingContex
   //	  Type of term
   //	  Accumulated substitution
   //
-  if (MetaModule* m = metaLevel->downModule(subject->getArgument(0)))
+  int variantFlags;
+  Int64 solutionNr;
+  if (metaLevel->downVariantOptionSet(subject->getArgument(6), variantFlags) &&
+      (variantFlags & ~(MetaLevel::DELAY | MetaLevel::FILTER)) == 0 &&
+      metaLevel->downSaturate64(subject->getArgument(7), solutionNr) &&
+      solutionNr >= 0)
     {
-      Int64 solutionNr;
-      if (metaLevel->downSaturate64(subject->getArgument(6), solutionNr) &&
-	  solutionNr >= 0)
+      if (MetaModule* m = metaLevel->downModule(subject->getArgument(0)))
 	{
 	  NarrowingSequenceSearch3* state;
 	  Int64 lastSolutionNr;
-	  if (getCachedStateObject(m, subject, context, solutionNr, state, lastSolutionNr))
-	    m->protect(); 
-	  else if ((state = makeNarrowingSequenceSearch3(m, subject, context, true)))
+	  if (m->getCachedStateObject(subject, context, solutionNr, state, lastSolutionNr))
+	    m->protect();
+	  else if ((state = makeNarrowingSequenceSearch3(m,
+							 subject,
+							 context,
+							 variantFlags |
+							 NarrowingSequenceSearch3::KEEP_HISTORY)))
 	    lastSolutionNr = -1;
 	  else
 	    return false;
@@ -209,7 +209,7 @@ MetaLevelOpSymbol::metaNarrowingSearchPath(FreeDagNode* subject, RewritingContex
 	  while (lastSolutionNr < solutionNr)
 	    {
 	      bool success = state->findNextUnifier();
-	      context.transferCount(*(state->getContext()));
+	      context.transferCountFrom(*(state->getContext()));
 	      if (!success)
 		{
 		  result = metaLevel->upNarrowingSearchPathFailure(state->isIncomplete());

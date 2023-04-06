@@ -39,7 +39,7 @@ StateEventFairLabel::makeFairSet(StateLabel* sl, EventLabel* el) const
 	const auto& efs = eventFC.unzip(*el->fs);
 
 	sfs->paste(*efs);
-	return move(sfs);
+	return sfs;
 }
 
 } /* namespace modelChecker */

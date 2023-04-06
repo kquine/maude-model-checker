@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -73,9 +73,15 @@ VariableTerm::deepSelfDestruct()
 Term*
 VariableTerm::deepCopy2(SymbolMap* translator) const
 {
-  VariableSymbol* vs = safeCast(VariableSymbol*,
-				(translator == 0 ? symbol() : translator->translate(symbol())));
-  return new VariableTerm(vs, id());
+  VariableSymbol* vs = safeCastNonNull<VariableSymbol*>((translator == 0 ? symbol() : translator->translate(symbol())));
+  VariableTerm* vt = new VariableTerm(vs, id());
+  //
+  //	Usually we need the index to be UNDEFINED so that statement analysis works; but if the term is part
+  //	of an op to term mapping we may need the index preserved.
+  //
+  if (translator != 0 && translator->preserveVariableIndices())
+    vt->index = index;
+  return vt;
 }
 
 Term*
@@ -95,13 +101,13 @@ VariableTerm::normalize(bool /* full */, bool& changed)
 int
 VariableTerm::compareArguments(const Term* other) const
 {
-  return id() - safeCast(const VariableTerm*, other)->id();
+  return id() - safeCastNonNull<const VariableTerm*>(other)->id();
 }
 
 int
 VariableTerm::compareArguments(const DagNode* other) const
 {
-  return id() - safeCast(const VariableDagNode*, other)->id();
+  return id() - safeCastNonNull<const VariableDagNode*>(other)->id();
 }
 
 void
@@ -150,7 +156,7 @@ VariableTerm::subsumes(const Term* other, bool sameVariableSet) const
   //
   if (sameVariableSet &&
       symbol() == other->symbol() &&
-      id() == safeCast(const VariableTerm*, other)->id())
+      id() == safeCastNonNull<const VariableTerm*>(other)->id())
     return true;
   //
   //	Otherwise a variable must be linear and have large enough

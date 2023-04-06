@@ -28,7 +28,7 @@ namespace modelChecker {
 
 template <bool hasState, bool hasEvent, typename SA, typename PA>
 ProductAutomaton<hasState,hasEvent,SA,PA>::ProductAutomaton(unique_ptr<SA>&& system, unique_ptr<PA>&& property):
-	systemAut(move(system)), propertyAut(move(property))
+	systemAut(std::move(system)), propertyAut(std::move(property))
 {
 	//
 	// First, create a set of initial states
@@ -56,7 +56,7 @@ template <>
 struct ProductTransitionIteratorTraits<true,false>
 {
 	template <typename SA, typename PA>
-	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr,
+	void computeNextTransition(int first, typename Automaton<PA>::Transition& tr,
 			const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
 	{
 		switch(first)
@@ -91,7 +91,7 @@ template <>
 struct ProductTransitionIteratorTraits<false,true>
 {
 	template <typename SA, typename PA>
-	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr,
+	void computeNextTransition(int first, typename Automaton<PA>::Transition& tr,
 			const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
 	{
 		switch(first)
@@ -131,7 +131,7 @@ struct ProductTransitionIteratorTraits<true,true>
 	Bdd label;	// temporary label
 
 	template <typename SA, typename PA>
-	void computeNextTransition(bool first, typename Automaton<PA>::Transition& tr,
+	void computeNextTransition(int first, typename Automaton<PA>::Transition& tr,
 			const typename PropertyTransitionTraits<PA>::PropertyTransitionSet& ts, SA& ks)
 	{
 		pair<bool,Bdd> test;

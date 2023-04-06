@@ -53,7 +53,7 @@ ModelCheckerManager::ModelCheckerManager(Formula& f, PropositionTable& props,
 			formula(f), propTable(props), pGenerator(ptg), sysContext(sysCxt)
 {
 	initPropFairCheckers(sev, eev, fairTable.get());
-	initModelChecker(move(fairTable));
+	initModelChecker(std::move(fairTable));
 }
 
 void
@@ -69,8 +69,8 @@ ModelCheckerManager::initPropFairCheckers(const PropEvaluator& sev,
 
 	for (unsigned int i = 0; i < formula.nrRealFormulaPropIds; ++i)
 	{
-		hasStateProp |= (propTable.isStateProp(i) | propTable.isEnabledProp(i));
-		hasEventProp |= propTable.isEventProp(i);
+		hasStateProp = hasStateProp || (propTable.isStateProp(i) || propTable.isEnabledProp(i));
+		hasEventProp = hasEventProp || propTable.isEventProp(i);
 	}
 
 	for (auto i = stateProps.rbegin(); i != stateProps.rend(); ++i)
@@ -102,15 +102,15 @@ ModelCheckerManager::initModelChecker(unique_ptr<AbstractFairnessTable>&& fTable
 
 		unique_ptr<StatePropLabel> pl(new StatePropLabel(fStateProps,*spc,epc.get()));
 		if (sfc)
-			makeGraph<FairStateSystemGraph>(move(pl),unique_ptr<StateFairLabel>(new StateFairLabel(*sfc)),move(fTable));
+			makeGraph<FairStateSystemGraph>(std::move(pl),unique_ptr<StateFairLabel>(new StateFairLabel(*sfc)),std::move(fTable));
 		else
-			makeGraph<StateSystemGraph>(move(pl));
+			makeGraph<StateSystemGraph>(std::move(pl));
 	}
 	else if ( enabledProps.empty() )	// there exist event props, but no enabled props
 	{
 		Verbose("ModelChecker: a system graph may compute state and event propositions..");
 
-		if (sfc || efc)	initFairLabel<FairStateEventSystemGraph>(move(fTable));
+		if (sfc || efc)	initFairLabel<FairStateEventSystemGraph>(std::move(fTable));
 		else			initPropLabel<StateEventSystemGraph>();
 	}
 	else
@@ -118,8 +118,8 @@ ModelCheckerManager::initModelChecker(unique_ptr<AbstractFairnessTable>&& fTable
 		Verbose("ModelChecker: a system graph may compute state, event, and enabled propositions..");
 
 		auto enph = PropCheckerFactory::createHandler(enabledProps, formula.nrFormulaPropIds, propTable);
-		if (sfc || efc)	initFairLabel<FairStateEventEnabledSystemGraph>(move(fTable),move(enph));
-		else			initPropLabel<StateEventEnabledSystemGraph>(move(enph));
+		if (sfc || efc)	initFairLabel<FairStateEventEnabledSystemGraph>(std::move(fTable),std::move(enph));
+		else			initPropLabel<StateEventEnabledSystemGraph>(std::move(enph));
 	}
 }
 
@@ -127,11 +127,11 @@ template <template <typename...> class Graph, typename... Args> void
 ModelCheckerManager::initFairLabel(Args&&... args)
 {
 	if (sfc && efc)
-		initPropLabel<Graph>(unique_ptr<StateEventFairLabel>(new StateEventFairLabel(*sfc,*efc)),forward<Args>(args)...);
+		initPropLabel<Graph>(unique_ptr<StateEventFairLabel>(new StateEventFairLabel(*sfc,*efc)),std::forward<Args>(args)...);
 	else if (sfc)
-		initPropLabel<Graph>(unique_ptr<StateFairLabel>(new StateFairLabel(*sfc)),forward<Args>(args)...);
+		initPropLabel<Graph>(unique_ptr<StateFairLabel>(new StateFairLabel(*sfc)),std::forward<Args>(args)...);
 	else if (efc)
-		initPropLabel<Graph>(unique_ptr<EventFairLabel>(new EventFairLabel(*efc)),forward<Args>(args)...);
+		initPropLabel<Graph>(unique_ptr<EventFairLabel>(new EventFairLabel(*efc)),std::forward<Args>(args)...);
 	else
 		throw logic_error("cannot happen.");
 }
@@ -141,11 +141,11 @@ ModelCheckerManager::initPropLabel(Args&&... args)
 {
 	if (!fStateProps.empty() && !fEventProps.empty())
 		makeGraph<Graph>(unique_ptr<StateEventPropLabel>(new StateEventPropLabel(
-				fStateProps,fEventProps,*spc,*epc)),forward<Args>(args)...);
+				fStateProps,fEventProps,*spc,*epc)),std::forward<Args>(args)...);
 	else if ( !fStateProps.empty() )
-		makeGraph<Graph>(unique_ptr<StatePropLabel>(new StatePropLabel(fStateProps,*spc,epc.get())),forward<Args>(args)...);
+		makeGraph<Graph>(unique_ptr<StatePropLabel>(new StatePropLabel(fStateProps,*spc,epc.get())),std::forward<Args>(args)...);
 	else if ( !fEventProps.empty())
-		makeGraph<Graph>(unique_ptr<EventPropLabel>(new EventPropLabel(fEventProps,spc.get(),*epc)),forward<Args>(args)...);
+		makeGraph<Graph>(unique_ptr<EventPropLabel>(new EventPropLabel(fEventProps,spc.get(),*epc)),std::forward<Args>(args)...);
 	else
 		throw invalid_argument("no propositions are provided.");
 }
@@ -154,12 +154,12 @@ template <template <typename> class Graph, typename PL, typename... Args> void
 ModelCheckerManager::makeGraph(unique_ptr<PL>&& pl, Args&&... args)
 {
 	pl->setExtraFlag(false);	// notify that there are no fairness props.
-	unique_ptr<Graph<PL>> sysGraph(new Graph<PL>(move(pl),forward<Args>(args)..., sysContext, pGenerator, propTable));
+	unique_ptr<Graph<PL>> sysGraph(new Graph<PL>(std::move(pl),std::forward<Args>(args)..., sysContext, pGenerator, propTable));
 	sysGraph->init();
 	dagGraphRef = sysGraph.get();
 
 	unique_ptr<BuchiAutomaton2> propGraph(new BuchiAutomaton2(&formula.data,formula.top));
-	makeProd(move(sysGraph), move(propGraph));
+	makeProd(std::move(sysGraph), std::move(propGraph));
 }
 
 template <template <typename,typename> class Graph, typename PL, typename FL, typename... Args> void
@@ -167,14 +167,14 @@ ModelCheckerManager::makeGraph(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl,
 		unique_ptr<AbstractFairnessTable>&& fairTable, Args&&... args)
 {
 	pl->setExtraFlag(true);		// notify that there exist fairness props.
-	unique_ptr<Graph<PL,FL>> sysGraph(new Graph<PL,FL>(move(pl),
-			move(fl),forward<Args>(args)..., sysContext, pGenerator, propTable));
+	unique_ptr<Graph<PL,FL>> sysGraph(new Graph<PL,FL>(std::move(pl),
+			std::move(fl),std::forward<Args>(args)..., sysContext, pGenerator, propTable));
 	sysGraph->init();
 	dagGraphRef = sysGraph.get();
 
 	unique_ptr<GenBuchiAutomaton> propGraph(new GenBuchiAutomaton(&formula.data,formula.top));
 	propGraph->simplify();
-	makeProd(move(sysGraph), move(propGraph), move(fairTable));
+	makeProd(std::move(sysGraph), std::move(propGraph), std::move(fairTable));
 }
 
 template <typename SA, typename PA, typename... Args> void
@@ -183,17 +183,17 @@ ModelCheckerManager::makeProd(unique_ptr<SA>&& sysGraph, unique_ptr<PA>&& propGr
 	if (hasStateProp && hasEventProp)
 	{
 		Verbose("ModelChecker: LTLR model checking with a state/event-based algorithm.");
-		makeModelChecker<true,true>(move(sysGraph), move(propGraph), forward<Args>(args)...);
+		makeModelChecker<true,true>(std::move(sysGraph), std::move(propGraph), std::forward<Args>(args)...);
 	}
 	else if (hasStateProp)
 	{
 		Verbose("ModelChecker: LTL model checking with a state-based algorithm.");
-		makeModelChecker<true,false>(move(sysGraph), move(propGraph), forward<Args>(args)...);
+		makeModelChecker<true,false>(std::move(sysGraph), std::move(propGraph), std::forward<Args>(args)...);
 	}
 	else if (hasEventProp)
 	{
 		Verbose("ModelChecker: LTLR model checking with an event-based algorithm.");
-		makeModelChecker<false,true>(move(sysGraph), move(propGraph), forward<Args>(args)...);
+		makeModelChecker<false,true>(std::move(sysGraph), std::move(propGraph), std::forward<Args>(args)...);
 	}
 	else
 		throw invalid_argument("no propositions in the formula.");
@@ -205,7 +205,7 @@ ModelCheckerManager::makeModelChecker(unique_ptr<SA>&& sysGraph, unique_ptr<Buch
 	auto propSize = propGraph->getNrStates();
 
 	using Prod = ProductAutomaton<hasState,hasEvent,SA,BuchiAutomaton2>;
-	product.reset(new Prod(move(sysGraph), move(propGraph)));
+	product.reset(new Prod(std::move(sysGraph), std::move(propGraph)));
 
 	Verbose("ModelChecker: Use the NDFS algorithm with a Buchi automaton (" << propSize << " states).");
 	modelChecker.reset(new NDFSModelChecker<BuchiAutomaton2>(static_cast<Prod&>(*product)));
@@ -218,7 +218,7 @@ ModelCheckerManager::makeModelChecker(unique_ptr<SA>&& sysGraph,
 	auto propSize = propGraph->getNrStates();
 
 	using Prod = FairProductAutomaton<hasState,hasEvent,SA,GenBuchiAutomaton>;
-	product.reset(new Prod(move(sysGraph), move(propGraph), move(fairTable)));
+	product.reset(new Prod(std::move(sysGraph), std::move(propGraph), std::move(fairTable)));
 
 	if (static_cast<Prod*>(product.get())->getFairnessTable().hasStrongFairness())
 	{

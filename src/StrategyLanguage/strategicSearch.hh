@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2006 SRI International, Menlo Park, CA 94025, USA.
 
@@ -23,19 +23,20 @@
 //
 //	Class for performing a search using a strategy.
 //
-#ifndef _stategicSearch_hh_
-#define _stategicSearch_hh_
-#include <list>
+#ifndef _strategicSearch_hh_
+#define _strategicSearch_hh_
 #include "cacheableState.hh"
 #include "hashConsSet.hh"
 #include "strategicTask.hh"
 #include "strategyStackManager.hh"
+#include "variableBindingsManager.hh"
 
 class StrategicSearch
  : public CacheableState,
    public HashConsSet,
    public StrategyStackManager,
-   private StrategicTask
+   public VariableBindingsManager,
+   protected StrategicTask
 {
   NO_COPYING(StrategicSearch);
 
@@ -46,7 +47,8 @@ public:
   StrategicSearch(RewritingContext* initial, StrategyExpression* strategy);
   ~StrategicSearch();
 
-  DagNode* findNextSolution();
+  virtual DagNode* findNextSolution() = 0;
+  DagNode* lastSolution() const;
   RewritingContext* getContext();
 
 private:
@@ -56,12 +58,19 @@ private:
   Survival executionSucceeded(int resultIndex, StrategicProcess* insertionPoint);
   Survival executionsExhausted(StrategicProcess* insertionPoint);
 
-  RewritingContext* initial;
   StrategyExpression* strategy;
+
+protected:
+  RewritingContext* initial;
   bool exhausted;
   int solutionIndex;
-  StrategicProcess* nextToRun;
 };
+
+inline DagNode*
+StrategicSearch::lastSolution() const
+{
+  return solutionIndex != NONE ? getCanonical(solutionIndex) : 0;
+}
 
 inline RewritingContext*
 StrategicSearch::getContext()

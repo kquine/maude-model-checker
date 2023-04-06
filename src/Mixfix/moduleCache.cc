@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,17 +39,29 @@
 #include "view.hh"
 #include "moduleCache.hh"
 #include "fileTable.hh"
+#include "parameter.hh"
 
 ModuleCache::ModuleCache()
 {
 }
 
+ModuleCache::~ModuleCache()
+{
+  //
+  //	We expect that all cached modules will have been destructed when the
+  //	modules they depend on are destructed - ahead of the deletion of the
+  //	ModuleCache object. We check this in debug mode.
+  //
+  Assert(moduleMap.empty(), "moduleMap not empty");
+}
+
 void
 ModuleCache::regretToInform(Entity* doomedEntity)
 {
-  ImportModule* doomedModule = static_cast<ImportModule*>(doomedEntity);
+  ImportModule* doomedModule = safeCastNonNull<ImportModule*>(doomedEntity);
   ModuleMap::iterator pos = moduleMap.find(doomedModule->id());
-  Assert(pos != moduleMap.end(), "could find self-destructing module " << doomedModule);
+  Assert(pos != moduleMap.end(), "couldn't find self-destructing module " << doomedModule);
+  Assert(pos->second == doomedEntity, "found the wrong self-destructing module " << doomedModule);
   DebugAdvisory("removing module " << doomedModule << " from cache");
   moduleMap.erase(pos);
 }
@@ -76,7 +88,6 @@ ModuleCache::makeRenamedCopy(ImportModule* module, Renaming* renaming)
     name += ')';
   name += " * (";
   name += canonical->makeCanonicalName() + ")";
-  //int t = Token::encode(name.c_str());
   int t = Token::ropeToCode(name);
   //
   //	Check if we already have a renamed copy in cache.
@@ -122,7 +133,6 @@ ModuleCache::makeParameterCopy(int parameterName, ImportModule* module)
   Rope name(Token::name(parameterName));
   name += " :: ";
   name += Token::name(module->id());
-  //int t = Token::encode(name.c_str());
   int t = Token::ropeToCode(name);
   //
   //	Check if we already have a parameter copy in cache.
@@ -141,13 +151,24 @@ ModuleCache::makeParameterCopy(int parameterName, ImportModule* module)
   ImportModule* copy = module->makeParameterCopy(t, parameterName, this);
   DebugAdvisory("finished parameter copy " << name);
 
-  Assert(!(copy->isBad()), "bad parameter copy");
+  if (copy->isBad())
+    {
+      //
+      //	It is possible for a parameter copy of a good theory
+      //	to be bad, for example if a parameter copy of a sort
+      //	clashed with a weirdly named sort imported from a module
+      //	by the base theory.
+      //
+      copy->removeUser(this);  // since we are not adding a bad parameter copy to the cache
+      copy->deepSelfDestruct();
+      return 0;
+    }
   moduleMap[t] = copy;
   return copy;
 }
 
 ImportModule*
-ModuleCache::makeInstatiation(ImportModule* module, const Vector<View*>& views, const Vector<int>& parameterArgs)
+ModuleCache::makeModuleInstantiation(ImportModule* module, const Vector<Argument*>& arguments)
 {
   //
   //	Make the name of the module we want.
@@ -160,27 +181,26 @@ ModuleCache::makeInstatiation(ImportModule* module, const Vector<View*>& views, 
     name += ')';
 
   const char* sep = "{";
-  int nrParameters = views.size();
+  int nrParameters = arguments.size();
   for (int i = 0; i < nrParameters; ++i)
     {
       name += sep;
       sep = ", ";
-      View* v = views[i];
-      if (v == 0)
+      Argument* a = arguments[i];
+      if (dynamic_cast<Parameter*>(a))
 	{
 	  //
 	  //	Place brackets around parameter arguments so that we don't confuse
 	  //	them with views having the same name.
 	  //
 	  name += '[';
-	  name += Token::name(parameterArgs[i]);
+	  name += Token::name(a->id());
 	  name += ']';
 	}
       else
-	name += Token::name(v->id());
+	name += Token::name(a->id());
     }
   name += "}";
-  //int t = Token::encode(name.c_str());
   int t = Token::ropeToCode(name);
   //
   //	Check if we already have an instantiation in cache.
@@ -189,15 +209,15 @@ ModuleCache::makeInstatiation(ImportModule* module, const Vector<View*>& views, 
   ModuleMap::const_iterator c = moduleMap.find(t);
   if (c != moduleMap.end())
     {
-      DebugAdvisory("using existing copy of " << name);
+      DebugAdvisory("using existing copy of module " << name);
       return c->second;
     }
   //
   //	Create new module; and insert it in cache.
   //
-  DebugAdvisory("making instantiation " << name);
-  ImportModule* copy = module->makeInstantiation(t, views, parameterArgs, this);
-  DebugAdvisory("finished instantiation " << name);
+  DebugInfo("making instantiation " << name);
+  ImportModule* copy = module->makeInstantiation(t, arguments, this);
+  DebugInfo("finished instantiation " << name);
 
   if (copy->isBad())
     {
@@ -246,7 +266,6 @@ ModuleCache::makeSummation(const Vector<ImportModule*>& modules)
 	name += " + ";
       name += Token::name((*i)->id());
     }
-  //int t = Token::encode(name.c_str());
   int t = Token::ropeToCode(name);
   //
   //	Check if it is already in cache.
@@ -261,39 +280,7 @@ ModuleCache::makeSummation(const Vector<ImportModule*>& modules)
   //	Otherwise build it.
   //
   DebugAdvisory("making summation " << name);
-
-  Vector<ImportModule*>::const_iterator i = local.begin();
-  MixfixModule::ModuleType moduleType = (*i)->getModuleType();
-  for (++i; i != e; ++i)
-    moduleType = MixfixModule::join(moduleType, (*i)->getModuleType());
-  ImportModule* sum = new ImportModule(t, moduleType, ImportModule::SUMMATION, this);
-  LineNumber lineNumber(FileTable::AUTOMATIC);
-  for (Vector<ImportModule*>::const_iterator i = local.begin(); i != e; i++)
-    sum->addImport(*i, ImportModule::INCLUDING, lineNumber);
-
-  sum->importSorts();
-  sum->closeSortSet();
-  if (!(sum->isBad()))
-    {
-      sum->importOps();
-      if (!(sum->isBad()))
-	{
-	  sum->closeSignature();
-	  sum->fixUpImportedOps();
-	  if (!(sum->isBad()))
-	    { 
-	      sum->closeFixUps();
-	      //
-	      //	We have no local statements.
-	      //
-	      sum->localStatementsComplete();
-	    }
-	}
-    }
-  //
-  //	Reset phase counter in each imported module.
-  //
-  sum->resetImports();
+  ImportModule* sum = ImportModule::makeSummation(t, local, this);
   DebugAdvisory("finished summation " << name);
 
   if (sum->isBad())
@@ -313,38 +300,44 @@ ModuleCache::makeSummation(const Vector<ImportModule*>& modules)
   return sum;
 }
 
-void
+int
 ModuleCache::destructUnusedModules()
 {
   //
-  //	This O(n^2) solution to finding unused cached modules is slow but
-  //	simple. If the number of cached modules grows beyond a few hundred
-  //	a more complex O(n) solution based on keeping a linked list of
-  //	candidates would be appropriate. We would need a call back from
-  //	ImportModule to tell us when a module is down to 1 user (us!).
+  //	We return the number of unused modules destructed.
   //
- restart:
-  {
-    FOR_EACH_CONST(i, ModuleMap, moduleMap)
-      {
-	int nrUsers = i->second->getNrUsers();
-	Assert(nrUsers >= 1, "no users");  // we are a user
-	if (nrUsers == 1)
-	  {
-	    DebugAdvisory("module " << i->second << " has no other users");
-	    i->second->deepSelfDestruct();  // invalidates i
-	    goto restart;
-	  }
-      }
-  }
+  int nrDestructed = 0;
+  for (auto i(moduleMap.begin()); i != moduleMap.end(); )
+    {
+      //
+      //	Need to move our iterator before possible invalidation.
+      //
+      auto current(i);
+      ++i;
+
+      int nrUsers = current->second->getNrUsers();
+      DebugAdvisory("examining " << current->second << " nrUsers = " << nrUsers);
+      Assert(nrUsers >= 1, "no users");  // we are a user!
+      if (nrUsers == 1)
+	{
+	  DebugAdvisory("module " << current->second << " has no users other than the cache - destructing it");
+	  //
+	  //	This will invalidate current, but since the module has no other users, it should not remove
+	  //	any other modules from the map and i should still be valid.
+	  //
+	  current->second->deepSelfDestruct();
+	  ++nrDestructed;
+	}
+    }
+  return nrDestructed;
 }
 
 void
 ModuleCache::showCreatedModules(ostream& s) const
 {
-  FOR_EACH_CONST(i, ModuleMap, moduleMap)
+  for (const auto& i : moduleMap)
     {
-      MixfixModule* m = i->second;
+      ImportModule* m = i.second;
       s << MixfixModule::moduleTypeString(m->getModuleType()) << ' ' << m << '\n';
     }
 }

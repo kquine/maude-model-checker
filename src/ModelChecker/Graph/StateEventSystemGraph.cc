@@ -33,7 +33,7 @@ namespace modelChecker {
 template <typename PL>
 StateEventSystemGraph<PL>::StateEventSystemGraph(unique_ptr<PL>&& pl, RewritingContext& initial,
 		const ProofTermGenerator& ptg, const PropositionTable& propTable):
-			Super(initial,propTable), CompactProofTermTransitionGraph(ptg), Traits(move(pl)) {}
+			Super(initial,propTable), CompactProofTermTransitionGraph(ptg), Traits(std::move(pl)) {}
 
 template <typename PL> bool
 SystemGraphTraits<StateEventSystemGraph<PL>>::satisfiesStateProp(unsigned int propId, const State& s) const

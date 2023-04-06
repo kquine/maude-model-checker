@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2014 SRI International, Menlo Park, CA 94025, USA.
 
@@ -337,8 +337,16 @@ MixfixModule::prettyPrint(ostream& s,
   //
   int iflags = si.iflags;
   bool needDisambig = !rangeKnown && ambiguous(iflags);
-  bool argRangeKnown = rangeOfArgumentsKnown(iflags, rangeKnown, needDisambig);
+  bool argRangeKnown = false;
   int nrArgs = symbol->arity();
+  if (nrArgs == 0)
+    {
+      if (interpreter.getPrintFlag(Interpreter::PRINT_DISAMBIG_CONST))
+	needDisambig = true;
+    }
+  else
+    argRangeKnown = rangeOfArgumentsKnown(iflags, rangeKnown, needDisambig);
+  
   if (needDisambig)
     s << '(';
   if ((interpreter.getPrintFlag(Interpreter::PRINT_MIXFIX) && si.mixfixSyntax.length() != 0) ||

@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -43,6 +43,11 @@ public:
   };
 
   typedef int PositionIndex;
+  //
+  //	For returning a pair of dags. First dag is the rebuilt dag up to the root,
+  //	second dag is the replacement, possibily extended by extension information
+  //	when only part of the redex is replaced (useful for tracing).
+  //
   typedef pair<DagNode*, DagNode*> DagPair;
 
   //

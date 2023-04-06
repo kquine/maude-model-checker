@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -85,7 +85,7 @@ VariableSymbol::normalizeAndComputeTrueSort(DagNode* subject, RewritingContext& 
 Term*
 VariableSymbol::termify(DagNode* dagNode)
 {
-  VariableDagNode* v = safeCast(VariableDagNode*, dagNode);
+  VariableDagNode* v = safeCastNonNull<VariableDagNode*>(dagNode);
   return new VariableTerm(this, v->id());
 }
 
@@ -99,7 +99,7 @@ VariableSymbol::computeGeneralizedSort(const SortBdds& sortBdds,
 				       DagNode* subject,
 				       Vector<Bdd>& generalizedSort)
 {
-  int firstVariable = realToBdd[safeCast(VariableDagNode*, subject)->getIndex()];  // first BDD variable for this variable
+  int firstVariable = realToBdd[safeCastNonNull<VariableDagNode*>(subject)->getIndex()];  // first BDD variable for this variable
   int nrVariables = sortBdds.getNrVariables(rangeComponent()->getIndexWithinModule());  // number of BDD variables depends on sort
   sortBdds.makeVariableVector(firstVariable, nrVariables, generalizedSort);
 }
@@ -110,7 +110,7 @@ VariableSymbol::computeGeneralizedSort2(const SortBdds& sortBdds,
 					DagNode* subject,
 					Vector<Bdd>& outputBdds)
 {
-  sortBdds.appendVariableVector(realToBdd[safeCast(VariableDagNode*, subject)->getIndex()],  // first BDD variable
+  sortBdds.appendVariableVector(realToBdd[safeCastNonNull<VariableDagNode*>(subject)->getIndex()],  // first BDD variable
 				sortBdds.getNrVariables(rangeComponent()->getIndexWithinModule()),  // # BDD variables
 				outputBdds);
 }
@@ -141,7 +141,7 @@ VariableSymbol::makeCanonicalCopy(DagNode* original, HashConsSet* /* hcs */)
   //
   //	We have a unreduced node - copy forced -  in principle variable could rewrite to something else!
   //
-  VariableDagNode* v = safeCast(VariableDagNode*, original);
+  VariableDagNode* v = safeCastNonNull<VariableDagNode*>(original);
   VariableDagNode* n = new VariableDagNode(this, v->id(), v->getIndex());
   n->copySetRewritingFlags(original);
   n->setSortIndex(original->getSortIndex());

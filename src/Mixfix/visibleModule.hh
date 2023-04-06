@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2021 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,7 +32,9 @@ class VisibleModule : public ImportModule
   NO_COPYING(VisibleModule);
 
 public:
-  VisibleModule(int name, ModuleType moduleType, Entity::User* parent = 0);
+  VisibleModule(int name, ModuleType moduleType, Interpreter* owner);
+
+  Interpreter* getOwner() const;
 
   void showSummary(ostream& s);
   void showKinds(ostream& s) const;
@@ -44,14 +46,25 @@ public:
   void showMbs(ostream& s, bool indent, bool all) const;
   void showEqs(ostream& s, bool indent, bool all) const;
   void showRls(ostream& s, bool indent, bool all) const;
+  void showStrats(ostream& s, bool indent, bool all) const;
+  void showSds(ostream& s, bool indent, bool all) const;
 
 private:
+  void showImports(ostream& s) const;
   void showSorts1(ostream& s, bool indent, bool all) const;
   void showSubsorts(ostream& s, bool indent, bool all) const;
   void showPolymorphDecl(ostream& s, bool indent, int index) const;
   void showPolymorphAttributes(ostream& s, int index) const;
   void showDecls(ostream& s, bool indent, int index, bool all) const;
   void showAttributes(ostream& s, Symbol* symbol, int opDeclIndex) const;
+
+  Interpreter* const owner;
 };
+
+inline Interpreter*
+VisibleModule::getOwner() const
+{
+  return owner;
+}
 
 #endif

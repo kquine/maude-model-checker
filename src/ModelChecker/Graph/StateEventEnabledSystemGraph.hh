@@ -61,7 +61,7 @@ public:
 	struct Transition;
 
 	SystemGraphTraits(unique_ptr<PL>&& pl, unique_ptr<EnabledPropHandler>&& enph):
-		propLabel(move(pl)), enabledHandler(move(enph)) {}
+		propLabel(std::move(pl)), enabledHandler(std::move(enph)) {}
 
 	template <typename STATE>
 	bool satisfiesStateProp(unsigned int propId, const STATE& s) const;

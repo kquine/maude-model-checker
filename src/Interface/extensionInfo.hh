@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2010 SRI International, Menlo Park, CA 94025, USA.
 
@@ -39,7 +39,7 @@ public:
 
   virtual DagNode* buildMatchedPortion() const = 0;
   virtual ExtensionInfo* makeClone() const = 0;		// for saving extension info
-  virtual void copy(ExtensionInfo* extensionInfo) = 0;	// for restoring extension info
+  virtual void copy(const ExtensionInfo* extensionInfo) = 0;	// for restoring extension info
 
 private:
   //

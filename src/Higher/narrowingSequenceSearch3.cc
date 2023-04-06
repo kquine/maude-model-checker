@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2017 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2020 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 */
 
 //
-//	Implementation for class NarrowingSequenceSearch2.
+//	Implementation for class NarrowingSequenceSearch3.
 //
 
 //	utility stuff
@@ -48,23 +48,23 @@
 #include "freshVariableGenerator.hh"
 #include "narrowingVariableInfo.hh"
 #include "narrowingSearchState3.hh"
-#include "variantSearch.hh"
+#include "filteredVariantUnifierSearch.hh"
 #include "narrowingSequenceSearch3.hh"
 
 NarrowingSequenceSearch3::NarrowingSequenceSearch3(RewritingContext* initial,
 						   SearchType searchType,
 						   DagNode* goal,
 						   int maxDepth,
-						   bool fold,
-						   bool keepHistory,
-						   FreshVariableGenerator* freshVariableGenerator)
+						   FreshVariableGenerator* freshVariableGenerator,
+						   int variantFlags)
   : initial(initial),
     goal(goal),
     maxDepth((searchType == ONE_STEP) ? 1 : maxDepth),
     needToTryInitialState(searchType == ANY_STEPS),
     normalFormNeeded(searchType == NORMAL_FORM),
     freshVariableGenerator(freshVariableGenerator),
-    stateCollection(fold, keepHistory)
+    variantFlags(variantFlags),
+    stateCollection(variantFlags & FOLD, variantFlags & KEEP_HISTORY)
 {
   incompleteFlag = false;
   unificationProblem = 0;
@@ -74,6 +74,7 @@ NarrowingSequenceSearch3::NarrowingSequenceSearch3(RewritingContext* initial,
   expansionSuccessful = false;
   nextInterestingState = NONE;
   counter = 0;
+  nrStatesExpanded = 0;
   //
   //	Index variables occurring in the initial term and create a fresh
   //	#variable for each original variable and an accumulated substitution
@@ -85,14 +86,16 @@ NarrowingSequenceSearch3::NarrowingSequenceSearch3(RewritingContext* initial,
   Substitution* accumulatedSubstitution = new Substitution(nrInitialVariables);
   for (int i = 0; i < nrInitialVariables; ++i)
     {
-      Sort* sort = safeCast(VariableSymbol*, initialVariableInfo.index2Variable(i)->symbol())->getSort();
-      VariableDagNode* v = new VariableDagNode(freshVariableGenerator->getBaseVariableSymbol(sort),
-					       freshVariableGenerator->getFreshVariableName(i, 0),
-					       i);
+      Symbol* baseSymbol = initialVariableInfo.index2Variable(i)->symbol();
+      int name = freshVariableGenerator->getFreshVariableName(i, 0);
+      VariableDagNode* v = new VariableDagNode(baseSymbol, name, i);
       accumulatedSubstitution->bind(i, v);
     }
-  //for (int i = 0; i < nrInitialVariables; ++i)
-  //  accumulatedSubstitution->bind(i, initialVariableInfo.index2Variable(i));
+  //
+  //	HACK: this is so we can use instantiate which expects ground terms
+  //	to have sorts. FIXME
+  //
+  //goal->computeTrueSort(*initial); 
   //
   //	We also want to index goal variables so we can apply the accumulated
   //	substitution, but we do not want to carry around the extra variables
@@ -105,11 +108,11 @@ NarrowingSequenceSearch3::NarrowingSequenceSearch3(RewritingContext* initial,
   //	from garbage collection by initial RewritingContext, and goal only
   //	variables will be protected by goal.
   //
-  if (DagNode* renamedDagToNarrow = dagToNarrow->instantiate(*accumulatedSubstitution))
+  if (DagNode* renamedDagToNarrow = dagToNarrow->instantiate(*accumulatedSubstitution, false))
     dagToNarrow = renamedDagToNarrow;
   RewritingContext* reduceContext = initial->makeSubcontext(dagToNarrow);
   reduceContext->reduce();
-  initial->transferCount(*reduceContext);
+  initial->transferCountFrom(*reduceContext);
   //
   //	Create initial state in state collection.
   //
@@ -144,13 +147,16 @@ NarrowingSequenceSearch3::findNextUnifier()
     {
       if (unificationProblem != 0)
 	{
-	  currentUnifier = unificationProblem->getNextUnifier(nrFreeVariablesInUnifier, variableFamilyInUnifier);
-	  initial->transferCount(*(unificationProblem->getContext()));
+	  bool moreUnifiers = unificationProblem->findNextUnifier();
+	  initial->transferCountFrom(*(unificationProblem->getContext()));
 	  if (unificationProblem->isIncomplete())
 	    incompleteFlag = true;
-
-	  if (currentUnifier != 0)
-	    return true;
+	  if (moreUnifiers)
+	    {
+	      currentUnifier = &(unificationProblem->getCurrentUnifier(nrFreeVariablesInUnifier,
+								       variableFamilyInUnifier));
+	      return true;
+	    }	  
 	  delete unificationProblem;
 	  unificationProblem = 0;
 	}
@@ -179,10 +185,10 @@ NarrowingSequenceSearch3::findNextUnifier()
 	    bigger.bind(i, accumulatedSubstitution->value(i));
 	  for (int i = nrInitialVariables; i < totalNrVariables; ++i)
 	    bigger.bind(i, 0);
-	  instantiatedGoal = goal.getNode()->instantiate(bigger);
+	  instantiatedGoal = goal.getNode()->instantiate(bigger, false);
 	}
       else
-	instantiatedGoal = goal.getNode()->instantiate(*accumulatedSubstitution);
+	instantiatedGoal = goal.getNode()->instantiate(*accumulatedSubstitution, false);
       if (instantiatedGoal == 0)
 	instantiatedGoal = goal.getNode();  // no change under instantiation
       //
@@ -195,14 +201,17 @@ NarrowingSequenceSearch3::findNextUnifier()
       RewritingContext* pairContext = initial->makeSubcontext(pairDag);
 
       const Vector<DagNode*> dummy;
-      unificationProblem = new VariantSearch(pairContext,  // will be deleted by VariantSearch
-					     dummy,
-					     freshVariableGenerator,
-					     true,
-					     false,
-					     false,
-					     variableFamily,
-					     false);
+      unificationProblem = (variantFlags & VariantUnificationProblem::FILTER_VARIANT_UNIFIERS) ?
+	new FilteredVariantUnifierSearch(pairContext,  // will be deleted by VariantSearch
+					 dummy,
+					 freshVariableGenerator,
+					 VariantSearch::UNIFICATION_MODE,
+					 variableFamily) :
+	new VariantSearch(pairContext,  // will be deleted by VariantSearch
+			  dummy,
+			  freshVariableGenerator,
+			  VariantSearch::UNIFICATION_MODE,
+			  variableFamily);
     }
   return false;
 }
@@ -228,7 +237,7 @@ NarrowingSequenceSearch3::findNextInterestingState()
       for (;;)
 	{
 	  bool success = stateBeingExpanded->findNextNarrowing();
-	  initial->transferCount(*(stateBeingExpanded->getContext()));
+	  initial->transferCountFrom(*(stateBeingExpanded->getContext()));
 	  if (stateBeingExpanded->isIncomplete())
 	    incompleteFlag = true;
 	  if (!success)
@@ -285,12 +294,14 @@ NarrowingSequenceSearch3::findNextInterestingState()
 	  replacementContextProtector.setNode(replacementContext);  // protect replacementContext from GC during reduce()
 	  reduceContext->reduce();  // can call GC
 	  replacementContextProtector.setNode(0);  // withdraw protection
-	  initial->transferCount(*reduceContext);
+	  initial->transferCountFrom(*reduceContext);
 	  //
 	  //	Does new state survive folding?
 	  //
 	  int newStateIndex = ++counter;
-	  bool survived = stateCollection.insertState(newStateIndex, reduceContext->root(), stateBeingExpandedIndex);
+	  bool survived = stateCollection.insertState(newStateIndex,
+						      reduceContext->root(),
+						      stateBeingExpandedIndex);
 	  delete reduceContext;
 	  if (survived)
 	    {
@@ -348,12 +359,27 @@ NarrowingSequenceSearch3::findNextInterestingState()
 	  RewritingContext* narrowingContext = initial->makeSubcontext(nextState);
 	  stateBeingExpanded = new NarrowingSearchState3(narrowingContext,
 							 nextStateAccumulatedSubstitution,
-							 nextStateVariableFamily,
 							 freshVariableGenerator,
-							 NarrowingSearchState3::ALLOW_NONEXEC | PositionState::RESPECT_FROZEN);
+							 nextStateVariableFamily,
+							 NarrowingSearchState3::ALLOW_NONEXEC |
+							 PositionState::RESPECT_FROZEN,
+							 0,
+							 UNBOUNDED,
+							 variantFlags);
+	  //
+	  //	Initialize flag to false, since have yet to see an expansion.
+	  //	We use this to detect normal form.
+	  //
 	  expansionSuccessful = false;
+	  ++nrStatesExpanded;
 	  goto tryToExpand;
 	}
     }
+  //
+  //	We're done expanding, so we've seen all the states we'll ever see.
+  //	States were numbered 0 (initial), ..., counter (last added to stateCollection).
+  //
+  Verbose("Total number of states seen = " << counter + 1);
+  Verbose("Of which " << nrStatesExpanded << " were considered for further narrowing.");
   return NONE;
 }

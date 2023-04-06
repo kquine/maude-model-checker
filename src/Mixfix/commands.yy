@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -132,6 +132,18 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
 			    interpreter.sRewrite(lexerBubble, number, $1);
 			}
+		|	optDebug KW_DSREWRITE
+			{
+			  lexerCmdMode();
+			  moduleExpr.contractTo(0);
+			  number = NONE;
+			}
+			numberModuleTerm
+			{
+			  lexerInitialMode();
+			  if (interpreter.setCurrentModule(moduleExpr, 1))
+			    interpreter.sRewrite(lexerBubble, number, $1, true);
+			}
 
 		|	KW_CHECK
 			{
@@ -158,6 +170,23 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
 			    interpreter.search(lexerBubble, number, number2, $2, $1);
 			}
+		|	optDebug optOptions KW_VU_NARROW
+			{
+			  variantOptions = $2;
+			  lexerCmdMode();
+			  moduleExpr.contractTo(0);
+			  number = NONE;
+			  number2 = NONE;			  
+			}
+			optionsNumbersModuleTerm
+			{
+			  lexerInitialMode();
+			  if (interpreter.setCurrentModule(moduleExpr, 1))
+			    {
+			      interpreter.search(lexerBubble, number, number2,
+			                         Interpreter::VU_NARROW, $1, variantOptions);
+			    }
+			}
 		|	match
 			{
 			  lexerCmdMode();
@@ -170,7 +199,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
 			    interpreter.match(lexerBubble, $1, number);
 			}
-		|	KW_UNIFY
+		|	optIrredundant KW_UNIFY
 			{
 			  lexerCmdMode();
 			  moduleExpr.contractTo(0);
@@ -180,7 +209,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			{
 			  lexerInitialMode();
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
-			    interpreter.unify(lexerBubble, number);
+			    interpreter.unify(lexerBubble, number, $1);
 			}
 		|	optDebug KW_VARIANT KW_UNIFY
 			{
@@ -192,7 +221,31 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			{
 			  lexerInitialMode();
 			  if (interpreter.setCurrentModule(moduleExpr, 1))
-			    interpreter.variantUnify(lexerBubble, number, $1);
+			    interpreter.variantUnify(lexerBubble, number, false, $1);
+			}
+		|	optDebug KW_FILTERED KW_VARIANT KW_UNIFY
+			{
+			  lexerCmdMode();
+			  moduleExpr.contractTo(0);
+			  number = NONE;
+			}
+			numberModuleTerm
+			{
+			  lexerInitialMode();
+			  if (interpreter.setCurrentModule(moduleExpr, 1))
+			    interpreter.variantUnify(lexerBubble, number, true, $1);
+			}
+		|	optDebug KW_VARIANT KW_MATCH
+			{
+			  lexerCmdMode();
+			  moduleExpr.contractTo(0);
+			  number = NONE;
+			}
+			numberModuleTerm
+			{
+			  lexerInitialMode();
+			  if (interpreter.setCurrentModule(moduleExpr, 1))
+			    interpreter.variantMatch(lexerBubble, number, $1);
 			}
 
 		|	optDebug KW_GET optIrredundant KW_VARIANTS
@@ -268,9 +321,10 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			  lexerInitialMode();
 			  interpreter.printConceal($2);
 			}
-		|	KW_DO KW_CLEAR KW_MEMO '.'
+		|	KW_DO KW_CLEAR KW_MEMO	{ lexBubble(END_COMMAND, 0); }
+			endBubble
 			{
-			  if (CM != 0)  // HACK
+			  if (interpreter.setCurrentModule(lexerBubble))
 			    CM->getFlatSignature()->clearMemo();
 			}
 /*
@@ -294,11 +348,23 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			  if (interpreter.setCurrentModule(lexerBubble))
 			    interpreter.showModule(true);
 			}
+		|	KW_SHOW KW_DESUGARED	{ lexBubble(END_COMMAND, 0); }
+			endBubble
+			{
+			  if (interpreter.setCurrentModule(lexerBubble))
+			    interpreter.showModule(false);
+			}
 		|	KW_SHOW KW_VIEW		{ lexBubble(END_COMMAND, 0); }
 			endBubble
 			{
 			  if (interpreter.setCurrentView(lexerBubble))
 			    interpreter.showView();
+			}
+		|	KW_SHOW KW_PROCESSED KW_VIEW	{ lexBubble(END_COMMAND, 0); }
+			endBubble
+			{
+			  if (interpreter.setCurrentView(lexerBubble))
+			    interpreter.showProcessedView();
 			}
 		|	KW_SHOW KW_MODULES '.'
 			{
@@ -306,7 +372,7 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			}
 		|	KW_SHOW KW_VIEWS '.'
 			{
-			  interpreter.showNamedViews();
+			  interpreter.showViews(true);
 			}
 		|	KW_SHOW KW_SORTS	{ lexBubble(END_COMMAND, 0); }
 			endBubble
@@ -344,6 +410,18 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			  if (interpreter.setCurrentModule(lexerBubble))
 			    interpreter.showRls();
 			}
+		|	KW_SHOW KW_STRATS	{ lexBubble(END_COMMAND, 0); }
+			endBubble
+			{
+			  if (interpreter.setCurrentModule(lexerBubble))
+			    interpreter.showStrats();
+			}
+		|	KW_SHOW KW_SDS		{ lexBubble(END_COMMAND, 0); }
+			endBubble
+			{
+			  if (interpreter.setCurrentModule(lexerBubble))
+			    interpreter.showSds();
+			}
 		|	KW_SHOW KW_SUMMARY	{ lexBubble(END_COMMAND, 0); }
 			endBubble
 			{
@@ -358,7 +436,11 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			}
 		|	KW_SHOW KW_PATH SIMPLE_NUMBER '.'
 			{
-			  interpreter.showSearchPath($3);
+			  interpreter.showSearchPath($3, true);
+			}
+		|	KW_SHOW KW_PATH KW_STATE SIMPLE_NUMBER '.'
+			{
+			  interpreter.showSearchPath($4, false);
 			}
 		|	KW_SHOW KW_PATH KW_LABEL SIMPLE_NUMBER '.'
 			{
@@ -435,11 +517,11 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			{
 			  interpreter.setAutoImport($2, $4, $6);
 			}
-		|	KW_SET KW_OMOD KW_INCLUDE	{ lexerCmdMode(); }
+		|	KW_SET KW_OO KW_INCLUDE		{ lexerCmdMode(); }
 			cSimpleTokenBarDot		{ lexerInitialMode(); }
 			polarity '.'
 			{
-			  interpreter.setOmodInclude($5, $7);
+			  interpreter.setOoInclude($5, $7);
 			}
 		|	KW_SET KW_VERBOSE polarity '.'
 			{
@@ -480,6 +562,10 @@ command		:	KW_SELECT		{ lexBubble(END_COMMAND, 1); }
 			{
 			  PARSE_RESULT = UserLevelRewritingContext::STEP;
 			}
+		|	KW_IMPLIED_STEP
+			{
+			  PARSE_RESULT = UserLevelRewritingContext::STEP;
+			}
 		|	KW_WHERE '.'
 			{
 			  PARSE_RESULT = UserLevelRewritingContext::WHERE;
@@ -515,6 +601,7 @@ printOption	:	KW_MIXFIX		{ $$ = Interpreter::PRINT_MIXFIX; }
 		|	KW_RAT			{ $$ = Interpreter::PRINT_RAT; }
 		|	KW_COLOR		{ $$ = Interpreter::PRINT_COLOR; }
 		|	KW_FORMAT		{ $$ = Interpreter::PRINT_FORMAT; }
+		|	KW_CONST KW_WITH KW_SORTS	{ $$ = Interpreter::PRINT_DISAMBIG_CONST; }
 		;
 
 traceOption	:				{ $$ = Interpreter::TRACE; }
@@ -525,6 +612,7 @@ traceOption	:				{ $$ = Interpreter::TRACE; }
 		|	KW_MBS			{ $$ = Interpreter::TRACE_MB; }
 		|	KW_EQS			{ $$ = Interpreter::TRACE_EQ; }
 		|	KW_RLS			{ $$ = Interpreter::TRACE_RL; }
+		|	KW_SDS			{ $$ = Interpreter::TRACE_SD; }
 		|	KW_REWRITE		{ $$ = Interpreter::TRACE_REWRITE; }
 		|	KW_BODY			{ $$ = Interpreter::TRACE_BODY; }
 		|	KW_BUILTIN		{ $$ = Interpreter::TRACE_BUILTIN; }
@@ -552,7 +640,6 @@ search		:	KW_NARROW		{ $$ = Interpreter::NARROW; }
 		|	KW_XG_NARROW		{ $$ = Interpreter::XG_NARROW; }
 		|	KW_SEARCH		{ $$ = Interpreter::SEARCH; }
 		|	KW_SMT_SEARCH		{ $$ = Interpreter::SMT_SEARCH; }
-		|	KW_VU_NARROW		{ $$ = Interpreter::VU_NARROW; }
 		|	KW_FVU_NARROW		{ $$ = Interpreter::FVU_NARROW; }
 		;
 
@@ -572,8 +659,20 @@ optNumber	:	SIMPLE_NUMBER	        { $$ = $1; }
 		|				{ $$ = NONE; }
 		;
 
+optOptions	:	'{' optionsList '}'	{ $$ = $2; }
+		|	    			{ $$ = 0; }
+		;
+
+optionsList	:	option			{ $$ = $1; }
+		|	optionsList ',' option  { $$ = $1 | $3; }
+		;
+
+option		:	KW_FOLD			{ $$ = NarrowingSequenceSearch3::FOLD; }
+		;
+
 importMode	:	KW_PROTECT		{ $$ = ImportModule::PROTECTING; }
 		|	KW_EXTEND		{ $$ = ImportModule::EXTENDING; }
+		|	KW_GENERATE_BY		{ $$ = ImportModule::GENERATED_BY; }
 		|	KW_INCLUDE		{ $$ = ImportModule::INCLUDING; }
 		;
 /*
@@ -628,6 +727,48 @@ numberModuleTerm2
  *	module expression, followed by term, followed by dot.
  *	{"[" { {<number>} , } <number> "]"} {"in" <module expression> ":"} <term> "."
  */
+
+
+/*
+ *	Seen <command>; looking for "{", "[", "in", or start of term.
+ */
+optionsNumbersModuleTerm
+		:	'{'			{ lexSave($1); }
+			optionsNumbersModuleTerm1
+		|	'['			{ lexSave($1); }
+			numbersModuleTerm1
+		|	initialEndBubble
+		|	cTokenBarOpenLeftIn	{ lexBubble($1, END_COMMAND, 0); }
+			endBubble
+		;
+
+optionsNumbersModuleTerm1
+		:	KW_FILTER
+			{
+			  lexContinueSave($1);
+			  variantOptions |= VariantUnificationProblem::FILTER_VARIANT_UNIFIERS;
+			}
+			optionsNumbersModuleTerm2
+		|	KW_DELAY
+			{
+			  lexContinueSave($1);
+			  variantOptions |= VariantSearch::IRREDUNDANT_MODE;
+			}
+			optionsNumbersModuleTerm2
+		|	cTokenBarDotOptionToken	{ lexContinueBubble($1, END_COMMAND, 0); }
+			endBubble
+		|	miscEndBubble
+		;
+		
+optionsNumbersModuleTerm2
+		:	'}'
+			numbersModuleTerm
+		|	','			{ lexContinueSave($1); }
+			optionsNumbersModuleTerm1
+		|	cTokenBarDotCommaClose	{ lexContinueBubble($1, END_COMMAND, 0); }
+			endBubble
+		|	miscEndBubble
+		;
 
 /*
  *	Seen <command>; looking for "[", "in", or start of term.
@@ -726,6 +867,11 @@ miscEndBubble	:	'('			{ lexContinueBubble($1, END_COMMAND, 0, 1); }
 		|	endBubble
 		;
 
+/*
+ *	Handles ( <bubble> )
+ *	        in <bubble> :
+ *		foo.
+ */
 initialEndBubble
 		:	'('			{ lexBubble($1, END_COMMAND, 1, 1); }
 			endBubble
@@ -742,26 +888,38 @@ initialEndBubble
 /*
  *	Command mode token types.
  */
-cTokenBarIn	:	IDENTIFIER | NUMERIC_ID | '[' | ']' | ':' | '.' | ','
+cTokenBarIn	:	cOptionToken | IDENTIFIER | NUMERIC_ID | '{' | '}' | '[' | ']' | ':' | '.' | ','
 		;
 
-cTokenBarLeftIn	:	IDENTIFIER | NUMERIC_ID | ']' | ':' | '.' | ','
+cTokenBarLeftIn	:	cOptionToken | IDENTIFIER | NUMERIC_ID | '{' | '}' | ']' | ':' | '.' | ','
+		;
+
+cTokenBarOpenLeftIn
+		:	cOptionToken | IDENTIFIER | NUMERIC_ID | '}' | ']' | ':' | '.' | ','
 		;
 
 cTokenBarDotNumber
-		:	IDENTIFIER | '[' | ']' | KW_IN | ':' | ','
+		:	cOptionToken | IDENTIFIER | '{' | '}' | '[' | ']' | KW_IN | ':' | ','
 		;
 
 cTokenBarDotRight
-		:	IDENTIFIER | NUMERIC_ID | '[' | KW_IN | ':' | ','
+		:	cOptionToken | IDENTIFIER | NUMERIC_ID | '{' | '}' | '[' | KW_IN | ':' | ','
 		;
 
 cTokenBarDotCommaNumber
-		:	IDENTIFIER | '[' | ']' | KW_IN | ':'
+		:	cOptionToken | IDENTIFIER | '{' | '}' | '[' | ']' | KW_IN | ':'
 		;
 
 cTokenBarDotCommaRight
-		:	IDENTIFIER | NUMERIC_ID | '[' | KW_IN | ':'
+		:	cOptionToken | IDENTIFIER | NUMERIC_ID | '{' | '}' | '[' | KW_IN | ':'
+		;
+
+cTokenBarDotCommaClose
+		:	cOptionToken | IDENTIFIER | NUMERIC_ID | '{' | '[' | ']' | KW_IN | ':'
+		;
+
+cTokenBarDotOptionToken
+		:	IDENTIFIER | NUMERIC_ID | '{' | '}' | '[' | ']' | KW_IN | ':' | ','
 		;
 
 /*
@@ -798,5 +956,9 @@ cSimpleOpName	:	cSimpleTokenBarDot
 		;
 
 cSimpleTokenBarDot
-		:	IDENTIFIER | NUMERIC_ID | '[' | ']' | KW_IN | ':' | ','
+		:	cOptionToken | IDENTIFIER | NUMERIC_ID | '{' | '}' | '[' | ']' | KW_IN | ':' | ','
+		;
+
+cOptionToken	:	KW_FILTER
+		|	KW_DELAY
 		;

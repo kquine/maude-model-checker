@@ -16,7 +16,7 @@ namespace modelChecker {
 void
 CompositeFairSet::addComponent(unique_ptr<FairSet>&& f)
 {
-	fairSets.push_back(move(f));
+	fairSets.push_back(std::move(f));
 }
 
 const FairSet&

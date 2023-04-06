@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -109,6 +109,14 @@ SocketManagerSymbol::closedSocketReply(int socketId,
   DagNode* socketName = originalMessage->getArgument(0);
   context.deleteExternalObject(socketName);
   activeSockets.erase(socketId);
+  //
+  //	If the fd was registered as active with PseudoThread it needs
+  //	go away to avoid trying to poll() a nonexistent fd.
+  //
+  PseudoThread::clearFlags(socketId);
+  //
+  //	Inject a closedSocket() message into the configuration.
+  //
   Vector<DagNode*> reply(3);
   reply[1] = socketName;
   reply[2] = new StringDagNode(stringSymbol, errorMessage);

@@ -34,8 +34,8 @@ namespace modelChecker {
 template <bool hasState, bool hasEvent, typename SA, typename PA>
 FairProductAutomaton<hasState,hasEvent,SA,PA>::FairProductAutomaton(unique_ptr<SA>&& system,
 		unique_ptr<PA>&& property, unique_ptr<AbstractFairnessTable>&& systemFairTable):
-	base(move(system),move(property)),
-	fairTable(makeInitFairTable(move(systemFairTable))),
+	base(std::move(system),std::move(property)),
+	fairTable(makeInitFairTable(std::move(systemFairTable))),
 	formulaRef(&static_cast<FormulaFairnessTable&>(fairTable->getComponent(fairTable->nrComponents()-1))) {}
 
 
@@ -47,14 +47,14 @@ FairProductAutomaton<hasState,hasEvent,SA,PA>::makeFairSet(const Transition& t)
 	unique_ptr<FairSet> forf = formulaRef->makeFairSet(t.propertyIndex);
 	if (CompositeFairSet* cfs = dynamic_cast<CompositeFairSet*>(sysf.get()))
 	{
-		cfs->addComponent(move(forf));
-		return move(sysf);
+		cfs->addComponent(std::move(forf));
+		return sysf;
 	}
 	else
 	{
 		cfs = new CompositeFairSet;
-		cfs->addComponent(move(sysf));
-		cfs->addComponent(move(forf));
+		cfs->addComponent(std::move(sysf));
+		cfs->addComponent(std::move(forf));
 		return unique_ptr<FairSet>(cfs);
 	}
 }
@@ -71,7 +71,7 @@ FairProductAutomaton<hasState,hasEvent,SA,PA>::makeInitFairTable(unique_ptr<Abst
 	else
 	{
 		result = new CompositeFairnessTable;
-		result->addComponent(move(systemFairTable));
+		result->addComponent(std::move(systemFairTable));
 	}
 	result->addComponent(unique_ptr<AbstractFairnessTable>(new FormulaFairnessTable(this->getPropertyAutomaton())));
 	return result;

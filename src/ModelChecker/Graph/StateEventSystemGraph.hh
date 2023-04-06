@@ -58,7 +58,7 @@ public:
 	struct Transition;
 	struct ActiveState;
 
-	SystemGraphTraits(unique_ptr<PL>&& pl): propLabel(move(pl)) {}
+	SystemGraphTraits(unique_ptr<PL>&& pl): propLabel(std::move(pl)) {}
 
 	bool insertTransition(unsigned int nextState, State& n, DagNode*);
 	void insertDeadlockTransition(unsigned int stateNr, State& n);

@@ -58,7 +58,7 @@ public:
 	using typename SystemGraphTraits<StateSystemGraph<PL>>::ActiveState;
 
 	SystemGraphTraits(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl):
-		SystemGraphTraits<StateSystemGraph<PL>>(move(pl)), fairLabel(move(fl)) {}
+		SystemGraphTraits<StateSystemGraph<PL>>(std::move(pl)), fairLabel(std::move(fl)) {}
 
 	void updateStateLabel(DagNode* stateDag, State& s) const;
 

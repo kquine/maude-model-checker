@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -49,6 +49,11 @@ public:
 		      int parentIndex,
 		      bool respectFrozen,
 		      bool eagerContext);
+  void stackPhysicalArguments(DagNode* subject,
+			      Vector<RedexPosition>& stack,
+			      int parentIndex,
+			      bool respectFrozen,
+			      bool eagerContext);
   Term* termify(DagNode* dagNode);
   //
   //	Member functions overiding default handling.

@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -46,9 +46,8 @@ bool RewritingContext::traceFlag = false;
 void
 RewritingContext::markReachableNodes()
 {
-  if (rootNode == 0)
-    return;  // limited use RewritingContext
-  rootNode->mark();
+  if (!isLimited())
+    rootNode->mark();
   int nrFragile = nrFragileBindings();
   for (int i = 0; i < nrFragile; i++)
     {
@@ -56,15 +55,43 @@ RewritingContext::markReachableNodes()
       if (d != 0)
 	d->mark();     
     }
-  int stackLength = redexStack.length();
-  for (int i = 0; i < stackLength; i++)
-    redexStack[i].node()->mark();
+  for (RedexPosition& p : redexStack)
+    p.node()->mark();
 }
 
 RewritingContext*
 RewritingContext::makeSubcontext(DagNode* root, int /* purpose */)
 {
   return new RewritingContext(root);
+}
+
+bool
+RewritingContext::handleInterrupt()
+{
+  //
+  //	By default we don't know how to handle an interrupt.
+  //
+  return false;
+}
+
+bool
+RewritingContext::blockAndHandleInterrupts(sigset_t *normalSet)
+{
+  //
+  //	Hard to do anything sensible here.
+  //
+  CantHappen("base class version shouldn't be called");
+  return false;
+}
+
+bool
+RewritingContext::interruptSeen()
+{
+  //
+  //	Hard to do anything sensible here.
+  //
+  CantHappen("base class version shouldn't be called");
+  return false;
 }
 
 int
@@ -81,6 +108,12 @@ RewritingContext::traceBeginRuleTrial(DagNode* /* subject */, const Rule* /* rul
 
 int
 RewritingContext::traceBeginScTrial(DagNode* /* subject */, const SortConstraint* /* sc */)
+{
+  return 0;
+}
+
+int
+RewritingContext::traceBeginSdTrial(DagNode* /* subject */, const StrategyDefinition* /* sc */)
 {
   return 0;
 }
@@ -164,6 +197,14 @@ RewritingContext::traceVariantNarrowingStep(Equation* /* equation */,
 					    DagNode* /* newState */,
 					    const Vector<DagNode*>& /* newVariantSubstitution */,
 					    const NarrowingVariableInfo& /* originalVariables */)
+{
+}
+
+void
+RewritingContext::traceStrategyCall(StrategyDefinition* /* sdef */,
+				    DagNode* /* callDag */,
+				    DagNode* /* subject */,
+				    const Substitution* /* substitution */)
 {
 }
 

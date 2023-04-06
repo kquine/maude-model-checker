@@ -56,7 +56,7 @@ PropSet::merge(unique_ptr<PropSet>& ps1, unique_ptr<PropSet>&& ps2)
 	}
 	else if (ps2)
 	{
-		ps1 = move(ps2);
+		ps1 = std::move(ps2);
 	}
 }
 

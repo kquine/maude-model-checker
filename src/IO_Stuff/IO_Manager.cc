@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2021 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 //      utility stuff
 #include "macros.hh"
@@ -45,6 +47,8 @@
 #include "autoWrapBuffer.hh"
 #include "IO_Manager.hh"
 
+pid_t IO_Manager::stdinOwner = 0;
+
 IO_Manager::IO_Manager()
 {
   gl = 0;
@@ -53,6 +57,12 @@ IO_Manager::IO_Manager()
   contFlag = false;
   wrapOut = 0;
   wrapErr = 0;
+  savedOut = 0;
+  savedErr = 0;
+  firstUnused = 0;
+  bufferEnd = 0;
+  bufferSize = 0;
+  buffer = 0;
 }
 
 void
@@ -60,31 +70,102 @@ IO_Manager::setCommandLineEditing(size_t lineLength, size_t historyLength)
 {
 #ifdef USE_TECLA
   gl = new_GetLine(lineLength, historyLength);
-  gl_trap_signal(gl, SIGINT, 0, GLS_ABORT, EINTR);
+  //
+  //	Tecla's behavior on Control-C is set as follows:
+  //	GLS_UNBLOCK_SIG : ensures tecla receives a SIGINT even if we block it.
+  //	  The reason we might block it is to avoid not responding to a SIGINT
+  //	  that was delivered after we last checked the flag set in the signal
+  //	  handler and before calling tecla.
+  //	GLS_ABORT : abort partial line and return NULL (default action anyway)
+  //	EINTR : set errno to this (default setting anyway)
+  //
+  gl_trap_signal(gl, SIGINT, GLS_UNBLOCK_SIG, GLS_ABORT, EINTR);
 #endif
 }
 
 void
-IO_Manager::setAutoWrap()
+IO_Manager::setAutoWrap(bool lineWrapping)
 {
+  Assert(wrapOut == 0 && wrapErr == 0 && savedOut == 0 && savedErr == 0, "already set");
   //
   //	Set up autowrapping of standard output and standard error.
   //
   winsize w;
+  {
+    int columns = NONE;
+    if (lineWrapping)
+      {
+	 columns = DEFAULT_COLUMNS;
+	 if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0 && w.ws_col > 0)
+	   columns = w.ws_col;
+      }
+    wrapOut = new AutoWrapBuffer(cout.rdbuf(), columns, true, &waitUntilSafeToAccessStdin);
+    savedOut = cout.rdbuf(wrapOut);
+  }
+  {
+    int columns = NONE;
+    if (lineWrapping)
+      {
+	columns = DEFAULT_COLUMNS;
+	if (ioctl(STDERR_FILENO, TIOCGWINSZ, &w) == 0 && w.ws_col > 0)
+	  columns = w.ws_col;
+      }
+    //
+    //	Because every character is flushed in cerr, we don't respect it otherwise
+    //	we couldn't buffer in order to compute places to wrap.
+    //
+    wrapErr = new AutoWrapBuffer(cerr.rdbuf(), columns, false, &waitUntilSafeToAccessStdin);
+    savedErr = cerr.rdbuf(wrapErr);
+  }
+}
 
-  int columns = DEFAULT_COLUMNS;
-  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0 && w.ws_col > 0)
-    columns = w.ws_col;
-  // cout << "out columns " << columns << '\n';
-  wrapOut = new AutoWrapBuffer(cout.rdbuf(), columns);
-  (void) cout.rdbuf(wrapOut);
+void
+IO_Manager::unsetAutoWrap()
+{
+  //
+  //	Undo autowrapping of standard output and standard error if we
+  //	originally wrapped them.
+  //
+  if (wrapOut != 0 && savedOut != 0)
+    {
+      (void) cout.rdbuf(savedOut);
+      delete wrapOut;
+      wrapOut = 0;
+      savedOut = 0;
+    }
+  if (wrapErr != 0 && savedErr != 0)
+    {
+      (void) cerr.rdbuf(savedErr);
+      delete wrapErr;
+      wrapErr = 0;
+      savedErr = 0;
+    }
+}
 
-  columns = DEFAULT_COLUMNS;
-  if (ioctl(STDERR_FILENO, TIOCGWINSZ, &w) == 0 && w.ws_col > 0)
-    columns = w.ws_col;
-  // cout << "err columns " << columns << '\n';
-  wrapErr = new AutoWrapBuffer (cerr.rdbuf(), columns);
-  (void) cerr.rdbuf(wrapErr);
+void
+IO_Manager::waitUntilSafeToAccessStdin()
+{
+  //
+  //	If a child process is reading from stdin we need to wait
+  //	until it exits to avoid a race condition where tecla saves
+  //	the terminal in a RAW state induced by the child.
+  //
+  if (stdinOwner)
+    {
+      if (stdinOwner == getpid())
+	{
+	  //
+	  //	We're the child that is reading from stdin.
+	  //
+	  return;
+	}
+      //
+      //	The child should exit once it is done with stdin
+      //	so we wait for it, but leave it in a waitable state.
+      //
+      waitpid(stdinOwner, 0, 0);
+      stdinOwner = 0;
+    }
 }
 
 ssize_t
@@ -99,9 +180,13 @@ IO_Manager::getInput(char* buf, size_t maxSize, FILE* stream)
       //
       return read(fileno(stream), buf, maxSize);
     }
+  //
+  //	In case we have a child process that is accessing stding.
+  //
+  waitUntilSafeToAccessStdin();
 
 #ifdef USE_TECLA
-  if (gl != 0)
+  if (usingTecla())
     {
       if (line == 0)
 	{
@@ -145,50 +230,88 @@ IO_Manager::getInput(char* buf, size_t maxSize, FILE* stream)
   //
   if (usePromptsAnyway)
     {
-      fputs(contFlag ? contPrompt.c_str() : prompt.c_str(), stdout);  // HACK: bypass line wrapper
-      fflush(stdout);
-      contFlag = true;
+      //
+      //	We don't generate continuation prompts in this case to avoid breaking IOP.
+      //
+      if (!contFlag)
+	{
+	  cout << prompt.c_str() << flush;
+	  contFlag = true;
+	}
     }
-  return boundedGetLine(buf, maxSize, stdin);
+  return readFromStdin(buf, maxSize);
 }
 
 ssize_t
-IO_Manager::boundedGetLine(char* buf, size_t maxSize, FILE* stream)
+IO_Manager::readFromStdin(char* buf, size_t maxSize)
 {
   //
-  //	This is a hybrid between read() that reads a bounded number
-  //	of characters but will read past \n, and getline() that only
-  //	reads up to \n but will reallocate() (requiring that buf was
-  //	malloc()'d) to return any number of characters, and null
-  //	terminating.
+  //	We bypass stdlib because we want to get whatever is available
+  //	from a pipe without waiting for a \n to avoid breaking IOP.
   //
-  //	We read up to and including the \n OR the bound, which ever
-  //	is reached first. Null termination is not added to we can
-  //	read nulls OK.
+  //	But we can't use read() in place of this function because
+  //	we don't want lexer swallowing characters past \n since they
+  //	may be wanted by the object system standard stream functionality.
   //
-  size_t index = 0;
+  //	Instead we keep a local buffer. We return whatever is in the
+  //	local buffer up to \n, maxSize, or the end of the buffer.
+  //	If the local buffer is empty, we refill it with whatever
+  //	is available from read(), and we don't make another call to
+  //	read() (which could block on a pipe or socket) until the local
+  //	buffer is empty.
+  //
+  if (firstUnused >= bufferEnd)
+    {
+      //
+      //	No buffered characters, need to do a read() and maybe block.
+      //
+      if (bufferSize < maxSize)
+	{
+	  //
+	  //	Need to reallocate our buffer first.
+	  //
+	  delete [] buffer;
+	  buffer = new char[maxSize];
+	  bufferSize = maxSize;
+	}
+
+      firstUnused = 0;
+      bufferEnd = read(STDIN_FILENO, buffer, maxSize);
+      if (bufferEnd <= 0)
+	{
+	  if (isatty(STDIN_FILENO))
+	    cout << '\n' << flush;
+	  return bufferEnd;  // EOF or error
+	}
+    }
+  //
+  //	Return the buffered characters, up to \n, maxSize or end of local buffer.
+  //
+  size_t  i = 0;
   for (;;)
     {
-      int c = getc(stream);
-      if (c == EOF)
-	return (index > 0) ? index : EOF;
-      buf[index] = c;
-      ++index;
-      if (c == '\n' || index == maxSize)
+      char c = buffer[firstUnused];
+      buf[i] = c;
+      ++firstUnused;
+      ++i;
+      if (c == '\n' || i == maxSize || firstUnused == bufferEnd)
 	break;
     }
-  return index;
+  return i;
 }
 
 Rope
-IO_Manager::getLine(const Rope& prompt, FILE* stream)
+IO_Manager::getLineFromStdin(const Rope& prompt)
 {
-  //cerr << "getLine() prompt = " << prompt << endl;
+  //
+  //	In case we have a child process that is accessing stding.
+  //
+  waitUntilSafeToAccessStdin();
   //
   //	Get a line as a Rope, possibly using Tecla.
   //
 #ifdef USE_TECLA
-  if (gl != 0 && isatty(fileno(stream)))
+  if (usingTecla() && isatty(STDIN_FILENO))
     {
       char* promptString = prompt.makeZeroTerminatedString();
       line = gl_get_line(gl, promptString, NULL, -1);  //  ignore any partial line left in line
@@ -200,28 +323,28 @@ IO_Manager::getLine(const Rope& prompt, FILE* stream)
       return result;
     }
 #endif
-  //cerr << "Non tecla case" << endl;
   //
   //	Non-Tecla case. Either Tecla not compiled it, or disabled or
-  //	we are getting the line from a file.
+  //	we are getting the line from a file or pipe.
+  //	We keep reading, respecting buffered characters, until we get to \n or EOF.
   //
   char* promptString = prompt.makeZeroTerminatedString();
-  fputs(promptString, stdout);  // HACK: bypass line wrapper
-  fflush(stdout);
+  cout << promptString << flush;
   delete [] promptString;
-
-  char* localLine = 0;
-  size_t n = 0;
-  ssize_t nrRead = getline(&localLine, &n, stream);
-  //cerr << "nrRead = " << nrRead << endl;
-  if (nrRead == -1)
+  //
+  //	We keep reading and accumulating characters until we hit \n, EOF or error.
+  //
+  Rope result;
+  for (;;)
     {
-      if (localLine != 0)
-	free(localLine);  // getline() might have realloc()'d memory
-      return Rope();  // return empty rope on error or eof
+      char buf[BUFFER_SIZE];
+      ssize_t nrRead = readFromStdin(buf, BUFFER_SIZE);
+      if (nrRead <= 0)
+	break;
+      Rope t(buf, nrRead);
+      result += t;
+      if (buf[nrRead - 1] == '\n')
+	break;
     }
-  Rope result(localLine, nrRead);
-  if (localLine != 0)
-    free(localLine);
   return result;
 }

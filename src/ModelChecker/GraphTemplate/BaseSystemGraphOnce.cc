@@ -95,9 +95,9 @@ BaseSystemGraphOnce<T>::enableState(unsigned int stateNr)
 		for (auto& tr : trs)
 		{
 			if (transitionPtrSet.insert(tr.get()).second)	// if a new transition identified
-				s->transitions.push_back(move(tr));				// NOTE: transfer ownership..
+				s->transitions.push_back(std::move(tr));				// NOTE: transfer ownership..
 		}
-		this->seen[stateNr] = move(s);
+		this->seen[stateNr] = std::move(s);
 	}
 	return stateNr;		// return an integer version to compare with NONE later..
 }

@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2006 SRI International, Menlo Park, CA 94025, USA.
 
@@ -32,7 +32,7 @@ public:
   //
   //	A cache needs to be able to delete a state.
   //
-  virtual ~CacheableState() {};
+  virtual ~CacheableState() {}
 };
 
 #endif

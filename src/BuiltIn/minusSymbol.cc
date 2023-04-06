@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -111,6 +111,13 @@ MinusSymbol::getNeg(const DagNode* dagNode, mpz_class& result) const
 	 "symbol mismatch");
   result = - getSuccSymbol()->getNat(safeCast(const FreeDagNode*, dagNode)->getArgument(0));
   return result;
+}
+
+DagNode*
+MinusSymbol::makeIntDag(const mpz_class& integer)
+{
+  return (integer >= 0) ? getSuccSymbol()->makeNatDag(integer) :
+    makeNegDag(integer);
 }
 
 Term*

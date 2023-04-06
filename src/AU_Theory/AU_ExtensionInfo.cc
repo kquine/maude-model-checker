@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -65,9 +65,9 @@ AU_ExtensionInfo::makeClone() const
 }
 
 void
-AU_ExtensionInfo::copy(ExtensionInfo* extensionInfo)
+AU_ExtensionInfo::copy(const ExtensionInfo* extensionInfo)
 {
-  AU_ExtensionInfo* e = safeCast(AU_ExtensionInfo*, extensionInfo);
+  const AU_ExtensionInfo* e = safeCast(const AU_ExtensionInfo*, extensionInfo);
   setValidAfterMatch(e->validAfterMatch());
   bool whole = e->matchedWhole();
   setMatchedWhole(whole);

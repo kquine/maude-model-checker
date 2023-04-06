@@ -15,7 +15,7 @@ namespace modelChecker {
 class ParamStrongFairSet: public StrongFairSet, public ParamRealizedSet
 {
 public:
-	struct Goal;
+	class Goal;
 	struct Bad;
 
 	ParamStrongFairSet(StrongFairSet&& f);

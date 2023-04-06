@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2020 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #include "macros.hh"
 #include "vector.hh"
 #include "pointerMap.hh"
+#include "meta.hh"
  
 //      forward declarations
 #include "interface.hh"
@@ -68,7 +69,9 @@
 #include "rewriteSequenceSearch.hh"
 #include "narrowingSequenceSearch.hh"
 #include "unificationProblem.hh"
+#include "irredundantUnificationProblem.hh"
 #include "variantSearch.hh"
+#include "filteredVariantUnifierSearch.hh"
 #include "narrowingSearchState2.hh"
 #include "narrowingSequenceSearch3.hh"
 
@@ -96,8 +99,13 @@
 #include "syntacticPreModule.hh"
 #include "interpreter.hh"
 #include "visibleModule.hh"
-#include "global.hh"  // HACK: shouldn't access global variables
 #include "freshVariableSource.hh"
+#include "mixfixParser.hh"
+
+//	strategy language definitions
+#include "strategyExpression.hh"
+#include "depthFirstStrategicSearch.hh"
+#include "fairStrategicSearch.hh"
 
 //	our stuff
 #include "descentFunctions.cc"
@@ -105,11 +113,17 @@
 #include "metaApply.cc"
 #include "metaMatch.cc"
 #include "metaSearch.cc"
+#include "metaSrewrite.cc"
 #include "metaUnify.cc"
 #include "metaVariant.cc"
+#include "metaVariantUnify.cc"
+#include "metaVariantMatch.cc"
 #include "metaNarrow.cc"
 #include "metaNewNarrow.cc"
 #include "metaNewNarrow2.cc"
+#include "legacyMetaUnify.cc"
+#include "legacyMetaVariant.cc"
+#include "legacyMetaVariantUnify.cc"
 
 MetaLevelOpSymbol::MetaLevelOpSymbol(int id, int nrArgs, const Vector<int>& strategy)
   : FreeSymbol(id, nrArgs, strategy)
@@ -122,6 +136,11 @@ MetaLevelOpSymbol::~MetaLevelOpSymbol()
 {
   if (shareWith == 0)
     delete metaLevel;
+}
+
+MetaLevelOpSymbol::AliasMapParserPair::~AliasMapParserPair()
+{
+  delete parser;
 }
 
 bool
@@ -250,28 +269,16 @@ MetaLevelOpSymbol::reset()
     metaLevel->reset();
 }
 
-DagNode*
-MetaLevelOpSymbol::term2Dag(Term* t)
-{
-  NatSet eagerVariables;
-  Vector<int> problemVariables;
-  t->markEager(0, eagerVariables, problemVariables);
-  DagNode* r = t->term2Dag();
-  return r;
-}
-
 bool
 MetaLevelOpSymbol::eqRewrite(DagNode* subject, RewritingContext& context)
 {
-  Assert(this == subject->symbol(), "Bad symbol");
-  Assert(metaLevel != 0, "metaLevel not set for " << this);
-  //if (metaLevel == 0)
-  //  metaLevel = shareWith->metaLevel;
+  Assert(this == subject->symbol(), "bad symbol");
+  Assert(metaLevel != 0, "metaLevel not set for " << this << " during postInterSymbolPass()");
   FreeDagNode* d = safeCast(FreeDagNode*, subject);
-  int nrArgs = arity();
   if (standardStrategy())
     {
-      for (int i = 0; i < nrArgs; i++)
+      const int nrArgs = arity();
+      for (int i = 0; i < nrArgs; ++i)
 	d->getArgument(i)->reduce(context);
       return (this->*descentFunction)(d, context) || FreeSymbol::eqRewrite(subject, context);
     }
@@ -290,10 +297,10 @@ MetaLevelOpSymbol::complexStrategy(DagNode* subject, RewritingContext& context)
   //	(2) we have no way to replace semi-eager arguments so that they can be evaluated.
   //
   const Vector<int>& userStrategy = getStrategy();
-  int stratLen = userStrategy.length();
-  for (int i = 0; i < stratLen - 1; i++)
+  const int stratLen = userStrategy.length() - 1;
+  for (int i = 0; i < stratLen; ++i)
     {
-      int a = userStrategy[i];
+      const int a = userStrategy[i];
       if(a == 0)
 	{
 	  //

@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 //
 //	Auxiliary functions and data needed by lexical analyzer.
 //
-#define MAX_IN_DEPTH	10
+#define MAX_IN_DEPTH	100
 
 int inStackPtr = 0;
 YY_BUFFER_STATE inStack[MAX_IN_DEPTH];
@@ -33,6 +33,7 @@ int nrPendingRead = 0;
 bool rootInteractive = false;
 bool fakeNewline = false;  // fake \n for files that don't end with \n
 bool fakeNewlineStack[MAX_IN_DEPTH];
+bool debugMode = false;
 
 void
 getInput(char* buf, yy_size_t& result, yy_size_t max_size)
@@ -92,6 +93,24 @@ cleanUpLexer()
   fileTable.abortEverything(lineNumber);
   nrPendingRead = pendingFiles.length();  // avoid any further reading of pending files
   BEGIN(INITIAL);
+}
+
+void
+setDebugMode(bool polarity)
+{
+  debugMode = polarity;
+}
+
+bool
+generateImpliedStep()
+{
+  //
+  //	We treat empty lines as an implied step command if
+  //	(1) We are in the debugger; and
+  //	(2) The root buffer is interactive; and
+  //	(3) We are reading from the root buffer rather than a file.
+  //
+  return debugMode && rootInteractive && inStackPtr == 0;
 }
 
 void
@@ -196,7 +215,7 @@ includeFile(const string& directory, const string& fileName, bool silent, int li
 		   QUOTE(fileName));
       return false;
     }
-  int dirMarker = directoryManager.pushd(directory.c_str());
+  int dirMarker = directoryManager.pushd(directory);
   if (dirMarker == UNDEFINED)
     {
       IssueWarning(LineNumber(lineNr) << ": couldn't chdir to " <<
@@ -218,6 +237,7 @@ includeFile(const string& directory, const string& fileName, bool silent, int li
   ++inStackPtr;
   yyin = fp;
   fileTable.openFile(lineNumber, fileName.c_str(), silent);
+  directoryManager.visitFile(fileName);
   yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE));
   UserLevelRewritingContext::setInteractive(false);
   return true;
@@ -276,10 +296,6 @@ eatComment(bool firstNonWhite)
       int c = yyinput();
       switch(c)
 	{
-	case 0:
-	  {
-	    IssueAdvisory(LineNumber(lineNumber) << "Saw null character in comment.");
-	  }
 	case ' ':
 	case '\t':
 	case '\r':
@@ -321,6 +337,7 @@ eatComment(bool firstNonWhite)
 	      }
 	    break;
 	  }
+	case 0:  // HACK to deal with flex returning NUL rather than EOF at end-of-file
 	case EOF:
 	  {
 	    return;
@@ -334,4 +351,143 @@ eatComment(bool firstNonWhite)
       if (passThrough)
 	cout << static_cast<char>(c);
     }
+}
+
+void
+bubbleEofError()
+{
+  int nrTokens = lexerBubble.size();
+  if (nrTokens > 0)
+    {
+      if (!analyzeEofError())
+	{
+	  //
+	  //	Adjust current line number for end-of-line.
+	  //
+	  IssueWarning(LineNumber(lineNumber - 1) <<
+		       ": unexpected end-of-file while reading:\n  " << lexerBubble);
+	  ContinueWarning("which started on " << LineNumber(lexerBubble[0].lineNumber()) << ".\n");
+	}
+    }
+  else
+    {
+      //
+      //	Adjust current line number for end-of-line.
+      //
+      IssueWarning(LineNumber(lineNumber - 1) << ": unexpected end-of-file.");
+    }
+  suppressParserErrorMessage = true;
+}
+
+bool
+startOfStatement(int code)
+{
+  //
+  //	These are all the tokens that can end a bubble following "." that do not appear in SharedTokens.
+  //
+  const string name(Token::name(code));
+  return name == "sort" || name == "sorts" || name == "subsort" || name == "subsorts" ||
+    name == "op" || name == "ops" || name == "var" || name == "vars" || name == "strat" || name == "strats" ||
+    name == "class" || name == "subclass" || name == "subclasses" || name == "msg" || name == "msgs";
+}
+
+const char*
+missingToken()
+{
+  //
+  //	The terminationSet should only contain one thing mid-statement.
+  //
+  switch (terminationSet)
+    {
+    case BAR_COLON:
+      return ":";
+    case BAR_EQUALS:
+      return "=";
+    case BAR_ARROW2:
+      return "=>";
+    case BAR_ASSIGN:
+      return ":=";
+    default:
+      Assert(terminationSet == BAR_IF, "bad terminationSet " << terminationSet);
+    }
+  return "if";
+}
+
+bool
+analyzeEofError()
+{
+  const char* statementType;
+  int code = lexerBubble[0].code();
+  //
+  //	See if it is a statement we can analyze.
+  //
+  if (code == SharedTokens::mb)
+    statementType = "membership axiom";
+  else if (code == SharedTokens::mb)
+    statementType = "conditional membership axiom";
+  else if (code == SharedTokens::eq)
+    statementType = "equation";
+  else if (code == SharedTokens::ceq || code == SharedTokens::cq)
+    statementType = "conditional equation";
+  else if (code == SharedTokens::rl)
+    statementType = "rule";
+  else if (code == SharedTokens::crl)
+    statementType = "conditional rule";
+  else if (code == SharedTokens::sd)
+    statementType = "strategy definition";
+  else if (code == SharedTokens::csd)
+    statementType = "conditional strategy definition";
+  else
+    return false;
+  //
+  //	See if we can figure out where the user intended the statement to end.
+  //
+  int nrTokens = lexerBubble.size();
+  int parenCount = 0;
+  for (int i = 1; i < nrTokens; ++i)
+    {
+      int code = lexerBubble[i].code();
+      if (code == SharedTokens::dot)
+	{
+	  if (i + 1 < nrTokens && lexerBubble[i + 1].lineNumber() > lexerBubble[i].lineNumber())
+	    {
+	      //
+	      //	Dot followed by a newline looks promising.
+	      //
+	      int code = lexerBubble[i + 1].code();
+	      if (code == SharedTokens::endth || code == SharedTokens::endfth || code == SharedTokens::endsth || code == SharedTokens::endoth ||
+		  code == SharedTokens::endm || code == SharedTokens::endfm || code == SharedTokens::endsm || code == SharedTokens::endom ||
+		  code == SharedTokens::endm || code == SharedTokens::endfm ||
+		  code == SharedTokens::mb || code == SharedTokens::cmb ||
+		  code == SharedTokens::eq || code == SharedTokens::ceq || code == SharedTokens::cq ||
+		  code == SharedTokens::rl || code == SharedTokens::crl ||
+		  code == SharedTokens::sd || code == SharedTokens::csd ||
+		  code == SharedTokens::pr || code == SharedTokens::protecting ||
+		  code == SharedTokens::ex || code == SharedTokens::extending ||
+		  code == SharedTokens::gb || code == SharedTokens::generatedBy ||
+		  code == SharedTokens::inc || code == SharedTokens::including ||
+		  code == SharedTokens::us || code == SharedTokens::usingToken ||
+		  startOfStatement(code))
+		{
+		  //
+		  //	We guess that the user intended to end the statement at lexerBubble[i].
+		  //
+		  ComplexWarning(LineNumber(lexerBubble[0].lineNumber()) <<
+			       ": runaway " << statementType << ":\n  ");
+		  Token::printTokenVector(cerr, lexerBubble, 0, i, true);
+		  ContinueWarning("\nEnd of " << statementType << " not recognized because of ");
+		  if (parenCount > 0)
+		    ContinueWarning("open parenthesis.\n");
+		  else
+		    ContinueWarning("missing " << QUOTE(missingToken()) << " token.\n");
+		  return true;
+		}
+	    }
+	}
+      else if (code == SharedTokens::leftParen)
+	++parenCount;
+      else if (code == SharedTokens::rightParen && parenCount > 0)
+	--parenCount;
+    }
+  return false;
 }

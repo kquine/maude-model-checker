@@ -1,3 +1,40 @@
+2021-09-21  Steven Eker  <eker@pup>
+
+	* S_ExtensionInfo.cc (S_ExtensionInfo::copy): take const arg
+	(S_ExtensionInfo::copy): copy validAfterMatch and matchedWhole to fix bugs
+	(makeClone): copy validAfterMatch and matchedWhole to fix bugs
+
+	* S_ExtensionInfo.hh (class S_ExtensionInfo): updated decl for copy()
+
+===================================Maude137===========================================
+
+2020-12-11  Steven Eker  <eker2@eker10>
+
+	* S_DagNode.cc (S_DagNode::instantiate2): take and pass
+	maintainInvariants flag; only do theory normalization and sort
+	computation for ground dags if maintainInvariants = true
+	(S_DagNode::instantiateWithCopies2): pass maintainInvariants =
+	false to instantiate()
+
+	* S_DagNode.hh (class S_DagNode): updated decl for instantiate2()
+
+2020-09-28  Steven Eker  <eker2@eker10>
+
+	* S_Symbol.cc (S_Symbol::computeGeneralizedSort2): use range-based
+	for loop
+
+===================================Maude131===========================================
+
+2019-11-11  Steven Eker  <eker@mu>
+
+	* S_DagNode.cc (computeBaseSortForGroundSubterms): take and pass
+	warnAboutUnimplemented; fix bug where we weren't setting ground flag
+
+	* S_DagNode.hh (DagNode): updated decl for
+	computeBaseSortForGroundSubterms()
+
+===================================Maude125===========================================
+
 2017-02-23  Steven Eker  <eker@install.csl.sri.com>
 
 	* S_DagNode.cc (instantiateWithCopies2): ifdef'd out ground flag and

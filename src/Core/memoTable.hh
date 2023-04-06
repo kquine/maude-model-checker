@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -23,11 +23,12 @@
 //
 //      Class for memoization tables.
 //
-//	In the current implmentation this is just a shell - the actually dag nodes are store
-//	in the module.
+//	In the current implmentation this is just a shell - the actually dag nodes are stored in
+//	the module. Thus MemoTable needs to be derived from ModuleItem in order to find the module.
 //
 #ifndef _memoTable_hh_
 #define _memoTable_hh_
+#include "moduleItem.hh"
 
 class MemoTable : public ModuleItem
 {

@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2022 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -81,7 +81,10 @@ public:
     SMT_NUMBER_SYMBOL,
     FILE_MANAGER_SYMBOL,
     STREAM_MANAGER_SYMBOL,
-
+    DIRECTORY_MANAGER_SYMBOL,
+    PROCESS_MANAGER_SYMBOL,
+    TIME_MANAGER_SYMBOL,
+    OBJECT_CONSTRUCTOR_SYMBOL,
     LTLR_FAIRCHECKER_SYMBOL,
     SYMBOLIC_MODEL_CHECKER_SYMBOL,
 
@@ -110,6 +113,7 @@ public:
     CONFIG = 0x100,
     OBJECT = 0x200,
     MESSAGE = 0x400,
+    MSG_STATEMENT = 0x800,  // MESSAGE flag was set by msg statement rather than an attribute; only used by SyntacticPreModule
     //
     //	Theory attributes.
     //
@@ -122,6 +126,7 @@ public:
     //
     //	Misc.
     //
+    PCONST = 0x200000,
     POLY = 0x400000,
     DITTO = 0x800000,
     //
@@ -129,9 +134,15 @@ public:
     //
     AXIOMS = ASSOC | COMM | LEFT_ID | RIGHT_ID | IDEM,
     COLLAPSE = LEFT_ID | RIGHT_ID | IDEM,
-    SIMPLE_ATTRIBUTES = ASSOC | COMM | IDEM | MEMO | CTOR | CONFIG | OBJECT | MESSAGE,
+    //
+    //	Simple attributes are just a flag without additional data. They produce a warning if given twice.
+    //
+    SIMPLE_ATTRIBUTES = ASSOC | COMM | IDEM | MEMO | CTOR | CONFIG | OBJECT | MESSAGE | ITER | PCONST,
+    //
+    //  All flagged attributes except ctor, poly, ditto. They need to agree between declarations of an operator.
+    //
     ATTRIBUTES = PREC | GATHER | FORMAT | LATEX | STRAT | MEMO | FROZEN |
-    CONFIG | OBJECT | MESSAGE | AXIOMS | ITER
+    CONFIG | OBJECT | MESSAGE | AXIOMS | ITER | PCONST
   };
 
   SymbolType();

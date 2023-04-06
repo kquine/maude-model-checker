@@ -15,7 +15,7 @@ namespace modelChecker {
 class WeakFairSet: public FairSet
 {
 public:
-	struct Goal;
+	class Goal;
 	struct Bad;
 
 	WeakFairSet() = default;

@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -86,6 +86,6 @@ MemoTable::memoEnter(SourceSet& sourceSet, DagNode* destination)
 		" has sort index " << destination->getSortIndex());
 #endif
   MemoMap* memoMap = getModule()->getMemoMap();
-  FOR_EACH_CONST(i, SourceSet, sourceSet)
-    memoMap->assignToDag(*i, destination);
+  for (int index : sourceSet)
+    memoMap->assignToDag(index, destination);
 }

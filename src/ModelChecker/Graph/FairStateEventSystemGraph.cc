@@ -33,7 +33,7 @@ template <typename PL, typename FL>
 FairStateEventSystemGraph<PL,FL>::FairStateEventSystemGraph(unique_ptr<PL>&& sepl, unique_ptr<FL>&& sefl,
 		RewritingContext& initial, const ProofTermGenerator& ptg, const PropositionTable& propTable):
 			Super(initial,propTable), CompactProofTermTransitionGraph(ptg),
-			propLabel(move(sepl)), fairLabel(move(sefl)) {}
+			propLabel(std::move(sepl)), fairLabel(std::move(sefl)) {}
 
 template <typename PL, typename FL> unique_ptr<FairSet>
 FairStateEventSystemGraph<PL,FL>::makeFairSet(unsigned int stateNr, unsigned int transitionNr) const

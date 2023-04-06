@@ -55,7 +55,7 @@ public:
 	struct Transition;
 
 	SystemGraphTraits(unique_ptr<PL>&& pl, unique_ptr<FL>&& fl, unique_ptr<EnabledPropHandler>&& enpc):
-		SystemGraphTraits<StateEventEnabledSystemGraph<PL>>(move(pl),move(enpc)), fairLabel(move(fl)) {}
+		SystemGraphTraits<StateEventEnabledSystemGraph<PL>>(std::move(pl),std::move(enpc)), fairLabel(std::move(fl)) {}
 
 	void updateAllLabels(DagNode* stateDag, const vector<DagNode*>& proofDags,
 			State& s, vector<unique_ptr<Transition>>& trs);

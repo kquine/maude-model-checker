@@ -19,7 +19,7 @@
 
 namespace modelChecker {
 
-ParamStrongFairSet::ParamStrongFairSet(StrongFairSet&& f): StrongFairSet(move(f)) {}
+ParamStrongFairSet::ParamStrongFairSet(StrongFairSet&& f): StrongFairSet(std::move(f)) {}
 
 void
 ParamStrongFairSet::paste(const FairSet& f)

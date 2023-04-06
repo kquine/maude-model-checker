@@ -240,7 +240,7 @@ LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context
     const ProofTermGenerator ptg(safeCast(MixfixModule*,getModule()), context,
     		prooftermSymbol,assignOp,holeOp,substitutionSymbol,emptySubstSymbol,qidSymbol,
     		unlabeledSymbol,noContextSymbol,deadlockTerm.getDag());
-    ModelCheckerManager mcm(*formula, *propTable, move(fairTable), stateEval, eventEval, ptg, *sysCxt);
+    ModelCheckerManager mcm(*formula, *propTable, std::move(fairTable), stateEval, eventEval, ptg, *sysCxt);
     //
     // 5. perform the model checking
     //
@@ -260,8 +260,8 @@ LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context
     if (globalVerboseFlag)
     {
     	auto& graph = mcm.getDagSystemGraph();
-		auto totalStates = graph.getNrVisitedStates();
-		unsigned int totalTransitions = 0;
+		int totalStates = graph.getNrVisitedStates();
+		int totalTransitions = 0;
 		for (unsigned int i = 0; i < graph.getNrStates(); ++i) totalTransitions += graph.getNrVisitedTransitions(i);
 		cout << "ModelChecker: Examined " << totalStates << " system state" << pluralize(totalStates)
 			 << " and " << totalTransitions << " transition" << pluralize(totalTransitions) << '.' << endl;

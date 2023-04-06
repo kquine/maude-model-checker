@@ -1,9 +1,9 @@
 
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2016 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2021 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,18 +28,27 @@
 void
 PigPug::makeStateKey(CombinedWord& stateKey)
 {
+  const ConstraintMap& constraintMap = constraintStack.back();
   {
-    Unificand& lhs = lhsStack.back();
-    int len = lhs.word.size();
+    const Unificand& lhs = lhsStack.back();
+    const int len = lhs.word.size();
     for (int i = lhs.index; i < len; ++i)
-      stateKey.push_back(lhs.word[i]);
+      {
+	const int v = lhs.word[i];
+	stateKey.push_back(v);
+	stateKey.push_back(constraintMap[v].getUpperBound());
+      }
   }
   stateKey.push_back(DELIMITER);
   {
-    Unificand& rhs = rhsStack.back();
-    int len = rhs.word.size();
+    const Unificand& rhs = rhsStack.back();
+    const int len = rhs.word.size();
     for (int i = rhs.index; i < len; ++i)
-      stateKey.push_back(rhs.word[i]);
+      {
+	const int v = rhs.word[i];
+	stateKey.push_back(v);
+	stateKey.push_back(constraintMap[v].getUpperBound());
+      }
   }
 }
 
@@ -60,15 +69,14 @@ PigPug::firstMoveWithCycleDetection()
   //
   //	Now we check feasibility of remaining equation.
   //
-  if (!(feasibleGeneralCase()))
+  if (!(feasible()))
     return NOT_ENTERED;
   //
   //	Check to see if we've reached this state before.
   //
   CombinedWord stateKey;
   makeStateKey(stateKey);
-  int safe = arrive(stateKey);
-  if (!safe)
+  if (onCycle(stateKey))
     return NOT_ENTERED;  // already been here
   //
   //	Try all three moves until we get success.
@@ -76,10 +84,10 @@ PigPug::firstMoveWithCycleDetection()
   //	This is because cancellation generates the equivalent of equate moves and
   //	we do not want these to have successors.
   //
-  int result = rhsPeelGeneralCase();
+  int result = rhsPeel();
   if (result != FAIL)
     return result;
-  result = lhsPeelGeneralCase();
+  result = lhsPeel();
   if (result != FAIL)
     return result;
   return equate();
@@ -89,7 +97,8 @@ int
 PigPug::nextMoveWithCycleDetection()
 {
   int previousMove = undoMove();
-  if ((previousMove & BOTH) == BOTH)
+  int basicMove = previousMove & BASIC_MOVES;
+  if (basicMove == EQUATE)
     {
       //
       //	Last move was cancel or equate - no more moves possible.
@@ -102,12 +111,12 @@ PigPug::nextMoveWithCycleDetection()
   //
   //	Try the one or two remaining moves.
   //
-  if ((previousMove & BOTH) == INC_RHS)
+  if (basicMove == RHS_PEEL)
     {
       //
       //	Last move was rhs peel so we can try lhs peel.
       //
-      int result = lhsPeelGeneralCase();
+      int result = lhsPeel();
       if (result != FAIL)
 	return result;
     }
@@ -147,7 +156,7 @@ PigPug::runWithCycleDetection(int result)
 	    }
 	}
       //
-      //	Either the last setp was a failure, or we failed to complete.
+      //	Either the last step was a failure, or we failed to complete.
       //
       if (path.empty())
 	break;  // nothing to undo so we're done
@@ -159,10 +168,13 @@ PigPug::runWithCycleDetection(int result)
 }
 
 bool
-PigPug::arrive(const CombinedWord& word)
+PigPug::onCycle(const CombinedWord& key)
 {
+  //
+  //	Returns true if we're not on a cycle and false if we're on a cycle.
+  //
   int stateNr = stateInfo.size();
-  pair<WordMap::iterator, bool> p = wordMap.insert(WordMap::value_type(word, stateNr));
+  pair<WordMap::iterator, bool> p = wordMap.insert(WordMap::value_type(key, stateNr));
   if (p.second)
     {
       //
@@ -174,7 +186,7 @@ PigPug::arrive(const CombinedWord& word)
       s.onCycle = false;
       s.onLivePath = false;
       traversalStack.append(stateNr);
-      return true;
+      return false;
     }
   //
   //	Saw an previous state.
@@ -199,14 +211,14 @@ PigPug::arrive(const CombinedWord& word)
 	  if (stateNr == index)
 	    break;
 	}
-      return false;
+      return true;
     }
   //
   //	We reach the previous state via a parallel path, so we push it on the stack.
   //
   stateInfo[index].onStack = true;
   traversalStack.append(index);
-  return true;
+  return false;
 }
 
 void
@@ -235,7 +247,10 @@ PigPug::confirmedLive()
       return;
     }
   //
-  //	All those states that are currently on the state have a path to a unifier.
+  //	All those states that are currently on the stack have a path to a unifier,
+  //	so mark them as live. If there is a state on a cycle then we have a infinite
+  //	family of unifiers corresponding to n times around the cycle and then exiting
+  //	via the path to the unifier.
   //
   int stackSize = traversalStack.size();
   for (int i = 0; i < stackSize; ++i)

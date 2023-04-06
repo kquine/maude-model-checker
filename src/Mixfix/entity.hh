@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -53,7 +53,7 @@ public:
 private:
   struct UserLt
   {
-    bool operator()(const User* user1, const User* user2)
+    bool operator()(const User* user1, const User* user2) const
     {
       //
       //	Direct < comparison of unrelated pointers is undefined. But since the casting

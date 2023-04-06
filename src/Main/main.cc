@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2010 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2021 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@
 #include "macros.hh"
 #include "vector.hh"
 #include "tty.hh"
+#include "pigPug.hh"
 
 
 //      forward declarations
@@ -40,6 +41,7 @@
 #include "higher.hh"
 #include "freeTheory.hh"
 #include "builtIn.hh"
+#include "objectSystem.hh"
 #include "strategyLanguage.hh"
 #include "mixfix.hh"
  
@@ -49,8 +51,13 @@
 //      core class definitions
 #include "lineNumber.hh"
 
-//      built in stuff
+//      built class definitions
 #include "randomOpSymbol.hh"
+
+//      object system class definitions
+#include "processManagerSymbol.hh"
+#include "fileManagerSymbol.hh"
+#include "directoryManagerSymbol.hh"
 
 //      system class definitions
 #include "IO_Manager.hh"
@@ -88,7 +95,7 @@ main(int argc, char* argv[])
   bool outputBanner = true;
   int ansiColor = UNDECIDED;
   int useTecla = UNDECIDED;
-
+ 
   for (int i = 1; i < argc; i++)
     {
       char* arg = argv[i];
@@ -98,6 +105,18 @@ main(int argc, char* argv[])
 	    interpreter.beginXmlLog(s);
 	  else if (const char* s = isFlag(arg, "-random-seed="))
 	    RandomOpSymbol::setGlobalSeed(strtoul(s, 0, 0));
+	  else if (const char* s = isFlag(arg, "-assoc-unif-depth="))
+	    {
+	      char *endptr;
+	      double m = strtod(s, &endptr);
+	      if (endptr > s && isfinite(m) && m >= 0.0 && m <= 1e6)
+		PigPug::setDepthBoundMultiplier(m);
+	      else
+		{
+		  IssueWarning(LineNumber(FileTable::COMMAND_LINE) <<
+			       ": bad associative unification depth value: " << QUOTE(s));
+		}
+	    }
 	  else if (strcmp(arg, "--help") == 0)
 	    printHelp(argv[0]);
 	  else if (strcmp(arg, "--version") == 0)
@@ -126,6 +145,8 @@ main(int argc, char* argv[])
 	      alwaysAdviseFlag = true;
 	      globalAdvisoryFlag = true;
 	    }
+	  else if (strcmp(arg, "-debug") == 0)
+	    globalDebugFlag = true;
 	  else if (strcmp(arg, "-no-wrap") == 0)
 	    lineWrapping = false;
 	  else if (strcmp(arg, "-batch") == 0)
@@ -134,6 +155,22 @@ main(int argc, char* argv[])
 	    forceInteractive = true;
 	  else if (strcmp(arg, "-print-to-stderr") == 0)
 	    UserLevelRewritingContext::setPrintAttributeStream(&cerr);
+	  else if (strcmp(arg, "-show-pid") == 0)
+	    cerr << getpid() << endl;
+	  else if (strcmp(arg, "-erewrite-loop-mode") == 0)
+	    interpreter.setFlag(Interpreter::EREWRITE_LOOP_MODE, true);
+	  else if (strcmp(arg, "-allow-processes") == 0)
+	    ProcessManagerSymbol::setAllowProcesses(true);
+	  else if (strcmp(arg, "-allow-files") == 0)
+	    FileManagerSymbol::setAllowFiles(true);
+	  else if (strcmp(arg, "-allow-dir") == 0)
+	    DirectoryManagerSymbol::setAllowDir(true);
+	  else if (strcmp(arg, "-trust") == 0)
+	    {
+	      FileManagerSymbol::setAllowFiles(true);
+	      DirectoryManagerSymbol::setAllowDir(true);
+	      ProcessManagerSymbol::setAllowProcesses(true);
+	    }
 	  else
 	    {
 	      IssueWarning(LineNumber(FileTable::COMMAND_LINE) <<
@@ -144,8 +181,11 @@ main(int argc, char* argv[])
 	pendingFiles.append(arg);
     }
 
-  if (lineWrapping)
-    ioManager.setAutoWrap();
+  //
+  //	We pass all output to terminal through wrapping code to
+  //	avoid writing while a nonblocking getLine is in progress.
+  //
+  ioManager.setAutoWrap(lineWrapping);
 
   if (ansiColor == UNDECIDED)
     {
@@ -178,7 +218,8 @@ main(int argc, char* argv[])
 	useTecla = false;
     }
   //
-  //	Make sure we flush cout before we output any error messages so things hit the tty in a consistent order.
+  //	Make sure we flush cout before we output any error messages so things
+  //	hit the tty in a consistent order.
   //
   (void) cerr.tie(&cout);
 
@@ -188,8 +229,13 @@ main(int argc, char* argv[])
   UserLevelRewritingContext::setHandlers(handleCtrlC);
   if (useTecla)
     ioManager.setCommandLineEditing();
-  if (inputIsTerminal)
-    ioManager.setUsePromptsAnyway();  // even if useTecla == false, or Tecla is not linked
+  if (inputIsTerminal || forceInteractive)
+    {
+      //
+      //	Prompt for input from stdio, even if useTecla == false, or Tecla is not linked
+      //
+      ioManager.setUsePromptsAnyway();
+    }
   directoryManager.initialize();
   string executable(argv[0]);
   findExecutableDirectory(executableDirectory, executable);
@@ -240,7 +286,7 @@ printHelp(const char* name)
     "  -no-advise\t\tNo advisories on startup\n" <<
     "  -always-advise\tAlways show advisories regardless\n" <<
     "  -no-mixfix\t\tDo not use mixfix notation for output\n" <<
-    "  -no-wrap\t\tDo not automatic line wrapping for output\n" <<
+    "  -no-wrap\t\tDo not use automatic line wrapping for output\n" <<
     "  -ansi-color\t\tUse ANSI control sequences\n" <<
     "  -no-ansi-color\tDo not use ANSI control sequences\n" <<
     "  -tecla\t\tUse tecla command line editing\n" <<
@@ -250,6 +296,14 @@ printHelp(const char* name)
     "  -print-to-stderr\tPrint attribute should use stderr rather than stdout\n" <<
     "  -random-seed=<int>\tSet seed for random number generator\n" <<
     "  -xml-log=<filename>\tSet file in which to produce an xml log\n" <<
+    "  -show-pid\t\tPrint process id to stderr before printing banner\n" <<
+    "  -erewrite-loop-mode\tUse external object rewriting for loop mode\n" <<
+    "  -allow-processes\tAllow running arbitrary executables\n" <<
+    "  -allow-files\t\tAllow operations on files\n" <<
+    "  -allow-dir\t\tAllow operations on directories\n" <<
+    "  -trust\t\tAllow all potentially risky capabilities\n" <<
+    "  -assoc-unif-depth=<float>\tSet depth bound multiplier for associative unification\n"
+    "  -debug\t\tPrint copious messages about internal state (debug build only)\n"
     "\n" <<
     "Send bug reports to: " << PACKAGE_BUGREPORT << endl;
   exit(0);

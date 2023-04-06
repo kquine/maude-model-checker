@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2016 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2020 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 
 //
 //	Class for searching for single narrowing step using variant unification.
+//	This version is used for one step search.
 //
 #ifndef _narrowingSearchState2_hh_
 #define _narrowingSearchState2_hh_
@@ -38,11 +39,10 @@ class NarrowingSearchState2 : public CacheableState, private SimpleRootContainer
 public:
   enum Flags
   {
-    ALLOW_NONEXEC = 32,		// allow narrowing with nonexecutable rules, unbound variables being treated as fresh
+    ALLOW_NONEXEC = 32,		// allow narrowing with nonexecutable rules, unbound
+    				// variables being treated as fresh
     GC_VAR_GEN = 64,		// delete freshVariableGenerator in dtor
   };
-  //
-  //	label may be UNDEFINED to make any rule usable.
   //
   //	Narrowing is done without extension and maxDepth may be
   //	UNBOUNDED to indicate no bound.
@@ -56,19 +56,8 @@ public:
 			int incomingVariableFamily,
 			int flags = ALLOW_NONEXEC | GC_VAR_GEN | PositionState::RESPECT_FROZEN,
 			int minDepth = 0,
-			int maxDepth = UNBOUNDED);
-  //
-  //	Simplified version that assumes variables are in-family and there are
-  //	no blocker dags.
-  //
-  NarrowingSearchState2(RewritingContext* context,
-			FreshVariableGenerator* freshVariableGenerator,
-			int incomingVariableFamily,
-			int label = UNDEFINED,
-			int flags = ALLOW_NONEXEC | GC_VAR_GEN | PositionState::RESPECT_FROZEN,
-			int minDepth = 0,
-			int maxDepth = UNBOUNDED);
-
+			int maxDepth = UNBOUNDED,
+			int variantFlags = 0);
   ~NarrowingSearchState2();
 
   bool findNextNarrowing();
@@ -90,8 +79,8 @@ public:
   const NarrowingVariableInfo& getVariableInfo() const;
   const NarrowingVariableInfo& getActiveVariableInfo() const;
   int getVariableFamily() const;
-  bool isIncomplete() const;
   DagNode* getReplacedDag() const;
+  bool isIncomplete() const;
 
 private:
   void markReachableNodes();
@@ -101,6 +90,7 @@ private:
   Vector<DagNode*> blockerDags;
   FreshVariableGenerator* const freshVariableGenerator;
   const int incomingVariableFamily;
+  const int variantFlags;
   Module* const module;
   //
   //	We keep two maps between substitution slots and variables.
@@ -113,17 +103,18 @@ private:
   //	If we did a renaming, we keep a substitution that gets us back to
   //	the original variables, for reconstructing the context around replaced
   //	subdag.
+  //
   Substitution* reverseMapping;
   //
   //	We might need to rename variables before we give the dag to
-  //	PositionState to handle the traversal, we we can't have PositionState
+  //	PositionState to handle the traversal, so we can't have PositionState
   //	as a base class as we normally do.
   //
   PositionState *positionState;
 
   int ruleIndex;  // index of current rule being tried
+  //int variableFamily;
   VariantUnificationProblem* unificationProblem;
-  int variableFamily;
   RewritingContext* newContext;
   bool incompleteFlag;
 };

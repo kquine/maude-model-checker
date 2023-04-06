@@ -1,4 +1,25 @@
 TESTS = \
+	metaProcPrelude \
+	metaProcReplace \
+	metaProcReplace2 \
+	russianDollsFlatProc \
+	russianDollsNonFlatProc \
+	russianDollsNonFlatProc2 \
+	russianDollsNonFlatProc3 \
+	metaProcMatch \
+	metaProcSearch \
+	metaProcSort \
+	metaProcUnify \
+	metaProcVariant \
+	metaProcVariantUnify \
+	metaProcVariantUnify2 \
+	metaProcVariantMatch \
+	metaProcPrint \
+	metaProcParse \
+	metaProcApply \
+	metaProcNarrow \
+	metaProcNarrowSearch \
+	metaProcStrategy \
 	metaApply \
 	metaUnify \
 	metaFrewrite \
@@ -25,10 +46,60 @@ TESTS = \
 	metaPrintAttr \
 	metaMetadata \
 	metaVariantUnify \
+	metaVariantUnify2 \
+	metaVariantMatch \
 	metaGetVariant \
-	metaNarrow
+	metaNarrow \
+	metaIntPrelude \
+	metaIntReplace \
+	metaIntReplace2 \
+	russianDollsFlat \
+	russianDollsNonFlat \
+	russianDollsNonFlat2 \
+	russianDollsNonFlat3 \
+	metaIntMatch \
+	metaIntSearch \
+	metaIntSort \
+	metaIntUnify \
+	metaIntVariant \
+	metaIntVariantUnify \
+	metaIntVariantUnify2 \
+	metaIntVariantMatch \
+	metaIntPrint \
+	metaIntParse \
+	metaIntApply \
+	metaIntNewNarrow \
+	metaIntNewNarrowSearch \
+	legacyMetaUnify \
+	legacyMetaVariantUnify \
+	legacyMetaGetVariant \
+	metaIntStrategy \
+	checkUnifiers \
+	meta-oo-list-2 \
+	metaGeneratedBy
 
 MAUDE_FILES = \
+	metaProcPrelude.maude \
+	metaProcReplace.maude \
+	metaProcReplace2.maude \
+	russianDollsFlatProc.maude \
+	russianDollsNonFlatProc.maude \
+	russianDollsNonFlatProc2.maude \
+	russianDollsNonFlatProc3.maude \
+	metaProcMatch.maude \
+	metaProcSearch.maude \
+	metaProcSort.maude \
+	metaProcUnify.maude \
+	metaProcVariant.maude \
+	metaProcVariantUnify.maude \
+	metaProcVariantUnify2.maude \
+	metaProcVariantMatch.maude \
+	metaProcPrint.maude \
+	metaProcParse.maude \
+	metaProcApply.maude \
+	metaProcNarrow.maude \
+	metaProcNarrowSearch.maude \
+	metaProcStrategy.maude \
 	metaApply.maude \
 	metaUnify.maude \
 	metaFrewrite.maude \
@@ -55,10 +126,60 @@ MAUDE_FILES = \
 	metaPrintAttr.maude \
 	metaMetadata.maude \
 	metaVariantUnify.maude \
+	metaVariantUnify2.maude \
+	metaVariantMatch.maude \
 	metaGetVariant.maude \
-	metaNarrow.maude 
+	metaNarrow.maude \
+	metaIntPrelude.maude \
+	metaIntReplace.maude \
+	metaIntReplace2.maude \
+	russianDollsFlat.maude \
+	russianDollsNonFlat.maude \
+	russianDollsNonFlat2.maude \
+	russianDollsNonFlat3.maude \
+	metaIntMatch.maude \
+	metaIntSearch.maude \
+	metaIntSort.maude \
+	metaIntUnify.maude \
+	metaIntVariant.maude \
+	metaIntVariantUnify.maude \
+	metaIntVariantUnify2.maude \
+	metaIntVariantMatch.maude \
+	metaIntPrint.maude \
+	metaIntParse.maude \
+	metaIntApply.maude \
+	metaIntNewNarrow.maude \
+	metaIntNewNarrowSearch.maude \
+	legacyMetaUnify.maude \
+	legacyMetaVariantUnify.maude \
+	legacyMetaGetVariant.maude \
+	metaIntStrategy.maude \
+	checkUnifiers.maude \
+	meta-oo-list-2.maude \
+	metaGeneratedBy.maude
 
 RESULT_FILES = \
+	metaProcPrelude.expected \
+	metaProcReplace.expected \
+	metaProcReplace2.expected \
+	russianDollsFlatProc.expected \
+	russianDollsNonFlatProc.expected \
+	russianDollsNonFlatProc2.expected \
+	russianDollsNonFlatProc3.expected \
+	metaProcMatch.expected \
+	metaProcSearch.expected \
+	metaProcSort.expected \
+	metaProcUnify.expected \
+	metaProcVariant.expected \
+	metaProcVariantUnify.expected \
+	metaProcVariantUnify2.expected \
+	metaProcVariantMatch.expected \
+	metaProcPrint.expected \
+	metaProcParse.expected \
+	metaProcApply.expected \
+	metaProcNarrow.expected \
+	metaProcNarrowSearch.expected \
+	metaProcStrategy.expected \
 	metaApply.expected \
 	metaUnify.expected \
 	metaFrewrite.expected \
@@ -87,7 +208,36 @@ RESULT_FILES = \
 	metaPrintAttr.expected \
 	metaMetadata.expected \
 	metaVariantUnify.expected \
+	metaVariantUnify2.expected \
+	metaVariantMatch.expected \
 	metaGetVariant.expected \
-	metaNarrow.expected
+	metaNarrow.expected \
+	metaIntPrelude.expected \
+	metaIntReplace.expected \
+	metaIntReplace2.expected \
+	russianDollsFlat.expected \
+	russianDollsNonFlat.expected \
+	russianDollsNonFlat2.expected \
+	russianDollsNonFlat3.expected \
+	metaIntMatch.expected \
+	metaIntSearch.expected \
+	metaIntSort.expected \
+	metaIntUnify.expected \
+	metaIntVariant.expected \
+	metaIntVariantUnify.expected \
+	metaIntVariantUnify2.expected \
+	metaIntVariantMatch.expected \
+	metaIntPrint.expected \
+	metaIntParse.expected \
+	metaIntApply.expected \
+	metaIntNewNarrow.expected \
+	metaIntNewNarrowSearch.expected \
+	legacyMetaUnify.expected \
+	legacyMetaVariantUnify.expected \
+	legacyMetaGetVariant.expected \
+	metaIntStrategy.expected \
+	checkUnifiers.expected \
+	meta-oo-list-2.expected \
+	metaGeneratedBy.expected
 
 EXTRA_DIST = $(TESTS) $(MAUDE_FILES) $(RESULT_FILES)

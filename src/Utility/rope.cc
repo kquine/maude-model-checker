@@ -1,10 +1,36 @@
+/*
+
+    This file is part of the Maude 3 interpreter.
+
+    Copyright 2020-2021 SRI International, Menlo Park, CA 94025, USA.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+
+*/
+
+//
+//	Implementation for class Rope.
+//
 #include "macros.hh"
 #include "rope.hh"
 
 //
 //	Fibonacci numbers less than max rope length.
 //
-//	We omit the inital 0, 1. For a rope of height h to be balanced it must have a length of at least fiboTable[h].
+//	We omit the inital 0, 1. For a rope of height h to be balanced
+//	it must have a length of at least fiboTable[h].
 //
 const Rope::size_type Rope::fiboTable[] =
 #if SIZEOF_UNSIGNED_LONG >= 8
@@ -272,12 +298,17 @@ Rope::operator+(const Rope& other) const
   size_type needed = (n->height) < RELAXATION ? 1 : fiboTable[n->height - RELAXATION];  // relaxed requirement for balance since we won't be returning strictly balanced ropes
   if (n->length < needed)
     {
-      size_type len = n->length;
-      //cout << "rebalancing because at height " << n->height << " length " << len << " < " << needed << endl;
+      DebugSave(len, n->length);
+#ifdef ROPE_DEBUG
+      cout << "rebalancing because at height " << n->height << " length " << len <<
+	" < " << needed << endl;
+#endif
       Fragment* b = rebalance(n);
       decCount(n);  // should free old tree
       n = b;
-      //cout << "rebalanced rope has height " << n->height << " length " << n->length << endl;
+#ifdef ROPE_DEBUG
+      cout << "rebalanced rope has height " << n->height << " length " << n->length << endl;
+#endif
       Assert(len == n->length, "length mismatch");
     }
   return Rope(n);
@@ -316,8 +347,10 @@ Rope::rebalance(Fragment* fragment)
   //	Insert initial fragment into forest.
   //
   addFragment(fragment, forest);
-  //cout << "after fragment addition:" << endl;
-  //dumpForest(forest);
+#ifdef DEBUG_ROPE
+  cout << "after fragment addition:" << endl;
+  dumpForest(forest);
+#endif
   //
   //	Construct a tree from the forest.
   //
@@ -340,19 +373,28 @@ Rope::addFragment(Fragment* fragment, Fragment* forest[])
   if (fragment->length >= fiboTable[fragment->height])
     {
       //
-      //	Balanced case. Leaves are always trivially balanced since they need only contain one character.
+      //	Balanced case. Leaves are always trivially balanced since they need
+      //	only contain one character.
       //
-      //cout << "  balanced case: at height " << fragment->height << " length " << fragment->length << " >= " << fiboTable[fragment->height] << endl;
+#if ROPE_DEBUG
+      cout << "  balanced case: at height " << fragment->height << " length " <<
+	fragment->length << " >= " << fiboTable[fragment->height] << endl;
+#endif
       incCount(fragment);  // we will resuse fragment in the new tree
       insertFragment(fragment, forest);
-      //dumpForest(forest);
+#if ROPE_DEBUG
+      dumpForest(forest);
+#endif
     }
   else
     {
       //
       //	Unbalanced case - can't be a leaf.
       //
-      //cout << "  unbalanced case: at height " << fragment->height << " length " << fragment->length << " < " << fiboTable[fragment->height] << endl;
+#if ROPE_DEBUG
+      cout << "  unbalanced case: at height " << fragment->height << " length " <<
+	fragment->length << " < " << fiboTable[fragment->height] << endl;
+#endif
       addFragment(fragment->node.left, forest);
       addFragment(fragment->node.right, forest);
     }
@@ -369,8 +411,10 @@ Rope::insertFragment(Fragment* fragment, Fragment* forest[])
   size_type i = 0;
   //
   //	If length >= fiboTable[i + 1] then it can't go in slot i; it must go in slot i+1 or later.
-  //	Last slot is MAX_BALANCED_HEIGHT; there is no fiboTable[MAX_BALANCED_HEIGH + 1] - it would be larger than we can store in size_type.
-  //	We exit when i = MAX_BALANCED_HEIGHT or we have length < fiboTable[i + 1]. Any earlier entries have been rolled up in smallFry.
+  //	Last slot is MAX_BALANCED_HEIGHT; there is no fiboTable[MAX_BALANCED_HEIGH + 1]
+  //	- it would be larger than we can store in size_type.
+  //	We exit when i = MAX_BALANCED_HEIGHT or we have length < fiboTable[i + 1].
+  //	Any earlier entries have been rolled up in smallFry.
   //
   for (; i < MAX_BALANCED_HEIGHT && length >= fiboTable[i + 1]; ++i)
     {
@@ -511,9 +555,8 @@ Rope::operator[](size_type n) const
 ostream&
 operator<<(ostream& s, const Rope& r)
 {
-  Rope::const_iterator e = r.end();
-  for (Rope::const_iterator i = r.begin(); i != e; ++i)
-    s << *i;
+  for (char c : r)
+    s << c;
   return s;
 }
 
@@ -552,7 +595,7 @@ Rope::const_iterator::const_iterator(const Rope& rope)
   if (ptr != 0)
     {
       //
-      //	stack path to left most leaf.
+      //	stack path to leftmost leaf.
       //
       while (ptr->height > 0)
 	{
@@ -564,7 +607,12 @@ Rope::const_iterator::const_iterator(const Rope& rope)
       index = 0;
     }
   else
-    index = END_MARKER;  // indicates end
+    {
+      //
+      //	begin() iterator to empty rope is also end() iterator.
+      //
+      index = END_MARKER;  // indicates end
+    }
 }
 
 Rope::const_iterator::const_iterator(const Rope* rope)
@@ -579,7 +627,6 @@ Rope::const_iterator::const_iterator(const Rope* rope)
   stackPtr->ptr = ptr;
   index = END_MARKER;
 }
-
 
 Rope::const_iterator&
 Rope::const_iterator::operator=(const const_iterator& other)
@@ -597,32 +644,6 @@ bool
 Rope::const_iterator::operator==(const const_iterator& other) const
 {
   return absolutePosition == other.absolutePosition;
-  /*
-  if (index != other.index)
-    {
-      //cout << "index disagrees " << index << " vs " << other.index << endl;
-      return false;
-    }
-
-  size_t stackSize = stackPtr - ptrStack;
-  size_t otherStackSize = other.stackPtr - other.ptrStack;
-
-  if (stackSize != otherStackSize)
-    {
-      //cout << "stackSize disagrees " << stackSize << " vs " << otherStackSize << endl;
-      return false;
-    }
-  for (size_t i = 0; i <= stackSize; ++i)
-    {
-      if (ptrStack[i].ptr != other.ptrStack[i].ptr)  // since we are pointing into the same tree, right flags must agree
-	{
-	  //cout << "pointer " << i << "disagrees" << endl;
-	  return false;
-	}
-    }
-  //cout << "agreement" << endl;
-  return true;
-  */
 }
 
 bool
@@ -651,16 +672,18 @@ Rope::const_iterator::operator++()
   if (index >= f->length)
     {
       //
-      //	We exhausted this leaf node; now need to find the next leaf in sequence, by stacking until we find a node
-      //	that is a left child. Such a node must have a corresponding right child and the left most descendant of the right child
-      //	is the leaf we seek.
+      //	We exhausted this leaf node; now need to find the next leaf in sequence,
+      //	by stacking until we find a node that is a left child.
+      //	Such a node must have a corresponding right child and the left most
+      //	descendant of the right child is the leaf we seek.
       //
       for (;;)
 	{
 	  if (stackPtr == ptrStack)
 	    {
 	      //
-	      //	The end iterator is a pointer to the root of the DAG and in index of END_MARKER
+	      //	The end iterator is a pointer to the root of the DAG and in
+	      //	index of END_MARKER
 	      //
 	      index = END_MARKER;
 	      return *this;
@@ -740,16 +763,17 @@ Rope::const_iterator::rebuildStack()
   //	We assume absolutePosition is correct and the bottom pointer in the stack points to the top-most fragment
   //	in the rope. We fill out the stack and the index.
   //
-  stackPtr = ptrStack;  // bottom of stack;
-  Fragment* ptr = stackPtr->ptr;
+  stackPtr = ptrStack;  // bottom of stack
+  Fragment* ptr = stackPtr->ptr;  // root fragment of rope
+  Assert(ptr != 0, "trying to add or subtract to an iterator into an empty rope");
+  Assert(absolutePosition <= ptr->length, "add or subtract makes iterator out of range");
 
-  if (ptr == 0 || absolutePosition >= ptr->length)
+  if (absolutePosition == ptr->length)
     {
       //
-      //	Absolute position beyond end of rope.
+      //	Absolute position at the end of rope.
       //
       index = END_MARKER;
-      absolutePosition = ptr->length;  // need correct value for == test
       return;
     }
 

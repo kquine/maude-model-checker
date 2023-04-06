@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -197,6 +197,27 @@ SuccSymbol::getSignedInt64(const DagNode* dagNode, Int64& value) const
   if (isNat(dagNode))
     {
       const mpz_class& n = getNat(dagNode);
+      mpz_class u = n >> BITS_PER_UINT;
+      if (u.fits_sint_p())
+	{
+	  value = u.get_si();
+	  value <<= BITS_PER_UINT;
+	  value |= n.get_ui();
+	  return true;
+	}
+    }
+  return false;
+}
+
+bool
+SuccSymbol::getScaledSignedInt64(const DagNode* dagNode,
+				 const mpz_class& scaleFactor,
+				 Int64& value) const
+{
+  if (isNat(dagNode))
+    {
+      mpz_class n(getNat(dagNode));
+      n /= scaleFactor;  // round down
       mpz_class u = n >> BITS_PER_UINT;
       if (u.fits_sint_p())
 	{

@@ -1,3 +1,656 @@
+2023-03-22  Steven Eker  <eker@pup>
+
+	* tests/Meta/metaGeneratedBy.maude: added
+
+	* tests/ResolvedBugs/opRenamingParseErrorMarch2023.maude: added
+
+	* tests/ResolvedBugs/parameterizedConstantsMarch2023.maude: added
+
+	* tests/ResolvedBugs/moduleOrphanedByViewFebruary2023.maude: added
+
+	* tests/ResolvedBugs/orphanedViewInstantiationFebruary2023.maude: added
+
+	* tests/ResolvedBugs/generatedByFebruary2023.maude: added
+
+2023-03-21  Steven Eker  <eker@pup>
+
+	* INSTALL: no need to pass CFLAGS for Maude build
+
+	* tests/ResolvedBugs/metaAutoOoIncludeFebruary2023.maude: added
+
+	* tests/ResolvedBugs/theoryViewOpToTermFebruary2023.maude: added
+
+	* tests/ResolvedBugs/specificOpMappingPrintFebruary2023.maude: added
+
+	* tests/ResolvedBugs/endothFebruary2023.maude: created
+
+	* tests/ResolvedBugs/metaNarrowingApplyMarch2023.maude: created
+
+	* configure.ac (USE_TECLA): try -ltinfo, -lncurses, -lcurses in
+	turn because Mac does not have libtinfo, but does have libncurses
+
+2023-03-20  Steven Eker  <eker@pup>
+
+	* configure.ac: remove -lcurses in the --with-tecla case
+
+2023-03-15  Steven Eker  <eker@pup>
+
+	* INSTALL: updated
+
+	* tests/Corner/badStatement.maude: added
+
+	* tests/Misc/pconst5.maude: added
+
+2023-03-14  Steven Eker  <eker@pup>
+
+	* tests/ResolvedBugs/showDesugaredFebruary2023.maude: added
+
+	* tests/ResolvedBugs/doubleAttributeFebruary2023.maude: added
+
+2023-03-13  Steven Eker  <eker@pup>
+
+	* tests/ResolvedBugs/spuriousAdvisoryRenamingCaptureJanuary2023.maude:
+	added
+
+	* tests/ResolvedBugs/smodStrategyNameJanuary2023.maude: added
+
+	* INSTALL: updated
+
+2023-03-10  Steven Eker  <eker@pup>
+
+	* tests/Corner/badOmod.maude: turn timing off
+
+	* README.md: updated
+
+2023-03-06  Steven Eker  <eker@pup>
+
+	* tests/Corner/badView.maude: added
+
+	* tests/Corner/badOmod.maude: added
+
+	* tests/Corner/badRenaming.maude: added
+
+===================================Maude143===========================================
+
+2023-02-16  Steven Eker  <eker@pup>
+
+	* tests/ObjectOriented/oo-list-2.maude: updated with new version from Paco
+
+	* tests/ObjectOriented/oo-list-3.maude: added
+
+	* tests/ObjectOriented/oo-list-2.maude: added
+
+	* tests/ObjectOriented/dining-philosophers6.maude: added
+
+	* tests/ObjectOriented/dining-philosophers5.maude: added
+
+===================================Maude141===========================================
+
+2023-02-14  Steven Eker  <eker@pup>
+
+	* README.md: added Maude 3.2.2 changes
+
+	* tests/ObjectOriented/parameterization.maude: added
+
+	* tests/Misc/parameterizedConstant.maude: added
+
+2023-02-08  Steven Eker  <eker@pup>
+
+	* tests/Misc/pconst4.maude: added
+
+2023-02-07  Steven Eker  <eker@pup>
+
+	* tests/Misc/pconst3.maude: added
+
+	* tests/Misc/pconst2.maude: added
+
+	* tests/Misc/pconst.maude: added
+
+===================================Maude140===========================================
+
+2023-02-02  Steven Eker  <eker@pup>
+
+	* tests/ResolvedBugs/theoryViewWrongWarningFebruary2023.maude: created
+
+	* tests/ObjectOriented/rrobin.maude: added
+
+	* tests/ObjectOriented/rent-a-car-store.maude: added
+
+	* tests/ObjectOriented/account.maude: added
+
+2023-01-31  Steven Eker  <eker@pup>
+
+	* tests/ResolvedBugs/upTheoryJanuary2023.maude: added
+
+===================================Maude139===========================================
+
+2022-12-22  Steven Eker  <eker@pup>
+
+	* tests/ResolvedBugs/degenerateFilteredVariantUnifyDecember2022.maude: turn timing off
+
+	* tests/ResolvedBugs/kindNameDecember2022.maude: added
+
+	* configure.ac: use AM_INIT_AUTOMAKE([tar-ustar foreign]) to avoid error now
+	that README has moved to README.md
+
+2022-12-19  Steven Eker  <eker@pup>
+
+	* tests/ResolvedBugs/degenerateFilteredVariantUnifyDecember2022.maude: added
+
+2022-12-08  Steven Eker  <eker@pup>
+
+	* tests/ResolvedBugs/instantiatedViewInternalNameOct2022.maude: added
+
+===================================Maude138===========================================
+
+2022-01-25  Steven Eker  <eker@pup>
+
+	* tests/ResolvedBugs/loopModeStateAugust2021.maude: added
+
+	* tests/ResolvedBugs/uninitIterExtSeptember2021.maude: added
+
+===================================Maude137===========================================
+
+2021-06-08  Steven Eker  <eker2@eker10>
+
+	* tests/Misc/directoryTest.maude: added
+
+2021-05-26  Steven Eker  <eker2@eker10>
+
+	* tests/Misc/AU_and_A_UnificationEdgeCases.maude: updated comment
+	now that PigPug::tightenConstraints() has been deleted
+
+===================================Maude136===========================================
+
+2021-03-10  Steven Eker  <eker2@eker10>
+
+	* tests/ResolvedBugs/deleteTimerMarch2021.maude: added
+
+===================================Maude135===========================================
+
+2021-02-22  Steven Eker  <eker2@eker10>
+
+	* tests/ResolvedBugs/irredUnifyFeb2021.maude: added
+
+2021-02-17  Steven Eker  <eker2@eker10>
+
+	* tests/Misc/fileTest.maude: use fileTest.maude itself as file to
+	read from
+
+2021-02-16  Steven Eker  <eker2@eker10>
+
+	* tests/Misc/fileTest.maude: added
+
+2021-01-22  Steven Eker  <eker2@eker10>
+
+	* tests/Misc/AU_IrredUnification.maude: added
+
+2021-01-04  Rubén Rubio  <rubenrub@ucm.es>
+
+	* tests/StrategyLanguage/parameterization.maude: added
+	tests for parameterized views
+
+===================================Maude133===========================================
+
+2020-12-08  Steven Eker  <eker2@eker10>
+
+	* tests/Meta/metaProcStrategy.maude: added
+
+	* tests/Meta/metaProcNarrowSearch.maude: added
+
+	* tests/Meta/metaProcNarrow.maude: added
+
+	* tests/Meta/metaProcApply.maude: added
+
+	* tests/Meta/metaProcParse.maude: added
+
+	* tests/Meta/metaProcPrint.maude: added
+
+	* tests/Meta/metaProcVariantMatch.maude: added
+
+	* tests/Meta/metaProcVariantUnify2.maude: added
+
+	* tests/Meta/metaProcVariantUnify.maude: added
+
+	* tests/Meta/metaProcVariant.maude: added
+
+	* tests/Meta/metaProcUnify.maude: added
+
+	* tests/Meta/metaProcMatch.maude: added
+
+	* tests/Meta/metaProcSearch.maude: added
+
+	* tests/Meta/metaProcPrelude.maude: added
+
+	* tests/Meta/metaProcReplace.maude: added
+
+	* tests/Meta/metaProcReplace2.maude: added
+
+2020-12-07  Steven Eker  <eker2@eker10>
+
+	* tests/Meta/metaProcSort.maude: added
+
+	* tests/Meta/russianDollsNonFlatProc3.maude: added
+
+	* tests/Meta/russianDollsNonFlatProc2.maude: added
+
+	* tests/Meta/russianDollsNonFlatProc.maude: added
+
+	* tests/Meta/russianDollsFlatProc.maude: added
+
+2020-11-09  Steven Eker  <eker2@eker10>
+
+	* tests/ResolvedBugs/attributeBugsNovember2020.maude: added
+
+	* tests/ResolvedBugs/polymorphicParsingBugsNovember2020.maude: added
+
+===================================Maude132===========================================
+
+2020-09-24  Steven Eker  <eker2@eker10>
+
+	* tests/ResolvedBugs/CUI_OccursCheckSeptember2020.maude: created
+
+===================================Maude131===========================================
+
+2020-09-21  Steven Eker  <eker2@eker10>
+
+	* tests/ResolvedBugs/indentityUnificationSeptember2020.maude:
+	added
+
+2020-09-17  Steven Eker  <eker2@eker10>
+
+	* tests/Misc/continue.maude: added test for variant matching
+
+2020-09-16  Steven Eker  <eker2@eker10>
+
+	* tests/Meta/metaNarrow.maude: added delay, filter examples
+
+	* tests/Meta/metaIntNewNarrow.maude: added delay, filter examples
+
+===================================Maude130===========================================
+
+2020-09-09  Steven Eker  <eker2@eker10>
+
+	* tests/Meta/metaVariantMatch.maude: added
+
+2020-09-08  Steven Eker  <eker2@eker10>
+
+	* tests/Meta/metaIntVariantMatch.maude: added
+
+2020-09-04  Steven Eker  <eker2@eker10>
+
+	* tests/Misc/variantMatching.maude: added
+
+2020-09-03  Steven Eker  <eker2@eker10>
+
+	* tests/Meta/metaIntVariantUnify2.maude: added
+
+2020-09-02  Steven Eker  <eker2@eker10>
+
+	* tests/Meta/metaVariantUnify2.maude: added
+
+	* tests/Meta/checkUnifiers.maude: use new version of metaVariantUnify()
+
+2020-09-01  Steven Eker  <eker2@eker10>
+
+	* tests/Misc/filteredVariantUnification.maude: added
+
+2020-07-15  Steven Eker  <eker2@eker10>
+
+	* tests/Meta/metaIntUnify.maude: added examples for
+	getIrredundantUnifier(), getIrredundantDisjointUnifier()
+
+	* tests/Meta/metaUnify.maude: added examples for
+	metaIrredundantUnify(), metaIrredundantDisjointUnify()
+
+===================================Maude129===========================================
+
+2020-07-01  Steven Eker  <eker2@eker10>
+
+	* tests/Misc/AU_Unification.maude: added
+
+2020-06-24  Steven Eker  <eker2@eker10>
+
+	* tests/Misc/unification.maude: change the theory in the
+	unsupported theory example to AUl since AU is now partly supported
+
+2020-06-11  Steven Eker  <eker2@eker10>
+
+	* tests/ResolvedBugs/variantUnifyJune2020.maude: added
+
+	* tests/Meta/checkUnifiers.maude: added
+
+2020-05-28  Steven Eker  <eker2@eker10>
+
+	* tests/ResolvedBugs/ACU_MissingUnifiersMay2020.maude: added
+
+	* tests/ResolvedBugs/sortCollapseMay2020.maude: added
+
+2020-05-19  Steven Eker  <eker2@eker10>
+
+	* tests/ResolvedBugs/identityUnificationMay2020.maude: added
+
+2020-05-05  Steven Eker  <eker2@eker10>
+
+	* tests/ResolvedBugs/complexParserSyncApril2020.maude: removed
+	line left from metaParseStrategy() test
+
+2020-04-28  Steven Eker  <eker2@eker10>
+
+	* configure.ac: added test for ppoll() existence
+
+2020-04-13  Steven Eker  <eker2@eker9>
+
+	* tests/ResolvedBugs/complexParserSyncApril2020.maude: added
+
+	* tests/ResolvedBugs/metaParseStrategyApril2020.maude: added
+
+===================================Maude128a===========================================
+
+2020-03-06  Steven Eker  <eker2@eker9>
+
+	* tests/ResolvedBugs/closeSocketFeb2020.maude: added
+
+2020-02-06  Steven Eker  <eker@mu>
+
+	* tests/ResolvedBugs/ascentFunctionsJanuary2020.maude: added
+
+===================================Maude128===========================================
+
+2019-11-20  Rubén Rubio  <rubenrub@ucm.es>
+
+	* tests/Meta/metaIntStrategy.maude: added
+
+	* tests/StrategyLanguage/metalevel.maude: adapted to the new
+	interface and syntax of the strategy language at the metalevel
+
+	* tests/StrategyLanguage/parameterization.maude: added
+
+2019-11-11  Steven Eker  <eker@mu>
+
+	* tests/Meta/metaIntParse.maude: parseQidList() ->
+	parseTerm()
+
+2019-11-08  Steven Eker  <eker@mu>
+
+	* tests/Meta/metaIntParse.maude: use variable alias feature
+
+	* tests/Meta/metaIntPrint.maude: use variable alias feature
+
+2019-11-05  Steven Eker  <eker@mu>
+
+	* tests/Meta/metaPrettyPrint.maude: added tests for variable
+	alias feature
+
+2019-11-04  Steven Eker  <eker@mu>
+
+	* tests/Meta/metaParse.maude: added tests for variable alias
+	feature
+
+2019-10-22  Steven Eker  <eker@mu>
+
+	* tests/Meta/metaGetVariant.maude: use new variable
+	family based metaGetVariant()
+
+	* tests/Meta/metaVariantUnify.maude: use new variable
+	family based metaVariantUnify()/metaVariantDisjointUnify()
+
+	* tests/Meta/legacyMetaGetVariant.maude: created
+
+2019-10-21  Steven Eker  <eker@mu>
+
+	* tests/Meta/legacyMetaVariantUnify.maude: created
+
+2019-10-18  Steven Eker  <eker@mu>
+
+	* tests/Meta/metaUnify.maude: use new variable family based
+	metaUnify()/metaDisjointUnify()
+
+	* tests/Meta/legacyMetaUnify.maude: created
+
+===================================Maude125===========================================
+
+2019-07-31  Steven Eker  <eker@mu>
+
+	* tests/ResolvedBugs/instantiationJuly2019.maude: added
+
+2019-05-29  Steven Eker  <eker@mu.csl.sri.com>
+
+	* tests/Misc/parameterizedView.maude: added
+
+	* tests/Misc/badView.maude: added
+
+	* tests/ResolvedBugs/viewRecursionMay2019.maude: added
+
+	* tests/ResolvedBugs/polymorphicOverloadMay2019.maude: added
+
+	* tests/ResolvedBugs/parameterTheoryCopyMay2019.maude: added
+
+	* tests/ResolvedBugs/parameterTheoryMay2019.maude: added
+
+	* tests/ResolvedBugs/moduleSumMay2019.maude: added
+
+2019-05-28  Steven Eker  <eker@mu.csl.sri.com>
+
+	* tests/Meta/russianDollsNonFlat2.maude: added
+
+2019-05-24  Steven Eker  <eker@mu.csl.sri.com>
+
+	* tests/Misc/mapToParameterTheory.maude: added
+
+2019-05-03  Steven Eker  <eker@mu.csl.sri.com>
+
+	* tests/Misc/parameterization.maude: summing modules with
+	bound parameters is now legal
+
+===================================Maude121===========================================
+
+2018-12-07  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntNewNarrowSearch.maude: added
+
+2018-12-04  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntNewNarrow.maude: added
+
+2018-11-12  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntApply.maude: added
+
+2018-11-09  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/ResolvedBugs/metaApplyNov2018.maude: added
+
+===================================Maude120===========================================
+
+2018-10-23  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/ResolvedBugs/physArgIndexOct2018.maude: added
+
+	* tests/Meta/metaIntParse.maude: added
+
+2018-10-22  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntPrint.maude: added
+
+2018-10-15  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntVariantUnify.maude: added
+
+2018-10-11  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/ResolvedBugs/metaIntMatchOct2018.maude: added
+
+2018-10-10  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntVariant.maude: added
+
+2018-10-09  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/ResolvedBugs/objectMessageOct2018.maude: added
+
+2018-09-26  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntUnify.maude: added
+
+2018-09-17  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntSort.maude: added tests for
+	getMaximalAritySet(); added tests for normalizeTerm()
+
+===================================Maude119===========================================
+
+2018-08-17  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntSort.maude: added
+
+2018-08-13  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/BuiltIn/string.maude: added tests for upperCase(),
+	lowerCase()
+
+2018-08-09  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/ResolvedBugs/metaIntAscentJune2018.maude: updated
+	to new createInterpreter() convention
+
+	* tests/ResolvedBugs/metaIntImportJune2018.maude: updated
+	to new createInterpreter() convention
+
+	* tests/ResolvedBugs/metaModuleCacheJune2018.maude: updated
+	to new createInterpreter() convention
+
+	* tests/ResolvedBugs/metaIntRewriteJune2018.maude: updated
+	to new createInterpreter() convention
+
+	* tests/ResolvedBugs/showModuleJune2018.maude: updated
+	to new createInterpreter() convention
+
+	* tests/Meta/metaIntPrelude.maude: updated to new
+	createInterpreter() convention
+
+	* tests/Meta/metaIntReplace.maude: updated to new
+	createInterpreter() convention
+
+	* tests/Meta/russianDollsFlat.maude: updated to new
+	createInterpreter() convention
+
+	* tests/Meta/metaIntReplace2.maude: updated to new
+	createInterpreter() convention
+
+	* tests/Meta/russianDollsNonFlat.maude: updated to new
+	createInterpreter() convention
+
+	* tests/Meta/metaIntSearch.maude: updated to new
+	createInterpreter() convention
+
+	* tests/Meta/metaIntMatch.maude: updated to new
+	createInterpreter() convention
+
+2018-08-08  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntMatch.maude: added
+
+	* tests/Meta/metaIntSearch.maude: added
+
+===================================Maude118===========================================
+
+2018-07-20  Rubén Rubio  <rubenrub@ucm.es>
+
+	* test/StrategyLanguage/metalevel.maude: added
+
+	* test/StrategyLanguage/modules.maude: added
+
+	* test/StrategyLanguage/srewrite.maude: added
+
+2018-07-09  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Misc/rot13.maude: added
+
+2018-06-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/ResolvedBugs/metaIntRewriteJune2018.maude: added
+
+2018-06-27  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/ResolvedBugs/clearRulesJune2018.maude: added
+
+	* tests/ResolvedBugs/metaIntAscentJune2018.maude: added
+
+	* tests/ResolvedBugs/metaIntImportJune2018.maude: added
+
+2018-06-26  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/ResolvedBugs/metaModuleCacheJune2018.maude: added
+
+	* tests/ResolvedBugs/showModuleJune2018.maude: added
+
+2018-06-25  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/ResolvedBugs/staleViewJune2018.maude: added
+
+	* tests/ResolvedBugs/parserJune2018.maude: added
+
+2018-06-08  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/russianDollsFlat.maude: added
+
+	* tests/Meta/russianDollsNonFlat.maude: added
+
+2018-05-22  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntReplace2.maude: added
+
+	* tests/Meta/metaIntReplace.maude: added
+
+	* tests/Meta/metaIntPrelude.maude: added example to test upModule()
+	running in meta-interpreter
+
+2018-05-21  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaIntPrelude.maude: added
+
+2018-05-11  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Misc/view.maude: added
+
+2018-03-27  Steven Eker  <eker@install.csl.sri.com>
+
+	* configure.ac: removed references to MSCP10
+
+	* AUTHORS: removed reference to MSCP10
+
+	* tests/Misc/bubble.maude: added two more examples
+
+===================================Maude117===========================================
+
+2018-03-16  Steven Eker  <eker@install.csl.sri.com>
+
+	* configure.ac: remove ref to MSCP10
+
+2018-03-15  Steven Eker  <eker@install.csl.sri.com>
+
+	* src/Makefile.am (SUBDIRS): remove MSCP10
+
+	* tests/Misc/Makefile.am: added parse and bubble tests
+
+	* tests/Misc/bubble (MAUDE_LIB): created
+
+	* tests/Misc/parse.maude: created
+
+	* tests/Misc/parse (MAUDE_LIB): created
+
+2018-02-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Misc/bubble.maude: created
+
+2017-12-22  Steven Eker  <eker@install.csl.sri.com>
+
+	* tests/Meta/metaWellFormed.maude: fix issue where none is ambiguous;
+	it can be (none).EmptyTypeSet or (none).Substitution
+
+===================================Maude116===========================================
+
 2017-07-12  Steven Eker  <eker@install.csl.sri.com>
 
 	* tests/Misc/smtTest.maude: added tests for violations

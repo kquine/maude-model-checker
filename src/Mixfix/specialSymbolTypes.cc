@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -58,6 +58,9 @@
   MACRO(SMT_NumberSymbol, SymbolType::SMT_NUMBER_SYMBOL)
   MACRO(FileManagerSymbol, SymbolType::FILE_MANAGER_SYMBOL)
   MACRO(StreamManagerSymbol, SymbolType::STREAM_MANAGER_SYMBOL)
+  MACRO(DirectoryManagerSymbol, SymbolType::DIRECTORY_MANAGER_SYMBOL)
+  MACRO(ProcessManagerSymbol, SymbolType::PROCESS_MANAGER_SYMBOL)
+  MACRO(TimeManagerSymbol, SymbolType::TIME_MANAGER_SYMBOL)
+  MACRO(ObjectConstructorSymbol, SymbolType::OBJECT_CONSTRUCTOR_SYMBOL)
   MACRO(LTLRFairnessCheckerSymbol, SymbolType::LTLR_FAIRCHECKER_SYMBOL)
   MACRO(SymbolicModelCheckerSymbol, SymbolType::SYMBOLIC_MODEL_CHECKER_SYMBOL)
-

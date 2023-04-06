@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2012 SRI International, Menlo Park, CA 94025, USA.
 
@@ -46,24 +46,28 @@ public:
 			      const NarrowingVariableInfo& originalVariables,
 			      bool unificationMode = false);
   ~VariantNarrowingSearchState();
-
   //
   //	Variant passed back is not GC protected by us.
   //
   bool findNextVariant(DagNode*& variantTerm, Vector<DagNode*>& variantSubstitution /*, int& nrFreeVariables */);
   bool isIncomplete() const;
+
 private:
   void collectUnifiers(NarrowingUnificationProblem* unificationProblem, int positionIndex, int equationIndex);
 
   RewritingContext* const context;  // has own GC protection
   const Vector<DagNode*>& variantSubstitution;  // assumed to be protected from GC by whatever passed it to us
   const Vector<DagNode*>& blockerDags;  // assumed to be protected from GC by whatever passed it to us
-  FreshVariableGenerator* const freshVariableGenerator;
+  //FreshVariableGenerator* const freshVariableGenerator;
   const NarrowingVariableInfo& originalVariables;  // assumed to be protected from GC by whatever passed it to us; only needed for tracing
   Module* const module;
 
   bool incompleteFlag;
   NarrowingVariableInfo variableInfo;
+  //
+  //	We can't create the UnifierFilter until we have indexed the variables in our variant
+  //	dag and variant substitution, so this can't be a member object.
+  //
   UnifierFilter* unifiers;  // has own GC protection
   Substitution blockerSubstitution;  // filled out and done with before GC happens
 };

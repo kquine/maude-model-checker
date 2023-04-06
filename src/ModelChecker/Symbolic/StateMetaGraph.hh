@@ -16,12 +16,13 @@ namespace modelChecker {
 class StateMetaGraph;
 
 template <>
-struct SystemGraphTraits<StateMetaGraph>: public SystemGraphTraits<StateSystemGraph<StatePropLabel>>
+class SystemGraphTraits<StateMetaGraph>: public SystemGraphTraits<StateSystemGraph<StatePropLabel>>
 {
+public:
 	struct State;
 	struct Transition;
 	struct ActiveState;
-	SystemGraphTraits(unique_ptr<StatePropLabel>&& spl): SystemGraphTraits<StateSystemGraph<StatePropLabel>>(move(spl)) {}
+	SystemGraphTraits(unique_ptr<StatePropLabel>&& spl): SystemGraphTraits<StateSystemGraph<StatePropLabel>>(std::move(spl)) {}
 };
 
 /*

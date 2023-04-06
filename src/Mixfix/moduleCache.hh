@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -34,12 +34,14 @@ class ModuleCache : public Entity::User
 
 public:
   ModuleCache();
+  ~ModuleCache();
+
   ImportModule* makeRenamedCopy(ImportModule* module, Renaming* renaming);
   ImportModule* makeSummation(const Vector<ImportModule*>& modules);
   ImportModule* makeParameterCopy(int parameterName, ImportModule* module);
-  ImportModule* makeInstatiation(ImportModule* module, const Vector<View*>& views, const Vector<int>& parameterArgs);
+  ImportModule* makeModuleInstantiation(ImportModule* module, const Vector<Argument*>& arguments);
 
-  void destructUnusedModules();
+  int destructUnusedModules();
   void showCreatedModules(ostream& s) const;
 
 private:

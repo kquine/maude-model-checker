@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ public:
   typedef void ErrorHandler(int errorNr);
 
   BddUser();
-  ~BddUser();
 
   static bdd ithvar(int i);
   static bdd nithvar(int i);
@@ -46,16 +45,15 @@ public:
 private:
   enum Constants
   {
-    DEFAULT_NODE_SIZE = 1000,
-    DEFAULT_CACHE_SIZE = 100,
-    DEFAULT_NR_VARIABLES = 10
+    DEFAULT_NODE_SIZE = 10000,
+    DEFAULT_CACHE_SIZE = 1000,
+    DEFAULT_NR_VARIABLES = 100
   };
 
   static void gc_handler(int pre, bddGbcStat* stat);
   static void err_handler(int errcode);
 
-  static int nrUsers;
-
+  static bool buddyInitialized;
   static ErrorHandler* errorHandler;
   //
   //	These structures are expensive to create and destroy so we keep
@@ -91,6 +89,7 @@ BddUser::setNrVariables(int nrVariables)
 {
   if (nrVariables > bdd_varnum())
     {
+      DebugInfo("Increasing number of variables from " << bdd_varnum() << " to " << nrVariables);
       if (cachedPairing != 0)
 	{
 	  //

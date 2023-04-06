@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2010 SRI International, Menlo Park, CA 94025, USA.
 
@@ -23,7 +23,7 @@
 //
 //	Class for substitutions.
 //
-//	Substitutions are used to hold partly built dags as well as variable
+//	Substitutions are used to hold partly built dags as well as
 //	variable bindings so that the same dag construction code can handle
 //	variable and non-variable operator arguments without branching.
 //

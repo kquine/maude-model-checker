@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -31,6 +31,17 @@ ostream&
 operator<<(ostream& s, const NamedEntity* e)
 {
   return s << ((e == 0) ? "(null)" : Token::name(e->id()));
+}
+
+ostream&
+operator<<(ostream& s, const Symbol* symbol)
+{
+  if (symbol == 0)
+    return s << "(null)";
+  int code = symbol->id();
+  if (symbol->arity() == 0)
+    return s << Token::sortName(code);  // hack to handle parameterized constant names
+  return s << Token::name(code);
 }
 
 ostream&
@@ -125,7 +136,7 @@ MixfixModule::printAttributes(ostream& s, const PreEquation* pe, ItemType itemTy
   if (!nonexec && !owise && !variant && !narrowing && id == NONE && metadata == NONE && printAttribute == 0)
     return;
   s << " [";
-  const char *space = "";
+  const char* space = "";
   if (nonexec)
     {
       s << "nonexec";
@@ -226,6 +237,73 @@ operator<<(ostream& s, const ConditionFragment* c)
     s << r->getLhs() << " => " << r->getRhs();
   else
     CantHappen("bad condition fragment");
+  return s;
+}
+
+ostream&
+operator<<(ostream& s, const RewriteStrategy* rs)
+{
+  s << "strat " << Token::name(rs->id()) << " ";
+
+  // Prints domain sorts
+  const Vector<Sort*>& domain = rs->getDomain();
+  int arity = rs->arity();
+  if (arity > 0)
+    {
+      s << ": ";
+      for (int i = 0; i < arity; i++)
+	s << domain[i] << ' ';
+    }
+
+  s << "@ " << rs->getSubjectSort();
+  // Print attributes (only metadata is allowed)
+  MixfixModule* m = safeCast(MixfixModule*, rs->getModule());
+  int metadata = m->getMetadata(MixfixModule::STRAT_DECL, rs);
+  if (metadata != NONE)
+    s << " [metadata " << Token::name(metadata) << "] ";
+  s << " .";
+  return s;
+}
+
+inline void
+MixfixModule::printStrategyTerm(ostream& s, RewriteStrategy* strat, Term* term)
+{
+  // The term itself is not what we want to print because it contains
+  // the auxiliary symbol label instead of the strategy label
+
+  s << Token::name(strat->id());
+
+  if (strat->arity() > 0 || ruleLabels.find(strat->id()) != ruleLabels.end())
+    {
+      s << "(";
+      bool first = true;
+      for (ArgumentIterator it(*term); it.valid(); it.next())
+	{
+	  if (first)
+	    first = false;
+	  else
+	    s << ", ";
+	  s << it.argument();
+	}
+      s << ")";
+    }
+}
+
+ostream&
+operator<<(ostream& s, const StrategyDefinition* e)
+{
+  if (e->hasCondition())
+    s << 'c';
+  s << "sd ";
+  // Prints the LHS with the strategy label
+  MixfixModule* m = safeCast(MixfixModule*, e->getModule());
+  m->printStrategyTerm(s, e->getStrategy(), e->getLhs());
+  s << " := " << e->getRhs();
+  if (e->hasCondition())
+    MixfixModule::printCondition(s, e);
+
+  m->printAttributes(s, e, MixfixModule::STRAT_DEF);
+  s << " .";
   return s;
 }
 

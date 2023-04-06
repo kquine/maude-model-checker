@@ -55,7 +55,7 @@ ParamFairnessTable<Formula>::createFormulaFairness(const Formula& f,
 {
 	unique_ptr<GroundFairness> gfi = Super::createFormulaFairness(f, propIds, fairDag);
 	return fairDag->isGround() ?
-			move(gfi) : unique_ptr<ParamFairness>(new ParamFairness(*gfi,fairDag,propIds,paramPropTableRef));
+			std::move(gfi) : unique_ptr<ParamFairness>(new ParamFairness(*gfi,fairDag,propIds,paramPropTableRef));
 }
 
 template <typename Formula> unsigned int

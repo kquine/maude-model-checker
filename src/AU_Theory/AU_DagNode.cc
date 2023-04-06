@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2021 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -76,8 +76,8 @@ size_t
 AU_DagNode::getHashValue()
 {
   size_t hashValue = symbol()->getHashValue();
-  FOR_EACH_CONST(i, ArgVec<DagNode*>, argArray)
-    hashValue = hash(hashValue, (*i)->getHashValue());
+  for (DagNode* d : argArray)
+    hashValue = hash(hashValue, d->getHashValue());
   return hashValue;
 }
 
@@ -93,9 +93,9 @@ AU_DagNode::compareArguments(const DagNode* other) const
     return r;
  
   ArgVec<DagNode*>::const_iterator j = argArray2.begin();
-  FOR_EACH_CONST(i, ArgVec<DagNode*>, argArray)
+  for (DagNode* d : argArray)
     {
-      int r = (*i)->compare(*j);
+      int r = d->compare(*j);
       if (r != 0)
 	return r;
       ++j;
@@ -115,9 +115,8 @@ AU_DagNode::markArguments()
   //
   Symbol* s = symbol();
   DagNode* r = 0;
-  FOR_EACH_CONST(i, ArgVec<DagNode*>, argArray)
+  for (DagNode* d : argArray)
     {
-      DagNode* d = *i;
       if (r == 0 && d->symbol() == s)
 	r = d;
       else
@@ -134,7 +133,7 @@ AU_DagNode::copyEagerUptoReduced2()
   AU_DagNode* n = new AU_DagNode(s, nrArgs);
   if (s->getPermuteStrategy() == BinarySymbol::EAGER)
     {
-      for (int i = 0; i < nrArgs; i++)
+      for (int i = 0; i < nrArgs; ++i)
 	n->argArray[i] = argArray[i]->copyEagerUptoReduced();
     }
   else
@@ -148,7 +147,7 @@ AU_DagNode::copyAll2()
   int nrArgs = argArray.length();
   AU_Symbol* s = symbol();
   AU_DagNode* n = new AU_DagNode(s, nrArgs);
-  for (int i = 0; i < nrArgs; i++)
+  for (int i = 0; i < nrArgs; ++i)
     n->argArray[i] = argArray[i]->copyAll();
   return n;
 }
@@ -156,8 +155,8 @@ AU_DagNode::copyAll2()
 void
 AU_DagNode::clearCopyPointers2()
 {
-  FOR_EACH_CONST(i, ArgVec<DagNode*>, argArray)
-    (*i)->clearCopyPointers();
+  for (DagNode* d : argArray)
+    d->clearCopyPointers();
 }
 
 void
@@ -188,7 +187,7 @@ AU_DagNode::copyWithReplacement(int argIndex, DagNode* replacement)
   int nrArgs = argArray.length();
   AU_DagNode* n = new AU_DagNode(symbol(), nrArgs);
   ArgVec<DagNode*>& args2 = n->argArray;
-  for (int i = 0; i < nrArgs; i++)
+  for (int i = 0; i < nrArgs; ++i)
     args2[i] = (i == argIndex) ? replacement : argArray[i];
   return n;
 }
@@ -202,7 +201,7 @@ AU_DagNode::copyWithReplacement(Vector<RedexPosition>& redexStack,
   AU_DagNode* n = new AU_DagNode(symbol(), nrArgs);
   ArgVec<DagNode*>& args = n->argArray;
   int nextReplacementIndex = redexStack[first].argIndex();
-  for (int i = 0; i < nrArgs; i++)
+  for (int i = 0; i < nrArgs; ++i)
     {
       if (i == nextReplacementIndex)
 	{
@@ -225,7 +224,7 @@ AU_DagNode::partialReplace(DagNode* replacement, ExtensionInfo* extensionInfo)
   int last = e->lastMatched();
   argArray[first++] = replacement;
   int nrArgs = argArray.length();
-  for (last++; last < nrArgs; last++)
+  for (++last; last < nrArgs; ++last)
     argArray[first++] = argArray[last];
   argArray.contractTo(first);
   repudiateSortInfo();  // probably not set but be safe
@@ -246,10 +245,10 @@ AU_DagNode::partialConstruct(DagNode* replacement, ExtensionInfo* extensionInfo)
   int nrArgs = argArray.length();
   AU_DagNode* n = new AU_DagNode(symbol(), nrArgs + first - last);
   ArgVec<DagNode*>& args2 = n->argArray;
-  for (int i = 0; i < first; i++)
+  for (int i = 0; i < first; ++i)
     args2[i] = argArray[i]; 
   args2[first++] = replacement;
-  for (last++; last < nrArgs; last++)
+  for (++last; last < nrArgs; ++last)
     args2[first++] = argArray[last]; 
   return n;
 }
@@ -283,55 +282,48 @@ AU_DagNode::matchVariableWithExtension(int index,
 }
 
 //
-//	Supported for A only.
+//	Unification code.
 //
 
 DagNode::ReturnResult
-AU_DagNode::computeBaseSortForGroundSubterms()
+AU_DagNode::computeBaseSortForGroundSubterms(bool warnAboutUnimplemented)
 {
   AU_Symbol* s = symbol();
   //
   //	If we have an identity we bail to backstop version since AU/AUl/AUr is not
   //	currently supported for unification.
   //
-  if (s->hasIdentity())
-    return DagNode::computeBaseSortForGroundSubterms();
+  
+  if (s->oneSidedId())
+    return DagNode::computeBaseSortForGroundSubterms(warnAboutUnimplemented);
 
-  bool ground = true;
-  int nrArgs = argArray.length();
-  for (int i = 0; i < nrArgs; ++i)
+  ReturnResult result = GROUND;
+  for (DagNode* d : argArray)
     {
-      switch (argArray[i]->computeBaseSortForGroundSubterms())
-	{
-	case NONGROUND:
-	  {
-	    ground = false;
-	    break;
-	  }
-	case UNIMPLEMENTED:
-	  return UNIMPLEMENTED;
-	default:
-	  ;  // to avoid compiler warning
-	}
+      ReturnResult r = d->computeBaseSortForGroundSubterms(warnAboutUnimplemented);
+      if (r > result)
+	result = r;  // NONGROUND dominates GROUND, UNIMPLEMENTED dominates NONGROUND
     }
-  if (ground)
+  if (result == GROUND)
     {
       s->computeBaseSort(this);
       setGround();
-      return GROUND;
     }
-  return NONGROUND;
+  return result;
 }
 
 bool
-AU_DagNode::computeSolvedForm2(DagNode* rhs, UnificationContext& solution, PendingUnificationStack& pending)
+AU_DagNode::computeSolvedForm2(DagNode* rhs,
+			       UnificationContext& solution,
+			       PendingUnificationStack& pending)
 {
+  DebugEnter(this << " =? " << rhs);
   //
-  //	If we have an identity we bail.
+  //	If we have a one-sided identity we bail.
   //
-  if (symbol()->hasIdentity())
+  if (symbol()->oneSidedId())
     return DagNode::computeSolvedForm2(rhs, solution, pending);
-
+  
   if (symbol() == rhs->symbol())
     {
       //
@@ -361,23 +353,18 @@ AU_DagNode::computeSolvedForm2(DagNode* rhs, UnificationContext& solution, Pendi
 void
 AU_DagNode::insertVariables2(NatSet& occurs)
 {
-  int nrArgs = argArray.length();
-  for (int i = 0; i < nrArgs; i++)
-    argArray[i]->insertVariables(occurs);
+  for (DagNode* d : argArray)
+    d->insertVariables(occurs);
 }
 
-//
-//	Unification code.
-//
-
 DagNode*
-AU_DagNode::instantiate2(const Substitution& substitution)
+AU_DagNode::instantiate2(const Substitution& substitution, bool maintainInvariants)
 {
   AU_Symbol* s = symbol();
   int nrArgs = argArray.length();
   for (int i = 0; i < nrArgs; ++i)
     {
-      if (DagNode* n = argArray[i]->instantiate(substitution))
+      if (DagNode* n = argArray[i]->instantiate(substitution, maintainInvariants))
 	{
 	  //
 	  //	Argument changed under instantiation - need to make a new
@@ -406,23 +393,31 @@ AU_DagNode::instantiate2(const Substitution& substitution)
 	  for (++i; i < nrArgs; ++i)
 	    {
 	      DagNode* a = argArray[i];
-	      if (DagNode* n = a->instantiate(substitution))
+	      if (DagNode* n = a->instantiate(substitution, maintainInvariants))
 		a = n;
 	      if (!(a->isGround()))
 		ground = false;
 	      d->argArray[i] = a;
 	    }
-	  //
-	  //	Normalize the new dagnode. We pass the dumb flag as true to prevent deque
-	  //	formation. If it doesn't collapse and all its arguments are ground we
-	  //	compute its base sort, and set ground flag.
-	  //
-	  if (d->normalizeAtTop(true) != COLLAPSED && ground)
+	  if (maintainInvariants)
 	    {
-	      s->computeBaseSort(d);
-	      d->setGround();
+	      //
+	      //	Normalize the new dagnode. We pass the dumb flag as true to prevent deque
+	      //	formation. If it doesn't collapse and all its arguments are ground we
+	      //	compute its base sort, and set ground flag.
+	      //
+	      if (d->normalizeAtTop(true) != COLLAPSED && ground)
+		{
+		  s->computeBaseSort(d);
+		  d->setGround();
+		}
+	      Assert(d->isDeque() == false, "Oops we got a deque! " << d);
 	    }
-	  Assert(d->isDeque() == false, "Oops we got a deque! " << d);
+	  else
+	    {
+	      if (ground)
+		d->setGround();
+	    }
 	  return d;	
 	}
     }
@@ -436,11 +431,10 @@ AU_DagNode::instantiate2(const Substitution& substitution)
 bool
 AU_DagNode::indexVariables2(NarrowingVariableInfo& indices, int baseIndex)
 {
-  int nrArgs = argArray.length();
   bool ground = true;
-  for (int i = 0; i < nrArgs; i++)
+  for (DagNode* d : argArray)
     {   
-      if (!(argArray[i]->indexVariables(indices, baseIndex)))
+      if (!(d->indexVariables(indices, baseIndex)))
 	ground = false;
     }
   return ground;
@@ -456,7 +450,7 @@ AU_DagNode::instantiateWithReplacement(const Substitution& substitution,
   AU_DagNode* n = new AU_DagNode(symbol(), nrArgs);
   ArgVec<DagNode*>& args2 = n->argArray;
   bool eager = (eagerCopies != 0) && symbol()->getPermuteStrategy() == BinarySymbol::EAGER;
-  for (int i = 0; i < nrArgs; i++)
+  for (int i = 0; i < nrArgs; ++i)
     {
       DagNode* d;
       if (i == argIndex)
@@ -482,7 +476,7 @@ AU_DagNode::instantiateWithCopies2(const Substitution& substitution, const Vecto
       DagNode* a = argArray[i];
       DagNode* n = eager ?
 	a->instantiateWithCopies(substitution, eagerCopies) :
-	a->instantiate(substitution);
+	a->instantiate(substitution, false);
       if (n != 0)
 	{
 	  //

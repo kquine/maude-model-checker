@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -83,4 +83,101 @@ PreModule::PreModule(int moduleName, Interpreter* owner)
 
 PreModule::~PreModule()
 {
+  for (Import& i : imports)
+    i.expr->deepSelfDestruct();
+  for (Parameter& p : parameters)
+    p.theory->deepSelfDestruct();
+}
+
+void
+PreModule::addParameter(Token name, ModuleExpression* theory)
+{
+  if (isTheory())
+    {
+      IssueWarning(LineNumber(name.lineNumber()) <<
+		   ": parmaeterized theories are not supported; recovering by ignoring parameter " <<
+		   QUOTE(name) << '.');
+      cout << "preModule = " << this << "  theory = " << theory << endl;
+      delete theory;
+      return;
+    }
+  int nrParameters = parameters.length();
+  parameters.resize(nrParameters + 1);
+  parameters[nrParameters].name = name;
+  parameters[nrParameters].theory = theory;
+}
+
+void
+PreModule::addImport(LineNumber lineNumber, ImportModule::ImportMode mode, ModuleExpression* expr)
+{
+  int nrImports = imports.length();
+  imports.resize(nrImports + 1);
+  imports[nrImports].lineNumber = lineNumber;
+  imports[nrImports].mode = mode;
+  imports[nrImports].expr = expr;
+}
+
+void
+PreModule::processParameters(ImportModule* flatModule)
+{
+  for (Parameter& p : parameters)
+    {
+      if (ImportModule* fm = owner->makeModule(p.theory))
+	{
+	  if (MixfixModule::canHaveAsParameter(getModuleType(), fm->getModuleType()))
+	    {
+	      ImportModule* parameterCopy = owner->makeParameterCopy(p.name.code(), fm);
+	      if (parameterCopy != 0)
+		flatModule->addParameter(p.name, parameterCopy);
+	      else
+		{
+		  flatModule->markAsBad();
+		  return;
+		}
+	    }
+	  else
+	    {
+	      IssueWarning(LineNumber(p.name.lineNumber()) <<
+			   ": parameterization of " << 
+			   QUOTE(MixfixModule::moduleTypeString(getModuleType())) <<
+			   " " << this << " by " <<
+			   QUOTE(MixfixModule::moduleTypeString(fm->getModuleType())) <<
+			   " " << fm << " is not allowed.");
+	      flatModule->markAsBad();
+	    }
+	}
+    }
+}
+
+void
+PreModule::processExplicitImports(ImportModule* flatModule)
+{
+  for (Import& i : imports)
+    {
+      if (ImportModule* fm = owner->makeModule(i.expr, flatModule))
+	{
+	  if (fm->hasFreeParameters())
+	    {
+	      IssueWarning(i.lineNumber << ": cannot import module " << fm <<
+			   " because it has free parameters.");
+	      //
+	      //	Mark the module as bad to avoid cascading warnings and potential
+	      //	internal errors. But press ahead with remaining imports since
+	      //	they should be independent and we might find other errors.
+	      //
+	      flatModule->markAsBad();
+	    }
+	  else
+	    flatModule->addImport(fm, i.mode, i.lineNumber);
+	}
+      else
+	{
+	  //
+	  //	Mark the module as bad to avoid cascading warnings and potential
+	  //	internal errors. But press ahead with remaining imports since
+	  //	they should be independent and we might find other errors.
+	  //
+	  flatModule->markAsBad();
+	}
+    }
 }

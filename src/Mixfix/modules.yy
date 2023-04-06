@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,40 +25,40 @@
  */
 moduleExprDot	:	tokenBarDot expectedDot
                         {
-                          moduleExpressions.push(new ModuleExpression($1));
+                          $$ =  new ModuleExpression($1);
                         }
 		|	endsInDot '.'
                         {
-                          moduleExpressions.push(new ModuleExpression($1));
+                          $$ = new ModuleExpression($1);
                         }
 		|	parenExpr expectedDot
 		|	renameExpr expectedDot
 		|	instantExpr expectedDot
 		|	moduleExpr '+' moduleExprDot
 			{
-			  ModuleExpression* m1 = moduleExpressions.top();
-			  moduleExpressions.pop();
-			  ModuleExpression* m2 = moduleExpressions.top();
-			  moduleExpressions.pop();
-			  moduleExpressions.push(new ModuleExpression(m1, m2));
+			  if ($3)
+			    $$ = new ModuleExpression($1, $3);
+			  else
+			    {
+			      IssueWarning(LineNumber($2.lineNumber()) <<
+			                   ": missing module expression after " << QUOTE($2) << ".");
+			      $$ = $1;
+			    }
 			}
-		|	ENDS_IN_DOT
+		|	tokenDot
 			{
-			  Token t;
-			  t.dropChar($1);
-			  missingSpace(t);
-			  moduleExpressions.push(new ModuleExpression(t));
+			  $$ = new ModuleExpression($1);
+			}
+		|	'.'
+			{
+			  $$ = 0;
 			}
 		;
 
 moduleExpr	:	moduleExpr2
 		|	moduleExpr '+' moduleExpr
 			{
-			  ModuleExpression* m1 = moduleExpressions.top();
-			  moduleExpressions.pop();
-			  ModuleExpression* m2 = moduleExpressions.top();
-			  moduleExpressions.pop();
-			  moduleExpressions.push(new ModuleExpression(m1, m2));
+			  $$ = new ModuleExpression($1, $3);
 			}
 		;
 
@@ -70,34 +70,56 @@ moduleExpr3	:	parenExpr
 		|	instantExpr
 		|	token
 		        {
-                          moduleExpressions.push(new ModuleExpression($1));
+                          $$ = new ModuleExpression($1);
                         }
 
 		;
 		
 renameExpr	:	moduleExpr2 '*' renaming
 			{
-			  ModuleExpression* m = moduleExpressions.top();
-			  moduleExpressions.pop();
-			  moduleExpressions.push(new ModuleExpression(m, currentRenaming));
+			  $$ = new ModuleExpression($1, currentRenaming);
 			  currentRenaming = 0;
 			}
 		;
 
-instantExpr	:	moduleExpr3 '{'			{ clear(); }
-			argList '}'
+instantExpr	:	moduleExpr3 '{' instantArgs '}'
 			{
-			  ModuleExpression* m = moduleExpressions.top();
-			  moduleExpressions.pop();
-			  moduleExpressions.push(new ModuleExpression(m, tokenSequence));
+			  $$ = new ModuleExpression($1, *($3));
+			  delete $3;
 			}
 		;
 
-parenExpr	:	'(' moduleExpr ')' {}
+parenExpr	:	'(' moduleExpr ')'
+			{
+			  $$ = $2;
+			}
 		;
 
-argList		:	argList ',' token		{ store($3); }
-		|	token				{ store($1); }
+/*
+ *	View expressions (parameters are treated as uninstantiated views for syntax purposes).
+ */
+viewExpr	:	viewExpr '{' instantArgs '}'
+			{
+			  $$ = new ViewExpression($1, *($3));
+			  delete $3;
+			}
+		|	token
+			{
+			  $$ = new ViewExpression($1);
+			}
+		;
+
+instantArgs	:	instantArgs ',' viewExpr
+			{
+			  $1->append($3);
+			  $$ = $1;
+			}
+		|	viewExpr
+			{
+			  Vector<ViewExpression*>* t =  new Vector<ViewExpression*>();
+			  t->append($1);
+			  $$ = t;
+			}
 		;
 
 /*
@@ -131,16 +153,55 @@ mapping		:	KW_SORT sortName KW_TO sortName
 			{
 			  currentRenaming->addLabelMapping($2, $4);
 			}
-		|	KW_OP 			{ lexBubble(BAR_COLON | BAR_TO, 1); }
+		|	KW_OP			{ lexBubble(BAR_COLON | BAR_TO, 1); }
 			fromSpec KW_TO		{ lexBubble(BAR_COMMA | BAR_LEFT_BRACKET | BAR_RIGHT_PAREN, 1); }
 			toAttributes		{}
+		|	KW_STRAT stratName	{ currentRenaming->addStratMapping($2); }
+			fromStratSpec
+			KW_TO stratName 	{ currentRenaming->addStratTarget($6); }
+		|	KW_CLASS sortName KW_TO sortName
+			{
+			  currentRenaming->addClassMapping($2, $4);
+			}
+		|	KW_ATTR token
+			{
+			  currentRenaming->addAttrMapping($2);
+			}
+			fromAttrSpec KW_TO token
+			{
+			  currentRenaming->addAttrTarget($6);
+			}
+		|	KW_MSG
+			{
+			  lexBubble(BAR_COLON | BAR_TO, 1);
+			}
+			fromSpec KW_TO
+			{
+			  lexBubble(BAR_COMMA | BAR_LEFT_BRACKET | BAR_RIGHT_PAREN, 1);
+			}
+			toAttributes
+			{
+			  currentRenaming->markAsMsg();
+			}
 		;
+
 /*
  *	The ':' alternative forces lookahead which allows the lexer to grab the bubble.
  */
 fromSpec	:	':'			{ Token::peelParens(lexerBubble); currentRenaming->addOpMapping(lexerBubble); }
 			typeList arrow typeName {}
 		|				{ Token::peelParens(lexerBubble); currentRenaming->addOpMapping(lexerBubble); }
+		;
+
+fromAttrSpec	:	':' typeName1
+			{
+			  currentRenaming->addAttrType($2 ? tokenSequence : singleton);
+			}
+		|	
+		;
+
+fromStratSpec	:	stratSignature
+		|
 		;
 
 /*
@@ -168,30 +229,29 @@ toAttribute	:	KW_PREC IDENTIFIER	{ currentRenaming->setPrec($2); }
  *	Views.
  */
 view		:	KW_VIEW			{ lexerIdMode(); }
-			token KW_FROM moduleExpr
+			token
 			{
 			  fileTable.beginModule($1, $3);
-			  interpreter.setCurrentView(new View($3));
+			  interpreter.setCurrentView(new SyntacticView($3, &interpreter));
 			  currentSyntaxContainer = CV;
-			  CV->addFrom(moduleExpressions.top());
-			  moduleExpressions.pop();
 			}
+			parameters KW_FROM moduleExpr
 			KW_TO moduleExpr
-			{
-			  CV->addTo(moduleExpressions.top());
-			  moduleExpressions.pop();
-			}
 			expectedIs viewDecList KW_ENDV
 			{
+			  CV->addFrom($7);
+			  CV->addTo($9);
 			  lexerInitialMode();
 			  fileTable.endModule(lineNumber);
-			  interpreter.insertView(($3).code(), CV);
+			  bool displacedView = interpreter.insertView(($3).code(), CV);
 			  CV->finishView();
+			  if (displacedView)
+			    interpreter.cleanCaches();
 			}
 		;
 
 viewDecList	:	viewDecList viewDeclaration
-		|
+		|	{}
 		;
 
 skipStrayArrow	:	KW_ARROW
@@ -199,7 +259,7 @@ skipStrayArrow	:	KW_ARROW
 			  IssueWarning(LineNumber($1.lineNumber()) <<
 				       ": skipping " << QUOTE("->") << " in variable declaration.");
 			}
-		|
+		|	{}
 		;
 
 viewDeclaration	:	KW_SORT sortName KW_TO sortDot
@@ -207,19 +267,48 @@ viewDeclaration	:	KW_SORT sortName KW_TO sortDot
 			  CV->addSortMapping($2, $4);
 			}
 		|	KW_VAR varNameList ':' skipStrayArrow typeDot {}
-		|	KW_OP			{ lexBubble(BAR_COLON | BAR_TO, 1); }
+		|	KW_OP
+			{
+			  lexBubble(BAR_COLON | BAR_TO, 1);
+			}
 			viewEndOpMap
+		|	KW_STRAT viewStratMap
+		|	KW_CLASS sortName KW_TO sortDot
+			{
+			  CV->addClassMapping($2, $4);
+			}
+		|	KW_ATTR token
+			{
+			  CV->addAttrMapping($2);
+			}
+			fromAttrSpec KW_TO token expectedDot
+			{
+			  CV->addAttrTarget($6);
+			}
+		|	KW_MSG
+			{
+			  lexBubble(BAR_COLON | BAR_TO, 1);
+			}
+			endMsgMap
 		|	error '.'
+		|	error END_OF_INPUT
+			{
+			  fileTable.endModule(lineNumber);
+			  IssueWarning(LineNumber(lineNumber) <<
+			  ": unexpected end-of-input while parsing view " << QUOTE(CV) << ".");
+			  YYABORT;  // rely on the caller to clear up view database and lexer
+			}
+		|	error CHANGE_FILE
+			{
+			  fileTable.endModule(lineNumber);
+			  IssueWarning(LineNumber(lineNumber) <<
+			  ": unexpected end-of-file while parsing view " << QUOTE(CV) << ".");
+			  YYABORT;  // rely on the caller to clear up view database and lexer
+			}
 		;
 
 sortDot		:	sortName expectedDot		{ $$ = $1; }
-		|	ENDS_IN_DOT
-			{
-			  Token t;
-			  t.dropChar($1);
-			  missingSpace(t);
-			  $$ = t;
-			}
+		|	tokenDot
 		;
 
 viewEndOpMap	:	':'
@@ -271,28 +360,126 @@ viewEndOpMap	:	':'
 			}
 		;
 
-
-endBubble	:	'.' {}
-		|	ENDS_IN_DOT
+endMsgMap	:	':'
 			{
-			  Token t;
-			  t.dropChar($1);
-			  missingSpace(t);
-			  lexerBubble.append(t);
+			  //
+			  //	Specific msg->msg mapping.
+			  //
+			  Token::peelParens(lexerBubble);  // remove any enclosing parens from op name
+			  CV->addOpMapping(lexerBubble);
+			}
+			typeList arrow typeName KW_TO
+			{
+			  lexBubble(END_STATEMENT, 1);
+			}
+			endBubble
+			{
+			  Token::peelParens(lexerBubble);  // remove any enclosing parens from op name
+			  CV->addOpTarget(lexerBubble);
+			  CV->markAsMsg();
+			}
+		|	KW_TO
+			{
+			  //
+			  //	At this point we don't know if we have an msg->term mapping
+			  //	or a generic msg->msg mapping so we save the from description and
+			  //	press on.
+			  //
+			  opDescription = lexerBubble;
+			  lexBubble(END_STATEMENT, 1);
+			}
+			endBubble
+			{
+			  if (lexerBubble[0].code() == Token::encode("term"))
+			    {
+			      //
+			      //	msg->term mapping.
+			      //
+			      CV->addOpTermMapping(opDescription, lexerBubble, true);
+			    }
+			  else
+			    {
+			      //
+			      //	Generic msg->msg mapping.
+			      //
+			      Token::peelParens(opDescription);  // remove any enclosing parens from op name
+			      CV->addOpMapping(opDescription);
+			      Token::peelParens(lexerBubble);  // remove any enclosing parens from op name
+			      CV->addOpTarget(lexerBubble);
+			      CV->markAsMsg();
+			    }
 			}
 		;
 
-parenBubble	:	'(' 			{ lexBubble(BAR_RIGHT_PAREN, 1); }
-			')'			{}
+strategyCall	:	stratName
+			{
+			  strategyCall.resize(1);
+			  strategyCall[0] = $1;
+			}
+		|	stratName '('			{ lexBubble(BAR_RIGHT_PAREN, 1); }
+			')'
+			{
+			  // Adds the stratName and parentheses to the lexer bubble
+			  int bubbleSize = lexerBubble.length();
+			  strategyCall.resize(bubbleSize + 3);
+			  strategyCall[0] = $1;
+			  strategyCall[1] = $2;
+			  for (int i = 0; i < bubbleSize; i++)
+			    strategyCall[2 + i] = lexerBubble[i];
+			  strategyCall[bubbleSize + 2] = $4;
+			}
+
+viewStratMap	:	stratName
+			{
+			  CV->addStratMapping($1);
+			}
+			stratSignature KW_TO stratName '.'
+			{
+			  CV->addStratTarget($5);
+			}
+		|	strategyCall KW_TO
+			{
+			  lexBubble(END_STATEMENT, 1);
+			}
+			endBubble
+			{
+			  if (lexerBubble[0].code() == Token::encode("expr"))
+			    {
+			      //
+			      //	Strat->expr mapping.
+			      //
+			      CV->addStratExprMapping(strategyCall, lexerBubble);
+			    }
+			  else if (strategyCall.length() == 1 && lexerBubble.length() == 1)
+			    {
+			      //
+			      //	Generic strat->strat mapping.
+			      //
+			      CV->addStratMapping(strategyCall[0]);
+			      CV->addStratTarget(lexerBubble[0]);
+			    }
+			  else {
+			    IssueWarning(LineNumber(strategyCall[0].lineNumber()) <<
+			      ": bad syntax for strategy mapping.");
+			  }
+			}
+		;
+
+endBubble	:	'.'		{}
+		|	tokenDot	{ lexerBubble.append($1); }
+		;
+
+parenBubble	:	'(' 		{ lexBubble(BAR_RIGHT_PAREN, 1); }
+			')'		{}
 		;
 
 /*
  *	Modules and theories.
  */
-module		:	startModule		{ lexerIdMode(); }
+module		:	KW_MOD		{ lexerIdMode(); }
 			token
 			{
-			  interpreter.setCurrentModule(new SyntacticPreModule($1, $3));
+			  interpreter.setCurrentModule(new SyntacticPreModule($1, $3, &interpreter));
 			  currentSyntaxContainer = CM;
 			  fileTable.beginModule($1, $3);
 			}
@@ -304,18 +491,12 @@ module		:	startModule		{ lexerIdMode(); }
 			}
 		;
 
-dot		:	'.' {}
-		|	ENDS_IN_DOT
-			{
-			  Token t;
-			  t.dropChar($1);
-			  missingSpace(t);
-			  store(t);
-			}
+dot		:	'.'		{}
+		|	tokenDot	{ store($1); }
 		;
 
 parameters	:	'{' parameterList '}' {}
-		|
+		|	{}
 		;
 
 parameterList	:	parameterList ',' parameter
@@ -324,9 +505,7 @@ parameterList	:	parameterList ',' parameter
 
 parameter	:	token colon2 moduleExpr
 			{
-			  ModuleExpression* me = moduleExpressions.top();
-			  moduleExpressions.pop();
-			  CM->addParameter($1, me);
+			  currentSyntaxContainer->addParameter2($1, $3);
 			}
 		;
 
@@ -352,25 +531,26 @@ typeDot		:	typeName expectedDot
 		|	badType {}
 		;
 
-startModule	:	KW_MOD | KW_OMOD
-		;
-
 decList		:	decList declaration
-		|
+		|	{}
 		;
 
 declaration	:	KW_IMPORT moduleExprDot
 			{
-			  ModuleExpression* me = moduleExpressions.top();
-			  moduleExpressions.pop();
-			  CM->addImport($1, me);
+			  if ($2)
+			    CM->addImport($1, $2);
+			  else
+			    {
+			      IssueWarning(LineNumber($1.lineNumber()) <<
+			                   ": missing module expression after " << QUOTE($1) << ".");
+			    }
 			}
 
 		|	KW_SORT			{ clear(); }
-			sortNameList dot	{ CM->addSortDecl(tokenSequence); }
+			endSortNameList		{ CM->addSortDecl(tokenSequence); }
 
 		|	KW_SUBSORT		{ clear(); }
-			subsortList dot		{ CM->addSubsortDecl(tokenSequence); }
+			endSubsortList		{ CM->addSubsortDecl(tokenSequence); }
 
 		|	KW_OP			{ lexBubble(BAR_COLON, 1); }
 			':'			{ Token::peelParens(lexerBubble); CM->addOpDecl(lexerBubble); }
@@ -407,25 +587,37 @@ declaration	:	KW_IMPORT moduleExprDot
 			KW_IF			{ lexContinueBubble($5, END_STATEMENT, 1); }
 			endBubble	    	{ CM->addStatement(lexerBubble); }
 
+		|	KW_SD			{ lexBubble($1, BAR_ASSIGN, 1); }
+			KW_ASSIGN		{ lexContinueBubble($3, END_STATEMENT, 1); }
+			endBubble		{ CM->addStatement(lexerBubble); }
+
+		|	KW_CSD			{ lexBubble($1, BAR_ASSIGN, 1); }
+			KW_ASSIGN		{ lexContinueBubble($3, BAR_IF, 1); }
+			KW_IF			{ lexContinueBubble($5, END_STATEMENT, 1); }
+			endBubble	    	{ CM->addStatement(lexerBubble); }
+
+		|	stratDeclKeyword	{ clear(); }
+			stratIdList
+			stratSignature
+			stratAttributes
+			dot			{}
+
 		|	KW_MSG			{ lexBubble(BAR_COLON, 1); }
 			':'			{ Token::peelParens(lexerBubble); CM->addOpDecl(lexerBubble); }
-			domainRangeAttr		{ CM->setFlag(SymbolType::MESSAGE); }
+			domainRangeAttr		{
+						  CM->endMsg();
+						}
 
 		|	KW_MSGS opNameList ':' domainRangeAttr
 			{
-			  CM->setFlag(SymbolType::MESSAGE);
+			  CM->endMsg();
 			}
 
-		|	KW_CLASS token
-			{
-			}
-			classDef '.'
-			{
-			}
+		|	KW_CLASS classDecl
 
 		|	KW_SUBCLASS		{ clear(); }
-			subsortList dot		{ CM->addSubsortDecl(tokenSequence); }
-
+			endSubsortList		{ CM->addSubclassDecl(tokenSequence); }
+		
 		|	error '.'
 		        {
 			  //
@@ -433,20 +625,62 @@ declaration	:	KW_IMPORT moduleExprDot
 			  //	to a partially processed declaration.
 			  //
 			  cleanUpModuleExpression();
-			  CM->makeOpDeclsConsistent();
+			  CM->makeDeclsConsistent();
+			}
+		|	error END_OF_INPUT
+			{
+			  fileTable.endModule(lineNumber);
+			  IssueWarning(LineNumber(lineNumber) <<
+			  ": unexpected end-of-input while parsing module " << QUOTE(CM) << ".");
+			  YYABORT;  // rely on the caller to clear up module database and lexer
+			}
+		|	error CHANGE_FILE
+			{
+			  fileTable.endModule(lineNumber);
+			  IssueWarning(LineNumber(lineNumber) <<
+			  ": unexpected end-of-file while parsing module " << QUOTE(CM) << ".");
+			  YYABORT;  // rely on the caller to clear up module database and lexer
 			}
 		;
 
-classDef	:	'|' {}
-		|	'|' cPairList {}
-		;
-
-cPairList	:	cPair
-		|	cPairList ',' cPair
-		;
-
-cPair		:	tokenBarDot ':' token
+classDecl	:	sortName
 			{
+			  CM->addClassDecl($1);
+			}
+			classDef
+			{
+			}
+		|	tokenDot
+			{
+			  CM->addClassDecl($1);
+			}
+		;
+
+classDef	:	expectedDot
+		|	'|' cPairList finalPair {}
+		;
+
+finalPair	:	attributeName ':' typeName1Dot
+			{
+			  CM->addAttributePair($1, $3, $3 ? tokenSequence : singleton);
+			}
+		|	attributeName typeName1Dot
+			{
+			  CM->addAttributePairNoColon($1, $2, $2 ? tokenSequence : singleton);
+			}
+		;
+
+cPairList	:	cPairList cPair ','
+		|
+		;
+
+cPair		:	attributeName ':' typeName1
+			{
+			  CM->addAttributePair($1, $3, $3 ? tokenSequence : singleton);
+			}
+		|	attributeName typeName1
+			{
+			  CM->addAttributePairNoColon($1, $2, $2 ? tokenSequence : singleton);
 			}
 		;
 
@@ -471,13 +705,40 @@ domainRangeAttr	:	typeName typeList dra2
 			}
 		;
 
+stratDeclKeyword : 	KW_STRAT | KW_DSTRAT ;
+
+stratIdList	: 	stratIdList stratId
+		|	stratId
+		;
+
+stratId		:	stratName	{ CM->addStratDecl($1); }
+		;
+
+stratSignature	:	'@'
+			typeName
+		|	':'
+			typeList
+			'@'
+			typeName
+		;
+
+stratAttributes :	'[' stratAttrList ']'	{}
+		|	{}
+		;
+
+stratAttrList 	:	KW_METADATA IDENTIFIER
+			{
+			  CM->setMetadata($2);
+			}
+		;
+
 skipStrayColon 	:	':'
 			{
 			  IssueWarning(LineNumber($1.lineNumber()) <<
 				       ": skipping stray " << QUOTE(":") << " in operator declaration.");
 
 			}
-		|
+		|	{}
 		;
 
 dra2		:	skipStrayColon rangeAttr
@@ -509,7 +770,38 @@ arrow		:	KW_ARROW      		{ $$ = false; }
 		;
 
 typeList	:	typeList typeName
-		|
+		|	{}
+		;
+
+typeName1	:	sortName
+			{
+			  singleton[0] = $1;
+			  $$ = false;
+			}
+		|	kind
+			{
+			  $$ = true;
+			}
+		;
+		
+typeName1Dot	:	sortName expectedDot
+			{
+			  singleton[0] = $1;
+			  $$ = false;
+			}
+		|	tokenDot
+			{
+			  singleton[0] = $1;
+			  $$ = false;
+			}
+		|	kind expectedDot
+			{
+			  $$ = true;
+			}
+		;
+
+kind		:	'['			{ clear(); }
+			sortNames ']'
 		;
 
 typeName	:	sortName
@@ -529,7 +821,7 @@ sortNames	:	sortNames ',' sortName		{ store($3); }
 		;
 
 attributes	:	'[' attributeList ']'	{}
-		|
+		|	{}
 		;
 
 attributeList	:	attributeList attribute
@@ -575,6 +867,8 @@ attribute	:	KW_ASSOC
 			idList ')'		{ CM->setFormat(tokenSequence); }
 		|	KW_STRAT '('		{ clear(); }
 			idList ')'		{ CM->setStrat(tokenSequence); }
+		|	KW_ASTRAT '('		{ clear(); }
+			idList ')'		{ CM->setStrat(tokenSequence); }
 		|	KW_POLY '('		{ clear(); }
 			idList ')'		{ CM->setPoly(tokenSequence); }
 		|	KW_MEMO
@@ -615,6 +909,10 @@ attribute	:	KW_ASSOC
 			{
 			  CM->setFlag(SymbolType::DITTO);
 			}
+		|	KW_PCONST
+			{
+			  CM->setFlag(SymbolType::PCONST);
+			}
 		;
 
 /*
@@ -622,15 +920,15 @@ attribute	:	KW_ASSOC
  *	bubble corresponding to the identity. We never see a FORCE_LOOKAHEAD token.
  */
 identity	:	FORCE_LOOKAHEAD
-		|
+		|	{}
 		;
 
 idList		:	idList IDENTIFIER	{ store($2); }
 		|	IDENTIFIER		{ store($1); }
 		;
 
-hookList	:	hookList hook
-		|	hook
+hookList	:	hookList hook		{}
+		|	hook	 		{}
 		;
 
 hook		:	KW_ID_HOOK token		{ clear(); CM->addHook(SyntacticPreModule::ID_HOOK, $2, tokenSequence); }
@@ -658,17 +956,26 @@ expectedDot	:	'.' {}
 		;
 
 /*
- *	Sort and subsort lists.
+ *	Sort lists.
  */
 sortNameList	:	sortNameList sortName	{ store($2); }
-		|
+		|	sortName     		{ store($1); }
 		;
 
-subsortList	:	subsortList sortName	{ store($2); }
-		|	subsortList '<'		{ store($2); }
-		|	sortName		{ store($1); }
-			sortNameList '<'	{ store($4); }
+		
+endSortNameList :	tokenDot		{ store($1); }
+	    	|	sortNameList dot
 		;
+
+/*
+ *	Subsort lists.
+ */
+subsortList	:	subsortList sortNameList '<'	{ store($3); }
+		|	sortNameList '<'		{ store($2); }
+	    	;
+
+endSubsortList	:	subsortList endSortNameList
+	       	;
 
 /*
  *	Sort names
@@ -694,56 +1001,107 @@ sortNameFrags	:	sortNameFrags ','	{ fragStore($2); }
 			sortNameFrag		{}
 		|	sortNameFrag		{}
 		;
+		
+tokenDot	:	ENDS_IN_DOT
+			{
+			  Token t;
+			  t.dropChar($1);
+			  missingSpace(t);
+			  $$ = t;
+			}
 
 /*
- *	Token types.
+ *	Sets of tokens returned in <ID_MODE>.
  */
-token		:	identifier | startKeyword | midKeyword | attrKeyword | '.'
+
+/*
+ *	Single token sort names are the most restricted general class of token.
+ *	We exclude
+ *	  '(' ')'
+ *	for all token types to avoid parentheses balancing issues
+ *	  ':' KW_ARROW KW_PARTIAL
+ *	to avoid ambiguity in operator declarations
+ *	  ':' '@'
+ *	to avoid ambiguity in strategy declarations
+ *	  '<'
+ *	to avoid ambiguity in subsort declarations
+ *	  ':' KW_COLON2 KW_ASSIGN KW_ID
+ *	because colons are not allowed in sort names (full variable name confusion)
+ *	  '.' ENDS_IN_DOT
+ *	because periods are not allowed sort names (metalevel constant confusion)
+ *	  '[' ',' ']'
+ *	to avoid ambiguity in kinds
+ *	  '{' ',' '}'
+ *	to avoid ambiguity in parameterized sort names
+ */
+sortToken	:	IDENTIFIER
+ 
+ 		|	KW_IMPORT | KW_SORT | KW_SUBSORT | KW_OP | KW_OPS | KW_VAR
+		|	KW_STRAT | KW_DSTRAT
+		|	KW_CLASS | KW_SUBCLASS | KW_ATTR | KW_MSG | KW_MSGS
+		|	KW_MB | KW_CMB | KW_EQ | KW_CEQ | KW_RL | KW_CRL
+		|	KW_SD | KW_CSD
+		|	KW_ENDM | KW_ENDV
+
+		|	KW_IF | KW_IS | KW_FROM | KW_TO | KW_LABEL
+
+		|	KW_ASSOC | KW_COMM | KW_IDEM | KW_ITER | KW_LEFT | KW_RIGHT
+		|	KW_PREC | KW_GATHER | KW_ASTRAT | KW_POLY | KW_MEMO | KW_CTOR
+		|	KW_LATEX | KW_SPECIAL | KW_FROZEN | KW_METADATA
+		|	KW_CONFIG | KW_OBJ | KW_DITTO | KW_FORMAT
+		|	KW_ID_HOOK | KW_OP_HOOK | KW_TERM_HOOK | KW_PCONST
+		
+		|	'=' | '|' | '+' | '*' |	KW_ARROW2
 		;
 
-tokenBarDot	:	inert | ',' | KW_TO
-		|	startKeyword | midKeyword | attrKeyword
+/*
+ *	An unrestricted token adds back these excluded tokens except  '(' ')'
+ */
+token		:	sortToken | ENDS_IN_DOT | KW_ID 
+		|	':' | '@' | '<' | ',' | '.' | '[' | ']' | '{' | '}'
+		|	KW_ARROW | KW_PARTIAL | KW_COLON2 | KW_ASSIGN
 		;
 
-tokenBarColon	:	identifier | startKeyword | attrKeyword | '.'
-		|	'<' | KW_ARROW | KW_PARTIAL | '=' | KW_ARROW2 | KW_IF
+/*
+ *	A strategy name excludes
+ *	  ':' '@'
+ *	to avoid ambiguity in strategy declarations
+ */
+stratName	:	sortToken | ENDS_IN_DOT | KW_ID 
+		|	'<' | ',' | '.' | '[' | ']' | '{' | '}'
+		|	KW_ARROW | KW_PARTIAL | KW_COLON2 | KW_ASSIGN
 		;
 
-sortToken	:	IDENTIFIER | startKeyword | attrKeyword2
-		|	'=' | '|' | '+' | '*'
-		|	KW_ARROW2 | KW_IF | KW_IS | KW_LABEL | KW_TO
+/*
+ *	An attribute name excludes
+ *	  ',' '[' ']' '{' '}'
+ *	to avoid the formation of illegal operator names
+ */
+attributeName	:	sortToken | ENDS_IN_DOT | KW_ID 
+		|	':' | '@' | '<' | '.'
+		|	KW_ARROW | KW_PARTIAL | KW_COLON2 | KW_ASSIGN
+		;
+
+/*
+ *	A tokenBarColon (used for variable names and single token operator names) excludes
+ *	  ':'
+ *	to avoid ambiguity in variable declarations and ops declarations.
+ */
+tokenBarColon	:	sortToken | ENDS_IN_DOT | KW_ID 
+		|	'@' | '<' | ',' | '.' | '[' | ']' | '{' | '}'
+		|	KW_ARROW | KW_PARTIAL | KW_COLON2 | KW_ASSIGN
+		;
+
+/*
+ *	For parsing modules expressions we split off
+ *	  '.' ENDS_IN_DOT
+ *	into a separate class so that M. can be overparsed as M . rather than M. .
+ *	and a bare . without a terminating dot is not overparsed as module name.
+ */
+tokenBarDot	:	sortToken | KW_ID 
+		|	':' | '@' | '<' | ',' | '[' | ']' | '{' | '}'
+		|	KW_ARROW | KW_PARTIAL | KW_COLON2 | KW_ASSIGN
 		;
 
 endsInDot	:	'.' | ENDS_IN_DOT
-		;
-
-/*
- *	Keywords (in id mode).
- */
-inert		:	IDENTIFIER | '{' | '}' | '+' | '*' | '|' | KW_COLON2 | KW_LABEL
-		|	KW_FROM | KW_IS
-		;
-
-identifier	:	inert | ENDS_IN_DOT | ',' | KW_TO
-		;
-
-startKeyword	:	KW_MSG | startKeyword2
-		;
-
-startKeyword2	:	KW_IMPORT | KW_SORT | KW_SUBSORT | KW_OP | KW_OPS | KW_VAR
-		|	KW_MSGS | KW_CLASS | KW_SUBCLASS
-		|	KW_MB | KW_CMB | KW_EQ | KW_CEQ | KW_RL | KW_CRL | KW_ENDM | KW_ENDV
-		;
-
-midKeyword	:	'<' | ':' | KW_ARROW | KW_PARTIAL | '=' | KW_ARROW2 | KW_IF
-		;
-
-attrKeyword	:	'[' | ']' | attrKeyword2
-		;
-
-attrKeyword2	:	KW_ASSOC | KW_COMM | KW_ID | KW_IDEM | KW_ITER | KW_LEFT | KW_RIGHT
-		|	KW_PREC | KW_GATHER | KW_STRAT | KW_POLY | KW_MEMO | KW_CTOR
-		|	KW_LATEX | KW_SPECIAL | KW_FROZEN | KW_METADATA
-		|	KW_CONFIG | KW_OBJ | KW_DITTO | KW_FORMAT
-		|	KW_ID_HOOK | KW_OP_HOOK | KW_TERM_HOOK
 		;

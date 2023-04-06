@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2021 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,11 +37,20 @@ void eatComment(bool firstNonWhite);
 void cleanUpLexer();
 void checkForPending();
 
+void setDebugMode(bool polarity);
+bool generateImpliedStep();
+
+
 void lexBubble(int termination, int minLen);
 void lexBubble(const Token& first, int termination, int minLen, int pCount = 0);
 void lexContinueBubble(const Token& next, int termination, int minLen, int pCount = 0);
 void lexSave(const Token& first);
 void lexContinueSave(const Token& next);
+
+void bubbleEofError();
+bool startOfStatement(int code);
+const char* missingToken();
+bool analyzeEofError();
 
 enum TERMINATION_TOKENS
   {
@@ -55,6 +64,8 @@ enum TERMINATION_TOKENS
     BAR_RIGHT_PAREN = 0x80,
     BAR_OP_ATTRIBUTE = 0x100,
     BAR_RIGHT_BRACKET = 0x200,
+
+    BAR_ASSIGN = 0x400,
 
     END_STATEMENT = 0x40000000,
     END_COMMAND = 0x80000000

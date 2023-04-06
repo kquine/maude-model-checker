@@ -20,7 +20,6 @@ maude_CPPFLAGS = \
 	-I$(top_srcdir)/src/Mixfix \
 	-I$(top_srcdir)/src/BuiltIn \
 	-I$(top_srcdir)/src/SMT \
-	-I$(top_srcdir)/src/MSCP10 \
 	-I$(top_srcdir)/src/IO_Stuff \
 	-I$(top_srcdir)/src/ACU_Persistent \
 	-I$(top_srcdir)/src/ACU_Theory \
@@ -37,6 +36,7 @@ maude_LDADD = \
 	../Mixfix/libmixfix.a \
 	../StrategyLanguage/libstrategyLanguage.a \
 	../Meta/libmeta.a \
+	../Mixfix/libmixfix.a \
 	../ObjectSystem/libobjectSystem.a \
 	../BuiltIn/libbuiltIn.a \
 	../SMT/libSMT.a \
@@ -52,7 +52,7 @@ maude_LDADD = \
 	../Variable/libvariable.a \
 	../Interface/libinterface.a \
 	../Core/libcore.a \
-	../MSCP10/libmscp10.a \
+	../Parser/libparser.a \
 	../Temporal/libtemporal.a \
 	../IO_Stuff/libIO_Stuff.a \
 	../ModelChecker/libModelChecker.a \
@@ -77,7 +77,8 @@ data_DATA = \
 	term-order.maude \
 	metaInterpreter.maude \
 	smt.maude \
-	file.maude
+	file.maude \
+	time.maude
 
 EXTRA_DIST = \
 	prelude.maude \
@@ -88,4 +89,6 @@ EXTRA_DIST = \
 	term-order.maude \
 	metaInterpreter.maude \
 	smt.maude \
-	file.maude
+	file.maude \
+	process.maude \
+	time.maude

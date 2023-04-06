@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 2004 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -82,6 +82,7 @@ CounterSymbol::resetRules()
   NumberOpSymbol::resetRules();
 }
 
+/*
 void
 CounterSymbol::saveHiddenState()
 {
@@ -96,12 +97,13 @@ CounterSymbol::restoreHiddenState()
   currentValueStack.pop();
   NumberOpSymbol::restoreHiddenState();
 }
+*/
 
 bool
 CounterSymbol::eqRewrite(DagNode* subject, RewritingContext& context)
 {
   //
-  //	NumberOpSymbol doesn't know how to deal with this.
+  //	Jump straight to FreeSymbol as NumberOpSymbol doesn't know how to deal with this.
   //
   return FreeSymbol::eqRewrite(subject, context);
 }

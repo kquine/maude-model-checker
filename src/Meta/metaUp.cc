@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2021 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ DagNode*
 MetaLevel::upQid(int id, PointerMap& qidMap)
 {
   void* p = const_cast<void*>(static_cast<const void*>(Token::name(id)));
-  DagNode *d = static_cast<DagNode*>(qidMap.getMap(p));
+  DagNode* d = static_cast<DagNode*>(qidMap.getMap(p));
   if (d == 0)
     {
       d = new QuotedIdentifierDagNode(qidSymbol, Token::backQuoteSpecials(id));
@@ -121,7 +121,7 @@ MetaLevel::upDagNode(DagNode* dagNode,
   //
   //	See if we have already up'd this dag node via a different path.
   //
-  DagNode *d = static_cast<DagNode*>(dagNodeMap.getMap(dagNode));
+  DagNode* d = static_cast<DagNode*>(dagNodeMap.getMap(dagNode));
   if (d != 0)
     return d;
   //
@@ -160,7 +160,7 @@ MetaLevel::upDagNode(DagNode* dagNode,
       {
 	VariableDagNode* v = safeCast(VariableDagNode*, dagNode);
 	int id = (variableGenerator == 0) ? v->id() :
-	  variableGenerator->getFreshVariableName(variableBase + v->getIndex());
+	  variableGenerator->getFreshVariableName(variableBase + v->getIndex(), 0 /* HACK */);
 	Sort* sort = safeCast(VariableSymbol*, dagNode->symbol())->getSort();
 	d = upVariable(id, sort, qidMap);
 	break;
@@ -291,7 +291,7 @@ MetaLevel::iterToken(DagNode* dagNode)
   free(str);
   return Token::encode(tmp.c_str());
 }
-    
+
 DagNode*
 MetaLevel::upContext(DagNode* dagNode,
 		     MixfixModule* m,
@@ -303,7 +303,7 @@ MetaLevel::upContext(DagNode* dagNode,
   //
   //	See if we have already up'd this dag node via a different path.
   //
-  if (DagNode *d = static_cast<DagNode*>(dagNodeMap.getMap(dagNode)))
+  if (DagNode* d = static_cast<DagNode*>(dagNodeMap.getMap(dagNode)))
     return d;
   //
   //	See if our node is the hole.
@@ -399,21 +399,21 @@ MetaLevel::upResult4Tuple(DagNode* dagNode,
 DagNode*
 MetaLevel::upUnificationPair(const Substitution& substitution,
 			     const VariableInfo& variableInfo,
-			     const mpz_class& variableIndex,
+			     int variableFamilyName,
 			     MixfixModule* m)
 {
   PointerMap qidMap;
   PointerMap dagNodeMap;
   Vector<DagNode*> args(2);
   args[0] = upSubstitution(substitution, variableInfo, m, qidMap, dagNodeMap);
-  args[1] = succSymbol->makeNatDag(variableIndex);
-  return unificationPairSymbol->makeDagNode(args);
+  args[1] = upQid(variableFamilyName, qidMap);
+  return matchPairSymbol->makeDagNode(args);  // unificationPairSymbol coincided at kind level so is eliminated
 }
 
 DagNode*
 MetaLevel::upUnificationTriple(const Substitution& substitution,
 			       const VariableInfo& variableInfo,
-			       const mpz_class& variableIndex,
+			       int variableFamilyName,
 			       MixfixModule* m)
 {
   PointerMap qidMap;
@@ -426,10 +426,9 @@ MetaLevel::upUnificationTriple(const Substitution& substitution,
 			  dagNodeMap,
 			  args[0],
 			  args[1]);
-  args[2] = succSymbol->makeNatDag(variableIndex);
+  args[2] = upQid(variableFamilyName, qidMap);
   return unificationTripleSymbol->makeDagNode(args);
 }
-
 
 void
 MetaLevel::upDisjointSubstitutions(const Substitution& substitution,
@@ -578,10 +577,10 @@ MetaLevel::upSmtResult(DagNode* state,
   PointerMap dagNodeMap;
   args[0] = upDagNode(state, m, qidMap, dagNodeMap);
   args[1] = upSmtSubstitution(substitution,
-			     variableInfo,
-			     smtVariables,
-			     m,
-			     qidMap,
+			      variableInfo,
+			      smtVariables,
+			      m,
+			      qidMap,
 			      dagNodeMap);
   args[2] = upDagNode(constraint, m, qidMap, dagNodeMap);
   args[3] = succSymbol->makeNatDag(variableNumber);
@@ -619,9 +618,9 @@ MetaLevel::upNoUnifierTriple(bool incomplete)
 }
 
 DagNode*
-MetaLevel::upNoMatchSubst()
+MetaLevel::upNoMatchSubst(bool incomplete)
 {
-  return noMatchSubstSymbol->makeDagNode();
+  return (incomplete ? noMatchIncompleteSubstSymbol : noMatchSubstSymbol)->makeDagNode();
 }
 
 DagNode*
@@ -694,11 +693,11 @@ MetaLevel::upFailureTrace()
 }
 
 DagNode*
-MetaLevel::upNoParse(int badTokenIndex)
+MetaLevel::upNoParse(int badTokenIndex, bool strategy)
 {
   static Vector<DagNode*> args(1);
   args[0] = succSymbol->makeNatDag(badTokenIndex);
-  return noParseSymbol->makeDagNode(args);
+  return (strategy ? noStratParseSymbol : noParseSymbol)->makeDagNode(args);
 }
 
 DagNode*
@@ -724,9 +723,9 @@ MetaLevel::upBool(bool value)
 }
 
 DagNode*
-MetaLevel::upKindSet(const Vector<ConnectedComponent*>& kinds)
+MetaLevel::upKindSet(const Vector<ConnectedComponent*>& kinds, int nrUserKinds)
 {
-  int nrKinds = kinds.length();
+  int nrKinds = nrUserKinds;
   if (nrKinds == 0)
     return new FreeDagNode(emptySortSetSymbol);
   PointerMap qidMap;
@@ -788,8 +787,8 @@ MetaLevel::upTypeListSet(const Vector<OpDeclaration>& opDecls,
 			 PointerMap& qidMap)
 {
   Vector<DagNode*> args;
-  FOR_EACH_CONST(i, NatSet, chosenDecls)
-    args.append(upTypeList(opDecls[*i].getDomainAndRange(), true, qidMap));
+  for (int i : chosenDecls)
+    args.append(upTypeList(opDecls[i].getDomainAndRange(), true, qidMap));
   int nrArgs = args.size();
   if (nrArgs == 0)
     return new FreeDagNode(emptySortSetSymbol);
@@ -806,7 +805,7 @@ MetaLevel::upTypeList(const Vector<Sort*>& types,
   int nrTypes = types.size();
   if (omitLast)
     --nrTypes;
-  if (nrTypes == 0)
+  if (nrTypes <= 0)  // <= rather than == to avoid compiler warning
     return new FreeDagNode(nilQidListSymbol);
   if (nrTypes == 1)
     return upType(types[0], qidMap);
@@ -850,7 +849,7 @@ MetaLevel::upSubstitution(const Vector<DagNode*>& substitution,
 DagNode*
 MetaLevel::upUnificationPair(const Vector<DagNode*>& unifier,
 			     const NarrowingVariableInfo& variableInfo,
-			     const mpz_class& variableIndex,
+			     int variableFamilyName,
 			     MixfixModule* m)
 {
   PointerMap qidMap;
@@ -858,8 +857,8 @@ MetaLevel::upUnificationPair(const Vector<DagNode*>& unifier,
   Vector<DagNode*> args(2);
 
   args[0] = upSubstitution(unifier, variableInfo, unifier.size(), m, qidMap, dagNodeMap);
-  args[1] = succSymbol->makeNatDag(variableIndex);
-  return unificationPairSymbol->makeDagNode(args);
+  args[1] = upQid(variableFamilyName, qidMap);
+  return matchPairSymbol->makeDagNode(args);  // unificationPairSymbol coincided at kind level so is eliminated
 }
 
 void
@@ -906,7 +905,7 @@ MetaLevel::upDisjointSubstitutions(const Vector<DagNode*>& unifier,
 DagNode*
 MetaLevel::upUnificationTriple(const Vector<DagNode*>& unifier,
 			       const NarrowingVariableInfo& variableInfo,
-			       const mpz_class& variableIndex,
+			       int variableFamilyName,
 			       MixfixModule* m)
 {
   PointerMap qidMap;
@@ -914,14 +913,14 @@ MetaLevel::upUnificationTriple(const Vector<DagNode*>& unifier,
   Vector<DagNode*> args(3);
 
   upDisjointSubstitutions(unifier, variableInfo, m, qidMap, dagNodeMap, args[0], args[1]);
-  args[2] = succSymbol->makeNatDag(variableIndex);
+  args[2] = upQid(variableFamilyName, qidMap);
   return unificationTripleSymbol->makeDagNode(args);
 }
 
 DagNode*
 MetaLevel::upVariant(const Vector<DagNode*>& variant, 
 		     const NarrowingVariableInfo& variableInfo,
-		     const mpz_class& variableIndex,
+		     int variableFamilyName,
 		     const mpz_class& parentIndex,
 		     bool moreInLayer,
 		     MixfixModule* m)
@@ -933,7 +932,7 @@ MetaLevel::upVariant(const Vector<DagNode*>& variant,
   int nrVariables = variant.size() - 1;
   args[0] = upDagNode(variant[nrVariables], m, qidMap, dagNodeMap);
   args[1] = upSubstitution(variant, variableInfo, nrVariables, m, qidMap, dagNodeMap);
-  args[2] = succSymbol->makeNatDag(variableIndex);
+  args[2] = upQid(variableFamilyName, qidMap);
   args[3] = (parentIndex >= 0) ? succSymbol->makeNatDag(parentIndex) :
     noParentSymbol->makeDagNode();
   args[4] = upBool(moreInLayer);
@@ -1158,6 +1157,15 @@ MetaLevel::upNarrowingStep(DagNode* root,
 }
 
 DagNode*
+MetaLevel::upNarrowingSearchPath(const Vector<DagNode*>& narrowingTrace)
+{
+  int traceSize = narrowingTrace.size();
+  return (traceSize == 1 ? narrowingTrace[0] :  // singleton
+	  (traceSize == 0 ? nilNarrowingTraceSymbol :  // empty
+	   narrowingTraceSymbol)->makeDagNode(narrowingTrace));  // associative list
+}
+
+DagNode*
 MetaLevel::upNarrowingSearchPathResult(DagNode* initialDag,
 				       const Substitution& initialRenaming,
 				       const NarrowingVariableInfo& initialVariableInfo,
@@ -1174,9 +1182,7 @@ MetaLevel::upNarrowingSearchPathResult(DagNode* initialDag,
   args[0] = upDagNode(initialDag, m, qidMap, dagNodeMap);
   args[1] = upType(initialDag->getSort(), qidMap);
   args[2] = upSubstitution(initialRenaming, initialVariableInfo, m, qidMap, dagNodeMap);
-  int traceSize = narrowingTrace.size();
-  args[3] = (traceSize == 1 ? narrowingTrace[0] :
-	     (traceSize == 0 ? nilNarrowingTraceSymbol : narrowingTraceSymbol)->makeDagNode(narrowingTrace));
+  args[3] = upNarrowingSearchPath(narrowingTrace);
   args[4] = upSubstitution(unifier, unifierVariableInfo, unifier.size(), m, qidMap, dagNodeMap);
   args[5] = upQid(unifierVariableFamilyName, qidMap);
   return narrowingSearchPathResultSymbol->makeDagNode(args);
@@ -1186,4 +1192,274 @@ DagNode*
 MetaLevel::upNarrowingSearchPathFailure(bool incomplete)
 {
   return (incomplete ? narrowingSearchPathFailureIncompleteSymbol : narrowingSearchPathFailureSymbol)->makeDagNode();
+}
+
+DagNode*
+MetaLevel::upStratExpr(const StrategyExpression* expr,
+		       MixfixModule* m,
+		       PointerMap& qidMap)
+{
+  static Vector<DagNode*> empty(0);
+  Vector<DagNode*> args;  // static make things fail
+
+  if (const TrivialStrategy* e = dynamic_cast<const TrivialStrategy*>(expr))
+    return (e->getResult() ? idleStratSymbol : failStratSymbol)->makeDagNode(empty);
+
+  else if (const TestStrategy* e = dynamic_cast<const TestStrategy*>(expr))
+    {
+      args.resize(2);
+      args[0] = upTerm(e->getPatternTerm(), m, qidMap);
+      args[1] = upCondition(e->getCondition(), m, qidMap);
+
+      switch (e->getDepth())
+	{
+	case -1:
+	  return matchStratSymbol->makeDagNode(args);
+	case 0:
+	  return xmatchStratSymbol->makeDagNode(args);
+	default:
+	  return amatchStratSymbol->makeDagNode(args);
+	}
+    }
+  else if (const OneStrategy* e = dynamic_cast<const OneStrategy*>(expr))
+    {
+      args.resize(1);
+      args[0] = upStratExpr(e->getStrategy(), m, qidMap);
+
+      return oneStratSymbol->makeDagNode(args);
+    }
+  else if (const ApplicationStrategy* e = dynamic_cast<const ApplicationStrategy*>(expr))
+    {
+      DagNode* metaApp;
+
+      if (e->getLabel() == UNDEFINED)
+	metaApp = allStratSymbol->makeDagNode(empty);
+      else
+	{
+	  Vector<DagNode*> args2;
+
+	  args.resize(3);
+	  args[0] = upQid(e->getLabel(), qidMap);
+
+	  {
+	    Vector<DagNode*> args3(2);
+
+	    const Vector<Term*>& variables = e->getVariables();
+	    const Vector<CachedDag>& values = e->getValues();
+
+	    int subsSize = e->getVariables().size();
+	    args2.resize(subsSize);
+
+	    for (int i = 0; i < subsSize; i++)
+	      {
+		args3[0] = upTerm(variables[i], m, qidMap);
+		args3[1] = upTerm(values[i].getTerm(), m, qidMap);
+
+		args2[i] = assignmentSymbol->makeDagNode(args3);
+	      }
+
+	    args[1] = upGroup(args2, emptySubstitutionSymbol, substitutionSymbol);
+	  }
+	  {
+	    const Vector<StrategyExpression*>& strategies = e->getStrategies();
+
+	    int nrStrats = strategies.size();
+	    args2.resize(nrStrats);
+	    for (int i = 0; i < nrStrats; i++)
+	      args2[i] = upStratExpr(strategies[i], m, qidMap);
+
+	    args[2] = upGroup(args2, emptyStratListSymbol, stratListSymbol);
+	  }
+
+	  metaApp = applicationStratSymbol->makeDagNode(args);
+	}
+
+      if (!e->getTop())
+	return metaApp;
+
+      args.resize(1);
+      args[0] = metaApp;
+
+      return topStratSymbol->makeDagNode(args);
+    }
+  else if (const UnionStrategy* e = dynamic_cast<const UnionStrategy*>(expr))
+    {
+      const Vector<StrategyExpression*>& strats = e->getStrategies();
+      int nrArgs = strats.size();
+      args.resize(nrArgs);
+
+      for (int i = 0; i < nrArgs; i++)
+	args[i] = upStratExpr(strats[i], m, qidMap);
+
+      return upGroup(args, failStratSymbol, unionStratSymbol);
+    }
+  else if (const ConcatenationStrategy* e = dynamic_cast<const ConcatenationStrategy*>(expr))
+    {
+      const Vector<StrategyExpression*>& strats = e->getStrategies();
+      int nrArgs = strats.size();
+      args.resize(nrArgs);
+
+      for (int i = 0; i < nrArgs; i++)
+	args[i] = upStratExpr(strats[i], m, qidMap);
+
+      return upGroup(args, idleStratSymbol, concatStratSymbol);
+    }
+  else if (const IterationStrategy* e = dynamic_cast<const IterationStrategy*>(expr))
+    {
+      args.resize(1);
+      args[0] = upStratExpr(e->getStrategy(), m, qidMap);
+
+      return (e->getZeroAllowed() ?
+	    starStratSymbol : plusStratSymbol)->makeDagNode(args);
+    }
+  else if (const BranchStrategy* e = dynamic_cast<const BranchStrategy*>(expr))
+    {
+      args.resize(1);
+      args[0] = upStratExpr(e->getInitialStrategy(), m, qidMap);
+
+      BranchStrategy::Action successAction = e->getSuccessAction();
+      BranchStrategy::Action failureAction = e->getFailureAction();
+
+      if (successAction == BranchStrategy::FAIL && failureAction == BranchStrategy::IDLE)
+	return notStratSymbol->makeDagNode(args);
+
+      else if (successAction == BranchStrategy::IDLE && failureAction == BranchStrategy::FAIL)
+	return testStratSymbol->makeDagNode(args);
+
+      else if (successAction == BranchStrategy::PASS_THRU && failureAction == BranchStrategy::IDLE)
+	return tryStratSymbol->makeDagNode(args);
+
+      else if (successAction == BranchStrategy::ITERATE && failureAction == BranchStrategy::IDLE)
+	return normalizationStratSymbol->makeDagNode(args);
+
+      // General branch case or or-else construct
+      // (in the general case both actions ought to be NEW_STRATEGY because of the way
+      // BranchStrategy is created but we will assume the restrictions in its constructor)
+
+      DagNode* failureDag = 0;
+
+      switch (failureAction)
+	{
+	case BranchStrategy::IDLE:
+	  failureDag = idleStratSymbol->makeDagNode(empty);
+	  break;
+	case BranchStrategy::FAIL:
+	  failureDag = failStratSymbol->makeDagNode(empty);
+	  break;
+	case BranchStrategy::NEW_STRATEGY:
+	  failureDag = upStratExpr(e->getFailureStrategy(), m, qidMap);
+	  break;
+	default:
+	  CantHappen("unexpected failure branch strategy");
+	}
+
+      // Or-else case
+      if (successAction == BranchStrategy::PASS_THRU)
+	{
+	  args.expandBy(1);
+	  args[1] = failureDag;
+	  return orelseStratSymbol->makeDagNode(args);
+	}
+
+      // General case
+      args.resize(3);
+
+      switch (successAction)
+	{
+	case BranchStrategy::IDLE:
+	  args[1] = idleStratSymbol->makeDagNode(empty);
+	  break;
+	case BranchStrategy::FAIL:
+	  args[1] = failStratSymbol->makeDagNode(empty);
+	  break;
+	case BranchStrategy::NEW_STRATEGY:
+	  args[1] = upStratExpr(e->getSuccessStrategy(), m, qidMap);
+	  break;
+	default:
+	  CantHappen("unexpected success branch strategy");
+	}
+      args[2] = failureDag;
+
+      return conditionalStratSymbol->makeDagNode(args);
+    }
+  else if (const SubtermStrategy* e = dynamic_cast<const SubtermStrategy*>(expr))
+    {
+      args.resize(3);
+      args[0] = upTerm(e->getPatternTerm(), m, qidMap);
+      args[1] = upCondition(e->getCondition(), m, qidMap);
+
+      const Vector<Term*>& subpatterns = e->getSubterms();
+      const Vector<StrategyExpression*>& substrats = e->getStrategies();
+
+      int nrSubs = subpatterns.size();
+
+      Vector<DagNode*> args2(nrSubs);
+      Vector<DagNode*> args3(2);
+
+      for (int i = 0; i < nrSubs; i++)
+	{
+	  args3[0] = upTerm(subpatterns[i], m, qidMap);
+	  args3[1] = upStratExpr(substrats[i], m, qidMap);
+
+	  args2[i] = usingStratSymbol->makeDagNode(args3);
+	}
+
+      args[2] = nrSubs == 1 ? args2[0] : usingListStratSymbol->makeDagNode(args2);
+
+      switch (e->getDepth())
+	{
+	case -1:
+	  return matchrewStratSymbol->makeDagNode(args);
+	case 0:
+	  return xmatchrewStratSymbol->makeDagNode(args);
+	default:
+	  return amatchrewStratSymbol->makeDagNode(args);
+	}
+    }
+  else if (const CallStrategy* e = dynamic_cast<const CallStrategy*>(expr))
+    return upCallStrat(e->getStrategy()->id(), e->getTerm(), m, qidMap);
+
+  else
+    {
+      CantHappen("bad strategy");
+      return 0; //  avoid compiler warning
+    }
+}
+
+DagNode*
+MetaLevel::upCallStrat(int label, Term* callTerm, MixfixModule* m, PointerMap& qidMap)
+{
+  Vector<DagNode*> args(2);
+
+  int nrArgs = callTerm->symbol()->arity();
+
+  Vector<DagNode*> args2(nrArgs);
+
+  size_t i = 0;
+
+  for (ArgumentIterator it(*callTerm); it.valid(); it.next())
+    args2[i++] = upTerm(it.argument(), m, qidMap);
+
+  args[0] = upQid(label, qidMap);
+  args[1] = upGroup(args2, emptyTermListSymbol, metaArgSymbol);
+
+  return callStratSymbol->makeDagNode(args);
+}
+
+DagNode*
+MetaLevel::upStratExpr(const StrategyExpression* expr, MixfixModule* m)
+{
+  PointerMap qidMap;
+  return upStratExpr(expr, m, qidMap);
+}
+
+DagNode*
+MetaLevel::upAmbiguity(StrategyExpression* parse1, StrategyExpression* parse2, MixfixModule* m)
+{
+  Assert(parse1 != 0 && parse2 != 0, "null strategy expression");
+  static Vector<DagNode*> args(2);
+  PointerMap qidMap;
+  args[0] = upStratExpr(parse1, m, qidMap);
+  args[1] = upStratExpr(parse2, m, qidMap);
+  return stratAmbiguitySymbol->makeDagNode(args);
 }

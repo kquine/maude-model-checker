@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2007 SRI International, Menlo Park, CA 94025, USA.
 
@@ -36,9 +36,10 @@ public:
 
   int getFreshVariableName(int index, int family);
   Symbol* getBaseVariableSymbol(Sort* sort);
-  bool variableNameConflict(int id);
+  bool variableNameConflict(int id, int okFamily);
   bool belongsToFamily(int id, int family);
-
+  bool isFreshVariableName(int id, int& index, int& family);
+  
   static int getBaseName(int index);
   static int getFamily(int id);
 

@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,19 +27,20 @@ ImportModule::makeRenamedCopy(int name, Renaming* canonical, ModuleCache* module
   DebugAdvisory("makeRenamedCopy() made " << copy << " at address " << static_cast<void*>(copy));
   LineNumber lineNumber(FileTable::AUTOMATIC);
 
-  int nrParameters = parameterNames.size();
-  for (int i = 0; i < nrParameters; ++i)
+  Index nrParameters = parameterNames.size();
+  for (Index i = 0; i < nrParameters; ++i)
     {
       Token t;
       t.tokenize(parameterNames[i], FileTable::AUTOMATIC);
-      copy->addParameter(t, importedModules[i]);
-    }
-  //Assert(!parametersBound(), "renamed module has bound parameters");
-
-  int nrImports = importedModules.size();
-  for (int i = nrParameters; i < nrImports; ++i)
+      copy->addParameter(t, parameterTheories[i]);
+   }
+  copy->copyBoundParameters(this);
+  //
+  //	We only rename regular imports, not parameter theory copies.
+  //
+  for (ImportModule* i : importedModules)
     {
-      if (ImportModule* importCopy = moduleCache->makeRenamedCopy(importedModules[i], canonical))
+      if (ImportModule* importCopy = moduleCache->makeRenamedCopy(i, canonical))
 	copy->addImport(importCopy, INCLUDING, lineNumber);  // HACK should this be INCLUDING?
       else
 	{
@@ -82,6 +83,11 @@ ImportModule::finishCopy(ImportModule* copy, Renaming* canonical)
       if (!(copy->isBad()))
 	{
 	  copy->closeSignature();
+	  //
+	  // Copy strategies
+	  //
+	  copy->importStrategies();
+	  donateStrategies2(copy, canonical);
 	  copy->fixUpImportedOps();
 	  fixUpDonatedOps2(copy, canonical);
 	  DebugAdvisory("finishCopy() done with fixups - from " << this << " to " << copy <<
@@ -96,6 +102,11 @@ ImportModule::finishCopy(ImportModule* copy, Renaming* canonical)
 	    }
 	}
     }
+  //
+  //	Copy rule labels
+  //
+  copy->importRuleLabels();
+  donateRuleLabels(copy, canonical);
   //
   //	Reset phase counter in each imported module and return copy.
   //
@@ -118,7 +129,7 @@ ImportModule::localSort2(ImportModule* copy, Renaming* renaming, const Sort* sor
     id = renaming->renameSort(id);
   Sort* ts = copy->findSort(id);
   Assert(ts != 0, "couldn't find sort " << QUOTE(Token::sortName(id)) <<
-	 " renamed from " << QUOTE(sort) << " in module " << copy);
+  	 " renamed from " << QUOTE(sort) << " in module " << copy);
   return ts;
 }
 
@@ -131,7 +142,7 @@ ImportModule::donateSorts2(ImportModule* copy, Renaming* renaming)
   //
   bool moduleDonatingToTheory = copy->isTheory() && !isTheory();
   const Vector<Sort*>& sorts = getSorts();
-  for (int i = nrImportedSorts; i < nrUserSorts; i++)
+  for (Index i = nrImportedSorts; i < nrUserSorts; ++i)
     {
       Sort* original = sorts[i];
       int id = original->id();
@@ -152,9 +163,9 @@ ImportModule::donateSorts2(ImportModule* copy, Renaming* renaming)
 	      //	A theory is getting the same sort from a module and a theory.
 	      //	This is a nasty situation that can cause various inconsistancies
 	      //	down the road since sorts from modules are handled differently
-	      //	to sorts from thoeries; so we handle it harshly.
+	      //	to sorts from theories; so we handle it harshly.
 	      //
-	      IssueWarning(*copy << ": sort " << QUOTE(original) <<
+	      IssueWarning(*copy << ": sort " << QUOTE(sort) <<
 			    " has been imported from both " << *original <<
 			   " and " << *sort <<
 			   ". Since it is imported from both a module and a theory, this renders theory " <<
@@ -168,22 +179,27 @@ ImportModule::donateSorts2(ImportModule* copy, Renaming* renaming)
 			    " and " << *sort << '.');
 	    }
 	}
-      if (moduleDonatingToTheory)
+      //
+      //	As of 5/2/19 if we are a module, we tell the copy that the sort was declared
+      //	in a module, even if the copy is also a module, and not just in the
+      //	moduleDonatingToTheory case.
+      //
+      if (!isTheory())
 	copy->sortDeclaredInModule.insert(sort->getIndexWithinModule());
     }
   //
   //	Donate our subsort relations, after a possible renaming.
   //
-  for (int i = 0; i < nrUserSorts; i++)
+  for (Index i = 0; i < nrUserSorts; ++i)
     {
-      int nrImports = getNrImportedSubsorts(i);
+      Index nrImports = getNrImportedSubsorts(i);
       const Sort* s = sorts[i];
       const Vector<Sort*>& subsorts = s->getSubsorts();
-      int nrSubsorts = subsorts.length();
+      Index nrSubsorts = subsorts.size();
       if (nrSubsorts > nrImports)
 	{
 	  Sort* ts = localSort2(copy, renaming, s);
-	  for (int j = nrImports; j < nrSubsorts; j++)
+	  for (Index j = nrImports; j < nrSubsorts; ++j)
 	    ts->insertSubsort(localSort2(copy, renaming, subsorts[j]));
 	}
     }
@@ -192,7 +208,7 @@ ImportModule::donateSorts2(ImportModule* copy, Renaming* renaming)
 void
 ImportModule::donateOps2(ImportModule* copy, Renaming* renaming)
 {
-  DebugAdvisory("donateOps2(), from " << this << " to " << copy);
+  DebugOld("donateOps2(), from " << this << " to " << copy);
   Assert(!isBad(), "original module bad " << this);
 
   bool moduleDonatingToTheory = copy->isTheory() && !isTheory();
@@ -204,7 +220,7 @@ ImportModule::donateOps2(ImportModule* copy, Renaming* renaming)
   //	Handle our regular operators.
   //
   const Vector<Symbol*>& symbols = getSymbols();
-  for (int i = 0; i < nrUserSymbols; i++)
+  for (Index i = 0; i < nrUserSymbols; ++i)
     {
       int nrImportedDeclarations = getNrImportedDeclarations(i);
       int nrUserDeclarations = nrUserDecls[i];
@@ -223,6 +239,7 @@ ImportModule::donateOps2(ImportModule* copy, Renaming* renaming)
 	  const Vector<int>* format;
 
 	  int index = (renaming == 0) ? NONE : renaming->renameOp(symbol);  // index of renaming that applies to symbol
+	  DebugOld("index = " << index);
 	  if (index == NONE)
 	    {
 	      name.tokenize(symbol->id(), symbol->getLineNumber());
@@ -247,20 +264,22 @@ ImportModule::donateOps2(ImportModule* copy, Renaming* renaming)
 	    }
 
 	  const Vector<OpDeclaration>& opDecls = symbol->getOpDeclarations();
-	  int domainAndRangeLength = opDecls[0].getDomainAndRange().length();
-	  domainAndRange.resize(domainAndRangeLength);
+	  int domainAndRangeSize = opDecls[0].getDomainAndRange().size();
+	  domainAndRange.resize(domainAndRangeSize);
 	  const Vector<int>& strategy = symbolType.hasFlag(SymbolType::STRAT) ?
 	    symbol->getStrategy() : emptyStrategy;
 	  const NatSet& frozen = symbol->getFrozen();
 
 	  bool originator;
-	  for (int j = nrImportedDeclarations; j < nrUserDeclarations; j++)
+	  for (Index j = nrImportedDeclarations; j < nrUserDeclarations; ++j)
 	    {
 	      const Vector<Sort*>& oldDomainAndRange = opDecls[j].getDomainAndRange();
-	      for (int k = 0; k < domainAndRangeLength; k++)
+	      for (Index k = 0; k < domainAndRangeSize; ++k)
 		domainAndRange[k] = localSort(copy, renaming, oldDomainAndRange[k]);
 	      symbolType.assignFlags(SymbolType::CTOR, opDecls[j].isConstructor());
-	      Symbol* newSymbol = copy->addOpDeclaration(name,  // BUG: name has codeNr = -1
+	      Assert(name.code() != NONE, "bad code");
+	      Assert(name.lineNumber() != NONE, "bad line number");
+	      Symbol* newSymbol = copy->addOpDeclaration(name,
 							 domainAndRange,
 							 symbolType,
 							 strategy,
@@ -294,8 +313,8 @@ ImportModule::donateOps2(ImportModule* copy, Renaming* renaming)
   //
   //	Now handle our polymorphic operators.
   //
-  int nrPolymorphs = getNrPolymorphs();
-  for (int i = nrImportedPolymorphs; i < nrPolymorphs; i++)
+  Index nrPolymorphs = getNrPolymorphs();
+  for (Index i = nrImportedPolymorphs; i < nrPolymorphs; ++i)
     {
       Token name = getPolymorphName(i);
       SymbolType symbolType = getPolymorphType(i);
@@ -324,9 +343,9 @@ ImportModule::donateOps2(ImportModule* copy, Renaming* renaming)
 	}
 
       const Vector<Sort*>& oldDomainAndRange = getPolymorphDomainAndRange(i);
-      int domainAndRangeLength = oldDomainAndRange.length();
+      Index domainAndRangeLength = oldDomainAndRange.size();
       domainAndRange.resize(domainAndRangeLength);
-      for (int j = 0; j < domainAndRangeLength; j++)
+      for (Index j = 0; j < domainAndRangeLength; ++j)
 	{
 	  Sort* s = oldDomainAndRange[j];
 	  domainAndRange[j] = (s == 0) ? 0 : localSort(copy, renaming, s);
@@ -361,7 +380,7 @@ ImportModule::fixUpDonatedOps2(ImportModule* copy, Renaming* renaming)
   //	Handle our regular operators.
   //
   const Vector<Symbol*>& symbols = getSymbols();
-  for (int i = 0; i < nrUserSymbols; i++)
+  for (Index i = 0; i < nrUserSymbols; ++i)
     {
       int nrImportedDeclarations = getNrImportedDeclarations(i);
       if (nrUserDecls[i] > nrImportedDeclarations)
@@ -395,8 +414,8 @@ ImportModule::fixUpDonatedOps2(ImportModule* copy, Renaming* renaming)
   {
     Vector<Sort*> domainAndRange;
     
-    int nrPolymorphs = getNrPolymorphs();
-    for (int i = nrImportedPolymorphs; i < nrPolymorphs; i++)
+    Index nrPolymorphs = getNrPolymorphs();
+    for (Index i = nrImportedPolymorphs; i < nrPolymorphs; ++i)
       {
 	//
 	//	Get polymorph name.
@@ -412,9 +431,9 @@ ImportModule::fixUpDonatedOps2(ImportModule* copy, Renaming* renaming)
 	//	Get polymorph domain and range.
 	//
 	const Vector<Sort*>& oldDomainAndRange = getPolymorphDomainAndRange(i);
-	int domainAndRangeLength = oldDomainAndRange.length();
-	domainAndRange.resize(domainAndRangeLength);
-	for (int j = 0; j < domainAndRangeLength; j++)
+	Index domainAndRangeSize = oldDomainAndRange.size();
+	domainAndRange.resize(domainAndRangeSize);
+	for (Index j = 0; j < domainAndRangeSize; ++j)
 	  {
 	    Sort* s = oldDomainAndRange[j];
 	    domainAndRange[j] = (s == 0) ? 0 : localSort(copy, renaming, s);
@@ -430,42 +449,55 @@ ImportModule::fixUpDonatedOps2(ImportModule* copy, Renaming* renaming)
 void
 ImportModule::localStatementsComplete()
 {
-  nrOriginalMembershipAxioms = getSortConstraints().length();
-  nrOriginalEquations = getEquations().length();
-  nrOriginalRules = getRules().length();
+  //
+  //	Record how many local statement we have so we can
+  //	distiguish them from later imports.
+  //
+  nrOriginalMembershipAxioms = getSortConstraints().size();
+  nrOriginalEquations = getEquations().size();
+  nrOriginalRules = getRules().size();
+  nrOriginalStrategyDefinitions = getStrategyDefinitions().size();
+  //
+  //	Collect labels from parameters and imports.
+  //	We include parameters because we current import statements from
+  //	parameter theories Because labels is a set
+  //	we don't need to worry about duplicates from diamond imports.
+  //
+  for (const ImportModule* i : parameterTheories)
+    labels.insert(i->labels.begin(), i->labels.end());
+  for (const ImportModule* i : importedModules)
+    labels.insert(i->labels.begin(), i->labels.end());
 
-  FOR_EACH_CONST(i, Vector<ImportModule*>, importedModules)
-    labels.insert((*i)->labels.begin(), (*i)->labels.end());
   if (canonicalRenaming == 0)
     {
-      {
-	FOR_EACH_CONST(i, Vector<SortConstraint*>, getSortConstraints())
-	  {
-	    int id = (*i)->getLabel().id();
-	    if (id != NONE)
-	      labels.insert(id);
-	  }
-      }
-      {
-	FOR_EACH_CONST(i, Vector<Equation*>, getEquations())
-	  {
-	    int id = (*i)->getLabel().id();
-	    if (id != NONE)
-	      labels.insert(id);
-	  }
-      }
-      {
-	FOR_EACH_CONST(i, Vector<Rule*>, getRules())
-	  {
-	    int id = (*i)->getLabel().id();
-	    if (id != NONE)
-	      labels.insert(id);
-	  }
-      }
+      //
+      //	We're an original module so collect labels from our statements.
+      //
+      for (const SortConstraint* sc : getSortConstraints())
+	{
+	  int id = sc->getLabel().id();
+	  if (id != NONE)
+	    labels.insert(id);
+	}
+      for (const Equation* eq : getEquations())
+	{
+	  int id = eq->getLabel().id();
+	  if (id != NONE)
+	    labels.insert(id);
+	}
+      for (const Rule* rl : getRules())
+	{
+	  int id = rl->getLabel().id();
+	  if (id != NONE)
+	    labels.insert(id);
+	}
     }
   else
     {
-      FOR_EACH_CONST(i, set<int>, baseModule->labels)
-	labels.insert(canonicalRenaming->renameLabel(*i));
+      //
+      //	We're a renaming of baseModule, so rename the labels from baseModule.
+      //
+      for (int i :  baseModule->labels)
+	labels.insert(canonicalRenaming->renameLabel(i));
     }
 }

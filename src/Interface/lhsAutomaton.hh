@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -31,6 +31,11 @@ class LhsAutomaton
 public:
   virtual ~LhsAutomaton() {}
 
+  //
+  //	If match() returns true, returnedSubproblem is set to remaining subproblem
+  //	to be solved or 0 if matching is complete.
+  //	If match() returns false, returnedSubproblem is not touched.
+  //
   virtual bool match(DagNode* subject,
 		     Substitution& solution,
 		     Subproblem*& returnedSubproblem,

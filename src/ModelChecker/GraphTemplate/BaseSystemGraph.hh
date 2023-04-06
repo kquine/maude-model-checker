@@ -13,7 +13,7 @@
 
 namespace modelChecker {
 
-template <typename T> class SystemGraphTraits;
+template <class T> class SystemGraphTraits;
 
 template <class T>
 class BaseSystemGraph: public DagSystemLabelGraph

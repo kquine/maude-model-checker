@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -31,6 +31,9 @@
 #include "moduleCache.hh"
 #include "compiler.hh"
 #include "viewDatabase.hh"
+#include "viewCache.hh"
+//#include "syntacticView.hh"
+#include "parameterDatabase.hh"
 #include "SMT.hh"
 
 class Interpreter
@@ -40,7 +43,9 @@ class Interpreter
 #ifdef COMPILER
     public Compiler,
 #endif
-    public ViewDatabase
+    public ViewDatabase,
+    public ViewCache,
+    public ParameterDatabase
 {
   NO_COPYING(Interpreter);
 
@@ -52,7 +57,7 @@ public:
       XG_NARROW,
       SMT_SEARCH,
       VU_NARROW,
-      FVU_NARROW,
+      FVU_NARROW
     };
 
   enum Flags
@@ -69,6 +74,7 @@ public:
     //
     SHOW_LOOP_STATS = 0x10,
     SHOW_LOOP_TIMING = 0x20,
+    EREWRITE_LOOP_MODE = 0x40,
     //
     //	Memoization flags.
     //
@@ -93,14 +99,15 @@ public:
     TRACE_MB = 0x20000,
     TRACE_EQ = 0x40000,
     TRACE_RL = 0x80000,
-    TRACE_REWRITE = 0x100000,
-    TRACE_BODY = 0x200000,
-    TRACE_BUILTIN = 0x400000,
+    TRACE_SD = 0x100000,
+    TRACE_REWRITE = 0x200000,
+    TRACE_BODY = 0x400000,
+    TRACE_BUILTIN = 0x800000,
     //
     //	Print attribute flags
     //
-    PRINT_ATTRIBUTE = 0x800000,
-    PRINT_ATTRIBUTE_NEWLINE = 0x1000000,
+    PRINT_ATTRIBUTE = 0x1000000,
+    PRINT_ATTRIBUTE_NEWLINE = 0x2000000,
     /*
     PRINT_ATTRIBUTE_MB = 0x2000000,
     PRINT_ATTRIBUTE_EQ = 0x4000000,
@@ -121,7 +128,7 @@ public:
 
     DEFAULT_FLAGS = SHOW_COMMAND | SHOW_STATS | SHOW_TIMING | SHOW_LOOP_TIMING |
     COMPILE_COUNT |
-    TRACE_CONDITION | TRACE_SUBSTITUTION | TRACE_MB | TRACE_EQ | TRACE_RL | TRACE_REWRITE | TRACE_BODY | TRACE_BUILTIN |
+    TRACE_CONDITION | TRACE_SUBSTITUTION | TRACE_MB | TRACE_EQ | TRACE_RL | TRACE_SD | TRACE_REWRITE | TRACE_BODY | TRACE_BUILTIN |
     AUTO_CLEAR_PROFILE | AUTO_CLEAR_RULES | PRINT_ATTRIBUTE_NEWLINE
   };
 
@@ -136,6 +143,7 @@ public:
     PRINT_MIXFIX = 0x8,		// mixfix notation
     PRINT_WITH_PARENS = 0x10,	// maximal parens
     PRINT_COLOR = 0x20,		// dag node coloring based on ctor/reduced status
+    PRINT_DISAMBIG_CONST = 0x40,	// (c).s for every constant c
     //
     //	Prettyprinter flags for particular symbol types.
     //
@@ -155,6 +163,7 @@ public:
   void endXmlLog();
   MaudemlBuffer* getXmlBuffer() const;
 
+  void cleanCaches();
   void setFlag(Flags flag, bool polarity);
   bool getFlag(Flags flag) const;
   void setPrintFlag(PrintFlags flag, bool polarity);
@@ -166,9 +175,9 @@ public:
   void setCurrentModule(SyntacticPreModule* module);
   void makeClean(int lineNumber);
 
-  View* getCurrentView() const;
+  SyntacticView* getCurrentView() const;
   bool setCurrentView(const Vector<Token>& viewExpr);
-  void setCurrentView(View* view);
+  void setCurrentView(SyntacticView* view);
 
   void parse(const Vector<Token>& subject);
   void reduce(const Vector<Token>& subject, bool debug);
@@ -177,7 +186,8 @@ public:
   void rewrite(const Vector<Token>& subject, Int64 limit, bool debug);
   void fRewrite(const Vector<Token>& subject, Int64 limit, Int64 gas, bool debug);
   void eRewrite(const Vector<Token>& subject, Int64 limit, Int64 gas, bool debug);
-  void sRewrite(const Vector<Token>& subjectAndStrategy, Int64 limit, bool debug);
+  void sRewrite(const Vector<Token>& subjectAndStrategy, Int64 limit, bool debug,
+		bool depthSearch = false);
   void cont(Int64 limit, bool debug);
   void check(const Vector<Token>& subject);
   //
@@ -186,13 +196,19 @@ public:
   void test(const Vector<Token>& subject);
 
   void match(const Vector<Token>& bubble, bool withExtension, Int64 limit);
-  void unify(const Vector<Token>& bubble, Int64 limit);
-  void search(const Vector<Token>& bubble, Int64 limit, Int64 depth, SearchKind searchKind, bool debug);
+  void unify(const Vector<Token>& bubble, Int64 limit, bool irredundant);
+  void search(const Vector<Token>& bubble,
+	      Int64 limit,
+	      Int64 depth,
+	      SearchKind searchKind,
+	      bool debug,
+	      int variantFlags = 0);
   void getVariants(const Vector<Token>& bubble, Int64 limit, bool irredundant, bool debug);
-  void variantUnify(const Vector<Token>& bubble, Int64 limit, bool debug);
+  void variantUnify(const Vector<Token>& bubble, Int64 limit, bool filtered, bool debug);
+  void variantMatch(const Vector<Token>& bubble, Int64 limit, bool debug);
   void smtSearch(const Vector<Token>& subject, int limit, int depth);
 
-  void showSearchPath(int stateNr);
+  void showSearchPath(int stateNr, bool showRule);
   void showSearchPathLabels(int stateNr);
   void showSearchGraph();
 
@@ -217,28 +233,36 @@ public:
   void showModule(bool all = true) const;
   void showModules(bool all) const;
   void showView() const;
+  void showProcessedView() const;
+  void showViews(bool all) const;
   void showVars() const;
   void showOps(bool all = true) const;
   void showMbs(bool all = true) const;
   void showEqs(bool all = true) const;
   void showRls(bool all = true) const;
+  void showStrats(bool all = true) const;
+  void showSds(bool all = true) const;
 
   ImportModule* getModuleOrIssueWarning(int name, const LineNumber& lineNumber);
-  ImportModule* makeModule(const ModuleExpression* expr, ImportModule* enclosingModule = 0);
+  ImportModule* makeModule(const ModuleExpression* expr, EnclosingObject* enclosingObject = 0);
 
 private:
   typedef void (Interpreter::*ContinueFuncPtr)(Int64 limit, bool debug);
 
   static DagNode* makeDag(Term* subjectTerm);
-  static void beginRewriting(bool debug);
   static void printTiming(Int64 nrRewrites, Int64 cpu, Int64 real);
   static void printBubble(ostream& s, const Vector<int>& bubble);
 
+  Argument* handleArgument(const ViewExpression* expr,
+		      EnclosingObject* enclosingObject,
+		      ImportModule* requiredParameterTheory,
+		      int argNr);
   void clearContinueInfo();
   DagNode* makeDag(const Vector<Token>& subject);
   void startUsingModule(VisibleModule* module);
   void printModifiers(Int64 number, Int64 number2);
   void printStats(const Timer& timer, RewritingContext& context, bool timingFlag);
+  void beginRewriting(bool debug);
   void endRewriting(Timer& timer,
 		    CacheableRewritingContext* context,
 		    VisibleModule* module,
@@ -247,9 +271,10 @@ private:
   void fRewriteCont(Int64 limit, bool debug);
   void eRewriteCont(Int64 limit, bool debug);
   bool contLoop2(const Vector<Token>& input);
-  void doLoop(DagNode* d, VisibleModule* module);
+  void doLoop(CacheableRewritingContext* context, VisibleModule* module);
   void searchCont(Int64 limit, bool debug);
   void sRewriteCont(Int64 limit, bool debug);
+  void dsRewriteCont(Int64 limit, bool debug);
   void doSearching(Timer& timer,
 		   VisibleModule* module,
 		   RewriteSequenceSearch* state,
@@ -286,6 +311,12 @@ private:
 			    Int64 solutionCount,
 			    Int64 limit);
   void variantUnifyCont(Int64 limit, bool debug);
+  void doVariantMatching(Timer& timer,
+			 VisibleModule* module,
+			 VariantSearch* state,
+			 Int64 solutionCount,
+			 Int64 limit);
+  void variantMatchCont(Int64 limit, bool debug);
   void doSmtSearch(Timer& timer,
 		   VisibleModule* module,
 		   SMT_RewriteSequenceSearch* state,
@@ -293,12 +324,12 @@ private:
 		   Int64 limit);
   void smtSearchCont(Int64 limit, bool debug);
 
-  void doExternalRewriting(UserLevelRewritingContext* context, Int64 limit);
   void doStrategicSearch(Timer& timer,
 			 VisibleModule* module,
 			 StrategicSearch* state,
 			 Int64 solutionCount,
-			 Int64 limit);
+			 Int64 limit,
+			 bool depthSearch);
   void printDecisionTime(const Timer& timer);
   void printSearchTiming(const Timer& timer,  RewriteSequenceSearch* state);
   void doMatching(Timer& timer,
@@ -327,7 +358,7 @@ private:
   int flags;
   int printFlags;
   SyntacticPreModule* currentModule;
-  View* currentView;
+  SyntacticView* currentView;
   //
   //	Continuation information.
   //
@@ -416,14 +447,14 @@ Interpreter::getCurrentModule() const
   return currentModule;
 }
 
-inline View*
+inline SyntacticView*
 Interpreter::getCurrentView() const
 {
   return currentView;
 }
 
 inline void
-Interpreter::setCurrentView(View* view)
+Interpreter::setCurrentView(SyntacticView* view)
 {
   currentView = view;
 }

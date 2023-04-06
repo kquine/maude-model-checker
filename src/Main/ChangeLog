@@ -1,3 +1,598 @@
+2023-03-03  Steven Eker  <eker@pup>
+
+	* prelude.maude: update version number
+
+===================================Maude141===========================================
+
+2023-02-22  Steven Eker  <eker@mu.csl.sri.com>
+
+	* term-order.maude: deleted stray lines at the end of the file
+
+2023-02-17  Steven Eker  <eker@pup>
+
+	* main.cc (main): added -debug flag
+	(printHelp): mention debug flag
+
+===================================Maude141===========================================
+
+2023-02-09  Steven Eker  <eker@pup>
+
+	* prelude.maude: added constant pconst to fmod META-MODULE and pconstSymbol
+	hook to metaReduce() in fmod META-LEVEL
+	added op generated-by to fmod META-MODULE and generatedBySymbol hood to
+	metaReduce() in fmod META-LEVEL
+
+===================================Maude140===========================================
+
+2023-01-31  Steven Eker  <eker@pup>
+
+	* prelude.maude: added format attribute to print space after comma for
+	_,_ : AttributeSet AttributeSet -> AttributeSet
+
+2023-01-04  Steven Eker  <eker@pup>
+
+	* prelude.maude: added getClass() projection function to mod CONFIGURATION
+
+2023-01-03  Steven Eker  <eker@pup>
+
+	* prelude.maude: added special to op <_:_|_>
+
+===================================Maude139===========================================
+
+2021-09-21  Steven Eker  <eker@pup>
+
+	* prelude.maude: applied Rubén's patch to make projection functions work for
+	parameterized meta-modules
+
+2021-07-20  Steven Eker  <eker2@eker10>
+
+	* prelude.maude: use oo rather than omod
+
+===================================Maude137===========================================
+
+2021-06-01  Steven Eker  <eker2@eker10>
+
+	* main.cc (printHelp): updated line for -assoc-unif-depth=
+	(main): new setDepthBoundMultiplier() convention
+	(main): use strtod() rather than stringToDouble()
+
+2021-05-18  Steven Eker  <eker2@eker10>
+
+	* main.cc (main): support -assoc-unif-depth=
+	(printHelp): added -assoc-unif-depth=
+
+2021-04-28  Steven Eker  <eker2@eker10>
+
+	* main.cc (main): added -allow-dir flag
+	(printHelp): added -allow-dir flag
+
+2021-04-27  Steven Eker  <eker2@eker10>
+
+	* main.cc (main): call setAllowDir() in -trust case
+
+===================================Maude136===========================================
+
+2021-04-26  Steven Eker  <eker2@eker10>
+
+	* file.maude: added mod DIRECTORY
+
+2021-04-20  Steven Eker  <eker2@eker10>
+
+	* file.maude: added makeLink()/madeLink() messages; hard, symbolic
+	constants, LinkType sort
+
+2021-03-31  Steven Eker  <eker2@eker10>
+
+	* file.maude: added cancelGetLine(), canceledGetLine(),
+	streamError()
+
+2021-03-29  Steven Eker  <eker2@eker10>
+
+	* main.cc (main): always call setAutoWrap() and pass flag
+
+===================================Maude135===========================================
+
+2021-03-10  Steven Eker  <eker2@eker10>
+
+	* main.cc (printHelp): fixed typo
+
+2021-03-05  Steven Eker  <eker2@eker10>
+
+	* time.maude: changed startTimer() time from Nat to NzNat
+
+2021-03-01  Steven Eker  <eker2@eker10>
+
+	* time.maude: created
+
+===================================Maude134===========================================
+
+2021-02-16  Steven Eker  <eker2@eker10>
+
+	* file.maude: added missing startSymbol op-hook; added
+	removeFile()/removedFile()
+
+===================================Maude133===========================================
+
+2020-12-02  Steven Eker  <eker2@eker10>
+
+	* metaInterpreter.maude: added interpreterExit()
+
+2020-11-12  Steven Eker  <eker2@eker10>
+
+	* metaInterpreter.maude: added interpreterError message; added
+	hook for stringSymbol
+
+2020-11-11  Steven Eker  <eker2@eker10>
+
+	* metaInterpreter.maude: added newProcess ctor
+
+2020-09-28  Steven Eker  <eker2@eker10>
+
+	* main.cc (printHelp): fix alignment of -allow-processes
+
+===================================Maude131===========================================
+
+2020-09-16  Steven Eker  <eker2@eker10>
+
+	* metaInterpreter.maude: getNarrowingSearchResult() and
+	getNarrowingSearchResultAndPath() now take VariantOptionSet
+	arguments, with a backward compatibility declarations and
+	equations
+
+	* prelude.maude: metaNarrowingApply() now takes VariantOptionSet
+	argument, with a backward compatibility declaration and equation;
+	metaNarrowingSearch() and metaNarrowingSearchPath() now take
+	VariantOptionSet arguments, with a backward compatibility
+	declarations and equations
+
+2020-09-15  Steven Eker  <eker2@eker10>
+
+	* metaInterpreter.maude: getOneStepNarrowing() now takes a
+	VariantOptionSet argument, with a backward compatibility
+	declaration and equation
+
+===================================Maude130===========================================
+
+2020-09-08  Steven Eker  <eker2@eker10>
+
+	* metaInterpreter.maude: added
+	getVariantMatcher()/gotVariantMatcher() messages
+
+2020-09-03  Steven Eker  <eker2@eker10>
+
+	* prelude.maude: added matching problem ctors, noMatchIncomplete,
+	metaVariantMatch()
+
+2020-09-02  Steven Eker  <eker2@eker10>
+
+	* metaInterpreter.maude: getVariantUnifier() and
+	getDisjointVariantUnifier() now take VariantOptionSet as their 7th
+	argument; added declarations and equations for backwards compatibility
+
+2020-08-31  Steven Eker  <eker2@eker10>
+
+	* prelude.maude: added backward compatibility declarations and
+	equations for metaVariantUnify(), metaVariantDisjointUnify();
+	added signature for variant options; updated decls for
+	metaVariantUnify(), metaVariantDisjointUnify() to take
+	VariantOptionSet argument
+
+2020-07-14  Steven Eker  <eker2@eker10>
+
+	* metaInterpreter.maude: added getIrredundantUnifier(),
+	gotIrredundantUnifier(), getIrredundantDisjointUnifier(),
+	gotIrredundantDisjointUnifier()
+
+	* prelude.maude: added metaIrredundantUnify(),
+	metaIrredundantDisjointUnify()
+
+===================================Maude129===========================================
+
+2020-07-09  Steven Eker  <eker2@eker10>
+
+	* main.cc (main): -no-execute becomes -allow-processes
+	(main): added flags -allow-files, -trust
+	(printHelp): updated with new flags
+
+2020-06-04  Steven Eker  <eker2@eker10>
+
+	* main.cc (printHelp): fix tabbing on -no-execute
+
+2020-05-19  Steven Eker  <eker2@eker10>
+
+	* main.cc (printHelp): -get-pid -> -show-pid
+
+2020-04-24  Steven Eker  <eker2@eker9>
+
+	* process.maude: added sort ExitStatus, ops normalExit,
+	terminatedBySignal; use ExitStatus for exited message; don't
+	protect INT, don't have hook for minusSymbol
+
+	* main.cc (main): added -no-execute flag
+	(printHelp): added -no-execute flag
+
+2020-04-22  Steven Eker  <eker2@eker9>
+
+	* process.maude: added op-hook for minusSymbol; protecting INT
+
+2020-04-16  Steven Eker  <eker2@eker9>
+
+	* process.maude: added signaledProcess() and waitForExit()
+	messages
+
+2020-03-30  Steven Eker  <eker2@eker9>
+
+	* process.maude: added sorts ProcessOption, ProcessOptionSet;
+	createProcess now takes ProcessOptionSet rather than 2nd
+	StringList for environment; added none
+
+2020-03-26  Steven Eker  <eker2@eker9>
+
+	* process.maude: added fmod STRING-LIST; use STRING-LIST in
+	PROCESS; added nilStringListSymbol and stringListSymbol hooks
+
+2020-03-24  Steven Eker  <eker2@eker9>
+
+	* process.maude: added hook for socketManagerSymbol
+
+2020-03-19  Steven Eker  <eker2@eker9>
+
+	* process.maude: updated to reflect move to sockets for
+	communication
+
+2020-03-18  Steven Eker  <eker2@eker9>
+
+	* process.maude: created
+
+2020-03-10  Rubén Rubio  <rubenrub@ucm.es>
+
+       * prelude.maude: changed sort of the strategy all to RuleApplication
+
+===================================Maude128a===========================================
+
+2020-02-28  Steven Eker  <eker@mu>
+
+	* prelude.maude: added projection functions for UnificationTriple,
+	Variant and TraceStep
+
+2020-02-27  Steven Eker  <eker@mu>
+
+	* prelude.maude: added projection functions for UnificationPair;
+	added applySubstitution()
+
+===================================Maude128===========================================
+
+2019-11-22  Steven Eker  <eker@mu>
+
+	* prelude.maude: revert to Qid < Header pending further
+	discussion of the metasyntax
+
+===================================Maude126===========================================
+
+2019-11-21  Steven Eker  <eker@mu>
+
+	* main.cc (printHelp): added -erewrite-loop-mode
+	(main): handle -erewrite-loop-mode
+
+2019-11-14  Rubén Rubio  <rubenrub@ucm.es>
+
+	* prelude.maude: metaSrewrite takes a SrewriteOption and
+	metaDsrewrite is removed. metaParseStrategy and
+	and metaPrettyPrintStrategy receive a VariableSet.
+
+2019-11-12  Rubén Rubio  <rubenrub@ucm.es>
+
+	* prelude.maude: renaming from VarStratPair to UsingPair,
+	VarStratList to UsingPairSet (and added equation), BasicStrategy
+	to RuleApplication, _(_) to _[[_]], metaSRewrite to metaSrewrite,
+	metaDSRewrite to metaDsrewrite, metaStratParse to metaParseStrategy,
+	and metaStratPrettyPrint to metaPrettyPrintStrategy. Added precedence
+	21 to rule application symbol. Changed equation for [_] : Qid -> Module
+	operator to support strategy modules. Added upStratDecls and upSds.
+
+2019-11-11  Steven Eker  <eker@mu>
+
+	* metaInterpreter.maude: parsedQidList()/parsedQidList() ->
+	parseTerm()/parsedTerm()
+
+2019-11-08  Steven Eker  <eker@mu>
+
+	* metaInterpreter.maude: printTerm()/parseQidList() now take
+	VariableSet arg for variables that can be abbreviated
+
+2019-11-06  Steven Eker  <eker@mu>
+
+	* prelude.maude: added sort SrewriteOption and ops breadthFirst,
+	depthFirst
+
+	* metaInterpreter.maude: srewriteTerm now takes an SrewriteOption
+	argument
+
+2019-11-05  Steven Eker  <eker@mu>
+
+	* metaInterpreter.maude: added decls for srewriteTerm/srewroteTerm
+
+2019-11-04  Steven Eker  <eker@mu>
+
+	* prelude.maude:  metaPrettyPrint() now takes 4 arguments; added
+	backward compatibility version
+
+2019-11-01  Steven Eker  <eker@mu>
+
+	* prelude.maude: changed emptyQidSetSymbol from empty to
+	none; fixed qidSetSymbol hook symbol and range
+
+2019-10-31  Steven Eker  <eker@mu>
+
+	* prelude.maude: rearrange subsort declarations to avoid
+	a redundant NeQidSet < QidSet
+
+2019-10-30  Steven Eker  <eker@mu>
+
+	* prelude.maude: EmptyTypeSet -> EmptyQidSet
+	Added decls for variable sets
+
+2019-10-18  Steven Eker  <eker@mu>
+
+	* prelude.maude: get rid of unificationPairSymbol hook; we're
+	going to merge the operator with matchPairSymbol because they
+	are subsort overloaded; fix new unificaton pair op so that Qid
+	is second argument; add sort MatchOrUnificationPair and
+	subsort MatchPair UnificationPair < MatchOrUnificationPair
+
+2019-10-17  Steven Eker  <eker@mu>
+
+	* prelude.maude: use legacyMetaUnify, legacyMetaDisjointUnify
+	for deprecated versions
+
+2019-10-16  Steven Eker  <eker@mu>
+
+	* prelude.maude: added op-hooks legacyUnificationPairSymbol,
+	legacyUnificationTripleSymbol, legacyVariantSymbol
+
+2019-10-15  Steven Eker  <eker@mu>
+
+	* prelude.maude: new variable family based ctors for
+	UnificationPair, UnificationTriple, Variant and descent
+	functions metaUnify(), metaDisjointUnify(), metaGetVariant(),
+	metaGetIrredundantVariant(), metaVariantUnify(),
+	metaVariantDisjointUnify()
+
+===================================Maude125===========================================
+
+2019-10-10  Rubén Rubio  <rubenrub@ucm.es>
+
+	* prelude.maude: conditions of tests and matchrews are now
+	EqCondition instead of Condition. Added a new parameter to
+	metaStratParse. to-expr changed to to expr (without hyphen).
+
+2019-09-19  Rubén Rubio  <rubenrub@ucm.es>
+
+	* prelude.maude: getStratDefs renamed to getSds,
+	make matchrew's using pair list associative and commutative
+
+2019-05-24  Steven Eker  <eker@mu.csl.sri.com>
+
+	* prelude.maude: revert to renaming after instantiating
+	after parameter for WEAKLY-SORTABLE-LIST, SORTABLE-LIST
+	WEAKLY-SORTABLE-LIST', SORTABLE-LIST', SORTABLE-LIST-AND-SET,
+	SORTABLE-LIST-AND-SET'
+
+2019-04-11  Steven Eker  <eker@mu.csl.sri.com>
+
+	* prelude.maude: added parameterized views: List,
+	WeaklySortableList, SortableList, WeaklySortableList',
+	SortableList', Set, List*, Set*, Map, Array
+
+2019-03-28  Steven Eker  <eker@mu.csl.sri.com>
+
+	* prelude.maude: rename before instantiating by parameter
+	in fmod WEAKLY-SORTABLE-LIST, fmod SORTABLE-LIST,
+	fmod WEAKLY-SORTABLE-LIST', fmod SORTABLE-LIST',
+	fmod SORTABLE-LIST-AND-SET, fmod SORTABLE-LIST-AND-SET'
+
+2019-02-15  Steven Eker  <eker@mu.csl.sri.com>
+
+	* prelude.maude: reorganized view and module expressions
+	to fix pre-regularity issues
+	deleted viewInstantiationSymbol
+	require NeParameterList for view and module instantiations
+
+2019-02-14  Steven Eker  <eker@mu.csl.sri.com>
+
+	* prelude.maude: added sort ViewExpression and operator
+	 _{_} : ViewExpression ParameterList -> ViewExpression
+	handle view with parameter decl lists in getName()
+	projection function
+
+===================================Maude121===========================================
+
+2018-20-12  Rubén Rubio  <rubenrub@ucm.es>
+
+	* prelude.maude: added 'all' strategy to META-STRATEGY, and
+	metaStratParse, metaStratPrettyPrint, and metaDSRewrite to
+	META-LEVEL. metaSRewrite signature has changed to match similar
+	functions. Now, it receives a solution index instead of returning
+	a set. Removed sort ResultSet.
+
+2018-12-05  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added
+	getNarrowingSearchResult/gotNarrowingSearchResult,
+	getNarrowingSearchResultAndPath/gotNarrowingSearchResultAndPath
+
+2018-11-29  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: getOneStepNarrow/gotOneStepNarrow ->
+	getOneStepNarrowing/gotOneStepNarrowing
+
+2018-11-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: changed narrowWithRule/narrowedWithRule
+	to getOneStepNarrow/gotOneStepNarrow since we're not passing
+	the label of a specific rule
+
+2018-11-27  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added narrowWithRule, narrowedWithRule
+
+2018-11-13  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: make interpreter a ctor
+
+2018-11-02  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added applyRule/appliedRule (2
+	overloaded versions)
+
+===================================Maude120===========================================
+
+2018-10-22  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added parseQidList/parsedQidList
+
+2018-10-16  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added printTerm/printedTerm
+
+2018-10-12  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added gotVariantUnifier,
+	gotDisjointVariantUnifier
+
+2018-10-11  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added getDisjointVariantUnifier,
+	getVariantUnifier
+
+2018-10-03  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added RewriteCount to gotVariant
+
+2018-09-28  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added getVariant/gotVariant,
+	noSuchResult (4 arg version)
+
+2018-09-25  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added getUnifier/gotUnifier,
+	getDisjointUnifier/gotDisjointUnifier, noSuchResult (Bool version)
+
+2018-09-17  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added normlizeTerm/normalizedTerm
+
+2018-09-14  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added getMaximalAritySet/gotMaximalAritySet
+
+===================================Maude119===========================================
+
+2018-08-17  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added getKind/gotKind,
+	getKinds/gotKinds
+	added getGlbTypes/gotGlbTypes
+
+2018-08-16  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added compareTypes/comparedTypes
+	deleted op-hook succSymbol
+
+2018-08-14  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added getLesserSorts/gotLesserSorts,
+	getMaximalSorts/gotMaximalSorts, getMinimalSorts/gotMinimalSorts
+
+2018-08-13  Steven Eker  <eker@install.csl.sri.com>
+
+	* prelude.maude: added upperCase(), lowerCase()
+
+2018-08-09  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added sorts InterpreterOption
+	InterpreterOptionSet, and constant none; createInterpreter()
+	now takes InterpreterOptionSet argument
+
+2018-08-07  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added getXmatch/gotXmatch
+
+2018-08-06  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added getMatch/gotMatch
+
+2018-08-02  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added getSearchResultAndPathMsg,
+	gotSearchResultAndPathMsg
+
+2018-07-31  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: updated decl for gotSearchResult()
+
+2018-07-30  Steven Eker  <eker@install.csl.sri.com>
+
+	* main.cc (printHelp): add -show-pid
+	(main): add -show-pid
+
+2018-07-20  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added getSearchResult() and
+	gotSearchResult() messages
+	added noSuchResultMsg() message
+
+2018-07-19  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: use Type rather than Sort for return
+	messages
+
+===================================Maude118===========================================
+
+2018-05-30  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added messages erewriteTerm()
+	and erewroteTerm()
+
+2018-05-18  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added messages showView() and
+	showingView()
+
+2018-05-16  Steven Eker  <eker@install.csl.sri.com>
+
+	* metaInterpreter.maude: added messages insertView() and
+	insertedView()
+
+===================================Maude117===========================================
+
+2018-04-29  Rubén Rubio  <rubenrub@ucm.es>
+
+	* prelude.maude: added strategy renamings for module expressions
+	and strategy mappings to metaviews. Changed -> to ~> in metaSRewrite
+
+2018-04-10  Rubén Rubio  <rubenrub@ucm.es>
+
+	* prelude.maude: added 'one' strategy to META-STRATEGY
+
+2018-03-23  Rubén Rubio  <rubenrub@ucm.es>
+
+	* prelude.maude: added fmod META-STRATEGY, moved metaconditions to
+	META-CONDITION. Added strategy modules syntax and hooks, and metaSRewrite
+	operator to META-LEVEL.
+
+2018-03-16  Steven Eker  <eker@install.csl.sri.com>
+
+	* Makefile.am (maude_LDADD): remove refs to MSCP10
+
+2017-12-06  Steven Eker  <eker@install.csl.sri.com>
+
+	* main.cc (main): call setUsePromptsAnyway() in
+	forceInteractive case
+
+===================================Maude116===========================================
+
 2017-08-08  Steven Eker  <eker@install.csl.sri.com>
 
 	* prelude.maude: fmod LEXICAL: print -> printTokens to

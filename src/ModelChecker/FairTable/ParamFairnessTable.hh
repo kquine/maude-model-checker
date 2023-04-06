@@ -47,7 +47,7 @@ private:
 	unique_ptr<GroundFairness> createFormulaFairness(const Formula& f,
 			const vector<unsigned int>& propIds, DagNode* fairDag) const override;
 
-	unsigned int getNextFairIndex() const;
+	unsigned int getNextFairIndex() const override;
 	typename ParamFairnessTable<Formula>::ParamInfo& getParamInfo(unsigned int fairId) const override;
 	typename ParamFairnessTable<Formula>::InstanceInfo* getInstanceInfo(unsigned int fairId) const override;
 	void insertInstance(unsigned int pfi, const ParamSubstitution* s) override;

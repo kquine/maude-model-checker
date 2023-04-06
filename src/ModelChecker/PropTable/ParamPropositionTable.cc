@@ -80,7 +80,7 @@ ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContex
 		{
 			unique_ptr<InstancePropInfo> ipi(new InstancePropInfo(*propInfoTable[propId]));
 			ipi->matchingPropNSubstRefs =  compact(computeMatchingProps(propDag, parentContext));
-			propInfoTable[propId] = move(ipi);
+			propInfoTable[propId] = std::move(ipi);
 		}
 		return getInstancePropInfo(propId)->matchingPropNSubstRefs.empty() ? NONE : propId;
 	}
@@ -96,7 +96,7 @@ ParamPropositionTable::insertInstanceAndUpdate(DagNode* propDag, RewritingContex
 
 			unique_ptr<InstancePropInfo> ipi(new InstancePropInfo(*propInfoTable[newPropId]));
 			ipi->matchingPropNSubstRefs = compact(temp);
-			propInfoTable[newPropId] = move(ipi);
+			propInfoTable[newPropId] = std::move(ipi);
 			return newPropId;
 		}
 		return NONE;

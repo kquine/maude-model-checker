@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -68,6 +68,7 @@ private:
   struct Inv;
 
   void associativeSortCheck();
+  void associativeCtorCheck();
   void associativeSortBoundsAnalysis();
   void associativeSortStructureAnalysis();
   bool checkUniformity(const Sort* uniformSort, int nrSorts);

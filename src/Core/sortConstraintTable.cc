@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -119,6 +119,15 @@ SortConstraintTable::compileSortConstraints()
 void
 SortConstraintTable::constrainToSmallerSort2(DagNode* subject, RewritingContext& context)
 {
+  if (context.isLimited())
+    {
+      //
+      //	Limited rewriting contexts don't support sort constraint application and
+      //	are only used for functionality that doesn't support sort constraints.
+      //
+      DebugInfo("ignoring sort constraints for " << subject << " because context is limited");
+      return;
+    }
   int currentSortIndex = subject->getSortIndex();
   Subproblem* sp;
   //

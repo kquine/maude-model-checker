@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2010 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@
 //
 #ifndef _dagNode_hh_
 #define _dagNode_hh_
-//#include "gmpxx.h"
 #include "symbol.hh"
 #include "redexPosition.hh"
 
@@ -37,11 +36,12 @@ public:
   DagNode(Symbol* symbol, int sortIndex = Sort::SORT_UNKNOWN);
   virtual ~DagNode() {}
   void setCallDtor();
+  bool needToCallDtor() const;
   //
-  //	Nasty cross casting stuff.
+  //    Get pointer to MemoryInfo object associated with us.
   //
-  MemoryCell* getMemoryCell();
-  const MemoryCell* getMemoryCell() const;
+  MemoryInfo* getMemoryInfo();
+  const MemoryInfo* getMemoryInfo() const;
   //
   //	Static members (for memory management).
   //
@@ -97,11 +97,6 @@ public:
 		     Subproblem*& returnedSubproblem,
 		     ExtensionInfo* extensionInfo);
   //
-  //	Currently only used as an efficiency measure in changing the sorts
-  //	of fresh variables introduced by unification.
-  //
-  void replaceSymbol(Symbol* newSymbol);
-  //
   //	These member functions must be defined for each derived class.
   //
   virtual RawDagArgumentIterator* arguments() = 0;
@@ -123,17 +118,27 @@ public:
     UNIMPLEMENTED
   };
 
-  virtual ReturnResult computeBaseSortForGroundSubterms();
+  virtual ReturnResult computeBaseSortForGroundSubterms(bool warnAboutUnimplemented);
   bool computeSolvedForm(DagNode* rhs, UnificationContext& solution, PendingUnificationStack& pending);
   virtual bool computeSolvedForm2(DagNode* rhs, UnificationContext& solution, PendingUnificationStack& pending);
 
   void insertVariables(NatSet& occurs);
   virtual void insertVariables2(NatSet& occurs) {}
   //
+  //	instantiate() is used for two distinct purposes:
+  //	(1) To construct finished dags (such as unifiers from solved forms); and
+  //	(2) To patch up dags prior to use (e.g. replace variables with fresh variables
+  //	    prior to narrowing).
+  //
+  //	For (1), we expect that dags are theory normalized and that ground dags have
+  //	their sorts computed - we need these invariants maintained under instatiation.
+  //	For (2) we have no such expectation and trying to compute sorts could cause
+  //	an error.
+  //
   //	instantiate() returns 0 if instantiation does not change term.
   //
-  DagNode* instantiate(const Substitution& substitution);
-  virtual DagNode* instantiate2(const Substitution& substitution) { CantHappen("Not implemented"); return 0; }
+  DagNode* instantiate(const Substitution& substitution, bool maintainInvariants);
+  virtual DagNode* instantiate2(const Substitution& substitution, bool maintainInvariants);
   //
   //	instantiateWithCopies() is similar but uses copies in eager positions.
   //
@@ -172,7 +177,10 @@ public:
   //	Utility function for variant narrowing.
   //
   bool reducibleByVariantEquation(RewritingContext& context);
-
+  //
+  //	Utility function for variant matching.
+  //
+  virtual void indexVariables(VariableInfo& indicies);
 #ifdef DUMP
   //
   //	dump() routine is optional; Default will dump common stuff togther with args
@@ -247,7 +255,7 @@ private:
 #define SAFE_INSTANTIATE(dagNode, eagerFlag, substitution, eagerCopies) \
   if (DagNode* _t = (eagerFlag ?					\
 		     dagNode->instantiateWithCopies(substitution, eagerCopies) : \
-		     dagNode->instantiate(substitution)))		\
+		     dagNode->instantiate(substitution, false)))		\
   dagNode = _t
 
 //
@@ -257,29 +265,29 @@ ostream& operator<<(ostream& s, DagNode* dagNode);
 
 #include "memoryCell.hh"
 
-inline MemoryCell*
-DagNode::getMemoryCell()
+inline MemoryInfo*
+DagNode::getMemoryInfo()
 {
-  return static_cast<MemoryCell*>(static_cast<void*>(this));
+  return MemoryCell::getMemoryInfo(this);
 }
 
-inline const MemoryCell*
-DagNode::getMemoryCell() const
+inline const MemoryInfo*
+DagNode::getMemoryInfo() const
 {
-  return static_cast<const MemoryCell*>(static_cast<const void*>(this));
+  return MemoryCell::getMemoryInfo(this);
 }
 
 inline void
 DagNode::copySetRewritingFlags(const DagNode* other)
 {
-  getMemoryCell()->copySetFlags(REDUCED | UNREWRITABLE | UNSTACKABLE | GROUND_FLAG,
-				other->getMemoryCell());
+  getMemoryInfo()->copySetFlags(REDUCED | UNREWRITABLE | UNSTACKABLE | GROUND_FLAG,
+				other->getMemoryInfo());
 }
 
 inline void
 DagNode::copySortIndex(const DagNode* other)
 {
-  getMemoryCell()->setHalfWord(other->getMemoryCell()->getHalfWord());
+  getMemoryInfo()->setHalfWord(other->getMemoryInfo()->getHalfWord());
 }
 
 inline void
@@ -296,32 +304,32 @@ DagNode::upgradeSortIndex(const DagNode* other)
   //	always be in agreement and SORT_UNKNOWN is represented by -1, i.e.
   //	all 1 bits.
   //
-  getMemoryCell()->setHalfWord(getMemoryCell()->getHalfWord() &
-			       other->getMemoryCell()->getHalfWord());
+  getMemoryInfo()->setHalfWord(getMemoryInfo()->getHalfWord() &
+			       other->getMemoryInfo()->getHalfWord());
 }
 
 inline void
 DagNode::setCallDtor()
 {
-  getMemoryCell()->setCallDtor();
+  getMemoryInfo()->setCallDtor();
+}
+
+inline bool
+DagNode::needToCallDtor() const
+{
+  return getMemoryInfo()->needToCallDtor();
 }
 
 inline int
 DagNode::getSortIndex() const
 {
-  return getMemoryCell()->getHalfWord();
+  return getMemoryInfo()->getHalfWord();
 }
 
 inline void
 DagNode::setSortIndex(int index)
 {
-  getMemoryCell()->setHalfWord(index);
-}
-
-inline void
-DagNode::replaceSymbol(Symbol* newSymbol)
-{
-  topSymbol = newSymbol;
+  getMemoryInfo()->setHalfWord(index);
 }
 
 inline void
@@ -329,8 +337,6 @@ DagNode::repudiateSortInfo()
 {
   setSortIndex(Sort::SORT_UNKNOWN);
 }
-
-//#include "memoryCellNew.hh"
 
 inline void*
 DagNode::operator new(size_t size)
@@ -341,16 +347,15 @@ DagNode::operator new(size_t size)
   //	which can set it to other values as an optimization.
   //
   Assert(size <= sizeof(MemoryCell), "dag node too big");
-  MemoryCell* m = MemoryCell::allocateMemoryCell();
+  void* m = MemoryCell::allocateMemoryCell();
   //
   //	We are obligated to clear the flags. We do this here rather than in
   //	MemoryCell::allocateMemoryCell() to allow the compiler to optimize any
   //	flag setting our caller might do.
   //
-  m->clearAllFlags();
+  MemoryCell::getMemoryInfo(m)->clearAllFlags();
   return m;
 }
-
 
 inline void*
 DagNode::operator new(size_t size, int)
@@ -362,26 +367,28 @@ DagNode::operator new(size_t size, int)
   //	The int parameter is a dummy to allow this version to be selected.
   //
   Assert(size <= sizeof(MemoryCell), "dag node too big");
-  MemoryCell* m = MemoryCell::allocateMemoryCell();
+  void* m = MemoryCell::allocateMemoryCell();
   //
   //	We are obligated to clear the flags. We do this here rather than in
   //	MemoryCell::allocateMemoryCell() to allow the compiler to optimize any
   //	flag setting our caller might do.
   //
-  m->initFlags(REDUCED);
+  MemoryCell::getMemoryInfo(m)->initFlags(REDUCED);
   return m;
 }
 
 inline void*
 DagNode::operator new(size_t /* size */, DagNode* old)
 {
-  if (old->getMemoryCell()->needToCallDtor())
-    old->~DagNode();	// explicitly call virtual destructor
-  old->getMemoryCell()->clearAllExceptMarked();
-  // old->repudiateSortInfo();  // shouldn't be needed now that sort info setting has been shifted to DagNode::DagNode()
-  //DebugAdvisory("in place new called, old = " << (void*)(old));
-  //Assert(old->getSortIndex() == Sort::SORT_UNKNOWN, "bad sort init");
-  return static_cast<void*>(old);
+  //
+  //	Version for in-place replacement of DagNodes; this is used
+  //	for fast equational rewriting so that the replacement appears
+  //	on all paths in the Directed Acyclic Graph.
+  //
+  if (old->needToCallDtor())
+    old->~DagNode();  // explicitly call virtual destructor on replaced DagNode
+  old->getMemoryInfo()->clearAllExceptMarked();
+  return old;
 }
 
 inline
@@ -418,103 +425,103 @@ DagNode::equal(const DagNode* other) const
 inline bool
 DagNode::isReduced() const
 {
-  return getMemoryCell()->getFlag(REDUCED);
+  return getMemoryInfo()->getFlag(REDUCED);
 }
 
 inline void
 DagNode::setReduced()
 {
-  getMemoryCell()->setFlag(REDUCED);
+  getMemoryInfo()->setFlag(REDUCED);
 }
 
 inline bool
 DagNode::isCopied() const
 {
-  return getMemoryCell()->getFlag(COPIED);
+  return getMemoryInfo()->getFlag(COPIED);
 }
 
 inline void
 DagNode::setCopied()
 {
-  getMemoryCell()->setFlag(COPIED);
+  getMemoryInfo()->setFlag(COPIED);
 }
 
 inline void
 DagNode::clearCopied()
 {
-  getMemoryCell()->clearFlag(COPIED);
+  getMemoryInfo()->clearFlag(COPIED);
 }
 
 inline void
 DagNode::setUnrewritable()
 {
-  getMemoryCell()->setFlag(UNREWRITABLE);
+  getMemoryInfo()->setFlag(UNREWRITABLE);
 }
 
 inline bool
 DagNode::isUnrewritable() const
 {
-  return getMemoryCell()->getFlag(UNREWRITABLE);
+  return getMemoryInfo()->getFlag(UNREWRITABLE);
 }
 
 inline void
 DagNode::setUnstackable()
 {
-  getMemoryCell()->setFlag(UNSTACKABLE);
+  getMemoryInfo()->setFlag(UNSTACKABLE);
 }
 
 inline bool
 DagNode::isUnstackable() const
 {
-  return getMemoryCell()->getFlag(UNSTACKABLE);
+  return getMemoryInfo()->getFlag(UNSTACKABLE);
 }
 
 inline void
 DagNode::setGround()
 {
-  getMemoryCell()->setFlag(GROUND_FLAG);
+  getMemoryInfo()->setFlag(GROUND_FLAG);
 }
 
 inline bool
 DagNode::isGround() const
 {
-  return getMemoryCell()->getFlag(GROUND_FLAG);
+  return getMemoryInfo()->getFlag(GROUND_FLAG);
 }
 
 inline void
 DagNode::setIrreducibleByVariantEquations()
 {
-  getMemoryCell()->setFlag(IRREDUCIBLE_BY_VARIANT_EQUATIONS);
+  getMemoryInfo()->setFlag(IRREDUCIBLE_BY_VARIANT_EQUATIONS);
 }
 
 inline bool
 DagNode::isIrreducibleByVariantEquations() const
 {
-  return getMemoryCell()->getFlag(IRREDUCIBLE_BY_VARIANT_EQUATIONS);
+  return getMemoryInfo()->getFlag(IRREDUCIBLE_BY_VARIANT_EQUATIONS);
 }
 
 inline void
 DagNode::setHashValid()
 {
-  getMemoryCell()->setFlag(HASH_VALID);
+  getMemoryInfo()->setFlag(HASH_VALID);
 }
 
 inline bool
 DagNode::isHashValid() const
 {
-  return getMemoryCell()->getFlag(HASH_VALID);
+  return getMemoryInfo()->getFlag(HASH_VALID);
 }
 
 inline Byte
 DagNode::getTheoryByte() const
 {
-  return getMemoryCell()->getByte();
+  return getMemoryInfo()->getByte();
 }
 
 inline void
 DagNode::setTheoryByte(Byte value)
 {
-  getMemoryCell()->setByte(value);
+  getMemoryInfo()->setByte(value);
 }
 
 //
@@ -545,9 +552,9 @@ DagNode::mark()
 	 topSymbol->arity() <= 30,  // arbitrary - but helps catch bugs
 	 "bad symbol at " << static_cast<void*>(topSymbol));
   DagNode* d = this;
-  while (!(d->getMemoryCell()->isMarked()))
+  while (!(d->getMemoryInfo()->isMarked()))
     {
-      d->getMemoryCell()->setMarked();
+      d->getMemoryInfo()->setMarked();
       //
       //	markArguments() returns a pointer our the last argument
       //	rather than calling mark() on it. This allows us to
@@ -640,9 +647,10 @@ DagNode::copyAndReduce(RewritingContext& context)
 }
 
 inline DagNode*
-DagNode::instantiate(const Substitution& substitution)
+DagNode::instantiate(const Substitution& substitution, bool maintainInvariants)
 {
-  return isGround() ? 0 : instantiate2(substitution);
+  DebugInfo("instantiating " << this);
+  return isGround() ? 0 : instantiate2(substitution, maintainInvariants);
 }
 
 inline DagNode*

@@ -39,7 +39,7 @@ CompositeFairnessTable::nrComponents() const
 void
 CompositeFairnessTable::addComponent(unique_ptr<AbstractFairnessTable>&& table)
 {
-	fairTables.push_back(move(table));
+	fairTables.push_back(std::move(table));
 }
 
 AbstractFairnessTable&

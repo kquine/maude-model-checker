@@ -32,7 +32,7 @@ RewriteTransitionState::getNextStateDag(RewritingContext& parent)
 {
 	RewritingContext* context = getContext();
 	bool success = findNextRewrite();
-	transferCount(parent);
+	transferCountTo(parent);
 
 	if (success)
 	{

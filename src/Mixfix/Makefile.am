@@ -19,7 +19,7 @@ libmixfix_a_CPPFLAGS = \
 	-I$(top_srcdir)/src/ObjectSystem \
 	-I$(top_srcdir)/src/Mixfix \
 	-I$(top_srcdir)/src/BuiltIn \
-	-I$(top_srcdir)/src/MSCP10 \
+	-I$(top_srcdir)/src/Parser \
 	-I$(top_srcdir)/src/IO_Stuff \
 	-I$(top_srcdir)/src/ACU_Persistent \
 	-I$(top_srcdir)/src/ACU_Theory \
@@ -33,14 +33,20 @@ libmixfix_a_CPPFLAGS = \
 	-I$(top_srcdir)/src/SMT
 
 libmixfix_a_SOURCES = \
+	parameterDatabase.cc \
 	syntaxContainer.cc \
 	renaming.cc \
 	view.cc \
+	syntacticView.cc \
 	entity.cc \
 	moduleCache.cc \
 	moduleExpression.cc \
+	viewExpression.cc \
+	viewCache.cc \
+	enclosingObject.cc \
 	importModule.cc \
 	importTranslation.cc \
+	strategyTranslation.cc \
 	fileTable.cc \
 	loopSymbol.cc \
 	quotedIdentifierSymbol.cc \
@@ -68,17 +74,18 @@ libmixfix_a_SOURCES = \
 	banner.cc \
 	lexer.cc \
 	tokenizer.cc \
+	deserializer.cc \
 	surface.cc \
 	freshVariableSource.cc \
 	variableGenerator.cc \
-	tokenizer.cc \
+	objectConstructorSymbol.cc \
 	$(COMPILER_SRC)
 
 EXTRA_libmixfix_a_SOURCES = \
 	compiler.cc
 
-BUILT_SOURCES = surface.yy surface.cc surface.h lexer.cc tokenizer.cc
-CLEANFILES = surface.yy surface.cc surface.h lexer.cc tokenizer.cc
+BUILT_SOURCES = surface.yy surface.cc surface.h lexer.cc tokenizer.cc deserializer.cc
+CLEANFILES = surface.yy surface.cc surface.h lexer.cc tokenizer.cc deserializer.cc
 
 surface.yy: \
 	$(srcdir)/top.yy \
@@ -92,9 +99,12 @@ surface.yy: \
 	$(srcdir)/bottom.yy \
 	> surface.yy
 
-surface.cc surface.h: surface.yy
+surface.cc: surface.yy
 	$(BISON) -dv surface.yy -o surface.c
 	mv surface.c surface.cc
+	touch surface.h
+
+surface.h: surface.cc
 
 #	According to the manual, automake is supposed to grok
 #	.ll files and do the right thing... but it doesn't
@@ -107,15 +117,31 @@ tokenizer.cc: \
 	$(srcdir)/tokenizer.ll
 	$(FLEX) -Pzz -t -p -p $(srcdir)/tokenizer.ll > tokenizer.cc
 
+deserializer.cc: \
+	$(srcdir)/deserializer.ll
+	$(FLEX) -Pxx -t -p -p $(srcdir)/deserializer.ll > deserializer.cc
+
 EXTRA_DIST = \
 	renameModule.cc \
 	parameterization.cc \
+	instantiateModuleWithFreeParameters.cc \
+	instantiateModuleWithBoundParameters.cc \
+	instantiateViewWithFreeParameters.cc \
+	instantiateViewWithBoundParameters.cc \
 	lexerAux.cc \
+	deserializerAux.cc \
+	ooSorts.cc \
+	ooProcess.cc \
+	ooTransform.cc \
+	ooView.cc \
+	ooRenaming.cc \
 	process.cc \
 	fixUp.cc \
 	ops.cc \
 	command.cc \
 	entry.cc \
+	fancySymbols.cc \
+	validateAttributes.cc \
 	prettyPrint.cc \
 	bufferPrint.cc \
 	specialSymbolTypes.cc \
@@ -142,23 +168,28 @@ EXTRA_DIST = \
 	bottom.yy \
 	lexer.ll \
 	tokenizer.ll \
+	deserializer.ll \
 	graphPrint.cc \
 	ansiEscapeSequences.cc \
 	narrowing.cc \
 	variantUnify.cc \
+	variantMatch.cc \
 	getVariants.cc \
 	smtSearch.cc \
 	cvc4_Bindings.cc \
 	yices2_Bindings.cc \
 	quotedIdentifierOpSignature.cc \
-	tokenizer.ll
+	serialize.cc
 
 noinst_HEADERS = \
 	renaming.hh \
 	view.hh \
+	syntacticView.hh \
 	entity.hh \
 	moduleCache.hh \
 	moduleExpression.hh \
+	viewCache.hh \
+	viewExpression.hh \
 	sharedTokens.hh \
 	compiler.hh \
 	fileTable.hh \
@@ -193,4 +224,10 @@ noinst_HEADERS = \
 	variableGenerator.hh \
 	cacheableRewritingContext.hh \
 	cvc4_Bindings.hh \
-	yices2_Bindings.hh
+	yices2_Bindings.hh \
+	enclosingObject.hh \
+	argument.hh \
+	parameter.hh \
+	parameterDatabase.hh \
+	objectConstructorSymbol.hh \
+	statementTransformer.hh

@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2008 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2020 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,11 +45,9 @@
 
 //	higher class definitions
 #include "pattern.hh"
-//#include "narrowingSearchState.hh"
 #include "narrowingSequenceSearch.hh"
 #include "freshVariableGenerator.hh"
 #include "narrowingVariableInfo.hh"
-
 
 NarrowingSequenceSearch::NarrowingSequenceSearch(RewritingContext* initial,
 						 SearchType searchType,
@@ -64,7 +62,8 @@ NarrowingSequenceSearch::NarrowingSequenceSearch(RewritingContext* initial,
     freshVariableGenerator(freshVariableGenerator)
 {
   //
-  //	First we replace all the variables in our initial term so they can't clash with variables in the rules.
+  //	First we replace all the variables in our initial term so they can't clash with
+  //	variables in the rules.
   //
   NarrowingVariableInfo variableInfo;
   initial->root()->indexVariables(variableInfo, 0);
@@ -72,13 +71,12 @@ NarrowingSequenceSearch::NarrowingSequenceSearch(RewritingContext* initial,
   Substitution s(nrVariables);
   for (int i = 0; i < nrVariables; ++i)
     {
-      Sort* sort = safeCast(VariableSymbol*, variableInfo.index2Variable(i)->symbol())->getSort();
-      VariableDagNode* v = new VariableDagNode(freshVariableGenerator->getBaseVariableSymbol(sort),
-					       freshVariableGenerator->getFreshVariableName(i, false),
-					       i);
+      Symbol* baseSymbol = variableInfo.index2Variable(i)->symbol();
+      int name = freshVariableGenerator->getFreshVariableName(i, 0);
+      VariableDagNode* v = new VariableDagNode(baseSymbol, name, i);
       s.bind(i, v);
     }
-  DagNode* newDag = initial->root()->instantiate(s);  // not safe if we haven't determined ground terms in context->root()
+  DagNode* newDag = initial->root()->instantiate(s, false);  // not safe if we haven't determined ground terms in context->root()
   if (newDag == 0)
     newDag = initial->root();
 
@@ -107,8 +105,8 @@ NarrowingSequenceSearch::~NarrowingSequenceSearch()
   delete matchState;
   delete goal;
   delete freshVariableGenerator;
-  FOR_EACH_CONST(i, Vector<NarrowingSearchState*>, stateStack)
-    delete *i;
+  for (NarrowingSearchState* s : stateStack)
+    delete s;
   delete initial;
 }
 
@@ -128,7 +126,8 @@ NarrowingSequenceSearch::findNextMatch()
 	  //	No pattern case: we do some extra accounting needed by metalevel.
 	  //
 	  variableTotalForPreviouslyReturnedStates = variableTotalForAllReturnedStates;
-	  variableTotalForAllReturnedStates += stateStack[stateStack.size() - 1]->getNrOfVariablesInSubject();
+	  variableTotalForAllReturnedStates +=
+	    stateStack[stateStack.size() - 1]->getVariableInfo().getNrVariables();
 	  /*
 	  cout << variableTotalForPreviouslyReturnedStates << '\n' <<
 	    variableTotalForAllReturnedStates << '\n' <<
@@ -141,7 +140,11 @@ NarrowingSequenceSearch::findNextMatch()
 					MatchSearchState::GC_CONTEXT);
     tryMatch:
       bool foundMatch = matchState->findNextMatch();
-      //matchState->transferCount(*(getContext()));
+      //
+      //	We don't transfer the rewrite count from matchState since there is
+      //	no condition, and there should be no membership axioms so count must
+      //	be zero.
+      //
       if (foundMatch)
 	return true;
       delete matchState;
@@ -182,6 +185,8 @@ NarrowingSequenceSearch::findNextNormalForm()
       
       DagNode* replacement;  // will be set by getNarrowedDag()
       DagNode* narrowedDag = currentState->getNarrowedDag(replacement);
+      DebugInfo("replacement = " << replacement <<
+	       "  narrowedDag =  " << narrowedDag);
 
       if (RewritingContext::getTraceStatus())
 	{
@@ -208,6 +213,9 @@ NarrowingSequenceSearch::findNextNormalForm()
       
       if (seenSet.dagNode2Index(newContext->root()) != NONE)
 	{
+	  DebugInfo(Tty(Tty::RED) << "--------------------------------\nDUP state " <<
+		    newContext->root() << "--------------------------------" <<
+		    Tty(Tty::RESET));
 	  delete newContext;
 	  topOfStackFresh = false;
 	  continue;
@@ -245,6 +253,7 @@ NarrowingSequenceSearch::findNextInterestingState()
 	{
 	  DagNode* replacement;  // will be set by getNarrowedDag()
 	  DagNode* narrowedDag = currentState->getNarrowedDag(replacement);
+	  DebugNew("replacement = " << replacement << "  narrowedDag =  " << narrowedDag);
 
 	  if (RewritingContext::getTraceStatus())
 	    {
@@ -265,7 +274,9 @@ NarrowingSequenceSearch::findNextInterestingState()
 	  ////cout << "which reduced to " << newContext->root() << endl;
 	  if (seenSet.dagNode2Index(newContext->root()) != NONE)
 	    {
-	      DebugAdvisory(Tty(Tty::RED) << "DUP state " << Tty(Tty::RESET) << newContext->root());
+	      DebugInfo(Tty(Tty::RED) << "\n--------------------------------\nDUP state " <<
+			newContext->root() << "\n--------------------------------" <<
+			Tty(Tty::RESET));
 	      delete newContext;
 	      continue;
 	    }

@@ -1,4 +1,11 @@
 TESTS = \
+	directoryTest \
+	fileTest \
+	timeTest \
+	view \
+	parameterizedView \
+	mapToParameterTheory \
+	badView \
 	dekker \
 	commands \
 	debug \
@@ -11,16 +18,37 @@ TESTS = \
 	attributes \
 	diophantine \
 	variantUnification \
+	filteredVariantUnification \
 	variantNarrowing \
 	meseguerFiniteVariant \
+	variantMatching \
 	CU_Unification \
 	assocUnification \
+	AU_Unification \
+	AU_IrredUnification \
+	AU_and_A_UnificationEdgeCases \
 	sreduce \
 	smtTest \
 	narrow \
-	continue
+	continue \
+	parse \
+	bubble \
+	rot13 \
+	pconst \
+	pconst2 \
+	pconst3 \
+	pconst4 \
+	parameterizedConstant \
+	pconst5
 
 MAUDE_FILES = \
+	directoryTest.maude \
+	fileTest.maude \
+	timeTest.maude \
+	view.maude \
+	parameterizedView.maude \
+	mapToParameterTheory.maude \
+	badView.maude \
 	dekker.maude \
 	commands.maude \
 	debug.maude \
@@ -33,16 +61,37 @@ MAUDE_FILES = \
 	attributes.maude \
 	diophantine.maude \
 	variantUnification.maude \
+	filteredVariantUnification.maude \
 	variantNarrowing.maude \
 	meseguerFiniteVariant.maude \
+	variantMatching.maude \
 	CU_Unification.maude \
 	assocUnification.maude \
+	AU_Unification.maude \
+	AU_IrredUnification.maude \
+	AU_and_A_UnificationEdgeCases.maude \
 	sreduce.maude \
 	smtTest.maude \
 	narrow.maude \
-	continue.maude
+	continue.maude \
+	parse.maude \
+	bubble.maude \
+	rot13.maude \
+	pconst.maude \
+	pconst2.maude \
+	pconst3.maude \
+	pconst4.maude \
+	parameterizedConstant.maude \
+	pconst5.maude
 
 RESULT_FILES = \
+	directoryTest.expected \
+	fileTest.expected \
+	timeTest.expected \
+	view.expected \
+	parameterizedView.expected \
+	mapToParameterTheory.expected \
+	badView.expected \
 	dekker.expected \
 	commands.expected \
 	debug.expected \
@@ -55,13 +104,27 @@ RESULT_FILES = \
 	attributes.expected \
 	diophantine.expected \
 	variantUnification.expected \
+	filteredVariantUnification.expected \
 	variantNarrowing.expected \
 	meseguerFiniteVariant.expected \
+	variantMatching.expected \
 	CU_Unification.expected \
 	assocUnification.expected \
+	AU_Unification.expected \
+	AU_IrredUnification.expected \
+	AU_and_A_UnificationEdgeCases.expected \
 	sreduce.expected \
 	smtTest.expected \
 	narrow.expected \
-	continue.expected
+	continue.expected \
+	parse.expected \
+	bubble.expected \
+	rot13.expected \
+	pconst.expected \
+	pconst2.expected \
+	pconst3.expected \
+	pconst4.expected \
+	parameterizedConstant.expected \
+	pconst5.expected
 
 EXTRA_DIST = $(TESTS) $(MAUDE_FILES) $(RESULT_FILES)

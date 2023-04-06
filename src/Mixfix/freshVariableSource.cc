@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2007 SRI International, Menlo Park, CA 94025, USA.
 
@@ -105,15 +105,36 @@ FreshVariableSource::getBaseVariableSymbol(Sort* sort)
 }
 
 bool
-FreshVariableSource::variableNameConflict(int id)
+FreshVariableSource::variableNameConflict(int id, int okFamily)
 {
   //
   //	If an identifier looks like an internally generated variable name, check to see if
   //	the index > baseNumber as this will produce a potential conflict with fresh variables.
+  //	We now allow variable of okFamily (which could be NONE).
   //
   const char* name = Token::name(Token::unflaggedCode(id));
-  if ((name[0] != '#' && name[0] != '%' && name[0] != '@') || name[1] == '0' || name[1] == '\0')
+  char c = name[0];
+  if (c == '#')
+    {
+      if (okFamily == 0)
+	return false;
+    }
+  else if (c == '%')
+    {
+      if (okFamily == 1)
+	return false;
+    }
+  else if (c == '@')
+    {
+      if (okFamily == 2)
+	return false;
+    }
+  else
     return false;
+
+  if (name[1] == '0' || name[1] == '\0')
+    return false;
+
   for (const char* p = name + 1; *p; ++p)
     {
       if (!isdigit(*p))
@@ -136,7 +157,7 @@ FreshVariableSource::getBaseName(int index)
 int
 FreshVariableSource::getFamily(int id)
 {
-  const char* name = Token::name(Token::unflaggedCode(id));
+  const char* name = Token::name(id);
   if (name[0] == '\0')
     return NONE;  // empty string
   if (name[1] != '\0')
@@ -164,5 +185,36 @@ FreshVariableSource::belongsToFamily(int id, int family)
       if (!(isdigit(name[i])))
 	return false;
     }
+  return true;
+}
+
+bool
+FreshVariableSource::isFreshVariableName(int id, int& index, int& family)
+{
+  const char* name = Token::name(id);
+  char firstChar = name[0];
+  if (firstChar == '#')
+    family = 0;
+  else if (firstChar == '%')
+    family = 1;
+  else if (firstChar == '@')
+    family = 2;
+  else
+    return false;
+  char secondChar = name[1];
+  if (!isdigit(secondChar) || secondChar == '0')
+    return false;  // index must start with 1 thru 9
+  mpz_class fullIndex;
+  mpz_set_str(fullIndex.get_mpz_t(), name + 1, 10);
+  --fullIndex;
+  if (fullIndex > INT_MAX)
+    {
+      //
+      //	We don't care about indices > INT_MAX because
+      //	we never generate such names ourselves.
+      //
+      return false;
+    }
+  index = fullIndex.get_si();
   return true;
 }

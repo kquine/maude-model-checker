@@ -35,7 +35,7 @@ namespace modelChecker {
 StateMetaGraph::StateMetaGraph(unique_ptr<StatePropLabel>&& spl, RewritingContext& initial,
 			const PropositionTable& propTable, Symbol* stateSymbol, Symbol* transitionSymbol, DagNode* deadlockDag):
 		BaseSystemGraphIter<StateMetaGraph>(initial,propTable),
-		Traits(move(spl)), stateSymbol(stateSymbol), transitionSymbol(transitionSymbol), deadlockDag(deadlockDag) {}
+		Traits(std::move(spl)), stateSymbol(stateSymbol), transitionSymbol(transitionSymbol), deadlockDag(deadlockDag) {}
 
 
 DagNode*

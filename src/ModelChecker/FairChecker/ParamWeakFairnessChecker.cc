@@ -32,7 +32,7 @@ ParamWeakFairnessChecker::getNrFairness() const
 unique_ptr<FairSet>
 ParamWeakFairnessChecker::computeAllFairness(const PropSet& trueProps)
 {
-	auto result = new ParamWeakFairSet(move(static_cast<WeakFairSet&>(
+	auto result = new ParamWeakFairSet(std::move(static_cast<WeakFairSet&>(
 			*WeakFairnessChecker::computeAllFairness(trueProps))));
 
 	for (auto& pt : this->generateRealizedFairness(trueProps))
@@ -50,7 +50,7 @@ ParamWeakFairnessChecker::computeAllFairness(const PropSet& trueProps)
 unique_ptr<FairSet>
 ParamWeakFairnessChecker::computeCompactFairness(const PropSet& trueProps)
 {
-	auto result = new ParamWeakFairSet(move(static_cast<WeakFairSet&>(
+	auto result = new ParamWeakFairSet(std::move(static_cast<WeakFairSet&>(
 			*WeakFairnessChecker::computeCompactFairness(trueProps))));
 
 	for (auto& pt : this->generateRealizedFairness(trueProps))
@@ -70,7 +70,7 @@ unique_ptr<FairSet>
 ParamWeakFairnessChecker::unzip(const FairSet& fs) const
 {
 	auto& pws = static_cast<const ParamWeakFairSet&>(fs);
-	auto result = new ParamWeakFairSet(move(static_cast<WeakFairSet&>(*WeakFairnessChecker::unzip(fs))));
+	auto result = new ParamWeakFairSet(std::move(static_cast<WeakFairSet&>(*WeakFairnessChecker::unzip(fs))));
 
 	// store an expanded version
 	for (unsigned int wn = WeakFairnessChecker::getNrFairness(), i = 0; i < compactIndices.size(); ++i)

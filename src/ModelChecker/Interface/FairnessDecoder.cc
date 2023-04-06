@@ -79,13 +79,13 @@ FairnessDecoder::interpretFairnessSet(DagNode* fairSetDag) const
 		if (wft->nrFairness() > 0 && sft->nrFairness() > 0)
 		{
 			CompositeFairnessTable* cft = new CompositeFairnessTable;
-			cft->addComponent(move(wft));	cft->addComponent(move(sft));
+			cft->addComponent(std::move(wft));	cft->addComponent(std::move(sft));
 			return unique_ptr<AbstractFairnessTable>(cft);
 		}
 		if (wft->nrFairness() > 0)
-			return unique_ptr<AbstractFairnessTable>(move(wft));
+			return unique_ptr<AbstractFairnessTable>(std::move(wft));
 		if (sft->nrFairness() > 0)
-			return unique_ptr<AbstractFairnessTable>(move(sft));
+			return unique_ptr<AbstractFairnessTable>(std::move(sft));
 	}
 	return nullptr;
 }

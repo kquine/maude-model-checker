@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -63,7 +63,6 @@ public:
   DagNode* getNarrowedDag(DagNode*& replacement) const;
   bool findNextNarrowing();
   const Substitution& getSubstitution() const;
-  int getNrOfVariablesInSubject() const;
   const NarrowingVariableInfo& getVariableInfo() const;
   bool isOdd() const;
   bool isIncomplete() const;
@@ -73,7 +72,6 @@ private:
   FreshVariableGenerator* freshVariableGenerator;
   const bool odd;
   const int label;
-  const bool withExtension;
 
   NarrowingVariableInfo variableInfo;
   int ruleIndex;  // index of current rule being tried
@@ -92,12 +90,6 @@ inline RewritingContext*
 NarrowingSearchState::getContext() const
 {
   return context;
-}
-
-inline int
-NarrowingSearchState::getNrOfVariablesInSubject() const
-{
-  return variableInfo.getNrVariables();
 }
 
 inline const NarrowingVariableInfo&

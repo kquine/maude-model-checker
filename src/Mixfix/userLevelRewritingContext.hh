@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2022 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #ifndef _userLevelRewritingContext_hh_
 #define _userLevelRewritingContext_hh_
 #include <signal.h>
+#include "timeStuff.hh"
 #ifdef USE_LIBSIGSEGV
 #include "sigsegv.h"
 #endif
@@ -39,24 +40,34 @@ class UserLevelRewritingContext : public ObjectSystemRewritingContext
   NO_COPYING(UserLevelRewritingContext);
 
 public:
+  enum ExitCodes
+    {
+     NORMAL_EXIT = 0,
+     STACK_OVERFLOW = 1,
+     INTERNAL_ERROR = 2,
+     SOCKET_CLOSED = 3,
+     OUT_OF_MEMORY = 4
+    };
+
   enum OtherPurpose
-  {
-    TOP_LEVEL_EVAL = OTHER + 1,
-    META_EVAL
-  };
+    {
+     TOP_LEVEL_EVAL = OTHER + 1,
+     META_EVAL
+    };
 
   enum ParseResult
-  {
-    NORMAL,
-    QUIT,
-    RESUME,
-    ABORT,
-    STEP,
-    WHERE
-  };
+    {
+     NORMAL,
+     QUIT,
+     RESUME,
+     ABORT,
+     STEP,
+     WHERE
+    };
 
   UserLevelRewritingContext(DagNode* root);
 
+  static void ignoreCtrlC();
   static void setHandlers(bool handleCtrlC);
   static ParseResult commandLoop();
   static bool interrupted();
@@ -66,14 +77,16 @@ public:
   static void beginCommand();
   static void setDebug();
   static void clearDebug();
-  static void clearInterrupt();
+  //static void clearInterrupt();
   static void clearTrialCount();
+  static void clearInfo();
 
   RewritingContext* makeSubcontext(DagNode* root, int purpose);
   void beAdoptedBy(UserLevelRewritingContext* newParent);
   int traceBeginEqTrial(DagNode* subject, const Equation* equation);
   int traceBeginRuleTrial(DagNode* subject, const Rule* rule);
   int traceBeginScTrial(DagNode* subject, const SortConstraint* sc);
+  int traceBeginSdTrial(DagNode* subject, const StrategyDefinition* sdef);
   void traceEndTrial(int trailRef, bool success);
   void traceExhausted(int trialRef);
 
@@ -109,6 +122,11 @@ public:
 				 const Vector<DagNode*>& newVariantSubstitution,
 				 const NarrowingVariableInfo& originalVariables);
 
+  void traceStrategyCall(StrategyDefinition* sdef,
+			 DagNode* callDag,
+			 DagNode* subject,
+			 const Substitution* substitution);
+
   static void printSubstitution(const Substitution& substitution,
 				const VariableInfo& varInfo,
 				const NatSet& ignoredIndices = NatSet());
@@ -119,7 +137,8 @@ public:
   static void printSubstitution(const Substitution& substitution,
 				const NarrowingVariableInfo& variableInfo);
 
-
+  bool interruptSeen();
+  
 private:
   UserLevelRewritingContext(DagNode* root,
 			    UserLevelRewritingContext* parent,
@@ -127,29 +146,43 @@ private:
 			    bool localTraceFlag);
 
   static void interruptHandler(int);
+  static void infoHandler(int);
   static void interruptHandler2(...);
 
 #ifdef USE_LIBSIGSEGV
   static void stackOverflowHandler(int emergency, stackoverflow_context_t scp);
-  static int sigsegvHandler(void *fault_address, int serious);
+  static int sigsegvHandler(void* fault_address, int serious);
 #endif
   static void internalErrorHandler(int signalNr);
 
   static void changePrompt();
   static bool dontTrace(const DagNode* redex, const PreEquation* pe);
+
+  bool handleInterrupt();
+  bool blockAndHandleInterrupts(sigset_t *normalSet);
+  
   void checkForPrintAttribute(MetadataStore::ItemType itemType, const PreEquation* item);
-  bool handleDebug(const DagNode* subject, const PreEquation* pe);
-  void where();
+  bool handleDebug(DagNode* subject, const PreEquation* pe);
+  void where(ostream& s);
+  void printStatusReportCommon();
+  void printStatusReport(DagNode* subject, const PreEquation* pe);
 
   static bool tracePostFlag;
   static int trialCount;
   static const char header[];
 
   static bool interactiveFlag;
-  static bool ctrlC_Flag;
+  static bool ctrlC_Flag;	// set in ^C signal handler
+  static bool infoFlag;		// set in info signal handler
   static bool stepFlag;
   static bool abortFlag;
   static int debugLevel;
+  //
+  //	This are used to decide how to respond to two interrupts
+  //	in succession.
+  //
+  static Int64 rewriteCountAtLastInterrupt;
+  static timespec timeAtLastInterrupt;
 
   static AutoWrapBuffer* wrapOut;
   static AutoWrapBuffer* wrapErr;
@@ -190,6 +223,12 @@ UserLevelRewritingContext::setDebug()
 {
   setTraceStatus(true);
   stepFlag = true;
+}
+
+inline void
+UserLevelRewritingContext::clearInfo()
+{
+  infoFlag = false;
 }
 
 inline void

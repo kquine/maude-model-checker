@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2022 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,14 +43,17 @@
 //      core class definitions
 #include "equation.hh"
 #include "rule.hh"
+#include "rewriteStrategy.hh"
+#include "strategyDefinition.hh"
 #include "sortConstraint.hh"
 
 //	front end class definitions
 #include "userLevelRewritingContext.hh"
 #include "visibleModule.hh"
 
-VisibleModule::VisibleModule(int name, ModuleType moduleType, Entity::User* parent)
-  : ImportModule(name, moduleType, TEXT, parent)
+VisibleModule::VisibleModule(int name, ModuleType moduleType, Interpreter* owner)
+  : ImportModule(name, moduleType),
+    owner(owner)
 {
 }
 
@@ -75,24 +78,29 @@ VisibleModule::showSummary(ostream& s)
     "\n\tpolymorphic operators: " << getNrPolymorphs() <<
     "\n\tmembership axioms: " << getSortConstraints().length() <<
     "\n\tequations: " << getEquations().length() <<
-    "\n\trules: " << getRules().length() << '\n';
+    "\n\trules: " << getRules().length() <<
+    "\n\tstrategies: " << getStrategies().length() <<
+    "\n\tstrategy definitions: " << getStrategyDefinitions().length() << '\n';
 }
 
 void
 VisibleModule::showKinds(ostream& s) const
 {
   const Vector<ConnectedComponent*>& kinds = getConnectedComponents();
-  int nrKinds = kinds.length();
+  int nrKinds = getNrUserComponents();
   for (int i = 0; i < nrKinds; i++)
     {
       const ConnectedComponent* c = kinds[i];
-      s << c->sort(0);
+      s << c->sort(Sort::KIND);
       if (c->errorFree())
 	s << " (error free)";
       s<< ":\n";
       int nrSorts = c->nrSorts();
       for (int j = 1; j < nrSorts; j++)
-	s << '\t' << j << '\t' << c->sort(j) << '\n';
+	{
+	  s << '\t' << j << '\t' << c->sort(j)  << '\n';
+	  DebugInfo(Token::name(c->sort(j)->id()));
+	}
       if (i + 1 < nrKinds)
 	s << '\n';
       DebugAdvisory("match indices = " << c->getLastAllocatedMatchIndex());
@@ -161,6 +169,19 @@ VisibleModule::showSortsAndSubsorts(ostream& s) const
 }
 
 void
+VisibleModule::showImports(ostream& s) const
+{
+  int nrImports = getNrImports();
+  for (int i = 0; i < nrImports; i++)
+    {
+      if (UserLevelRewritingContext::interrupted())
+	return;
+      s << "  " << importModeString(getImportMode(i)) <<
+	' ' << Token::removeBoundParameterBrackets(getImportedModule(i)->id()) << " .\n";
+    }
+}
+
+void
 VisibleModule::showModule(ostream& s, bool all) const
 {
   s << moduleTypeString(getModuleType()) << ' ' << this;
@@ -173,6 +194,8 @@ VisibleModule::showModule(ostream& s, bool all) const
       s << '}';
     }
   s << " is\n";
+  if (!all)
+    showImports(s);
 
   showSorts1(s, true, all);
   showSubsorts(s, true, all);
@@ -182,6 +205,8 @@ VisibleModule::showModule(ostream& s, bool all) const
   showMbs(s, true, all);
   showEqs(s, true, all);
   showRls(s, true, all);
+  showStrats(s, true, all);
+  showSds(s, true, all);
   if (UserLevelRewritingContext::interrupted())
     return;
   s << moduleEndString(getModuleType()) << '\n';
@@ -241,11 +266,11 @@ VisibleModule::showVars(ostream& s, bool indent) const
 {
   const char* ind = indent ? "  " : "";
   const AliasMap& variableAliases = getVariableAliases();
-  FOR_EACH_CONST(i, AliasMap, variableAliases)
+  for (const auto& p : variableAliases)
     {
       if (UserLevelRewritingContext::interrupted())
 	return;
-      s << ind << "var " << Token::name(i->first) << " : " << i->second << " .\n";
+      s << ind << "var " << Token::name(p.first) << " : " << p.second << " .\n";
     }
 }
 
@@ -292,6 +317,35 @@ VisibleModule::showRls(ostream& s, bool indent, bool all) const
 }
 
 void
+VisibleModule::showStrats(ostream& s, bool indent, bool all) const
+{
+  const char* ind = indent ? "  " : "";
+  const Vector<RewriteStrategy*>& strategies = getStrategies();
+  int nrStrategies = strategies.size();
+  int start = all ? 0 : getNrImportedStrategies();
+  for (int i = start; i < nrStrategies; i++)
+    {
+      if (UserLevelRewritingContext::interrupted())
+       return;
+      s << ind << strategies[i] << '\n';
+    }
+}
+
+void
+VisibleModule::showSds(ostream& s, bool indent, bool all) const
+{
+  const char* ind = indent ? "  " : "";
+  const Vector<StrategyDefinition*>& defs = getStrategyDefinitions();
+  int nrDefs = all ? defs.length() : getNrOriginalStrategyDefinitions();
+  for (int i = 0; i < nrDefs; i++)
+    {
+      if (UserLevelRewritingContext::interrupted())
+	return;
+      s << ind << defs[i] << '\n';
+    }
+}
+
+void
 VisibleModule::showPolymorphAttributes(ostream& s, int index) const
 {
   SymbolType st = getPolymorphType(index);
@@ -313,6 +367,8 @@ VisibleModule::showPolymorphAttributes(ostream& s, int index) const
     s << " idem";
   if (st.hasFlag(SymbolType::ITER))
     s << " iter";
+  if (st.hasFlag(SymbolType::PCONST))
+    s << " pconst";
   //
   //	Object-oriented attributes.
   //
@@ -474,9 +530,15 @@ void
 VisibleModule::showPolymorphDecl(ostream& s, bool indent, int index) const
 {
   const char* ind = indent ? "  " : "";
-  s << ind << "op " << getPolymorphName(index) << " :";
+  s << ind << "op ";
+  
   const Vector<Sort*>& domainAndRange = getPolymorphDomainAndRange(index);
   int nrArgs = domainAndRange.length() - 1;
+  if (nrArgs == 0)
+    s << Token::sortName(getPolymorphName(index).code()) << " :";
+  else
+    s << getPolymorphName(index) << " :";
+
   for (int i = 0; i < nrArgs; i++)
     {
       if (Sort* sort = domainAndRange[i])
@@ -603,6 +665,11 @@ VisibleModule::showAttributes(ostream& s, Symbol* symbol, int opDeclIndex) const
   if (st.hasFlag(SymbolType::IDEM))
     {
       s << space << "idem";
+      space = " ";
+    }
+  if (st.hasFlag(SymbolType::PCONST))
+    {
+      s << space << "pconst";
       space = " ";
     }
   //

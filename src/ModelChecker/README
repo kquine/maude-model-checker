@@ -4,24 +4,31 @@
 ***************************************************
 
 The followings are the step-by-step instruction for adding LTLR/LMC
-model checker module into the Core Maude 2.7 source. We assume that 
-the files are in the directory ModelChecker and the Maude source files 
+model checker module into the Maude 3.3 source. We assume that the 
+files are in the directory ModelChecker and the Maude source files 
 are in the directory $MAUDE.
 
 1. Copy ModelChecker folder into "$MAUDE/src"
-2. Modify "$MAUDE/configuer.ac"
-  - add "src/ModelChecker/Makefile" to line 417 (in AC_CONFIG_FILES)
-3. Modify "Makefile.am" files
+
+2. Modify "$MAUDE/configure"
+
+    PACKAGE_STRING='Maude 3.3 LTLR&LMC'
+
+3. Modify "$MAUDE/configuer.ac"
+  - add "src/ModelChecker/Makefile" to line 423 (in AC_CONFIG_FILES)
+
+4. Modify "Makefile.am" files
   - $MAUDE/src/Makefile.am 
-    * add "ModelChecker \" to line 26 (in SUBDIRS)
+    * add "ModelChecker \" to line 25 (in SUBDIRS)
   - $MAUDE/src/Main/Makefile.am
-    * add "-I$(top_srcdir)/src/ModelChecker \" to line 33 (in maude_CPPFLAGS)
+    * add "-I$(top_srcdir)/src/ModelChecker \" to line 32 (in maude_CPPFLAGS)
     * add "../ModelChecker/libModelChecker.a \" to line 58 (in maude_LDADD)
   - $MAUDE/src/Mixfix/Makefile.am
     * add "-I$(top_srcdir)/src/ModelChecker \" to line 32 (in libmixfix_a_CPPFLAGS)
-4. Add the declaration for special symbols.
-  - $MAUDE/src/Mixfix/entry.cc
-    * add the following statements to line 697 (at the end of the function 
+
+5. Add the declaration for special symbols.
+  - $MAUDE/src/Mixfix/fancySymbols.cc
+    * add the following statements to line 132 (in the middle of the function 
       declaration "MixfixModlue::newFancySymbol")
 
       case SymbolType::LTLR_FAIRCHECKER_SYMBOL:
@@ -30,7 +37,7 @@ are in the directory $MAUDE.
         return new modelChecker::SymbolicModelCheckerSymbol(name, nrArgs);
 
   - $MAUDE/src/Mixfix/mixfixModule.cc
-    * add the following includes at line 159
+    * add the following includes at line 168
 
         //	ltlr and lmc model checkers
         #include "ltlrFairnessCheckerSymbol.hh"
@@ -43,27 +50,16 @@ are in the directory $MAUDE.
       MACRO(SymbolicModelCheckerSymbol, SymbolType::SYMBOLIC_MODEL_CHECKER_SYMBOL)
 
   - $MAUDE/src/Mixfix/symbolType.hh
-    *  add the following to line 85 (in "enum BasicTypes")
+    *  add the following to line 88 (in "enum BasicTypes")
 
       LTLR_FAIRCHECKER_SYMBOL,
       SYMBOLIC_MODEL_CHECKER_SYMBOL,
 
-  - Fix for c++11: model the following code at line 233
+6. Run autoconf and automake again. Sometime you need to execute aclocal.
 
-        if (bind(fd, reinterpret_cast<sockaddr*>(&sockName), sizeof(sockName)) == -1)
-
-    into
-
-        if (::bind(fd, reinterpret_cast<sockaddr*>(&sockName), sizeof(sockName)) == -1)
-
-
-5. Run autoconf and automake again. Sometime you need to execute aclocal.
-
-6. Follow the instruction for Maude sourcecode installation.
-
-   (Note: You may need to modify $MAUDE/src/Mixfix/lexerAux.hh and $MAUDE/src/Mixfix/lexerAux.cc under certain compile options and architectures. The second argument type of getInput function declarations may be modified from int& to size_t&.)
+7. Follow the instruction for Maude sourcecode installation.
 
 ------
 
-If you have any question or comments, please contact Kyungmin Bae (kbae4@cs.uiuc.edu).
+If you have any question or comments, please contact Kyungmin Bae (kmbae@postech.ac.kr).
 

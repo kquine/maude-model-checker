@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -20,6 +20,16 @@
 
 */
 
+PreModule*
+MetaLevelOpSymbol::getPreModule(int name)
+{
+  Module* activeModule = getModule();
+  DebugAdvisory("activeModule = " << activeModule);
+  Interpreter* owner = safeCast(VisibleModule*, activeModule)->getOwner();
+  DebugAdvisory("owner = " << (void*) owner);
+  return owner->getModule(name);
+}
+
 bool
 MetaLevelOpSymbol::metaUpModule(FreeDagNode* subject, RewritingContext& context)
 {
@@ -28,10 +38,17 @@ MetaLevelOpSymbol::metaUpModule(FreeDagNode* subject, RewritingContext& context)
   if (metaLevel->downQid(subject->getArgument(0), moduleName) &&
       metaLevel->downBool(subject->getArgument(1), flat))
     {
-      if (PreModule* pm = interpreter.getModule(moduleName))
+      if (PreModule* pm = getPreModule(moduleName))
 	{
-	  PointerMap qidMap;
-	  return context.builtInReplace(subject, metaLevel->upModule(flat, pm, qidMap));
+	  //
+	  //	We check the status of the flattened module before proceeding
+	  //	since we don't have an easy way to back out if it is bad.
+	  //
+	  if (!(pm->getFlatModule()->isBad()))
+	    {
+	      PointerMap qidMap;
+	      return context.builtInReplace(subject, metaLevel->upModule(flat, pm, qidMap));
+	    }
 	}
     }
   return false;
@@ -43,10 +60,17 @@ MetaLevelOpSymbol::metaUpImports(FreeDagNode* subject, RewritingContext& context
   int moduleName;
   if (metaLevel->downQid(subject->getArgument(0), moduleName))
     {
-      if (PreModule* pm = interpreter.getModule(moduleName))
+      if (PreModule* pm = getPreModule(moduleName))
 	{
-	  PointerMap qidMap;
-	  return context.builtInReplace(subject, metaLevel->upImports(pm, qidMap));
+	  //
+	  //	We check the status of the flattened module before proceeding
+	  //	since we don't have an easy way to back out if it is bad.
+	  //
+	  if (!(pm->getFlatModule()->isBad()))
+	    {
+	      PointerMap qidMap;
+	      return context.builtInReplace(subject, metaLevel->upImports(pm, qidMap));
+	    }
 	}
     }
   return false;
@@ -60,11 +84,14 @@ MetaLevelOpSymbol::metaUpSorts(FreeDagNode* subject, RewritingContext& context)
   if (metaLevel->downQid(subject->getArgument(0), moduleName) &&
       metaLevel->downBool(subject->getArgument(1), flat))
     {
-      if (PreModule* pm = interpreter.getModule(moduleName))
+      if (PreModule* pm = getPreModule(moduleName))
 	{
-	  PointerMap qidMap;
-	  return context.builtInReplace(subject,
-					metaLevel->upSorts(flat, pm->getFlatModule(), qidMap));
+	  VisibleModule* vm = pm->getFlatModule();
+	  if (!(vm->isBad()))
+	    { 
+	      PointerMap qidMap;
+	      return context.builtInReplace(subject, metaLevel->upSorts(flat, vm, qidMap));
+	    }
 	}
     }
   return false;
@@ -78,11 +105,14 @@ MetaLevelOpSymbol::metaUpSubsortDecls(FreeDagNode* subject, RewritingContext& co
   if (metaLevel->downQid(subject->getArgument(0), moduleName) &&
       metaLevel->downBool(subject->getArgument(1), flat))
     {
-      if (PreModule* pm = interpreter.getModule(moduleName))
+      if (PreModule* pm = getPreModule(moduleName))
 	{
-	  PointerMap qidMap;
-	  return context.builtInReplace(subject,
-					metaLevel->upSubsortDecls(flat, pm->getFlatModule(), qidMap));
+	  VisibleModule* vm = pm->getFlatModule();
+	  if (!(vm->isBad()))
+	    { 
+	      PointerMap qidMap;
+	      return context.builtInReplace(subject, metaLevel->upSubsortDecls(flat, vm, qidMap));
+	    }
 	}
     }
   return false;
@@ -96,11 +126,14 @@ MetaLevelOpSymbol::metaUpOpDecls(FreeDagNode* subject, RewritingContext& context
   if (metaLevel->downQid(subject->getArgument(0), moduleName) &&
       metaLevel->downBool(subject->getArgument(1), flat))
     {
-      if (PreModule* pm = interpreter.getModule(moduleName))
+      if (PreModule* pm = getPreModule(moduleName))
 	{
-	  PointerMap qidMap;
-	  return context.builtInReplace(subject,
-					metaLevel->upOpDecls(flat, pm->getFlatModule(), qidMap));
+	  VisibleModule* vm = pm->getFlatModule();
+	  if (!(vm->isBad()))
+	    { 
+	      PointerMap qidMap;
+	      return context.builtInReplace(subject, metaLevel->upOpDecls(flat, vm, qidMap));
+	    }
 	}
     }
   return false;
@@ -114,11 +147,14 @@ MetaLevelOpSymbol::metaUpMbs(FreeDagNode* subject, RewritingContext& context)
   if (metaLevel->downQid(subject->getArgument(0), moduleName) &&
       metaLevel->downBool(subject->getArgument(1), flat))
     {
-      if (PreModule* pm = interpreter.getModule(moduleName))
+      if (PreModule* pm = getPreModule(moduleName))
 	{
-	  PointerMap qidMap;
-	  return context.builtInReplace(subject,
-					metaLevel->upMbs(flat, pm->getFlatModule(), qidMap));
+	  VisibleModule* vm = pm->getFlatModule();
+	  if (!(vm->isBad()))
+	    { 
+	      PointerMap qidMap;
+	      return context.builtInReplace(subject, metaLevel->upMbs(flat, vm, qidMap));
+	    }
 	}
     }
   return false;
@@ -132,11 +168,14 @@ MetaLevelOpSymbol::metaUpEqs(FreeDagNode* subject, RewritingContext& context)
   if (metaLevel->downQid(subject->getArgument(0), moduleName) &&
       metaLevel->downBool(subject->getArgument(1), flat))
     {
-      if (PreModule* pm = interpreter.getModule(moduleName))
+      if (PreModule* pm = getPreModule(moduleName))
 	{
-	  PointerMap qidMap;
-	  return context.builtInReplace(subject,
-					metaLevel->upEqs(flat, pm->getFlatModule(), qidMap));
+	  VisibleModule* vm = pm->getFlatModule();
+	  if (!(vm->isBad()))
+	    { 
+	      PointerMap qidMap;
+	      return context.builtInReplace(subject, metaLevel->upEqs(flat, vm, qidMap));
+	    }
 	}
     }
   return false;
@@ -150,11 +189,56 @@ MetaLevelOpSymbol::metaUpRls(FreeDagNode* subject, RewritingContext& context)
   if (metaLevel->downQid(subject->getArgument(0), moduleName) &&
       metaLevel->downBool(subject->getArgument(1), flat))
     {
-      if (PreModule* pm = interpreter.getModule(moduleName))
+      if (PreModule* pm = getPreModule(moduleName))
 	{
-	  PointerMap qidMap;
-	  return context.builtInReplace(subject,
-					metaLevel->upRls(flat, pm->getFlatModule(), qidMap));
+	  VisibleModule* vm = pm->getFlatModule();
+	  if (!(vm->isBad()))
+	    {
+	      PointerMap qidMap;
+	      return context.builtInReplace(subject, metaLevel->upRls(flat, vm, qidMap));
+	    }
+	}
+    }
+  return false;
+}
+
+bool
+MetaLevelOpSymbol::metaUpStratDecls(FreeDagNode* subject, RewritingContext& context)
+{
+  int moduleName;
+  bool flat;
+  if (metaLevel->downQid(subject->getArgument(0), moduleName) &&
+      metaLevel->downBool(subject->getArgument(1), flat))
+    {
+      if (PreModule* pm = getPreModule(moduleName))
+	{
+	  VisibleModule* vm = pm->getFlatModule();
+	  if (!(vm->isBad()))
+	    {
+	      PointerMap qidMap;
+	      return context.builtInReplace(subject, metaLevel->upStratDecls(flat, vm, qidMap));
+	    }
+	}
+    }
+  return false;
+}
+
+bool
+MetaLevelOpSymbol::metaUpSds(FreeDagNode* subject, RewritingContext& context)
+{
+  int moduleName;
+  bool flat;
+  if (metaLevel->downQid(subject->getArgument(0), moduleName) &&
+      metaLevel->downBool(subject->getArgument(1), flat))
+    {
+      if (PreModule* pm = getPreModule(moduleName))
+	{
+	  VisibleModule* vm = pm->getFlatModule();
+	  if (!(vm->isBad()))
+	    {
+	      PointerMap qidMap;
+	      return context.builtInReplace(subject, metaLevel->upSds(flat, vm, qidMap));
+	    }
 	}
     }
   return false;
@@ -166,7 +250,9 @@ MetaLevelOpSymbol::metaUpView(FreeDagNode* subject, RewritingContext& context)
   int viewName;
   if (metaLevel->downQid(subject->getArgument(0), viewName))
     {
-      if (View* view = interpreter.getView(viewName))
+      Module* activeModule = getModule();
+      Interpreter* owner = safeCast(VisibleModule*, activeModule)->getOwner();
+      if (View* view = owner->getView(viewName))
 	{
 	  PointerMap qidMap;
 	  return context.builtInReplace(subject, metaLevel->upView(view, qidMap));

@@ -1,6 +1,6 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
     Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
 
@@ -52,6 +52,17 @@ ExternalObjectManagerSymbol::ExternalObjectManagerSymbol(int id)
   : FreeSymbol(id, 0)
 {
 }
+
+void
+ExternalObjectManagerSymbol::cleanUpManager(ObjectSystemRewritingContext& /* context */)
+{
+  //
+  //	Most derived classes won't need this functionality so we provide
+  //	a default function.
+  //
+  CantHappen("Shouldn't be called for this ExternalObjectManagerSymbol " << this);
+}
+
 
 void
 ExternalObjectManagerSymbol::trivialReply(Symbol* replySymbol, 

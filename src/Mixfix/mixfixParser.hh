@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 1997-2003 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 1997-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,11 +26,7 @@
 #ifndef _mixfixParser_hh_
 #define _mixfixParser_hh_
 #include <map>
-#ifdef SCP
-#include "scp_parser.hh"
-#else
 #include "parser.hh"
-#endif
 #include "intSet.hh"
 #include "token.hh"
 
@@ -53,6 +49,7 @@ public:
     //
     MAKE_VARIABLE,
     MAKE_VARIABLE_FROM_ALIAS,
+    MAKE_OBJECT_WITH_EMPTY_ATTRIBUTE_SET,
     MAKE_NATURAL,
     MAKE_INTEGER,
     MAKE_RATIONAL,
@@ -62,6 +59,7 @@ public:
     MAKE_SORT_TEST,  // HACK used for condition fragment as well
     MAKE_POLYMORPH,
     MAKE_ITER,
+    MAKE_POLYMORPH_ITER,
     MAKE_SMT_NUMBER,
     MAKE_BUBBLE,
     //
@@ -92,13 +90,14 @@ public:
     MAKE_OWISE_ATTRIBUTE,
     MAKE_VARIANT_ATTRIBUTE,
     MAKE_NARROWING_ATTRIBUTE,
+    MAKE_DNT_ATTRIBUTE,
     MAKE_PRINT_ATTRIBUTE,
     MAKE_ATTRIBUTE_LIST,
     //
     //	Command construction actions.
     //
     CONDITIONAL_COMMAND,
-    UNIFY_LIST,
+    PAIR_LIST,
     MAKE_TERM_LIST,
     //
     //	Strategy expression construction actions
@@ -106,20 +105,34 @@ public:
     MAKE_TRIVIAL,
     MAKE_ALL,
     MAKE_APPLICATION,
+    MAKE_CALL,
     MAKE_TOP,
     MAKE_CONCATENATION,
     MAKE_UNION,
     MAKE_ITERATION,
     MAKE_BRANCH,
     MAKE_TEST,
+    MAKE_REW,
+    MAKE_ONE,
     MAKE_STRATEGY_LIST,
 
     MAKE_SUBSTITUTION,
+    MAKE_USING_PAIR,
+    MAKE_USING_LIST,
+    //
+    // Strategy module actions
+    //
+    MAKE_SD,
+    MAKE_CSD,
 
     MAKE_PRINT_LIST
   };
 
-  MixfixParser(MixfixModule& client);
+  MixfixParser(MixfixModule& client,
+	       bool complexFlag,
+	       int componentNonTerminalBase,
+	       int nextNonTerminalCode);
+  ~MixfixParser();
   //
   //	Functions to construct parser.
   //
@@ -152,6 +165,7 @@ public:
   //	Functions that analyse the parse tree.
   //
   void makeTerms(Term*& first, Term*& second);
+  void makeStrategyExprs(StrategyExpression*& first, StrategyExpression*& second);
   void insertStatement();
   void makeMatchCommand(Term*& pattern,
 			Term*& subject,
@@ -162,19 +176,23 @@ public:
 			 Term*& target,
 			 Vector<ConditionFragment*>& condition);
   void makeGetVariantsCommand(Term*& initial, Vector<Term*>& constraint);
-  void makeVariantUnifyCommand(Vector<Term*>& lhs,
-			       Vector<Term*>& rhs,
-			       Vector<Term*>& constraint);
+  void makeVariantUnifyOrMatchCommand(Vector<Term*>& lhs,
+				      Vector<Term*>& rhs,
+				      Vector<Term*>& constraint);
   void makeStrategyCommand(Term*& subject, StrategyExpression*& strategy);
 
   void makeAssignment(int node, Vector<Term*>& variables, Vector<Term*>& values);
   void makeSubstitution(int node, Vector<Term*>& variables, Vector<Term*>& values);
-
-  //
+  int newNonTerminal();
+   //
   //	Functions to get info about the parser.
   //
   const IntSet& getTokenSet();  // HACK
-  int getNrProductions();
+  bool isComplex() const;
+  int getComponentNonTerminalBase() const;
+  int getNrProductions() const;
+  int getNrNonTerminals() const;
+  int getNrTerminals() const;
 
 private:
   typedef map<int,int> IntMap;
@@ -185,7 +203,8 @@ private:
     OWISE = 2,
     PRINT = 4,
     VARIANT = 8,
-    NARROWING = 16
+    NARROWING = 16,
+    DNT = 128
   };
 
   struct Action
@@ -197,7 +216,9 @@ private:
 
   Sort* getSort(int node);
   Term* makeTerm(int node);
+  void makeAssocList(int node, Vector<Term*>& args);
   StrategyExpression* makeStrategy(int node);
+  std::pair<RewriteStrategy*, Term*> makeStrategyCall(int node);
   ConditionFragment* makeConditionFragment(int node);
   void makeCondition(int node, Vector<ConditionFragment*>& condition);
   void makeStatement(int node);
@@ -216,11 +237,16 @@ private:
 			 const Vector<Sort*>& printSorts);
   void makeTermList(int node, Vector<Term*>& termList);
   void makeStrategyList(int node, Vector<StrategyExpression*>& strategies);
-
+  void appendUsingPair(int node, Vector<Term*>& terms, Vector<StrategyExpression*>& strategies);
+  void makeUsingList(int node, Vector<Term*>& terms, Vector<StrategyExpression*>& strategies);
   int translateSpecialToken(int code);
 
   MixfixModule& client;
+  const bool complexParser;
+  const int componentNonTerminalBase;
+  int nextNonTerminal;
   Parser parser;			// CFG parser
+  Vector<int> productionRhs;		// to avoid creating a new Vector for each production insertion
   IntSet tokens;			// mapping between token codes and terminal numbers
   Vector<Action> actions;		// action associated with each production
   Vector<int> specialTerminals;		// special terminals for tokens with special properties
@@ -238,9 +264,39 @@ private:
 };
 
 inline int
-MixfixParser::getNrProductions()
+MixfixParser::getNrProductions() const
 {
   return actions.length();
+}
+
+inline bool
+MixfixParser::isComplex() const
+{
+  return complexParser;
+}
+
+inline int
+MixfixParser::getComponentNonTerminalBase() const
+{
+  return componentNonTerminalBase;
+}
+
+inline int
+MixfixParser::getNrNonTerminals() const
+{
+  return -nextNonTerminal;
+}
+
+inline int
+MixfixParser::getNrTerminals() const
+{
+  return tokens.cardinality();
+}
+
+inline int
+MixfixParser::newNonTerminal()
+{
+  return --nextNonTerminal;
 }
 
 #endif

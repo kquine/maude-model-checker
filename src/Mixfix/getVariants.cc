@@ -1,8 +1,8 @@
 /*
 
-    This file is part of the Maude 2 interpreter.
+    This file is part of the Maude 3 interpreter.
 
-    Copyright 2017 SRI International, Menlo Park, CA 94025, USA.
+    Copyright 2017-2023 SRI International, Menlo Park, CA 94025, USA.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,9 +46,9 @@ Interpreter::getVariants(const Vector<Token>& bubble, Int64 limit, bool irredund
 	{
 	  cout << " such that ";
 	  const char* sep = "";
-	  FOR_EACH_CONST(i, Vector<Term*>, constraint)
+	  for (const Term* t : constraint)
 	    {
-	      cout << sep << *i;
+	      cout << sep << t;
 	      sep = ", ";
 	    }
 	  cout << " irreducible ." << endl;
@@ -65,9 +65,8 @@ Interpreter::getVariants(const Vector<Token>& bubble, Int64 limit, bool irredund
     UserLevelRewritingContext::setDebug();
 
   Vector<DagNode*> blockerDags;
-  FOR_EACH_CONST(i, Vector<Term*>, constraint)
+  for (Term* t : constraint)
     {
-      Term* t = *i;
       t = t->normalize(true);  // we don't really need to normalize but we do need to set hash values
       blockerDags.append(t->term2Dag());
       t->deepSelfDestruct();
@@ -75,15 +74,28 @@ Interpreter::getVariants(const Vector<Token>& bubble, Int64 limit, bool irredund
   //
   //	Responsibility for deleting context and freshVariableGenerator is passed to ~VariantSearch().
   //
-  VariantSearch* vs = new VariantSearch(context, blockerDags, freshVariableGenerator, false, irredundant);
-  if (irredundant)
+  VariantSearch* vs = new VariantSearch(context,
+					blockerDags,
+					freshVariableGenerator,
+					VariantSearch::DELETE_FRESH_VARIABLE_GENERATOR |
+					VariantSearch::CHECK_VARIABLE_NAMES |
+					(irredundant ? VariantSearch::IRREDUNDANT_MODE : 0));
+  if (vs->problemOK())
     {
-      //
-      //	All computation is done up-front so there is only one time value.
-      //
-      printStats(timer, *context, getFlag(SHOW_TIMING));
+      if (irredundant)
+	{
+	  //
+	  //	All computation is done upfront so there is only one time value.
+	  //
+	  printStats(timer, *context, getFlag(SHOW_TIMING));
+	}
+      doGetVariants(timer, fm, vs, 0, limit);
     }
-  doGetVariants(timer, fm, vs, 0, limit);
+  else
+    {
+      delete vs;
+      fm->unprotect();
+    }
 }
 
 void
@@ -100,10 +112,7 @@ Interpreter::doGetVariants(Timer& timer,
   Int64 i = 0;
   for (; i != limit; i++)
     {
-      int nrFreeVariables;
-      int parentIndex;
-      bool moreInLayer;
-      const Vector<DagNode*>* variant = state->getNextVariant(nrFreeVariables, parentIndex, moreInLayer);
+      bool anotherVariant = state->findNextVariant();
       //
       //	If we did all the narrowing up front, there are no narrowing or rewriting
       //	steps to catch a ^C so we need to check here and treat it as an abort.
@@ -111,8 +120,9 @@ Interpreter::doGetVariants(Timer& timer,
       if ((irredundant && UserLevelRewritingContext::interrupted()) ||
 	  UserLevelRewritingContext::aborted())
 	break;
-      if (variant == 0)
-	{
+      
+     if (!anotherVariant)
+	{ 
 	  cout << ((solutionCount == 0) ? "\nNo variants.\n" : "\nNo more variants.\n");
 	  if (!irredundant)
 	    printStats(timer, *context, getFlag(SHOW_TIMING));
@@ -120,18 +130,23 @@ Interpreter::doGetVariants(Timer& timer,
 	    IssueWarning("Some variants may have been missed due to incomplete unification algorithm(s).");
 	  break;
 	}
+     
       ++solutionCount;
-      cout << "\nVariant #" << solutionCount << endl;
+      cout << "\nVariant " << solutionCount << endl;
       if (!irredundant)
 	printStats(timer, *context, getFlag(SHOW_TIMING));
 
-      int nrVariables = variant->size() - 1;
-      DagNode* d = (*variant)[nrVariables];
+      int nrFreeVariables;  // dummy
+      int variableFamily;  // dummy
+      const Vector<DagNode*>& variant = state->getCurrentVariant(nrFreeVariables, variableFamily);
+
+      int nrVariables = variant.size() - 1;
+      DagNode* d = variant[nrVariables];
       cout << d->getSort() << ": " << d << '\n';
       for (int i = 0; i < nrVariables; ++i)
 	{
 	  DagNode* v = variableInfo.index2Variable(i);
-	  cout << v << " --> " << (*variant)[i] << endl;
+	  cout << v << " --> " << variant[i] << endl;
 	}
     }
   QUANTIFY_STOP();
