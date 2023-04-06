@@ -41,12 +41,12 @@ load ltlr-interface .
   sorts Pos .
   subsort Nat < Pos .
   op nil : -> Pos [ctor] .
-  op _._ : Pos Pos -> Pos [ctor assoc id: nil] .
+  op _.._ : Pos Pos -> Pos [ctor assoc id: nil] .
 
   op pos : Context$Conf -> Pos .
   eq pos([]) = nil .
-  eq pos(f(XCF,CF)) = 0 . pos(XCF) .
-  eq pos(f(CF,XCF)) = 1 . pos(XCF) .
+  eq pos(f(XCF,CF)) = 0 .. pos(XCF) .
+  eq pos(f(CF,XCF)) = 1 .. pos(XCF) .
 
   op pos : RuleName Pos -> Action .
  ceq {CXT | R : SUB} |= pos(R,P:Pos) = true if P:Pos := pos(CXT) .

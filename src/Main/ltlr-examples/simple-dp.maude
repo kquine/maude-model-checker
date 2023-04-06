@@ -102,7 +102,7 @@ red modelCheckFair(init, ([] ~ deadlock) -> <> eating(0),
 		   fair({'grabF : 'I \ I:Nat}) ; 
 		   fair({'grabS : 'I \ I:Nat})) .
 
-
+set verbose off .
 
 --- Full Maude interface
 load ltlr-interface
@@ -149,6 +149,8 @@ endm)
   op eating : Nat -> Prop [ctor] .
   eq p(I,eat) || CF |= eating(I) = true .
 endm)
+
+set verbose on .
 
 --- false
 (mc init |=  <> eating(0) .)

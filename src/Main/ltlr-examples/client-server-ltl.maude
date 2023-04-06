@@ -1,0 +1,32 @@
+load model-checker
+load client-server-model
+
+mod CLIENT-SERVER-CHECK is
+    protecting CLIENT-SERVER-ABS .
+    inc MODEL-CHECKER .
+
+    subsort Conf < State .
+
+*********************************
+*** Predicate
+*********************************
+
+    ops enabled.req answered : Oid -> Prop .  
+    eq X [C, S, N, nil] |= enabled.req(C) = true .
+    eq X [C, S, N, M]   |= answered(C) = true .
+
+
+    var X : Conf .  var CNT : Cnts . 
+    vars C S I : Oid .  vars M N : Nat . var W : Nat? .
+
+    op init : -> State .
+    eq init  
+     = [a] [b,a,1,nil] [c,a,0,nil] [d] [e,d,2,nil] [f,d,3,nil] .
+endm
+
+---set show gc on .
+set verbose on .
+
+red modelCheck(init, [] ~ answered(a)) .
+
+q

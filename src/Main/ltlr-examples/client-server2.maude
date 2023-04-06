@@ -1,0 +1,55 @@
+load ltlr-checker
+load client-server-model
+
+mod CLIENT-SERVER-CHECK is
+    protecting CLIENT-SERVER-ABS .
+    inc LTLR-MODEL-CHECKER .
+
+    subsort Conf < State .
+
+    var X : Conf .  vars A B : Action . var CNT : Cnts . 
+    vars C S I : Oid .  vars M N : Nat . var W : Nat? .
+
+    op answered : Oid -> Prop .
+    eq X [C, S, N, M]   |= answered(C) = true .
+
+    op init : -> State .
+    eq init = [a] [b,a,1,nil] [c,a,0,nil] .
+endm
+
+load ltlr-interface
+
+---set show gc on .
+set verbose on .
+
+--- false
+(mc in CLIENT-SERVER-CHECK : init |= <> answered(b) .)
+
+--- true
+(pfmc in CLIENT-SERVER-CHECK : init |= <> answered(b) .)
+
+--- true
+(pfmc in CLIENT-SERVER-CHECK : init |= <> answered(b) under
+  just(req(b)) .)
+
+
+--- false
+(mc in CLIENT-SERVER-CHECK : init |= <> answered(b) under 
+   just(req(b)) ; fair(rec(b))  .)
+
+--- true
+(mc in CLIENT-SERVER-CHECK : init |= <> answered(b) under 
+   just(req(b)) ; fair(rec(b)) ; fair(reply(a,b)) .)
+
+--- false
+(mc in CLIENT-SERVER-CHECK : init |= <> answered(b) under 
+   just(req(b)) ; just(rec(b)) ; just(reply(a,b)) .)
+
+--- false
+(mc in CLIENT-SERVER-CHECK : init |= <> answered(b) under
+  fair(rec(C:Oid)) ; fair(reply(S:Oid,C:Oid)) .)
+
+--- true 
+(mc in CLIENT-SERVER-CHECK : init |= <> answered(b) under
+  just(req(C:Oid)) ; fair(rec(C:Oid)) ; fair(reply(S:Oid,C:Oid)) .)
+

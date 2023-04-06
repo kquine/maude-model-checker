@@ -1,0 +1,66 @@
+load ltlr-checker
+load client-server-model
+
+mod CLIENT-SERVER-CHECK is
+    protecting CLIENT-SERVER-ABS .
+    inc LTLR-MODEL-CHECKER .
+    subsort Conf < State .
+
+    vars C S : Oid . vars N M : Nat . var CF : Conf .
+
+    op answered : Oid -> Prop .
+    eq [C,S,N,M] CF |= answered(C) = true .
+    eq CF |= answered(C) = false [owise]  .
+
+    op init : -> State .
+    eq init = [a] [b,a,1,nil] [c,a,0,nil] .
+endm
+
+set verbose on .
+
+--- false
+red modelCheck(init, <> answered(b)) .
+
+--------------- ---------------
+--- Full Maude commands
+
+set verbose off .
+
+load ltlr-interface
+
+(mod CLIENT-SERVER-CHECK-CONTEXT is
+  including LTLR-MODEL-CHECKER .
+  protecting CLIENT-SERVER-CHECK . 
+  protecting CONTEXT[CLIENT-SERVER] .   --- generate context signature
+  subsort Context$Conf < StateContext . --- declare state context sort
+endm)
+
+(select CLIENT-SERVER-CHECK .)
+
+set verbose on .
+
+--- false
+(mc init |= <> answered(b) .)
+
+--- false (plus context information)
+(mc in CLIENT-SERVER-CHECK-CONTEXT : init |= [] (req(b) -> <> answered(b)) .)
+
+
+--- true
+(pfmc init |= <> answered(b) .)
+
+--- false
+(mc init |= <> answered(b) under
+   just(req(C:Oid)) ; just(rec(b))  .)
+
+--- false
+(mc init |= <> answered(b) under
+   just(req(C:Oid)) ; just(rec(C:Oid)) ; fair(reply(S:Oid,C:Oid))  .)
+
+--- true
+(mc init |= <> answered(b) under
+   just(req(b)) ; fair(rec(C:Oid)) ; fair(reply(S:Oid,b))  .)
+
+--- true
+(mc init |= <> answered(b) under
+   just(req(C:Oid)) ; fair(rec(C:Oid)) ; fair(reply(S:Oid,C:Oid))  .)

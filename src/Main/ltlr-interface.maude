@@ -1,4 +1,4 @@
-load full-maude27
+load full-maude321
 load ltlr-checker
 
 --- The Full Maude interface of the Maude Fair LTLR model checker
@@ -92,7 +92,7 @@ endv
 
 fmod TLR-TERM-UTIL is
   pr CONVERSION .
-  pr EXT-TERM .
+  pr FM-EXT-TERM .
 
   vars Q F : Qid . var QS : QidSet . var N : Nat .
   var TY : Type . var TYL : TypeList . var TYS : TypeSet . 
@@ -317,6 +317,11 @@ eof
 ***       Declaration Generation
 ******************************************************************************
 
+view OpDeclSet from TRIV to META-MODULE is 
+  sort Elt to OpDeclSet .
+endv
+
+
 fmod TLR-DECL-RESULT is
   pr 4TUPLE{SortSet,SubsortDeclSet,OpDeclSet,EquationSet} *
      (sort Tuple{SortSet,SubsortDeclSet,OpDeclSet,EquationSet} to DeclResult,
@@ -458,20 +463,20 @@ endfm
 ******************************************************************************
 
 fmod TLR-ACTION-EXPR is
-  pr INST-EXPR-EVALUATION .
-  pr EVALUATION . 
-  pr MOD-EXP-PARSING .
+  pr FM-INST-EXPR-EVALUATION .
+  pr FM-EVALUATION . 
+  pr FM-MOD-EXP-PARSING .
   inc MOD-EXPR .
   pr TLR-PATTERN-DECL-GENERATE .
-  pr UNIT .  --- for the addDecl function
+  pr FM-UNIT .  --- for the addDecl function
 
   op ACTION`[_`] : ModuleExpression -> ModuleExpression .
 
   var ME ME' : ModuleExpression .  vars U U' M DM : Module .
   var Q X : Qid .  var QIL : QidList .  vars T T2 : Term .  
-  var PDL : ParameterDeclList .  var IL : ImportList .  var VDS : OpDeclSet .
-  var VEPS : Set{Tuple{ViewExp,ViewExp}} .  vars DB DB1 : Database .
-  var DT : Default{Term} .  vars VES VES' : Set{ViewExp} .
+  var PDL : ParameterDeclList .  var IL : ImportList .  var VDS : VariableSet .
+  var VEPS : Set{Tuple{ViewExpression,ViewExpression}} .  vars DB DB1 : Database .
+  var DT : Default{Term} .  vars VES VES' : Set{ViewExpression} .
   vars MNS MNS' MNS'' MNS3 MNS4 : Set{ModuleName} .
   var MIS : Set{ModuleInfo} .  var VIS : Set{ViewInfo} .
   vars DCL : DeclResult .  var IPR : IntprtResult .  
@@ -531,11 +536,11 @@ endfm
 
 
 fmod TLR-CONTEXT-EXPR is
-  pr INST-EXPR-EVALUATION .
-  pr EVALUATION . 
-  pr MOD-EXP-PARSING .
+  pr FM-INST-EXPR-EVALUATION .
+  pr FM-EVALUATION . 
+  pr FM-MOD-EXP-PARSING .
   inc MOD-EXPR .
-  pr MODULE-HANDLING  * (op addOps to addOpsSE, 
+  pr FM-MODULE-HANDLING  * (op addOps to addOpsSE, 
                          op addEqs to addEqsSE, 
                          op addSorts to addSortsSE,
                          op _in_ : Attr AttrSet -> Bool to _inSE_) .
@@ -545,9 +550,9 @@ fmod TLR-CONTEXT-EXPR is
 
   var ME ME' : ModuleExpression .  vars U U' M DM : Module .
   var Q X : Qid .  var QIL : QidList .  vars T T2 : Term .  
-  var PDL : ParameterDeclList .  var IL : ImportList .  var VDS : OpDeclSet .
-  var VEPS : Set{Tuple{ViewExp,ViewExp}} .  vars DB DB1 : Database .
-  var DT : Default{Term} .  vars VES VES' : Set{ViewExp} .
+  var PDL : ParameterDeclList .  var IL : ImportList .  var VDS : VariableSet .
+  var VEPS : Set{Tuple{ViewExpression,ViewExpression}} .  vars DB DB1 : Database .
+  var DT : Default{Term} .  vars VES VES' : Set{ViewExpression} .
   vars MNS MNS' MNS'' MNS3 MNS4 : Set{ModuleName} .
   var MIS : Set{ModuleInfo} .  var VIS : Set{ViewInfo} .
   vars DCL1 DCL2 : DeclResult .
@@ -615,7 +620,7 @@ endfm
 set show advisories off .
 
 --- REDEFINED
-fmod BANNER is
+fmod FM-BANNER is
   pr STRING .
   op banner : -> String .
   eq banner = "LTLR Fairness Model Checker Interface" .
@@ -623,7 +628,7 @@ endfm
 
 
 fmod TLR-COMMANDS is
-  inc COMMANDS .
+  inc FM-COMMANDS .
 
   --- no fairness
   op mc_|=_. : @Bubble@ @Bubble@ -> @Command@ [ctor] .
@@ -635,9 +640,9 @@ endfm
 
 --- REDEFINED: frequently used as meta functions in many cases.
 --- NOTE: MOD-EXPRS is not used for parsing module expressions.
-fmod FM-MOD-EXPRS is
-  including OPERATOR-ATTRIBUTES .
-  including EXTENDED-SORTS .
+fmod FM-MOD-EXPR is
+  including FM-OPERATOR-ATTRIBUTES .
+  including FM-EXTENDED-SORTS .
 
   sorts @Map@ @MapList@ .
   subsort @Map@ < @MapList@ .
@@ -645,7 +650,7 @@ fmod FM-MOD-EXPRS is
 
   *** module expression
   op _*`(_`) : @ModExp@ @MapList@ -> @ModExp@ .
-  op _`{_`} : @ModExp@ @ViewExp@ -> @ModExp@ .
+  op _`{_`} : @ModExp@ @ViewExpression@ -> @ModExp@ .
   op TUPLE`[_`] : @Token@ -> @ModExp@ .
   op POWER`[_`] : @Token@ -> @ModExp@ .
   op _+_ : @ModExp@ @ModExp@ -> @ModExp@ [assoc prec 42] .
@@ -671,22 +676,28 @@ fmod FM-MOD-EXPRS is
   op msg_to_ : @Token@ @Token@ -> @Map@ .
   op msg_:_->_to_ : @Token@ @TypeList@ @Type@ @Token@ -> @Map@ .
   op msg_:`->_to_ : @Token@ @Type@ @Token@ -> @Map@ .
+  op strat_to_ : @Token@ @Token@ -> @Map@ .
+  op strat_@_to_ : @Token@ @Type@ @Token@ -> @Map@ .
+  op strat_:_@_to_ : @Token@ @TypeList@ @Type@ @Token@ -> @Map@ .
 
   op _`,_ : @MapList@ @MapList@ -> @MapList@ [assoc prec 42] .
 endfm
 
 
+
 --- REDEFINED 
 fmod FULL-MAUDE-SIGN is
-  including VIEWS .
+  including FM-VIEWS .
   including TLR-COMMANDS .
+
   sort @Input@ .
   subsorts @Command@ @Module@ @View@ < @Input@ .
 endfm
 
 
+
 fmod TLR-COMMAND-PROCESSING is
-  pr COMMAND-PROCESSING .
+  pr FM-COMMAND-PROCESSING .
   pr TLR-ACTION-EXPR .
 
   vars T T1 T2 T3 : Term .  
@@ -697,10 +708,10 @@ fmod TLR-COMMAND-PROCESSING is
   vars ME ME1 : ModuleExpression .
   var  B : Bool .
   var  QIL : QidList .
-  vars VS VDS : OpDeclSet .
+  vars VS VDS : VariableSet .
   vars QI QI' F V O : Qid .
   var  TDM : Tuple{Database,ModuleExpression} .
-  var  TM : [Tuple{Term,Module,Bool,OpDeclSet,Database}] .
+  var  TM : [Tuple{Term,Module,Bool,VariableSet,Database}] .
   var  RP? : [ResultPair] .
 
 --- process tlr commands (parse arguments)
@@ -719,7 +730,7 @@ fmod TLR-COMMAND-PROCESSING is
   if B  := included('META-MODULE, getImports(getTopModule(ME,DB)), DB) .
 
 --- parse arguments
-  op procTlrComd : Qid TermList ModuleExpression Module Bool OpDeclSet 
+  op procTlrComd : Qid TermList ModuleExpression Module Bool VariableSet 
                 Database TermList -> Tuple{Database,QidList} .
 
   eq procTlrComd(F, TL, ME, unitError(QIL), B, VDS, DB, TL1) = << DB ; QIL >> .
@@ -735,7 +746,7 @@ fmod TLR-COMMAND-PROCESSING is
      fi
    if TM := solveBubblesRed(T, M, B, VDS, DB) . --- 'in MOD : " part
 
-  op procTlrComdAux : Qid TermList ModuleExpression Module Bool OpDeclSet 
+  op procTlrComdAux : Qid TermList ModuleExpression Module Bool VariableSet 
                 Database TermList -> Tuple{Database,QidList} .
  ceq procTlrComdAux(F, TL, ME, M, B, VDS, DB, TL1)
    = procTlrComd(F, TL, ME, M1, B, VDS, DB1, TL1)
@@ -770,9 +781,9 @@ fmod TLR-COMMAND-PROCESSING is
 
 
  --- the last argument (with condition)
-  op parseTlrCondArg1 : Qid Term ModuleExpression Module OpDeclSet 
+  op parseTlrCondArg1 : Qid Term ModuleExpression Module VariableSet 
                    Database TermList -> Tuple{Database,QidList} .
-  op parseTlrCondArg2 : Qid Term ModuleExpression Module OpDeclSet 
+  op parseTlrCondArg2 : Qid Term ModuleExpression Module VariableSet 
                    Database TermList -> Tuple{Database,QidList} .
 
  ceq parseTlrCondArg1(F, 'bubble['__[TL]], ME, M, VDS, DB, TL1)
@@ -788,17 +799,17 @@ fmod TLR-COMMAND-PROCESSING is
   eq parseTlrCondArg2(F, QI[T1,T2], ME, M, VDS, DB, TL1)
     = if QI == '_under_.
       then procTlrMC(F[TL1,T1] ,T2, ME, M, VDS, DB)
-      else procTlrMC(F[TL1,constsToVars(QI[T1,T2],VDS)], 
+      else procTlrMC(F[TL1,QI[T1,T2]], 
                      'noFairness.FairnessSet, ME, M, VDS, DB)
       fi .
 
   eq parseTlrCondArg2(F, T, ME, M, VDS, DB, TL1)
-   = procTlrMC(F[TL1,constsToVars(T,VDS)],'noFairness.FairnessSet,ME,M,VDS,DB) 
+   = procTlrMC(F[TL1,T],'noFairness.FairnessSet,ME,M,VDS,DB) 
   [owise] .
 
 
 --- process tlr model-checking commands
-  op procTlrMC : Term Term ModuleExpression Module OpDeclSet Database -> Tuple{Database,QidList} .
+  op procTlrMC : Term Term ModuleExpression Module VariableSet Database -> Tuple{Database,QidList} .
 
  --- no fairness
  ceq procTlrMC('mc_|=_.[T1,T2], 'noFairness.FairnessSet, ME, M, VDS, DB)   
@@ -910,7 +921,7 @@ endfm
 
 
 mod TLR-DATABASE-HANDLING is
-  pr DATABASE-HANDLING .
+  pr FM-DATABASE-HANDLING .
   pr TLR-COMMAND-PROCESSING .
   pr TLR-CONTEXT-EXPR .
 
