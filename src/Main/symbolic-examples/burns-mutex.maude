@@ -77,9 +77,8 @@ fmod BURNS-PROCSETS is
   op __ : InitFlag0ProcSet InitFlag0ProcSet -> InitFlag0ProcSet [ctor ditto] .
 endfm
 
-load symbolic-checker-core
 
-(fmod BURNS-PROCSET-TRIPLES is
+fmod BURNS-PROCSET-TRIPLES is
   protecting BURNS-PROCSETS .
 
   --- proc | proc with smaller ids | proc with greater ids
@@ -95,9 +94,10 @@ load symbolic-checker-core
 
 ---  eq [J I : F1,S1] | PS1 | [J : F2,S2] PS2 
 ---   = [J I : F1,S1] | PS1 [J : F2,S2] | PS2 [variant] .
-endfm)
+endfm
 
-(mod BURNS-CONF is
+
+mod BURNS-CONF is
   protecting BURNS-PROCSET-TRIPLES .
 
   sort Conf .
@@ -107,40 +107,42 @@ endfm)
   var P : Proc . var PS : ProcSet .
 
   --- NOTE: there is an additional "pick" phase for each step.
-  rl [pick]: < P PS >  =>  < P | PS | none > .
-endm)
+  rl [pick]: < P PS >  =>  < P | PS | none > [narrowing] .
+endm
 
-(mod BURNS-MUTEX is
+
+mod BURNS-MUTEX is
   protecting BURNS-CONF .
 
   vars I J : Number . var F : Flag . var S : Status .
   vars PS1 PS2 : ProcSet . var F0PS : Flag0ProcSet .
 
   rl [l1] : < [I : F,l1] | PS1 | PS2 >
-         => < [I : 0,l2] PS1 PS2 > .
+         => < [I : 0,l2] PS1 PS2 > [narrowing] .
 
   rl [l2] : < [I : F,l2] | [J : 1,S] PS1 | PS2 >
-         => < [I : F,l1] [J : 1,S] PS1 PS2 > .
+         => < [I : F,l1] [J : 1,S] PS1 PS2 > [narrowing] .
 
   rl [l2] : < [I : F,l2] | F0PS | PS2 >
-         => < [I : F,l3] F0PS PS2 > .
+         => < [I : F,l3] F0PS PS2 > [narrowing] .
 
   rl [l3] : < [I : F,l3] | PS1 | PS2 >
-         => < [I : 1,l4] PS1 PS2 > .
+         => < [I : 1,l4] PS1 PS2 > [narrowing] .
 
   rl [l4] : < [I : F,l4] | [J : 1,S] PS1 | PS2 >
-         => < [I : F,l1] [J : 1,S] PS1 PS2 > .
+         => < [I : F,l1] [J : 1,S] PS1 PS2 > [narrowing] .
 
   rl [l4] : < [I : F,l4] | F0PS | PS2 >
-         => < [I : F,l5] F0PS PS2 > .
+         => < [I : F,l5] F0PS PS2 > [narrowing] .
 
   rl [l5] : < [I : F,l5] | PS1 | F0PS > 
-         => < [I : F,crit] PS1 F0PS > .
+         => < [I : F,crit] PS1 F0PS > [narrowing] .
 
   rl [l6] : < [I : F,crit] | PS1 | PS2 >
-         => < [I : 0,l1] PS1 PS2 > .
-endm)
+         => < [I : 0,l1] PS1 PS2 > [narrowing] .
+endm
 
+load symbolic-checker
 
 (mod BURNS-MUTEX-SATISFACTION is
   pr SYMBOLIC-CHECKER .
@@ -167,12 +169,7 @@ endm)
   eq < P | [I : F,crit] [J : F',crit] PS | PS' > |= ex? = false [variant] .
   eq < P | [I : F,crit] PS | [J : F',crit] PS' > |= ex? = false [variant] .
   eq < P | PS | [I : F,crit] [J : F',crit] PS' > |= ex? = false [variant] .
-
 endm)
-
----(
-(lfmc [20] < IS:InitProcSet > |= [] ex? .)
----)
 
 
 (mod BURNS-MUTEX-SATISFACTION-ABS is
@@ -194,5 +191,9 @@ endm)
   eq < PS1 [I : 1,l4] [J : 1,l4] > = < PS1 [I : 1,l4] > [variant] .
 endm)
 
-(lfmc < IS:InitProcSet > |= [] ex? .)
+
+(lfmc [20] in BURNS-MUTEX-SATISFACTION : < IS:InitProcSet > |= [] ex? .)
+
+
+(lfmc in BURNS-MUTEX-SATISFACTION-ABS : < IS:InitProcSet > |= [] ex? .)
 

@@ -74,24 +74,24 @@ mod PETERSON-MUTEX is
   var RBS : RBagList . var RNBS : RNEBagList . var REBS : REmptyBagList .
 
 --- we can change a focus to any position
-  rl [movel]: N,M | LBS @ B  / RBS   => N,M | LBS / B :: RBS .
-  rl [mover]: N,M | LBS / B :: RNBS  => N,M | LBS @ B /  RNBS .
+  rl [movel]: N,M | LBS @ B  / RBS   => N,M | LBS / B :: RBS [narrowing] .
+  rl [mover]: N,M | LBS / B :: RNBS  => N,M | LBS @ B /  RNBS [narrowing] .
 
 --- an idle proc can increase its priority
   rl [l0]: N,s M | nill / [0 | PS]   :: RBS 
-        => N,  M | nill / [0 | * PS] :: RBS .
+        => N,  M | nill / [0 | * PS] :: RBS [narrowing] .
 
 --- a proc can increase it priority if it has the single maximum priority
   rl [lM]: N,M | LBS / [I |    *] :: [s I | none] :: REBS
-        => N,M | LBS / [I | none] :: [s I |    *] :: REBS .
+        => N,M | LBS / [I | none] :: [s I |    *] :: REBS [narrowing] .
 
 --- a proc can increase its priority if at least procs have the same priority
   rl [lK]: N,M | LBS / [I | * * PS] :: [s I |   PS'] :: RBS
-        => N,M | LBS / [I |   * PS] :: [s I | * PS'] :: RBS .
+        => N,M | LBS / [I |   * PS] :: [s I | * PS'] :: RBS [narrowing] .
 
 --- a proc in critical section can go to idle status
   rl [lC]: s N,  M | LBS / [N | * PS] :: nilr
-        => s N,s M | LBS / [N |   PS] :: nilr .
+        => s N,s M | LBS / [N |   PS] :: nilr [narrowing] .
 endm
 
 ---(
@@ -99,7 +99,7 @@ search s s s, s s s | nill / [0 | none] :: [s | none] :: [s s | none] :: nilr
    =>* C:Conf .
 ---)
 
-load symbolic-checker-core .
+load symbolic-checker
 
 (mod PETERSON-MUTEX-SATISFACTION is
   pr SYMBOLIC-CHECKER .
@@ -143,6 +143,8 @@ endm)
   eq s s I N, N | nill / [0 | * * ES] :: [s | * * ES'] :: RBS
    =     I N, N | nill / [0 | * * ES] :: [s |     ES'] :: RBS [variant] .
 endm)
+
+set verbose on .
 
 (lfmc N,N | nill / REBS |= [] ex? .)
 

@@ -12,9 +12,9 @@ mod MYSTERY is
   op [_] : S? -> Conf [ctor] .
   op >< : -> Conf [ctor] .
 
-  rl [0] => [s(0)] .
-  rl [s(N:S?)] => [s(s(N:S?))] .
-  rl [s(*)] => >< .
+  rl [0] => [s(0)] [narrowing] .
+  rl [s(N:S?)] => [s(s(N:S?))] [narrowing] .
+  rl [s(*)] => >< [narrowing] .
 endm
 
 

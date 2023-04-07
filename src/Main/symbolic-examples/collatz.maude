@@ -14,8 +14,8 @@ mod COLLATZ is
 
   var N : Number .
 
-  rl  [odd]: [N N s] => [N N N N N N s s s s] .	
-  rl [even]: [N N]   => [N] .
+  rl  [odd]: [N N s] => [N N N N N N s s s s] [narrowing] .	
+  rl [even]: [N N]   => [N] [narrowing] .
 
 ---  rl  [odd]: [N N s] => [N N N s s] .	
 ---  eq [even]: [N N] = [N] .
@@ -24,7 +24,7 @@ endm
 --- search [s s s s s] =>* [s] .
 --- show search graph .
 
-load symbolic-checker-core
+load symbolic-checker
 
 (mod COLLATZ-CHECK is
   pr COLLATZ .

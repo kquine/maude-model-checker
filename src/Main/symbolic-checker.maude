@@ -145,36 +145,36 @@ endfm
 ***  Full Maude Narrowing Connector  ***
 ****************************************
 
-load full-maude27
+load full-maude321
 
 fmod META-LMC-PARAMETERS is 
   pr META-MODULE .
   op ##m## : ~> SModule [memo] . --- empty! the user module shoule define them.
   op ##f## : ~> TermList [memo] .
 
-  var H : Header .  var IL : ImportList .  var SS : SortSet .  var SSDS : SubsortDeclSet .  
-  var OPDS : OpDeclSet . var MAS : MembAxSet .  var EQS : EquationSet .  var RLS : RuleSet .
-  vars T1 T2 : Term . var ATS : AttrSet . var COND : EqCondition .
+  var H : Header .  
+  var IL : ImportList .  
+  var SS : SortSet .  
+  var SSDS : SubsortDeclSet .  
+  var OPDS : OpDeclSet . 
+  var MAS : MembAxSet .  
+  var EQS : EquationSet .  
+  var RLS : RuleSet .
+  var STDS : StratDeclSet .
+  var STDFS : StratDefSet .
 
-  --- to handle the mismatch between Full & Core Maude
-  --- due to some bugs, only used for getVarants and metaNarrow
+  --- as Full Maude internally generates StratModule, we need
+  --- to remove all strat declarations for narrowing.
 
-  op trMod : SModule -> SModule [memo] . 
-  eq trMod(fmod H is IL sorts SS . SSDS OPDS MAS EQS endfm) 
-   = fmod H is IL sorts SS . SSDS OPDS MAS trEqs(EQS) endfm .
-  eq trMod(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm)
-   = mod H is IL sorts SS . SSDS OPDS MAS trEqs(EQS) RLS endm .
-
-  op trEqs : EquationSet -> EquationSet .
-  eq trEqs(eq T1 = T2 [metadata("variant") ATS] . EQS)
-   = eq T1 = T2 [variant ATS] . trEqs(EQS) .
-  eq trEqs(ceq T1 = T2 if COND [metadata("variant") ATS] . EQS)
-   = ceq T1 = T2 if COND [variant ATS] . trEqs(EQS) .
-  eq trEqs(EQS) = EQS [owise] .
+  op trMod : Module -> SModule [memo] . 
+  eq trMod(smod H is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm)
+   = mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm .
+  eq trMod(M:Module) = M:Module [owise] .
 endfm
 
+
 fmod LMC-RESULT-SET is
-  pr RESULT-CONTEXT-SET .
+  pr FM-RESULT-CONTEXT-SET .
 
   sort StepResult StepResult? .
   subsort StepResult < StepResult? .
@@ -188,10 +188,18 @@ fmod LMC-RESULT-SET is
     [ctor assoc comm id: empty prec 65] .
   eq X:StepResult || X:StepResult = X:StepResult .
 
-  var M : Module . vars NextVar : Nat . vars S S' : Substitution .
-  vars T TS CtTS : Term . var TL : TermList . var TP : Type . var R : Rule .
-  var Tr : TraceNarrow . var B : Flags . vars Ct CtS : Context .  
-  var RTS : ResultContextSet . var SRS : StepResultSet .
+  var M : Module . 
+  vars NextVar : Nat . 
+  vars S S' : Substitution .
+  vars T TS CtTS : Term . 
+  var TL : TermList . 
+  var TP : Type . 
+  var R : Rule .
+  var Tr : TraceNarrow . 
+  var B : Flags . 
+  vars Ct CtS : Context .  
+  var RTS : ResultContextSet . 
+  var SRS : StepResultSet .
 
   op to4Tuple : Module ResultContextSet -> StepResult .
   eq to4Tuple(M, empty ) = empty .
@@ -221,9 +229,13 @@ mod META-LMC-THEORY is
   pr META-LMC-PARAMETERS .
   pr BOUNDED-FOLDING-MODEL-CHECKER .
 
-  vars T1 T2 ST ST' : Term . vars SUB SUB' : Substitution .  
-  var RS : RuleSet . var CD : Condition . var Q : Qid . 
-  var TP : Type .  var SRS : StepResultSet . 
+  vars T1 T2 ST ST' : Term . 
+  vars SUB SUB' : Substitution .  
+  var RS : RuleSet . 
+  var CD : Condition . 
+  var Q : Qid . 
+  var TP : Type .  
+  var SRS : StepResultSet . 
 
   ops init mid : Term -> State [ctor] .
 
@@ -243,13 +255,22 @@ endm
 fmod META-NARROWING-INTERFACE is
   pr META-LMC-PARAMETERS .
   pr LMC-RESULT-SET .
-  pr META-NARROWING-SEARCH .
+  pr FM-META-NARROWING-SEARCH .
 
-  var M : Module . var RS : RuleSet .
-  vars T T1 T2 ST PT : Term .  var TL : TermList .  var C : Constant . 
-  var TP : Type . vars SUB SUB1 SUB2 : Substitution .  
-  vars NextVar NextVar' N : Nat . var VR : Variant . var VS : VariantSet .
-  var SR : StepResult . var SRS : StepResultSet . 
+  var M : Module . 
+  var RS : RuleSet .
+  vars T T1 T2 ST PT : Term .  
+  var TL : TermList .  
+  var C : Constant . 
+  var TP : Type . 
+  vars SUB SUB1 SUB2 : Substitution .  
+  vars NextVar NextVar' N : Nat . 
+  var VR : Variant . 
+  var VS : VariantSet .
+  var SR : StepResult . 
+  var SRS : StepResultSet . 
+  var P : Parent . 
+  var B : Bool .
 
   op metaNarrow2 : Module Term -> StepResult .
   eq metaNarrow2(M,T) 
@@ -285,7 +306,7 @@ fmod META-NARROWING-INTERFACE is
   eq propInstSet(empty, PT) = empty .
 
   op filterPropVars : StepResult VariantSet ~> StepResultSet .
-  eq filterPropVars({ST,TP,SUB / RS}, {T,SUB1,N} # VS)
+  eq filterPropVars({ST,TP,SUB / RS}, {T,SUB1,N,P,B} # VS)
    = if inst?(T) then {ST << SUB1,TP, SUB .. SUB1 / RS} 
      else empty fi 
    || filterPropVars({ST,TP,SUB / RS}, VS) .
@@ -309,11 +330,19 @@ mod META-SYMBOLIC-CONNECTOR is
   pr DECL-META-PRETTY-PRINT 
    * (op addOps to addOpsSE, op addEqs to addEqsSE, op addSorts to addSortsSE) .
 
-  var M : Module .  vars T T' T1 T2 ST ST' PT CT : Term . 
-  var RN : RuleName . var RS : RuleSet . var TL : TermList .  
-  var V : Variable . var TP : Type . vars SUB SUB' SUB'' : Substitution .  
-  var B : Bool . var N : Nat . var D : Bound .
-  var RT : ResultTriple .  var RTS : ResultTripleSet . 
+  var M : Module .  
+  vars T T' T1 T2 ST ST' PT CT : Term . 
+  var RN : RuleName . 
+  var RS : RuleSet . 
+  var TL : TermList .  
+  var V : Variable . 
+  var TP : Type . 
+  vars SUB SUB' SUB'' : Substitution .  
+  var B : Bool . 
+  var N : Nat . 
+  var D : Bound .
+  var RT : ResultTriple .  
+  var RTS : ResultTripleSet . 
 
 --- meta prop and state
   eq mid(ST) |= prop(PT) 
@@ -387,10 +416,19 @@ endm
 fmod META-NARROWING-COND-INTERFACE is
   pr META-NARROWING-INTERFACE .
 
-  vars T T1 T2 ST PT : Term .  var TL : TermList .
-  var C : Constant . var CD : EqCondition . var RS : RuleSet .
-  var TP : Type . vars SUB SUB1 SUB2 : Substitution .  var N : Nat .
-  var SR : StepResult . var SRS : StepResultSet . var VS : VariantSet .
+  vars T T1 T2 ST PT : Term .  
+  var TL : TermList .
+  var C : Constant . 
+  var CD : EqCondition . 
+  var RS : RuleSet .
+  var TP : Type . 
+  vars SUB SUB1 SUB2 : Substitution .  
+  var N : Nat .
+  var SR : StepResult . 
+  var SRS : StepResultSet . 
+  var VS : VariantSet .
+  var P : Parent . 
+  var B : Bool .
 
 --- variant narrowing condition instantiations.
 
@@ -409,7 +447,7 @@ fmod META-NARROWING-COND-INTERFACE is
 
   --- only true instances (hence the conditions should be complete and FVP)
   op filterCondVars : StepResult VariantSet ~> StepResultSet .
-  eq filterCondVars({ST,TP,SUB / RS}, {'true.Bool,SUB1,N} # VS)
+  eq filterCondVars({ST,TP,SUB / RS}, {'true.Bool,SUB1,N,P,B} # VS)
    = {ST << SUB1, TP, SUB .. SUB1 / RS} 
    || filterCondVars({ST,TP,SUB / RS}, VS) .
   eq filterCondVars(SR, VS) = empty [owise] .
@@ -430,11 +468,17 @@ mod META-SYMBOLIC-COND-CONNECTOR-BASE is
   pr META-SYMBOLIC-CONNECTOR .
   pr META-NARROWING-COND-INTERFACE .
 
-  var M : Module .  vars T T' T1 T2 ST ST' PT CT : Term . 
-  var TL : TermList .  var V : Variable .
-  var TP : Type . vars SUB SUB' SUB'' : Substitution .  
-  var B : Bool . var N : Nat . var D : Bound .
-  var RT : ResultTriple .  var RTS : ResultTripleSet . 
+  var M : Module .  
+  vars T T' T1 T2 ST ST' PT CT : Term . 
+  var TL : TermList .  
+  var V : Variable .
+  var TP : Type . 
+  vars SUB SUB' SUB'' : Substitution .  
+  var B : Bool . 
+  var N : Nat . 
+  var D : Bound .
+  var RT : ResultTriple .  
+  var RTS : ResultTripleSet . 
   vars CD CD' : EqCondition .
 
 --- meta prop and state
@@ -472,11 +516,17 @@ endm
 mod META-SYMBOLIC-COND-CONNECTOR is
   pr META-SYMBOLIC-COND-CONNECTOR-BASE .
 
-  var M : Module .  vars T T' T1 T2 ST ST' PT CT : Term . 
-  var TL : TermList .  var V : Variable .
-  var TP : Type . vars SUB SUB' SUB'' : Substitution .  var N : Nat .
-  var SR : StepResult .  var SRS : StepResultSet . 
-  vars CD CD' : EqCondition . var RS : RuleSet .
+  var M : Module .  
+  vars T T' T1 T2 ST ST' PT CT : Term . 
+  var TL : TermList .  
+  var V : Variable .
+  var TP : Type . 
+  vars SUB SUB' SUB'' : Substitution .  
+  var N : Nat .
+  var SR : StepResult .  
+  var SRS : StepResultSet . 
+  vars CD CD' : EqCondition . 
+  var RS : RuleSet .
 
 --- meta rules
  crl [init-cond] : 
@@ -508,11 +558,19 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
   pr META-SYMBOLIC-COND-CONNECTOR-BASE .
 
   vars T T' T1 T2 ST ST' PT CT : Term . 
-  var TL : TermList .  var V : Variable .
-  var TP : Type . vars SUB SUB' SUB'' : Substitution .  
-  var N : Nat . var B : Bool . var RS : RuleSet .
-  var SR : StepResult .  var SRS : StepResultSet . 
-  vars CD CD' : EqCondition .  var VS : VariantSet .
+  var TL : TermList .  
+  var V : Variable .
+  var TP : Type . 
+  vars SUB SUB' SUB'' : Substitution .  
+  var N : Nat . 
+  var B : Bool . 
+  var RS : RuleSet .
+  var SR : StepResult .  
+  var SRS : StepResultSet . 
+  vars CD CD' : EqCondition .  
+  var VS : VariantSet .
+  var P : Parent .
+
 
 --- meta rules
  crl [init-cond] : 
@@ -554,7 +612,7 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
                                      '_or_[condList(CD',false)]]) .
 
   op implyOKsub : VariantSet ~> Bool .
- ceq implyOKsub({T,SUB,N} # VS)
+ ceq implyOKsub({T,SUB,N,P,B} # VS)
    = T' =/= 'true.Bool and-then implyOKsub(VS)
   if T' := getTerm(metaReduce((##m##),T)) .
   eq implyOKsub(emptyVariantSet) = true .
@@ -572,30 +630,33 @@ endm
 *****************************************
 
 --- REDEFINED
-fmod BANNER is
+fmod FM-BANNER is
   pr STRING .
   op banner : -> String .
-  eq banner = "Logical Model Checker January 10th 2012" .
+  eq banner = "Logical Model Checker" .
 endfm
 
 fmod LMC-COMMANDS is
-  inc COMMANDS .
+  inc FM-COMMANDS .
   op lmc_|=_. : @Bubble@ @Bubble@ -> @Command@ [ctor] .
   op lfmc_|=_. : @Bubble@ @Bubble@ -> @Command@ [ctor] .
 endfm
 
 --- REDEFINED
 fmod FULL-MAUDE-SIGN is
-  including VIEWS .
+  including FM-VIEWS .
   inc LMC-COMMANDS .
+
   sort @Input@ .
   subsorts @Command@ @Module@ @View@ < @Input@ .
 endfm
 
+
 fmod META-PROP-SET is
   pr META-LEVEL .
 
-  var M : Module . vars T T' : Term .
+  var M : Module . 
+  vars T T' : Term .
 
   op props : Module Term -> TermList .
   eq props(M, T) = #props(M, getTerm(metaReduce(M, T))) .
@@ -616,12 +677,23 @@ mod META-LMC-COUNTEREXAMPLE-TRANSFORMER is
   pr META-LMC-COND-THEORY .
   pr BOUNDED-FOLDING-MODEL-CHECKER .
 
-  vars Q F : Qid . var M : Module .  var V : Variable . var C : Constant .
-  var CD : Condition . vars T T' ST PT : Term . var TL : TermList . 
-  var TR : Transition . var TRL TRL' : TransitionList . 
-  var RS : RuleSet . var RN : RuleName .  var AtS : AttrSet . 
-  var SUB : Substitution . var ME : MetaEdge .
-  var D : Bound . vars B BC BR : Bool . var MR : ModelCheckResult .
+  vars Q F : Qid . 
+  var M : Module .  
+  var V : Variable . 
+  var C : Constant .
+  var CD : Condition . 
+  vars T T' ST PT : Term . 
+  var TL : TermList . 
+  var TR : Transition . 
+  var TRL TRL' : TransitionList . 
+  var RS : RuleSet . 
+  var RN : RuleName .  
+  var AtS : AttrSet . 
+  var SUB : Substitution . 
+  var ME : MetaEdge .
+  var D : Bound . 
+  vars B BC BR : Bool . 
+  var MR : ModelCheckResult .
 
 --- meta counterexample
   op transRes : ModelCheckResult -> Term .
@@ -668,7 +740,7 @@ mod META-LMC-COUNTEREXAMPLE-TRANSFORMER is
 endm
 
 mod LMC-COMMAND-PROCESSING is
-  pr COMMAND-PROCESSING .
+  pr FM-COMMAND-PROCESSING .
   pr META-PROP-SET .
 
   vars T T1 T2 T3 T4 T5 T6 : Term .  
@@ -680,11 +752,13 @@ mod LMC-COMMAND-PROCESSING is
   var D : Bound .
   var CD : Condition .
   var  QIL : QidList .
-  vars VS VDS : OpDeclSet .
-  vars QI QI' F V O : Qid .  var TY : Type .
+  vars VS VDS : VariableSet .
+  vars QI QI' F V O : Qid .  
+  var TY : Type .
   var  TDM : Tuple{Database,ModuleExpression} .
-  var  TMVB : [Tuple{Term,Module,Bool,OpDeclSet,Bound,Database}] .
-  var RP : ResultPair . var  RP? : [ResultPair] .
+  var  TMVB : [Tuple{Term,Module,Bool,VariableSet,Bound,Database}] .
+  var RP : ResultPair . 
+  var  RP? : [ResultPair] .
 
 --- command condition type
   op lmcCmdCond : Qid -> Type? .
@@ -726,7 +800,7 @@ mod LMC-COMMAND-PROCESSING is
 -------------------------------------
 --- parse arguments
 ---
-  op procLMCComd : Qid TermList Module Bool Bound OpDeclSet Database TermList 
+  op procLMCComd : Qid TermList Module Bool Bound VariableSet Database TermList 
                 -> Tuple{Database,QidList} .
 
   eq procLMCComd(F, TL, unitError(QIL), B, D, VDS, DB, TL1) = << DB ; QIL >> .
@@ -766,9 +840,9 @@ mod LMC-COMMAND-PROCESSING is
   if T?:[Term] := solveBubbles('bubble['__[TL]], M, B, VDS, DB) .
 
   --- parse lmc command args: procLMCComd(BUBBLES,MOD,HasMetaLv?,HasCond?,...)
-  op parseLMCCondArg1 : Qid Term Type Bound Module OpDeclSet Database TermList 
+  op parseLMCCondArg1 : Qid Term Type Bound Module VariableSet Database TermList 
                     -> Tuple{Database,QidList} .
-  op parseLMCCondArg2 : Qid Term Bound Module OpDeclSet Database TermList 
+  op parseLMCCondArg2 : Qid Term Bound Module VariableSet Database TermList 
                     -> Tuple{Database,QidList} .
 
  --- the last argument (with condition)
@@ -786,28 +860,16 @@ mod LMC-COMMAND-PROCESSING is
   --- parse conditions
   eq parseLMCCondArg2(F, QI[T1,T2], D, M, VDS, DB, TL1)
     = if QI == '_s.t._. or QI == '_such`that_. 
-      then procLMC(F, (TL1,T1), parseCond(T2,VDS), D, M, VDS, DB)
-      else procLMC(F, (TL1,constsToVars(QI[T1,T2],VDS)), nil, D, M, VDS, DB)
+      then procLMC(F, (TL1,T1), parseCond(T2), D, M, VDS, DB)
+      else procLMC(F, (TL1,QI[T1,T2]), nil, D, M, VDS, DB)
       fi .
   eq parseLMCCondArg2(F, T, D, M, VDS, DB, TL1)
-   = procLMC(F, (TL1,constsToVars(T,VDS)), nil, D, M, VDS, DB) [owise] .
-
-  --- error handling
-  eq getTerm({T, M, B, VDS, DB}) = T .
-  eq getTerm(tupleTMBOBDerror(QIL)) = qidError(QIL) .
-  eq getModule({T, M, B, VDS, DB}) = M .
-  eq getModule(tupleTMBOBDerror(QIL)) = unitError(QIL) .
-  eq getVars({T, M, B, VDS, DB}) = VDS .
-  eq getVars(tupleTMBOBDerror(QIL)) = opDeclError(QIL) .
-  eq getBool({T, M, B, VDS, DB}) = B .
-  eq getBool(tupleTMBOBDerror(QIL)) = false .
-  eq getDatabase({T, M, B, VDS, DB}) = DB .
-  eq getDatabase(tupleTMBOBDerror(QIL)) = emptyDatabase .
+   = procLMC(F, (TL1,T), nil, D, M, VDS, DB) [owise] .
 
 -------------------------------------
 --- execute commands
 ---
-  op procLMC : Qid TermList Condition Bound Module OpDeclSet Database -> Tuple{Database,QidList} .
+  op procLMC : Qid TermList Condition Bound Module VariableSet Database -> Tuple{Database,QidList} .
 
   eq procLMC('lfmc_|=_., (T1,T2), CD, D, M, VDS, DB)
    = procLMCExec(T1, T2, CD, true, D, M, DB) .
@@ -866,12 +928,18 @@ mod LMC-COMMAND-PROCESSING is
 endm
 
 mod LMC-DATABASE-HANDLING is
-  inc DATABASE-HANDLING .
+  inc FM-DATABASE-HANDLING .
   pr LMC-COMMAND-PROCESSING .
 
-  var Atts : AttributeSet . var X@DatabaseClass : DatabaseClass . 
-  var F : Qid . var O : Oid .  var ME : ModuleExpression . var DB : Database .
-  var TL : TermList . var T T' : Term . var QIL : QidList .
+  var Atts : AttributeSet . 
+  var X@DatabaseClass : DatabaseClass . 
+  var F : Qid . 
+  var O : Oid .  
+  var ME : ModuleExpression . 
+  var DB : Database .
+  var TL : TermList . 
+  var T T' : Term . 
+  var QIL : QidList .
 
  crl [LMC] :
     < O : X@DatabaseClass | 

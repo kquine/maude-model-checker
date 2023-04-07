@@ -49,23 +49,23 @@ mod PETERSON-MUTEX is
 
 --- an idle proc can increase its priority
   rl [init]: N | s M ;     PS ; CPS | MP
-          => N |   M ; [0] PS ; CPS | MP .
+          => N |   M ; [0] PS ; CPS | MP [narrowing] .
 
 --- increase the priority if it has the single maximum priority
   rl [inc1]: s s s I J N | M ;   [s I J] PS ; CPS |   s I J, J
-          => s s s I J N | M ; [s s I J] PS ; CPS | s s I J, J .
+          => s s s I J N | M ; [s s I J] PS ; CPS | s s I J, J [narrowing] .
 
 --- increase the priority if it is not the latest proc acquiring the current priority.
   rl [inc2]: s I N | M ; [I] [I]   PS ; CPS | MP
-          => s I N | M ; [I] [s I] PS ; CPS | max([I] [s I] PS CPS) .
+          => s I N | M ; [I] [s I] PS ; CPS | max([I] [s I] PS CPS) [narrowing] .
 
 --- a proc with the max priority goes to the critical section
   rl [crit]: s N | M ; [N] PS ; CPS     | MP
-          => s N | M ;     PS ; CPS [N] | MP .
+          => s N | M ;     PS ; CPS [N] | MP [narrowing] .
 
 --- a proc in critical section can go to idle status
   rl [exit]: s N |   M ; PS ; CPS [N] | MP 
-          => s N | s M ; PS ; CPS     | max(PS CPS) .
+          => s N | s M ; PS ; CPS     | max(PS CPS) [narrowing] .
 
 --- NOTE: assuming a bounded number of procs (in the instantiated graph)
 --- the following equations satisfy FVP.
@@ -78,9 +78,39 @@ mod PETERSON-MUTEX is
 
 endm
 
+mod PETERSON-MUTEX-ABS is
+  pr PETERSON-MUTEX .
+
+  vars I J N M : Number . var MP : MaxPr .
+  var PS CPS : ProcSet .
+
+  eq [a1]: s s N M | M ; [I] [I] [I] PS ; CPS | MP
+         =   s N M | M ;     [I] [I] PS ; CPS | MP [variant] .
+   
+  eq [a2]: s s s s I J N | M ; [s s I J] PS ; CPS | s s I J, J 
+         = s s s s I J N | M ;   [s I J] PS ; CPS |   s I J, J [variant] .  
+
+--- coherent completion
+  rl [inc2]:   s I N | M ; [I] [I]   PS ; CPS | MP
+          => s s I N | M ; [I] [I] [s I] PS ; CPS | max([I] [I] [s I] PS CPS) [narrowing] . --- a1
+
+---(
+  eq s s s s N | M ; [I] [I] [s I] [s I] PS ;          CPS | MP
+   =     s s N | M ; [I] [I]    shift(I,PS) ; shift(I,CPS) | max([I] [I] shift(I,PS) shift(I,CPS)) [variant] .
+   ---)
+
+--- NOTE: assuming a bounded number of procs (in the instantiated graph)
+--- the following equations satisfy FVP.
+
+  op shift : Number ProcSet -> ProcSet .
+  eq shift(J I,     [I] PS) =   [I] shift(J I, PS) [variant] .
+  eq shift(  I, [s J I] PS) = [J I] shift(  I, PS) [variant] .
+  eq shift(  I,       none) = none                 [variant] .
+endm
+
 --- search s s s s | s s s s ; none ; none | 0,0 =>* C:Conf .
 
-load symbolic-checker-core .
+load symbolic-checker
 
 (mod PETERSON-MUTEX-SATISFACTION is
   pr SYMBOLIC-CHECKER .
@@ -105,33 +135,13 @@ endm)
 
 (mod PETERSON-MUTEX-INF-MC is
   pr PETERSON-MUTEX-SATISFACTION .
+  pr PETERSON-MUTEX-ABS .
 
-  vars I J N M : Number . var MP : MaxPr .
-  var PS CPS : ProcSet .
-
-  eq [a1]: s s N M | M ; [I] [I] [I] PS ; CPS | MP
-         =   s N M | M ;     [I] [I] PS ; CPS | MP [variant] .
-   
-  eq [a2]: s s s s I J N | M ; [s s I J] PS ; CPS | s s I J, J 
-         = s s s s I J N | M ;   [s I J] PS ; CPS |   s I J, J [variant] .  
-
---- coherent completion
-  rl [inc2]:   s I N | M ; [I] [I]   PS ; CPS | MP
-          => s s I N | M ; [I] [I] [s I] PS ; CPS | max([I] [I] [s I] PS CPS) . --- a1
-
----(
-  eq s s s s N | M ; [I] [I] [s I] [s I] PS ;          CPS | MP
-   =     s s N | M ; [I] [I]    shift(I,PS) ; shift(I,CPS) | max([I] [I] shift(I,PS) shift(I,CPS)) [variant] .
-   ---)
-
---- NOTE: assuming a bounded number of procs (in the instantiated graph)
---- the following equations satisfy FVP.
-
-  op shift : Number ProcSet -> ProcSet .
-  eq shift(J I,     [I] PS) =   [I] shift(J I, PS) [variant] .
-  eq shift(  I, [s J I] PS) = [J I] shift(  I, PS) [variant] .
-  eq shift(  I,       none) = none                 [variant] .
+  var N : Number .
 endm)
+
+set verbose on .
+
 
 (lfmc N | N ; none ; none | 0,0  |=  [] ex? .)
 

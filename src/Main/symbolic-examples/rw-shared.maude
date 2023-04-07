@@ -37,12 +37,12 @@ mod RW is
 
   var N : Natural . var B : Truth . var PS : ProcSet .
 
-  rl [r1]: < 0, true | think ; PS >     =>  < s(0), false | read ; PS > .
-  rl [r2]: < s(N), B | think ; PS >     =>  < s(s(N)), B | read ; PS > .
-  rl [r3]: < s(s(N)), B | read ; PS >   =>  < s(N), B | think ; PS > .
-  rl [r4]: < s(0), false | read ; PS >  =>  < 0, true | think ; PS > .
-  rl [w1]: < N, true | think ; PS >     =>  < N, false | write ; PS > .
-  rl [w2]: < N, false | write ; PS >    =>  < N, true | think ; PS > .
+  rl [r1]: < 0, true | think ; PS >     =>  < s(0), false | read ; PS > [narrowing] .
+  rl [r2]: < s(N), B | think ; PS >     =>  < s(s(N)), B | read ; PS > [narrowing] .
+  rl [r3]: < s(s(N)), B | read ; PS >   =>  < s(N), B | think ; PS > [narrowing] .
+  rl [r4]: < s(0), false | read ; PS >  =>  < 0, true | think ; PS > [narrowing] .
+  rl [w1]: < N, true | think ; PS >     =>  < N, false | write ; PS > [narrowing] .
+  rl [w2]: < N, false | write ; PS >    =>  < N, true | think ; PS > [narrowing] .
 endm
 
 ---(

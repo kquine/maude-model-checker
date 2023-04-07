@@ -72,43 +72,43 @@ mod PETERSON-MUTEX is
 --- not guaranteed currently.
 
   rl [r0]  : < N | VS [s,K] | PS1 [I] | PS2 > 
-          => < N | VS [s,I] | none | PS1 [I,s,wait] PS2 > .
+          => < N | VS [s,I] | none | PS1 [I,s,wait] PS2 > [narrowing] .
 
   rl [r0]  : < N | VS [s,K] | PS1 | PS2 [I] > 
-          => < N | VS [s,I] | none | PS1 [I,s,wait] PS2 > .
+          => < N | VS [s,I] | none | PS1 [I,s,wait] PS2 > [narrowing] .
 
   rl [r1]  : < N | VS [s P,K] | [I,P,ready] PS1 | PS2 >
-          => < N | VS [s P,I] | none | [I,s P,wait] PS1 PS2 > .
+          => < N | VS [s P,I] | none | [I,s P,wait] PS1 PS2 > [narrowing] .
 
   rl [r1]  : < N | VS [s P,K] | PS1 | PS2 [I,P,ready] >
-          => < N | VS [s P,I] | none | PS1 PS2 [I,s P,wait] > .
+          => < N | VS [s P,I] | none | PS1 PS2 [I,s P,wait] > [narrowing] .
 
   rl [c]   : < N | VS | PS1 | [I,P,S] PS2 [J,s K P,S'] >
-          => < N | VS | PS1 [I,P,S] | PS2 [J,s K P,S'] > .
+          => < N | VS | PS1 [I,P,S] | PS2 [J,s K P,S'] > [narrowing] .
 
   rl [c]   : < N | VS | PS1 | [I] PS2 >
-          => < N | VS | PS1 [I] | PS2 > .
+          => < N | VS | PS1 [I] | PS2 > [narrowing] .
 
   rl [wa]  : < N | VS [P,s J I] | [I,P,wait]  PS1 | PS2 >
-          => < N | VS [P,s J I] | [I,P,ready] PS1 | PS2 > .
+          => < N | VS [P,s J I] | [I,P,ready] PS1 | PS2 > [narrowing] .
 
   rl [wa]  : < N | VS [P,J] | [s I J,P,wait]  PS1 | PS2 >
-          => < N | VS [P,J] | [s I J,P,ready] PS1 | PS2 > .
+          => < N | VS [P,J] | [s I J,P,ready] PS1 | PS2 > [narrowing] .
 
   rl [wb]  : < N | VS | PS1 | [I,P,wait]  >
-          => < N | VS | PS1 | [I,P,ready] > .
+          => < N | VS | PS1 | [I,P,ready] > [narrowing] .
 
   rl [crit]: < s N | VS | PS1 | PS2 [I,N,ready] >
-          => < s N | VS | PS1 | PS2 [I,N,crit]  > .
+          => < s N | VS | PS1 | PS2 [I,N,crit]  > [narrowing] .
 
   rl [crit]: < s N | VS | [I,N,ready] PS1 | PS2 >
-          => < s N | VS | [I,N,crit]  PS1 | PS2 > .
+          => < s N | VS | [I,N,crit]  PS1 | PS2 > [narrowing] .
 	   
   rl [exit]: < N | VS | [I,N,crit] PS1 | PS2 >
-          => < N | VS | none | [I] PS1 PS2 > .
+          => < N | VS | none | [I] PS1 PS2 > [narrowing] .
 
   rl [exit]: < N | VS | PS1 | PS2 [I,N,crit] >
-          => < N | VS | none | PS1 PS2 [I]   > .
+          => < N | VS | none | PS1 PS2 [I]   > [narrowing] .
 endm
 
 --- search < s s s | [s,0] [s s,0] | none | [0] [s] [s s] > =>* C:Conf .

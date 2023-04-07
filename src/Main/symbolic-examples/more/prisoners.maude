@@ -40,9 +40,9 @@ mod PRISONER-GAME is
 
   var PS : PrisonerSet . vars I N C : Number .
 
-  rl [vote0]:  off | [I,0] PS | false  =>   on | [I,  s] PS | false .
-  rl [vote1]:  off | [I,s] PS | false  =>   on | [I,s s] PS | false .
-  rl [leadI]:   on | {C,N} PS | false  =>  off | {s C,N} PS | false .
+  rl [vote0]:  off | [I,0] PS | false  =>   on | [I,  s] PS | false [narrowing] .
+  rl [vote1]:  off | [I,s] PS | false  =>   on | [I,s s] PS | false [narrowing] .
+  rl [leadI]:   on | {C,N} PS | false  =>  off | {s C,N} PS | false [narrowing] .
 
   --- the announce step is defined as the equation:
   eq [leadA]:  off | {N N,N} PS | false  =  off | {N N,N} PS | true  [variant] .
@@ -52,7 +52,7 @@ rew  off | {0,s s s} [0,0] [s,0] [s s,0] | false .
 rew   on | {0,s s s} [0,0] [s,0] [s s,0] | false .
 
 
-load symbolic-checker-core
+load symbolic-checker
 
 (mod CHECK-PRISONERS is 
   including PRISONER-GAME .
