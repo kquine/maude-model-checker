@@ -219,10 +219,6 @@ mod DIJKSTRA-MUTEX is
   rl [l5]  : < {F,crit,!} PS >         => < {0,l1,!} PS > [narrowing] .
 endm
 
----(
-search < {0,l1,-} {0,l1,-} {0,l1,!} > =>* < CPS > .
----)
-
 load symbolic-checker
 
 (mod DIJKSTRA-MUTEX-SATISFACTION is
@@ -246,22 +242,4 @@ load symbolic-checker
   eq < {F,crit,-} {F',crit,!} PS >  |= ex? = false [variant] .
 endm)
 
----(
 (lfmc [20] < CIS > |= [] ex? .)
----)
-
-(mod DIJKSTRA-MUTEX-SATISFACTION-WIDENING is
-  pr DIJKSTRA-MUTEX-SATISFACTION .
-
-  var F : Flag .  var CIS : CInitProcSet .  var CPS : CProcSet .
-
---- bisimilar equational abstraction
-  eq < {F,l2,-} {F,l2,-} CPS > = < {F,l2,-} CPS > [variant] .
-
-endm)
-
-set verbose on .
-
----   true (complete with depth 16)
-(lfmc < CIS > |= [] ex?  .)
-

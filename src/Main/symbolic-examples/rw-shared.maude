@@ -32,6 +32,7 @@ fmod RW-CONF is
   op <_,_|_> : Natural Truth ProcSet -> Conf [ctor] .
 endfm
 
+
 mod RW is
   protecting RW-CONF .
 
@@ -44,13 +45,6 @@ mod RW is
   rl [w1]: < N, true | think ; PS >     =>  < N, false | write ; PS > [narrowing] .
   rl [w2]: < N, false | write ; PS >    =>  < N, true | think ; PS > [narrowing] .
 endm
-
----(
-search < 0, true | think ; think ; think ; think > 
-   =>* < N, B | read ; write ; PS > .
-
-eof
----)
 
 load symbolic-checker .
 
@@ -74,7 +68,7 @@ load symbolic-checker .
    = <    s(N),false | read ; IS > [variant] .
 endm)
 
-set verbose on .
+---set verbose on .
 
-(lfmc < 0, true | IS > |= [] ex? .)
+(lfmc [50] < 0, true | IS > |= [] ex? .)
 
