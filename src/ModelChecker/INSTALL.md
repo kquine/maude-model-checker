@@ -13,7 +13,7 @@ are in the directory `$MAUDE`.
 2. Modify `$MAUDE/configure` (line 615)
 
   ```
-    PACKAGE_STRING='Maude 3.3 LTLR&LMC'
+    PACKAGE_STRING='Maude 3.3.1 LTLR&LMC'
   ```
 
 3. Modify `$MAUDE/configuer.ac`
