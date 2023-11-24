@@ -62,10 +62,6 @@ load symbolic-checker .
   eq < N, B | RS > |= ex? = true [variant] .
   eq < N, B | WS > |= ex? = true [variant] .
   eq < N, B | read ; write ; PS > |= ex? = false [variant] .
-
---- equational abstractions 
-  eq < s(s(N)),false | read ; read ; IS >  
-   = <    s(N),false | read ; IS > [variant] .
 endm)
 
 ---set verbose on .
