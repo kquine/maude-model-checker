@@ -22,18 +22,18 @@ possibly spurious counterexample is found and reported.
 ## User Interface
 
 Our tool provides a user interface implemented by extending 
-[Full Maude]((https://github.com/maude-team/full-maude/). The main module
+[Full Maude](https://github.com/maude-team/full-maude/). The main module
 `SYMBOLIC-CHECKER` (in the file `symbolic-checker.maude`) declares the sorts 
 and operators used by the tool. To use the tool, the user should declare a 
 state sort as a subsort of the predefined sort `State` and state predicates 
-using the predefined operator `_|= : State Prop -> Bool` in the same way as 
+using the predefined operator `_|=_ : State Prop -> Bool` in the same way as 
 the Maude LTL model checker.
 
 There are the two commands for logical model checking an LTL formula $\varphi$
 from an initial pattern $t$ with the optional bound $n$:
 
-- (lmc [$n$] $t$ |= $\varphi$ .)
-- (lfmc [$n$] $t$ |= $\varphi$ .)
+- (lmc [n] $t$ |= $\varphi$ .)
+- (lfmc [n] $t$ |= $\varphi$ .)
 
 Each command uses a different folding relation: `lmc` uses the $E$-renaming
 equivalence and `lfmc` uses the $E$-subsumption. 
