@@ -140,7 +140,7 @@ result:
   true (complete with depth 3)
 ```
 
-## Example
+## More Examples
 
 - [Lamport's Bakery protocol](src/Main/symbolic-examples/bakery.maude) 
 - Readers-Writers problem: 
