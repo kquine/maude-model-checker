@@ -149,3 +149,12 @@ result:
     [shared](src/Main/symbolic-examples/rw-shared.maude) 
 - [Dijkstra's mutual exclusion algorithm](src/Main/symbolic-examples/dijkstra-mutex.maude) 
 - [Token ring mutual exclusion](src/Main/symbolic-examples/token-mutex.maude)
+
+## References
+- [Abstract Logical Model Checking of Infinite-State Systems Using Narrowing](https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.RTA.2013.81),
+  by Kyungmin Bae, Santiago Escobar, and José Meseguer.
+  In _International Conference on Rewriting Techniques and Applications (RTA)_, 2013
+
+- [Symbolic Model Checking of Infinite-State Systems Using Narrowing](https://dl.acm.org/doi/10.5555/1779782.1779795),
+  by Santiago Escobar and José Meseguer.
+  In _International Conference on Rewriting Techniques and Applications (RTA)_, 2007
