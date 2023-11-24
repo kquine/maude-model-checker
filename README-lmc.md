@@ -23,11 +23,11 @@ possibly spurious counterexample is found and reported.
 
 Our tool provides a user interface implemented by extending 
 [Full Maude]((https://github.com/maude-team/full-maude/). The main module
-`SYMBOLIC-CHECKER` (in the file `symbolic-checker.maude`) declares the sorts 
-and operators used by the tool. To use the tool, the user should declare a 
-state sort as a subsort of the predefined sort `State` and state predicates 
-using the predefined operator `_|= : State Prop -> Bool` in the same way as 
-the Maude LTL model checker.
+`SYMBOLIC-CHECKER` (in the file [`symbolic-checker.maude`](src/Main/symbolic-checker.maude))) 
+declares the sorts and operators used by the tool. To use the tool, the user 
+should declare a state sort as a subsort of the predefined sort `State` and 
+state predicates using the predefined operator `_|= : State Prop -> Bool` in 
+the same way as the Maude LTL model checker.
 
 There are the two commands for logical model checking an LTL formula $\varphi$
 from an initial pattern $t$ with the optional bound $n$:
@@ -139,3 +139,13 @@ logical folding model check in READERS-WRITERS-PROPS :
 result:
   true (complete with depth 3)
 ```
+
+## Example
+
+- [Lamport's Bakery protocol](src/Main/symbolic-examples/bakery.maude) 
+- Readers-Writers problem: 
+    [simple](src/Main/symbolic-examples/rw.maude),
+    [fair](src/Main/symbolic-examples/rw-fair.maude),
+    [shared](src/Main/symbolic-examples/rw-shared.maude) 
+- [Dijkstra's mutual exclusion algorithm](src/Main/symbolic-examples/dijkstra-mutex.maude) 
+- [Token ring mutual exclusion](src/Main/symbolic-examples/token-mutex.maude)
