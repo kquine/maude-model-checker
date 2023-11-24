@@ -26,16 +26,6 @@ load symbolic-checker
 
   vars N M : Natural .
 
-  ops one-writer : -> Prop .
-  eq < N, 0       > |= one-writer = true [variant] .
-  eq < N, s(0)    > |= one-writer = true [variant] .
-  eq < N, s(s(M)) > |= one-writer = false [variant] .
-  
-  op mutex : -> Prop .
-  eq < 0,    M    > |= mutex = true [variant] .
-  eq < N,    0    > |= mutex = true [variant] .
-  eq < s(N), s(M) > |= mutex = false [variant] .
-
   op reads : -> Prop .
   eq < s(N), M > |= reads = true [variant] .
   eq < 0,    M > |= reads = false [variant] .
@@ -46,22 +36,14 @@ load symbolic-checker
 endm)
 
 --- result: no counterexample
-(lmc [10] < N, 0 > |= [] one-writer .)
+(lmc [10] < N, 0 > |= [] ~ (reads /\ writes) .)
 
 --- result: true
-(lfmc < N, 0 > |= [] one-writer .)
-
---- result: no counterexample
-(lmc [10] < N, 0 > |= [] mutex .)
-
---- result: true
-(lfmc < N, 0 > |= [] mutex .)
+(lfmc < N, 0 > |= [] ~ (reads /\ writes) .)
 
 --- result: false
-(lfmc < N, 0 > |= []<> reads .)
+(lmc < N, 0 > |= ([]<> reads) /\ ([]<> writes) .)
 
---- result: false
-(lfmc < N, 0 > |= []<> writes .)
 
 --- result: true
 (lfmc < N, 0 > |= []<> (reads \/ writes) .)

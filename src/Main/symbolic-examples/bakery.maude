@@ -67,7 +67,8 @@ endm)
 
 
 *** deadlock counterexample
-(lfmc [5] N ; M ; IS:ProcIdleSet |= [] (ever-wait? -> <> ever-crit?) .)
+(lfmc N ; M ; IS:ProcIdleSet |= [] (ever-wait? -> <> ever-crit?) .)
+
 
 *** spurious counterexample
 (lfmc N ; M ; WS:ProcWaitSet |= [] (ever-wait? -> <> ever-crit?) .)
@@ -94,16 +95,19 @@ endm)
 *** no counterexample
 (lmc [20] N:Name ; N:Name ; [idle] [idle] |= [] ex? .)
 
+
 *** true
 (lfmc N:Name ; N:Name ; [idle] [idle] |= [] ex? .)
 
+
 *** false
 (lfmc N ; M ; WS |= [] ex?  .)
+
 
 *** false (infinite graph, but a counterexample exists)
 (lfmc N ; N ; WS |= [] ex?  .)
 
 
-*** true
+*** no counterexample
 (lfmc [20] N ; N ; IS |= [] ex?  .)
 
