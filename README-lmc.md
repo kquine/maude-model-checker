@@ -145,7 +145,6 @@ result:
 - [Lamport's Bakery protocol](src/Main/symbolic-examples/bakery.maude) 
 - Readers-Writers problem: 
     [simple](src/Main/symbolic-examples/rw.maude),
-    [fair](src/Main/symbolic-examples/rw-fair.maude),
     [shared](src/Main/symbolic-examples/rw-shared.maude) 
 - [Dijkstra's mutual exclusion algorithm](src/Main/symbolic-examples/dijkstra-mutex.maude) 
 - [Token ring mutual exclusion](src/Main/symbolic-examples/token-mutex.maude)
