@@ -16,6 +16,7 @@ fmod RULE-NAME is
   ops unlabeled deadlock : -> RuleName .
 endfm
 
+
 fmod SYMBOLIC-CHECKER is
   pr RULE-NAME .
   pr SATISFACTION .
@@ -40,6 +41,7 @@ fmod SYMBOLIC-CHECKER is
   op __ : TransitionList TransitionList -> TransitionList [ctor assoc id: nil format (d ni d)] .
   op prefix_loop_ : TransitionList TransitionList -> ModelCheckResult [ctor format(n n++i n ni i--)] .
 endfm
+
 
 **************************************************
 ***    Logical Model Checker on META-LEVEL     ***
@@ -214,32 +216,18 @@ fmod LMC-RESULT-SET is
   eq X:StepResult || X:StepResult = X:StepResult .
 
   var M : Module . 
-  vars NextVar : Nat . 
-  vars S S' : Substitution .
-  vars T TS CtTS ST : Term . 
-  var TL : TermList . 
+  var S : Substitution .
+  vars T ST : Term . 
   var TP : Type . 
   var R : Rule .
   var Tr : TraceNarrow . 
-  var B : Flags . 
-  vars Ct CtS : Context .  
-  var NAR : NarrowingApplyResult . 
   var SRS : StepResultSet .
   var RN : RuleName .
 
-  op toStepResult : Term NarrowingApplyResult? -> StepResult .
-  eq toStepResult(T, failure) = empty .
-  eq toStepResult(T, failureIncomplete) = empty .
-  eq toStepResult(T, NAR) = {getTerm(NAR), getTermSubstitution(NAR), getLabel(NAR) | T} .
-
-  op _|>_ : StepResult TermList -> StepResult .
-  eq (empty).StepResult |> TL = (empty).StepResult .
-  eq ({ST,S,RN | T} || SRS) |> TL = {ST,(S |> TL),RN | T} || (SRS |> TL) .
-  eq (failure || SRS ) |> TL = failure || (SRS |> TL) .
-
-  op getRuleSet : TraceNarrow -> RuleSet .
-  eq getRuleSet({T,S,TP,R} Tr) = R getRuleSet(Tr) .
-  eq getRuleSet(nil) = none .
+  op _|>_ : StepResult Term -> StepResult .
+  eq empty |> T = (empty).StepResult .
+  eq ({ST,S,RN | T} || SRS) |> T = {ST,(S |> T),RN | T} || (SRS |> T) .
+  eq (failure || SRS) |> T = failure || (SRS |> T) .
 
   sort VariantSet .
   subsort Variant < VariantSet .
@@ -249,17 +237,14 @@ fmod LMC-RESULT-SET is
   eq X:Variant # X:Variant = X:Variant .
 endfm
 
+
 mod META-LMC-THEORY is
   pr LMC-RESULT-SET .
   pr META-LMC-PARAMETERS .
   pr BOUNDED-FOLDING-MODEL-CHECKER .
 
-  vars T T1 T2 ST ST' : Term . 
+  vars T ST ST' : Term . 
   vars SUB SUB' : Substitution .  
-  var RS : RuleSet . 
-  var CD : Condition . 
-  var Q : Qid . 
-  var TP : Type .  
   var SRS : StepResultSet . 
   var RN : RuleName .
 
@@ -286,18 +271,17 @@ fmod META-NARROWING-INTERFACE is
   pr FM-TERMSET .
 
   var M : Module . 
-  var RS : RuleSet .
   vars T T' T1 T2 ST ST' PT : Term .  
   var TL : TermList .  
   var TS : TermSet .
   var C : Constant . 
-  var TP : Type . 
   vars SUB SUB' SUB1 SUB2 SUBI : Substitution .  
   vars NextVar NextVar' N : Nat . 
   var VR : Variant . 
   var VS : VariantSet .
   var SR : StepResult . 
   var SRS : StepResultSet . 
+  var NAR : NarrowingApplyResult . 
   var P : Parent . 
   var B : Bool .
   vars V1 V2 V3 : Variable .
@@ -311,24 +295,20 @@ fmod META-NARROWING-INTERFACE is
   ceq cleanRedundant({ST,V1 <- V2 ; SUB,RN | T}) = cleanRedundant({ST << (V2 <- V1),SUB << (V2 <- V1),RN | T}) if getType(V1) = getType(V2) .
   eq cleanRedundant(SR) = SR [owise] .
 
-  op metaNarrow2 : Module Term -> StepResult .
-  eq metaNarrow2(M,T) = metaNarrowCollect(M, T, 0) |> T .
-
   op metaNarrowCollect : Module Term Nat -> StepResultSet .
-  ceq metaNarrowCollect(M, T, N) = if SRS == empty then empty else SRS || metaNarrowCollect(M, T, s N) fi
-    if SRS := toStepResult(T, metaNarrowingApply(M, T, empty, '@, N)) .
+  ceq metaNarrowCollect(M, T, N) 
+    = {getTerm(NAR), getTermSubstitution(NAR), getLabel(NAR) | T} || metaNarrowCollect(M, T, s N)
+   if NAR := metaNarrowingApply(M, T, empty, '@, N) .
+  eq metaNarrowCollect(M, T, N) = empty [owise] .
+
 
   op metaGenVariant : Module Term -> VariantSet .
-  eq metaGenVariant(M, T) = metaGenVariant(M, T, highestVar(T)) .
-
-  op metaGenVariant : Module Term Nat -> VariantSet .
-  eq metaGenVariant(M, T, NextVar) = metaGenVariant2(M, T, NextVar, 0) .
-   
-  op metaGenVariant2 : Module Term Nat Nat -> VariantSet .
- ceq metaGenVariant2(M, T, NextVar, N)
-   = VR # metaGenVariant2(M,T,NextVar,s N) 
+  op metaGenVariant : Module Term Nat Nat -> VariantSet .
+  eq metaGenVariant(M, T) = metaGenVariant(M, T, highestVar(T), 0) .
+ ceq metaGenVariant(M, T, NextVar, N)
+   = VR # metaGenVariant(M,T,NextVar,s N) 
    if VR := metaGetVariant(M,T,empty,NextVar,N) .
-  eq metaGenVariant2(M, T, NextVar, N) = emptyVariantSet [owise] .
+  eq metaGenVariant(M, T, NextVar, N) = emptyVariantSet [owise] .
 
 --- variant narrowing prop instantiations.
 --- compute the PI-instantated states of the given state.
@@ -361,8 +341,8 @@ fmod META-NARROWING-INTERFACE is
   eq isGround('GroundBoolList) = true .
   eq isGround('GroundBool) = true .
   eq isGround(S:Sort) = false [owise] .
-  
 endfm
+
 
 mod META-SYMBOLIC-CONNECTOR is
   pr META-LMC-THEORY .
@@ -404,7 +384,7 @@ mod META-SYMBOLIC-CONNECTOR is
 --- compute the next states
 --- TODO: keep both a state and a substitution for a counter example..
   eq next(ST)    
-   = propSetInstSet(metaNarrow2(trMod(##m##), ST), ##f##) .
+   = propSetInstSet(metaNarrowCollect(trMod(##m##), ST, 0) |> ST, ##f##) .
   eq variant(ST) 
    = propSetInstSet({ST,none,unlabeled | ST}, ##f##) .
 
@@ -565,7 +545,6 @@ mod META-SYMBOLIC-COND-CONNECTOR is
   var TP : Type . 
   vars SUB SUB' SUB'' : Substitution .  
   var N : Nat .
-  var SR : StepResult .  
   var SRS : StepResultSet . 
   vars CD CD' : EqCondition . 
   var RS : RuleSet .
@@ -584,10 +563,9 @@ mod META-SYMBOLIC-COND-CONNECTOR is
 
   ops next variant : Term EqCondition -> StepResultSet .
   eq next(ST,CD)    
-   = propSetInstSet(condSetInstSet(metaNarrow2(trMod(##m##), ST),CD), ##f##) .
+   = propSetInstSet(condSetInstSet(metaNarrowCollect(trMod(##m##), ST, 0) |> ST, CD), ##f##) .
   eq variant(ST,CD) 
-   = propSetInstSet(condSetInstSet({ST,none,unlabeled | ST},CD), 
-                    ##f##) .
+   = propSetInstSet(condSetInstSet({ST,none,unlabeled | ST},CD), ##f##) .
 
 --- condition should be already considered by variant narrowing
   eq mid(ST,CD) >= mid(ST',CD')
@@ -608,7 +586,6 @@ mod META-SYMBOLIC-COND-CONNECTOR2 is
   var N : Nat . 
   var B : Bool . 
   var RS : RuleSet .
-  var SR : StepResult .  
   var SRS : StepResultSet . 
   vars CD CD' : EqCondition .  
   var VS : VariantSet .

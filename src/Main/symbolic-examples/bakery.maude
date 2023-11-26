@@ -1,11 +1,16 @@
-
 --- Lamport's Bakery protocol in Maude.
 --- From: All About Maude - A High-Performance Logical Framework. 
+
+fmod NUMBER is
+  sorts Number . 
+  op 0 : -> Number [ctor] .
+  op s : -> Number [ctor] .
+  op __ : Number Number -> Number [ctor comm assoc id: 0] .
+endfm
+
+
 fmod BAKERY-SYNTAX is 
-  sort Name .
-  op 0 : -> Name [ctor] .
-  op s : -> Name [ctor] .
-  op __ : Name Name -> Name [ctor comm assoc id: 0] .
+  protecting NUMBER .
 
   sorts ModeIdle ModeWait ModeCrit Mode . 
   subsorts ModeIdle ModeWait ModeCrit < Mode . 
@@ -16,25 +21,25 @@ fmod BAKERY-SYNTAX is
   subsorts ProcIdleSet < ProcWaitSet < ProcSet . 
   
   op idle : -> ModeIdle . 
-  op wait : Name -> ModeWait . 
-  op crit : Name -> ModeCrit . 
+  op wait : Number -> ModeWait . 
+  op crit : Number -> ModeCrit . 
   op [_] : ModeIdle -> ProcIdle . 
   op [_] : ModeWait -> ProcWait . 
   op [_] : Mode -> Proc . 
   op none : -> ProcIdleSet . 
-  op __ : ProcIdleSet ProcIdleSet -> ProcIdleSet [assoc comm ] . 
-  op __ : ProcWaitSet ProcWaitSet -> ProcWaitSet [assoc comm ] .
-  op __ : ProcSet ProcSet -> ProcSet [assoc comm ] .
+  op __ : ProcIdleSet ProcIdleSet -> ProcIdleSet [assoc comm] . 
+  op __ : ProcWaitSet ProcWaitSet -> ProcWaitSet [assoc comm] .
+  op __ : ProcSet ProcSet -> ProcSet [assoc comm] .
 
   sort Conf . 
-  op _;_;_ : Name Name ProcSet -> Conf .
+  op _;_;_ : Number Number ProcSet -> Conf .
 endfm
 
 
 mod BAKERY is
   protecting BAKERY-SYNTAX . 
   
-  var PS : ProcSet .  vars N M : Name . 
+  var PS : ProcSet .  vars N M : Number . 
   
   rl [wake] : N ; M ; [idle] PS    => s N ; M ; [wait(N)] PS [narrowing] .
   rl [crit] : N ; M ; [wait(M)] PS => N ; M ; [crit(M)] PS [narrowing] .
@@ -53,7 +58,7 @@ load symbolic-checker
 
   ops ever-wait? ever-crit? : -> Prop . 
 
-  vars N M : Name . vars PS : ProcSet . 
+  vars N M : Number . vars PS : ProcSet . 
   
   eq s N ; M ; PS |= ever-wait? = true [variant] . 
   eq 0 ; M ; PS    |= ever-wait? = false [variant] . 
@@ -80,34 +85,34 @@ endm)
 
   subsort Conf < State .
 
-  ops ex? ini : -> Prop . 
+  op mutex : -> Prop . 
 
   var WS : ProcWaitSet . var IS : ProcIdleSet . var PS : ProcSet . 
-  vars N M M1 M2 : Name .
+  vars N M M1 M2 : Number .
 
 --- NOTE: ProcIdleSet < ProcWaitSet
-  eq N ; M ; WS |= ex? = true [variant] .
-  eq N ; M ; [crit(M1)] WS |= ex? = true [variant] .
-  eq N ; M ; [crit(M1)] [crit(M2)] PS |= ex? = false [variant] .
+  eq N ; M ; WS |= mutex = true [variant] .
+  eq N ; M ; [crit(M1)] WS |= mutex = true [variant] .
+  eq N ; M ; [crit(M1)] [crit(M2)] PS |= mutex = false [variant] .
 endm)
 
 
 *** no counterexample
-(lmc [20] N:Name ; N:Name ; [idle] [idle] |= [] ex? .)
+(lmc [20] N ; N ; [idle] [idle] |= [] mutex .)
 
 
 *** true
-(lfmc N:Name ; N:Name ; [idle] [idle] |= [] ex? .)
+(lfmc N ; N ; [idle] [idle] |= [] mutex .)
 
 
 *** false
-(lfmc N ; M ; WS |= [] ex?  .)
+(lfmc N ; M ; WS |= [] mutex  .)
 
 
 *** false (infinite graph, but a counterexample exists)
-(lfmc N ; N ; WS |= [] ex?  .)
+(lfmc N ; N ; WS |= [] mutex  .)
 
 
 *** no counterexample
-(lfmc [20] N ; N ; IS |= [] ex?  .)
+(lfmc [20] N ; N ; IS |= [] mutex  .)
 

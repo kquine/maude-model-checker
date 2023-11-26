@@ -33,17 +33,27 @@ load symbolic-checker
   op writes : -> Prop .
   eq < M, s(N) > |= writes = true [variant] .
   eq < M,    0 > |= writes = false [variant] .
+
+  op writers>1 : -> Prop .
+  eq < M, s(s(N)) > |= writers>1 = true [variant] .
+   eq < M, s(0)   > |= writers>1 = false [variant] .
+  eq < M,     0   > |= writers>1 = false [variant] . 
 endm)
 
 --- result: no counterexample
+(lmc [10] < N, 0 > |= [] ~ (writers>1) .)
+
+--- result: no counterexample
 (lmc [10] < N, 0 > |= [] ~ (reads /\ writes) .)
+
+--- result: true
+(lfmc < N, 0 > |= [] ~ (writers>1) .)
 
 --- result: true
 (lfmc < N, 0 > |= [] ~ (reads /\ writes) .)
 
 --- result: false
 (lmc < N, 0 > |= ([]<> reads) /\ ([]<> writes) .)
-
 
 --- result: true
 (lfmc < N, 0 > |= []<> (reads \/ writes) .)

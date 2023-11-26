@@ -95,6 +95,7 @@ fmod DIJKSTRA-MUTEX-PROC is
   op {_,_,_} : WaitFlag NL5Status CTurn -> CWNL5Proc [ctor] .
 endfm
 
+
 mod DIJKSTRA-MUTEX-PROCSET is
   pr DIJKSTRA-MUTEX-PROC .
 
@@ -190,6 +191,7 @@ mod DIJKSTRA-MUTEX-PROCSET is
   op __ : WNL5ProcSet CWNL5ProcSet -> CWNL5ProcSet [ctor ditto] .
 endm
 
+
 mod DIJKSTRA-MUTEX is
   including DIJKSTRA-MUTEX-PROCSET .
 
@@ -219,6 +221,7 @@ mod DIJKSTRA-MUTEX is
   rl [l5]  : < {F,crit,!} PS >         => < {0,l1,!} PS > [narrowing] .
 endm
 
+
 load symbolic-checker
 
 (mod DIJKSTRA-MUTEX-SATISFACTION is
@@ -227,19 +230,20 @@ load symbolic-checker
 
   subsort Conf < State .
 
-  ops ex? : -> Prop . 
+  ops mutex : -> Prop . 
 
   vars F F' : Flag . var S : Status . 
   var CPS : CProcSet .     var PS : ProcSet . 
   var CNS : CNCrtProcSet . var NS : NCrtProcSet .
   var CIS : CInitProcSet .
 
-  eq < CNS >                        |= ex? = true  [variant] .
-  eq < {F,crit,-} CNS >             |= ex? = true  [variant] .
-  eq < {F,crit,!} NS >              |= ex? = true  [variant] .
-  eq < {F,crit,-} {F',crit,-} CPS > |= ex? = false [variant] .
-  eq < {F,crit,!} {F',crit,-} PS >  |= ex? = false [variant] .
-  eq < {F,crit,-} {F',crit,!} PS >  |= ex? = false [variant] .
+  eq < CNS >                        |= mutex = true  [variant] .
+  eq < {F,crit,-} CNS >             |= mutex = true  [variant] .
+  eq < {F,crit,!} NS >              |= mutex = true  [variant] .
+  eq < {F,crit,-} {F',crit,-} CPS > |= mutex = false [variant] .
+  eq < {F,crit,!} {F',crit,-} PS >  |= mutex = false [variant] .
+  eq < {F,crit,-} {F',crit,!} PS >  |= mutex = false [variant] .
 endm)
 
-(lfmc [20] < CIS > |= [] ex? .)
+
+(lfmc [20] < CIS > |= [] mutex .)
