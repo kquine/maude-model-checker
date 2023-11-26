@@ -61,9 +61,10 @@ mod READERS-WRITERS is
 endm
 ```
 
-We consider two state predicates: `reads` indicates that there is at least 
-one reader, and `writes` indicates that there is at least one writer. The 
-following module in Full Maude declares the state predicates:
+We consider three state predicates: `reads` indicates that there is at least 
+one reader, `writes` indicates that there is at least one writer, and `writers>1`
+indicates that there are two or more writers. The following module in Full Maude 
+declares the state predicates:
 
 ```maude
 load symbolic-checker
@@ -76,11 +77,6 @@ load symbolic-checker
 
   vars N M : Natural .
 
-  ops one-writer : -> Prop .
-  eq < N, 0       > |= one-writer = true [variant] .
-  eq < N, s(0)    > |= one-writer = true [variant] .
-  eq < N, s(s(M)) > |= one-writer = false [variant] .
-
   op reads : -> Prop .
   eq < s(N), M > |= reads = true [variant] .
   eq < 0,    M > |= reads = false [variant] .
@@ -88,6 +84,11 @@ load symbolic-checker
   op writes : -> Prop .
   eq < M, s(N) > |= writes = true [variant] .
   eq < M,    0 > |= writes = false [variant] .
+
+  op writers>1 : -> Prop .
+  eq < M, s(s(N)) > |= writers>1 = true [variant] .
+  eq < M, s(0) > |= writers>1 = false [variant] .
+  eq < M, 0 > |= writers>1 = false [variant] . 
 endm)
 ```
 
@@ -112,6 +113,18 @@ logical folding model check in READERS-WRITERS-PROPS :
 result:
   true (complete with depth 3)
 ```
+
+The following command verifies that there is no case where the number of 
+writers is greater than one:
+
+```
+Maude> (lfmc [10] < N, 0 > |= [] ~ (writers>1) .)
+logical folding model check in READERS-WRITERS-PROPS :
+  < N:Natural,0 > |= []~ writers>1
+result:
+  true (complete with depth 3)
+```
+
 
 The following command finds a counterexample of the liveness property 
 `([]<> reads) /\ ([]<> writes)`:
