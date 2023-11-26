@@ -68,7 +68,7 @@ endm)
 
 
 *** true
-(lfmc N ; N ; [idle] [idle] |= [] (ever-wait? -> <> ever-crit?) .)
+(lfmc N ; N ; [idle] [idle] [idle] |= [] (ever-wait? -> <> ever-crit?) .)
 
 
 *** deadlock counterexample
@@ -98,11 +98,11 @@ endm)
 
 
 *** no counterexample
-(lmc [20] N ; N ; [idle] [idle] |= [] mutex .)
+(lmc [20] N ; N ; [idle] [idle] [idle] |= [] mutex .)
 
 
 *** true
-(lfmc N ; N ; [idle] [idle] |= [] mutex .)
+(lfmc N ; N ; [idle] [idle] [idle] |= [] mutex .)
 
 
 *** false
