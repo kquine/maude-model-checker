@@ -30,13 +30,14 @@ using the predefined operator `_|=_ : State Prop -> Bool` in the same way as
 the Maude LTL model checker.
 
 There are the two commands for logical model checking an LTL formula $\varphi$
-from an initial pattern $t$ with the optional bound $n$:
+from an initial pattern $\mathit{pat}$ with the optional bound $n$:
 
-- (lmc [n] $t$ |= $\varphi$ .)
-- (lfmc [n] $t$ |= $\varphi$ .)
+- (lmc $[n]$ $\mathit{pat}$ |= $\varphi$ .)
+- (lfmc $[n]$ $\mathit{pat}$ |= $\varphi$ .)
 
-Each command uses a different folding relation: `lmc` uses the $E$-renaming
-equivalence and `lfmc` uses the $E$-subsumption. 
+where $\mathit{pat}$ is either a single symbolic term or a disjunction 
+of symbolic terms. Each command uses a different folding relation: `lmc` 
+uses the $E$-renaming equivalence and `lfmc` uses the $E$-subsumption. 
 
 
 ## Example
@@ -118,11 +119,28 @@ The following command verifies that there is no case where the number of
 writers is greater than one:
 
 ```
-Maude> (lfmc [10] < N, 0 > |= [] ~ (writers>1) .)
+Maude> (lfmc [10] < N, 0 > |= [] ~ writers>1 .)
 logical folding model check in READERS-WRITERS-PROPS :
   < N:Natural,0 > |= []~ writers>1
 result:
   true (complete with depth 3)
+```
+
+The following are the same as above, except that the initial pattern is 
+given by a disjunction of state terms:
+
+```
+Maude> (lfmc < N, 0 > \/ < 0, s(0) > |= [] ~ (reads /\ writes) .)
+logical folding model check in READERS-WRITERS-PROPS :
+  < N:Natural,0 > |= []~(reads /\ writes)
+result:
+  true (complete with depth 2)
+
+Maude> (lfmc < N, 0 > \/ < 0, s(0) > |= []~ writers>1 .)
+logical folding model check in READERS-WRITERS-PROPS :
+  < N:Natural,0 > \/ < 0,s(0)> |= []~ writers>1
+result:
+  true (complete with depth 2)
 ```
 
 
