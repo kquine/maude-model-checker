@@ -41,16 +41,22 @@ load symbolic-checker
 endm)
 
 --- result: no counterexample
-(lmc [10] < N, 0 > |= [] ~ (writers>1) .)
+(lmc [10] < N, 0 > |= [] ~ writers>1 .)
 
 --- result: no counterexample
 (lmc [10] < N, 0 > |= [] ~ (reads /\ writes) .)
 
 --- result: true
-(lfmc < N, 0 > |= [] ~ (writers>1) .)
+(lfmc < N, 0 > |= [] ~ writers>1 .)
 
 --- result: true
 (lfmc < N, 0 > |= [] ~ (reads /\ writes) .)
+
+--- result: true
+(lfmc < N, 0 > \/ < 0, s(0) > |= [] ~ writers>1 .)
+
+--- result: true
+(lfmc < N, 0 >  \/ < 0, s(0) > |= [] ~ (reads /\ writes) .)
 
 --- result: false
 (lmc < N, 0 > |= ([]<> reads) /\ ([]<> writes) .)
